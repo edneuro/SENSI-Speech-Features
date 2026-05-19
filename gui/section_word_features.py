@@ -315,9 +315,9 @@ class WordFeaturesSection(QWidget):
         if backend == "auto":
             from extractors.semantic_domain import detect_backend
             backend, _ = detect_backend()
-        key = f"word_categories_{backend}"
+        key = f"categories_{backend}"
         sel = prefs["semantic"].get(key, [])
-        return f"{len(sel)} categories selected for word level."
+        return f"{len(sel)} categories selected (shared with document level)."
 
     def _update_cats_count_text(self):
         self.cats_count_label.setText(self._cats_count_text())

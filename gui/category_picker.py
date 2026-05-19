@@ -54,13 +54,11 @@ def _list_backend_categories(backend: str) -> tuple[list[str], str | None]:
 class CategoryPicker(QWidget):
     selection_changed = Signal(list)
 
-    def __init__(self, backend: str, level: str = "word", parent=None):
+    def __init__(self, backend: str, parent=None):
         super().__init__(parent)
         self._backend = backend
-        self._level = level  # "word" or "document"
-        # v7 schema: word and doc levels share a single `categories_<backend>`
-        # key — the word-level page is the canonical editor and the doc-level
-        # page reads the same key.
+        # v7 schema: a single categories_<backend> key shared between word and
+        # doc levels. The word-level page is the canonical editor.
         self._prefs_key = f"categories_{backend}"
         self._categories, load_error = _list_backend_categories(backend)
         self._checks: dict[str, QCheckBox] = {}

@@ -3,7 +3,7 @@ modal doc-level category selection."""
 
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QLabel, QPushButton,
+    QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QLabel,
     QDoubleSpinBox,
 )
 
@@ -81,14 +81,12 @@ class DocFeaturesSection(QWidget):
             "output_doc_category_proportions",
             "Compute count_<cat>, prop_<cat> for each active category",
             o["doc_category_proportions"], "output"))
-        cat_row = QHBoxLayout()
         self.cats_count_label = QLabel(self._cats_count_text())
-        self.configure_cats_button = QPushButton("Configure document-level categories…")
-        self.configure_cats_button.clicked.connect(self._open_category_dialog)
-        cat_row.addWidget(self.cats_count_label, 1)
-        cat_row.addWidget(self.configure_cats_button)
-        cat_w = QWidget(); cat_w.setLayout(cat_row)
-        cat_card.add_widget(cat_w)
+        hint = QLabel("Edit categories on the Word-level features page — the selection is shared between levels.")
+        hint.setObjectName("Subtitle")
+        hint.setWordWrap(True)
+        cat_card.add_widget(self.cats_count_label)
+        cat_card.add_widget(hint)
         layout.addWidget(cat_card)
 
         # --- Composite psychological scores (per-column) ---
@@ -202,21 +200,6 @@ class DocFeaturesSection(QWidget):
         if backend == "auto":
             from extractors.semantic_domain import detect_backend
             backend, _ = detect_backend()
-        key = f"doc_categories_{backend}"
+        key = f"categories_{backend}"
         sel = prefs["semantic"].get(key, [])
-        return f"{len(sel)} categories selected for document level."
-
-    def _update_cats_count_text(self):
-        self.cats_count_label.setText(self._cats_count_text())
-
-    def _open_category_dialog(self):
-        from gui.category_dialog import CategoryDialog
-        prefs = load_preferences()
-        backend = prefs["semantic"].get("backend", "auto")
-        if backend == "auto":
-            from extractors.semantic_domain import detect_backend
-            backend, _ = detect_backend()
-        dlg = CategoryDialog(backend=backend, level="document", parent=self)
-        dlg.exec()
-        self._update_cats_count_text()
-        self.settings_changed.emit()
+        return f"{len(sel)} categories active in document-level summary."

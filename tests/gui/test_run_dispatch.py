@@ -184,19 +184,17 @@ def test_doc_args_enable_llm_when_any_word_llm_toggle_on(prefs_tmp):
     assert args.no_doc_mean_llm_cloze is False
 
 
-def test_doc_args_passes_doc_level_categories_explicitly(prefs_tmp):
-    """Regression: main.run() reads the obsolete v3 key
-    `categories_<backend>` and returns [] for v4+ prefs. The dispatcher
-    must pass the selected categories explicitly via ns.sem_categories so
-    add_semantic_domain receives the doc-level selections — otherwise the
-    doc summary's count_<cat>/prop_<cat> columns are missing entirely."""
+def test_doc_args_passes_categories_from_unified_key(prefs_tmp):
+    """v7 unified: both word and doc levels read from categories_<backend>.
+    The dispatcher must pass the selection via ns.sem_categories so
+    add_semantic_domain receives it — otherwise count_<cat>/prop_<cat>
+    columns are missing from the doc summary."""
     from utils.preferences import save_preferences
     from gui.run_dispatch import build_args_doc_level
     save_preferences({
         "semantic": {
             "backend": "empath",
-            "doc_categories_empath": ["violence", "love", "money"],
-            "word_categories_empath": ["work"],  # different, must NOT leak
+            "categories_empath": ["violence", "love", "money"],
         },
     })
     args = build_args_doc_level()
@@ -205,15 +203,14 @@ def test_doc_args_passes_doc_level_categories_explicitly(prefs_tmp):
     assert set(args.sem_categories.split(",")) == {"violence", "love", "money"}
 
 
-def test_word_args_passes_word_level_categories_explicitly(prefs_tmp):
-    """Symmetric to the doc-level test."""
+def test_word_args_passes_categories_from_unified_key(prefs_tmp):
+    """v7 unified: word-level args reads from the shared categories_<backend> key."""
     from utils.preferences import save_preferences
     from gui.run_dispatch import build_args_word_level
     save_preferences({
         "semantic": {
             "backend": "empath",
-            "word_categories_empath": ["work", "family"],
-            "doc_categories_empath": ["violence"],  # must NOT leak
+            "categories_empath": ["work", "family"],
         },
     })
     args = build_args_word_level()

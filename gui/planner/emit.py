@@ -72,12 +72,17 @@ def _enabled_ewfg_bands(features: dict) -> str | None:
 
 
 def _categories_for_level(prefs: dict, level: str) -> str | None:
+    """Return the comma-joined active categories for `level`.
+
+    v7 unified: word and doc levels share `semantic.categories_<backend>`.
+    `level` is unused inside; kept in the signature so callers can pass it
+    transparently if a future divergence is ever needed.
+    """
     backend = prefs.get("semantic", {}).get("backend", "auto")
     if backend == "auto":
         # Defer to runtime detection; emit None so main.run() falls back.
         return None
-    key = f"{'doc' if level == 'doc' else 'word'}_categories_{backend}"
-    cats = prefs.get("semantic", {}).get(key, [])
+    cats = prefs.get("semantic", {}).get(f"categories_{backend}", [])
     return ",".join(cats) if cats else None
 
 

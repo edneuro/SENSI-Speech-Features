@@ -25,12 +25,17 @@ def test_doc_section_psych_has_four_per_column_toggles(qtbot):
         assert w.toggle(k) is not None, k
 
 
-def test_doc_section_has_configure_categories_button(qtbot):
+def test_doc_section_shows_categories_count_and_hint(qtbot):
+    """v7: doc-level page is read-only for categories. It shows a count label
+    and a hint pointing to the word-level page; the old configure button is gone."""
     from gui.section_doc_features import DocFeaturesSection
     w = DocFeaturesSection()
     qtbot.addWidget(w)
-    assert w.configure_cats_button is not None
-    assert "document" in w.configure_cats_button.text().lower()
+    # Count label must exist and mention categories
+    assert w.cats_count_label is not None
+    assert "categor" in w.cats_count_label.text().lower()
+    # No configure button on this page in v7
+    assert not hasattr(w, "configure_cats_button")
 
 
 def test_doc_prosody_card_has_sixteen_toggles(qtbot, prefs_tmp):

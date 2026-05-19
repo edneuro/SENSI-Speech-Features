@@ -30,8 +30,7 @@ def _prefs(output: dict, features: dict, **kw) -> dict:
         "output":   merged_output,
         "features": merged_features,
         "semantic": kw.get("semantic", {"backend": "empath",
-                                         "word_categories_empath": [],
-                                         "doc_categories_empath": []}),
+                                         "categories_empath": []}),
         "prosody":  kw.get("prosody", {"pitch_units": "semitones",
                                         "pitch_floor_hz": 75.0,
                                         "pitch_ceiling_hz": 500.0,
@@ -185,23 +184,23 @@ def test_doc_aggregates_gates_on_word_extractor_presence():
     assert ns.no_doc_mean_zipf is False
 
 
-def test_sem_categories_routes_by_level():
-    """Word level reads semantic.word_categories_<backend>; doc level reads
-    semantic.doc_categories_<backend>. Mixing the two silently routed word
-    categories into doc runs in an earlier draft of emit.py."""
+def test_sem_categories_unified_key_used_for_both_levels():
+    """v7 unified: word and doc levels both read semantic.categories_<backend>.
+    The old split word_/doc_categories_* keys no longer exist in prefs; both
+    levels must return the same value from the shared key."""
     prefs = _prefs(
         output={"word_level_csv": True, "syllables_csv": False,
                 "phonemes_csv": False, "document_summary": True},
         features={"sem_indicators": True},
         semantic={"backend": "empath",
-                  "word_categories_empath": ["positive_emotion", "work"],
-                  "doc_categories_empath": ["family", "money"]},
+                  "categories_empath": ["positive_emotion", "work", "family"]},
     )
     plan = plan_from_prefs(prefs)
     ns_word = to_namespace(plan, prefs, level="word")
     ns_doc  = to_namespace(plan, prefs, level="doc")
-    assert ns_word.sem_categories == "positive_emotion,work"
-    assert ns_doc.sem_categories  == "family,money"
+    # Both levels must return the same unified selection.
+    assert set(ns_word.sem_categories.split(",")) == {"positive_emotion", "work", "family"}
+    assert ns_doc.sem_categories == ns_word.sem_categories
 
 
 def test_doc_level_stages_dont_bleed_into_word_namespace():

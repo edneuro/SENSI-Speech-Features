@@ -46,12 +46,12 @@ def test_picker_auto_saves_on_toggle(qtbot, tmp_path, monkeypatch):
     assert "friends" in prefs["semantic"]["categories_empath"]
 
 
-def test_picker_word_level_uses_unified_categories_key(qtbot, tmp_path, monkeypatch):
-    """v7: word and doc levels both save to categories_<backend> (unified key)."""
+def test_picker_uses_unified_categories_key(qtbot, tmp_path, monkeypatch):
+    """v7: the picker saves to categories_<backend> (unified key, no level split)."""
     monkeypatch.setenv("SENSI_PREFS_PATH", str(tmp_path / "p.json"))
     from gui.category_picker import CategoryPicker
     from utils.preferences import load_preferences
-    w = CategoryPicker(backend="empath", level="word")
+    w = CategoryPicker(backend="empath")
     qtbot.addWidget(w)
     w.set_selection(["money"])
     w._checks["money"].setChecked(True)
@@ -62,30 +62,8 @@ def test_picker_word_level_uses_unified_categories_key(qtbot, tmp_path, monkeypa
     assert "doc_categories_empath" not in prefs["semantic"]
 
 
-def test_picker_doc_level_uses_unified_categories_key(qtbot, tmp_path, monkeypatch):
-    """v7: doc-level picker saves to the same unified categories_<backend> key."""
-    monkeypatch.setenv("SENSI_PREFS_PATH", str(tmp_path / "p.json"))
-    from gui.category_picker import CategoryPicker
-    from utils.preferences import load_preferences
-    w = CategoryPicker(backend="empath", level="document")
-    qtbot.addWidget(w)
-    w._checks["money"].setChecked(True)
-    prefs = load_preferences()
-    assert "money" in prefs["semantic"]["categories_empath"]
-
-
-def test_picker_default_level_is_word_for_backward_compat(qtbot):
-    from gui.category_picker import CategoryPicker
-    w = CategoryPicker(backend="empath")  # no level arg
-    qtbot.addWidget(w)
-    # Should default to "word" so older test calls keep working
-    assert w._level == "word"
-
-
-def test_picker_doc_level_writes_to_unified_not_document_key(qtbot, tmp_path, monkeypatch):
-    """Regression: the picker used to map level='document' to a key prefix
-    of 'document_' which doesn't match the schema's unified key. v7 uses
-    categories_<backend> for both word and doc levels.
+def test_picker_writes_to_unified_not_split_key(qtbot, tmp_path, monkeypatch):
+    """Regression: the picker must not write any level-prefixed key.
     Verify by toggling a non-SOP category so the assertion isn't a false
     positive on the default selection."""
     monkeypatch.setenv("SENSI_PREFS_PATH", str(tmp_path / "p.json"))
@@ -95,13 +73,14 @@ def test_picker_doc_level_writes_to_unified_not_document_key(qtbot, tmp_path, mo
     non_sop = "violence"  # in empath but not in SOP defaults
     assert non_sop not in _SOP_CATEGORIES_EMPATH
 
-    w = CategoryPicker(backend="empath", level="document")
+    w = CategoryPicker(backend="empath")
     qtbot.addWidget(w)
     w._checks[non_sop].setChecked(True)
 
     prefs = load_preferences()
     assert non_sop in prefs["semantic"]["categories_empath"]
-    # Neither the old split key nor the old buggy key should appear.
+    # Neither old split keys nor old buggy key should appear.
+    assert "word_categories_empath" not in prefs["semantic"]
     assert "doc_categories_empath" not in prefs["semantic"]
     assert "document_categories_empath" not in prefs["semantic"]
 

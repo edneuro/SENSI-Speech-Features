@@ -21,7 +21,9 @@ class CategoryDialog(QDialog):
         layout.setContentsMargins(16, 16, 16, 16)
         layout.setSpacing(12)
 
-        self.picker = CategoryPicker(backend=backend, level=level)
+        # `level` is no longer routed to CategoryPicker (v7 unified key);
+        # it's kept on the dialog only to vary the window title.
+        self.picker = CategoryPicker(backend=backend)
         layout.addWidget(self.picker, 1)
 
         button_row = QHBoxLayout()

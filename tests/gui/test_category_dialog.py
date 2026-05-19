@@ -14,10 +14,13 @@ def test_dialog_doc_level_title(qtbot):
 
 def test_dialog_embeds_category_picker(qtbot):
     from gui.category_dialog import CategoryDialog
+    from gui.category_picker import CategoryPicker
     d = CategoryDialog(backend="empath", level="word")
     qtbot.addWidget(d)
     assert d.picker is not None
-    assert d.picker._level == "word"
+    # v7: CategoryPicker has no _level attribute — unified key only.
+    assert isinstance(d.picker, CategoryPicker)
+    assert not hasattr(d.picker, "_level")
 
 
 def test_dialog_done_button_closes(qtbot):

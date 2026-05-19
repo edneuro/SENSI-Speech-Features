@@ -364,14 +364,13 @@ def run(args) -> pd.DataFrame:
 
     if args.save_prefs and args.sem_categories:
         from utils.preferences import save_preferences
-        # v4+ schema: write to the level-appropriate keys for both backends
-        # so the saved selection is visible regardless of which backend the
-        # user later activates. --save-prefs at CLI is rare; the GUI saves
-        # via category_picker._on_toggle which already writes the right key.
-        level_prefix = 'doc' if getattr(args, 'level', 'word') == 'document' else 'word'
+        # v7 unified: a single categories_<backend> key per backend. Write to
+        # both backends so the saved selection survives a later backend switch.
+        # --save-prefs at CLI is rare; the GUI saves via
+        # category_picker._on_toggle which already writes the right key.
         save_preferences({'semantic': {
-            f'{level_prefix}_categories_empath': sem_categories,
-            f'{level_prefix}_categories_liwc': sem_categories,
+            'categories_empath': sem_categories,
+            'categories_liwc':   sem_categories,
         }})
 
     return df
