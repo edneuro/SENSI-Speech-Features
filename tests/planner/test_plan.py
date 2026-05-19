@@ -179,3 +179,109 @@ def test_stage_configs_carries_llm_model():
     ))
     assert "llm_predict" in p.stages_to_run
     assert p.stage_configs.get("llm_predict", {}).get("llm_model") == "gpt-4o-mini"
+
+
+# ---------------------------------------------------------------------------
+# master_toggle and available_when activation tests
+# ---------------------------------------------------------------------------
+
+import gui.planner.plan as _plan_mod
+from gui.planner.stages import FeatureCluster, Stage
+
+
+def _install_test_cluster(monkeypatch, cluster: FeatureCluster, extra_stages=()):
+    """Replace CLUSTERS and STAGES with a minimal synthetic registry."""
+    test_stage = Stage(name="t_stage", consumes=("text",),
+                       produces=("text.out",), run=lambda *a, **kw: None)
+    monkeypatch.setattr(_plan_mod, "CLUSTERS", [cluster])
+    monkeypatch.setattr(_plan_mod, "STAGES", [test_stage, *extra_stages])
+
+
+def test_master_toggle_gates_cluster_inactive_when_false(monkeypatch):
+    cluster = FeatureCluster(
+        name="t", toggle_keys=("child",), output_csv="features",
+        requires_stages=("t_stage",), emits_columns=("X",),
+        master_toggle="master_t",
+    )
+    _install_test_cluster(monkeypatch, cluster)
+    p = plan_from_prefs({
+        "output": {"word_level_csv": True},
+        "features": {"child": True, "master_t": False},  # child on, master off
+    })
+    assert p.stages_to_run == ()  # master off = cluster inactive
+
+
+def test_master_toggle_active_when_true(monkeypatch):
+    cluster = FeatureCluster(
+        name="t", toggle_keys=("child",), output_csv="features",
+        requires_stages=("t_stage",), emits_columns=("X",),
+        master_toggle="master_t",
+    )
+    _install_test_cluster(monkeypatch, cluster)
+    p = plan_from_prefs({
+        "output": {"word_level_csv": True},
+        "features": {"child": True, "master_t": True},
+    })
+    assert "t_stage" in p.stages_to_run
+
+
+def test_available_when_gates_cluster_inactive_on_mismatch(monkeypatch):
+    cluster = FeatureCluster(
+        name="t", toggle_keys=("child",), output_csv="features",
+        requires_stages=("t_stage",), emits_columns=("X",),
+        available_when=("semantic.backend", "liwc"),
+    )
+    _install_test_cluster(monkeypatch, cluster)
+    p = plan_from_prefs({
+        "output": {"word_level_csv": True},
+        "features": {"child": True},
+        "semantic": {"backend": "empath"},  # mismatch
+    })
+    assert p.stages_to_run == ()
+
+
+def test_available_when_active_on_match(monkeypatch):
+    cluster = FeatureCluster(
+        name="t", toggle_keys=("child",), output_csv="features",
+        requires_stages=("t_stage",), emits_columns=("X",),
+        available_when=("semantic.backend", "liwc"),
+    )
+    _install_test_cluster(monkeypatch, cluster)
+    p = plan_from_prefs({
+        "output": {"word_level_csv": True},
+        "features": {"child": True},
+        "semantic": {"backend": "liwc"},
+    })
+    assert "t_stage" in p.stages_to_run
+
+
+def test_master_and_available_when_both_required(monkeypatch):
+    """Both gates must pass for the cluster to be active."""
+    cluster = FeatureCluster(
+        name="t", toggle_keys=("child",), output_csv="features",
+        requires_stages=("t_stage",), emits_columns=("X",),
+        master_toggle="master_t",
+        available_when=("semantic.backend", "liwc"),
+    )
+    _install_test_cluster(monkeypatch, cluster)
+    # master True, available_when False
+    p = plan_from_prefs({
+        "output": {"word_level_csv": True},
+        "features": {"child": True, "master_t": True},
+        "semantic": {"backend": "empath"},
+    })
+    assert p.stages_to_run == ()
+    # master False, available_when True
+    p = plan_from_prefs({
+        "output": {"word_level_csv": True},
+        "features": {"child": True, "master_t": False},
+        "semantic": {"backend": "liwc"},
+    })
+    assert p.stages_to_run == ()
+    # both pass
+    p = plan_from_prefs({
+        "output": {"word_level_csv": True},
+        "features": {"child": True, "master_t": True},
+        "semantic": {"backend": "liwc"},
+    })
+    assert "t_stage" in p.stages_to_run

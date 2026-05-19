@@ -27,14 +27,18 @@ class FeatureCluster:
     """A group of user-facing columns sharing a stage and a toggle group.
 
     A cluster is active iff:
-    - `output_csv` is among the user's requested outputs, AND
-    - any key in `toggle_keys` is True in prefs["features"].
+    - `available_when` predicate (when present) matches the live prefs
+    - `master_toggle` (when present) is True in prefs
+    - `output_csv` is among the user's requested outputs
+    - any key in `toggle_keys` is True in prefs
     """
     name: str
     toggle_keys: tuple[str, ...]
     output_csv: str   # "features" | "syllables" | "phonemes" | "documents_summary"
     requires_stages: tuple[str, ...]
     emits_columns: tuple[str, ...]
+    master_toggle: str | None = None
+    available_when: tuple[str, str] | None = None
 
 
 @dataclass(frozen=True)

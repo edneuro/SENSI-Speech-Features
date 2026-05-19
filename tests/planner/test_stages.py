@@ -59,3 +59,41 @@ def test_plan_field_reassignment_blocked():
              column_drops={}, stage_configs={})
     with pytest.raises(FrozenInstanceError):
         p.column_drops = {}
+
+
+def test_feature_cluster_accepts_master_toggle_field():
+    c = FeatureCluster(
+        name="word prosody",
+        toggle_keys=("feat_prosody_pitch_mean",),
+        output_csv="features",
+        requires_stages=("word_prosody",),
+        emits_columns=("Pitch_Mean",),
+        master_toggle="master_word_prosody",
+    )
+    assert c.master_toggle == "master_word_prosody"
+    assert c.available_when is None
+
+
+def test_feature_cluster_accepts_available_when_field():
+    c = FeatureCluster(
+        name="psych composite",
+        toggle_keys=("feat_psych_authentic",),
+        output_csv="documents_summary",
+        requires_stages=("doc_liwc",),
+        emits_columns=("psych_authentic",),
+        available_when=("semantic.backend", "liwc"),
+    )
+    assert c.available_when == ("semantic.backend", "liwc")
+    assert c.master_toggle is None
+
+
+def test_feature_cluster_defaults_both_to_none():
+    c = FeatureCluster(
+        name="default",
+        toggle_keys=("k",),
+        output_csv="features",
+        requires_stages=(),
+        emits_columns=(),
+    )
+    assert c.master_toggle is None
+    assert c.available_when is None

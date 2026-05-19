@@ -41,6 +41,16 @@ _OUTPUT_CSV_MAP = {
 }
 
 
+def _get_dotted(prefs: dict, path: str):
+    """Read a value from prefs by a dotted path like 'semantic.backend'."""
+    cur = prefs
+    for part in path.split("."):
+        if not isinstance(cur, dict):
+            return None
+        cur = cur.get(part)
+    return cur
+
+
 def _active_output_csvs(prefs: dict) -> frozenset[str]:
     out = prefs.get("output", {})
     return frozenset(
@@ -59,8 +69,18 @@ def _toggle_value(prefs: dict, key: str) -> bool:
 def _active_clusters(prefs: dict, active_csvs: frozenset[str]) -> list[FeatureCluster]:
     actives = []
     for c in CLUSTERS:
+        # 1. available_when: hard env gate
+        if c.available_when is not None:
+            path, expected = c.available_when
+            if _get_dotted(prefs, path) != expected:
+                continue
+        # 2. master_toggle: user gate
+        if c.master_toggle is not None and not _toggle_value(prefs, c.master_toggle):
+            continue
+        # 3. output_csv must be wanted
         if c.output_csv not in active_csvs:
             continue
+        # 4. any child toggle on
         if any(_toggle_value(prefs, k) for k in c.toggle_keys):
             actives.append(c)
     return actives
