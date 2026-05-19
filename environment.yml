@@ -1,0 +1,19 @@
+name: sensi
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - montreal-forced-aligner
+  - pip
+  - pip:
+    - spacy>=3.7
+    - wordfreq>=3.0
+    - num2words>=0.5
+    - tgt>=1.4.4
+    - transformers>=4.30
+    - torch>=2.0
+    - pandas>=2.0
+    - PySide6>=6.6
+    - tiktoken>=0.6
+    - pytest-qt>=4.4

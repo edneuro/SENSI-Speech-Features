@@ -1,0 +1,176 @@
+"""Run section: output checkboxes, readiness summary, cost estimate, Run button."""
+
+from pathlib import Path
+
+from PySide6.QtCore import Signal
+from PySide6.QtWidgets import (
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QFrame,
+)
+
+from gui.widgets import SectionHeader, ToggleRow
+from gui.preflight import compute_warnings
+from gui.cost_estimate import estimate, count_input_tokens
+from gui.run_dispatch import run as dispatch_run
+from utils.preferences import load_preferences, save_preferences
+
+
+class RunSection(QWidget):
+    run_started = Signal()
+    run_finished = Signal(str)
+    # Internal cross-thread bridges. dispatch_run invokes its progress/done
+    # callbacks from a worker thread; emitting a Qt signal auto-upgrades to
+    # QueuedConnection so the connected slots run on the main (GUI) thread.
+    # Not part of the public RunSection contract — hence the leading underscore.
+    _progress_event = Signal(int, int, str)
+    _done_event = Signal(str)
+
+    def __init__(self, get_session_api_key, status_strip, parent=None):
+        super().__init__(parent)
+        self._get_api_key = get_session_api_key
+        self._status_strip = status_strip
+        # Wire cross-thread bridges to main-thread slots before any widget
+        # creation that might cause them to fire.
+        self._progress_event.connect(self._on_progress_main)
+        self._done_event.connect(self._on_done_main)
+        # Cache for tiktoken cost computation — keyed by (model_id, folder_path).
+        # Re-tokenizing every transcript file on every feature toggle was a
+        # 1-3s freeze; we recompute only when model or folder changes.
+        self._cost_cache_key: tuple[str, str] | None = None
+        self._cost_cache_value: tuple[int, int] | None = None
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(24, 16, 24, 16)
+        layout.setSpacing(16)
+
+        # Output
+        layout.addWidget(SectionHeader("Output"))
+        prefs = load_preferences()
+        self.word_csv_toggle = ToggleRow("Word-level CSVs (one per stimulus)")
+        self.word_csv_toggle.set_checked(prefs["output"]["word_level_csv"])
+        self.word_csv_toggle.toggled.connect(
+            lambda v: save_preferences({"output": {"word_level_csv": v}}))
+        layout.addWidget(self.word_csv_toggle)
+        self.doc_sum_toggle = ToggleRow("Document-level summary (single CSV)")
+        self.doc_sum_toggle.set_checked(prefs["output"]["document_summary"])
+        self.doc_sum_toggle.toggled.connect(
+            lambda v: save_preferences({"output": {"document_summary": v}}))
+        layout.addWidget(self.doc_sum_toggle)
+        self.syllables_csv_toggle = ToggleRow("Syllables CSV (one per stimulus)")
+        self.syllables_csv_toggle.set_checked(prefs["output"]["syllables_csv"])
+        self.syllables_csv_toggle.toggled.connect(
+            lambda v: save_preferences({"output": {"syllables_csv": v}}))
+        layout.addWidget(self.syllables_csv_toggle)
+        self.phonemes_csv_toggle = ToggleRow("Phonemes CSV (one per stimulus)")
+        self.phonemes_csv_toggle.set_checked(prefs["output"]["phonemes_csv"])
+        self.phonemes_csv_toggle.toggled.connect(
+            lambda v: save_preferences({"output": {"phonemes_csv": v}}))
+        layout.addWidget(self.phonemes_csv_toggle)
+
+        # Readiness
+        layout.addWidget(SectionHeader("Readiness"))
+        self.readiness_label = QLabel("…")
+        layout.addWidget(self.readiness_label)
+        self.warnings_label = QLabel("")
+        self.warnings_label.setWordWrap(True)
+        layout.addWidget(self.warnings_label)
+
+        # Cost panel
+        self.cost_panel = QFrame()
+        self.cost_panel.setObjectName("Card")
+        cp = QVBoxLayout(self.cost_panel)
+        cp.addWidget(QLabel("<b>Cost estimate</b>"))
+        self.cost_detail = QLabel("…")
+        self.cost_detail.setWordWrap(True)
+        cp.addWidget(self.cost_detail)
+        layout.addWidget(self.cost_panel)
+
+        # Run button
+        layout.addStretch(1)
+        self.run_button = QPushButton("▶  Run extraction")
+        self.run_button.setObjectName("Primary")
+        self.run_button.clicked.connect(self._on_run)
+        layout.addWidget(self.run_button)
+
+        self.refresh()
+
+    def refresh(self) -> None:
+        prefs = load_preferences()
+        # Hard errors disable Run
+        ok = bool(prefs["shared"].get("analyzer_name", "").strip()) \
+             and Path(prefs["shared"].get("last_transcripts_folder", "")).is_dir() \
+             and Path(prefs["shared"].get("last_audio_folder", "")).is_dir() \
+             and Path(prefs["shared"].get("last_output_folder", "")).is_dir()
+        self.run_button.setEnabled(ok)
+
+        warnings = compute_warnings(session_api_key=self._get_api_key())
+        if not warnings:
+            self.readiness_label.setText("✓  Ready to run.")
+            self.warnings_label.setText("")
+        else:
+            self.readiness_label.setText(f"⚠  {len(warnings)} warnings — review Features.")
+            self.warnings_label.setText(
+                "\n".join(f"• {w.message}" for w in warnings))
+
+        # Cost panel
+        model = prefs["predictability"].get("llm_model", "")
+        if model.startswith("gpt-"):
+            self.cost_panel.setVisible(True)
+            t = Path(prefs["shared"].get("last_transcripts_folder", ""))
+            if t.is_dir():
+                cache_key = (model, str(t))
+                if cache_key == self._cost_cache_key and self._cost_cache_value is not None:
+                    n_in, n_out = self._cost_cache_value
+                else:
+                    paths = [p for p in t.iterdir() if p.is_file()]
+                    n_in = count_input_tokens(paths, model)
+                    n_out = sum(len(p.read_text(encoding="utf-8", errors="ignore").split())
+                                 for p in paths if p.is_file())
+                    self._cost_cache_key = cache_key
+                    self._cost_cache_value = (n_in, n_out)
+                est = estimate(model_id=model, n_input_tokens=n_in,
+                                n_output_tokens=n_out)
+                self.cost_detail.setText(
+                    f"Model: {est.model_id}<br>"
+                    f"Input tokens: ~ {est.n_input_tokens:,} (tiktoken)<br>"
+                    f"Output tokens: ~ {est.n_output_tokens:,} (1/word)<br>"
+                    f"Rates (last updated {est.rates_last_updated}): "
+                    f"${est.usd_input/max(est.n_input_tokens,1)*1e6:.2f}/1M input, "
+                    f"${est.usd_output/max(est.n_output_tokens,1)*1e6:.2f}/1M output<br>"
+                    f"<b>Estimated: ≈ ${est.usd_total:.3f}</b><br>"
+                    "⚠ OpenAI pricing changes — verify at openai.com/api/pricing"
+                )
+            else:
+                self.cost_detail.setText("Pick a transcripts folder to compute cost.")
+        else:
+            self.cost_panel.setVisible(False)
+
+    def _on_progress_main(self, i: int, total: int, name: str) -> None:
+        """Main-thread slot for worker-thread progress updates."""
+        if self._status_strip:
+            self._status_strip.set_running(i, total, name)
+
+    def _on_done_main(self, status: str) -> None:
+        """Main-thread slot for worker-thread completion."""
+        if status == "done":
+            if self._status_strip:
+                self._status_strip.set_done(1, 0)
+        else:
+            if self._status_strip:
+                self._status_strip.set_errored(1)
+        self.run_finished.emit(status)
+        self.run_button.setEnabled(True)
+
+    def _on_run(self) -> None:
+        self.run_button.setEnabled(False)
+        self.run_started.emit()
+        if self._status_strip:
+            self._status_strip.set_running(0, 1, "starting…")
+
+        # Pass signal.emit (itself a callable) as the dispatcher callbacks.
+        # The worker thread will emit; the connected slots run on the main
+        # thread via Qt's auto-QueuedConnection.
+        dispatch_run(
+            progress_cb=self._progress_event.emit,
+            done_cb=self._done_event.emit,
+            session_api_key=self._get_api_key(),
+        )

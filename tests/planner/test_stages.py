@@ -1,0 +1,61 @@
+from dataclasses import FrozenInstanceError
+import pytest
+
+from gui.planner.stages import Stage, FeatureCluster, Plan
+
+
+def test_stage_is_frozen_dataclass():
+    s = Stage(name="x", consumes=("a",), produces=("b",), run=lambda: None)
+    with pytest.raises(FrozenInstanceError):
+        s.name = "y"
+
+
+def test_stage_fields():
+    fn = lambda x: x
+    s = Stage(name="word_freq", consumes=("word_df",), produces=("Zipf_Freq",), run=fn)
+    assert s.name == "word_freq"
+    assert s.consumes == ("word_df",)
+    assert s.produces == ("Zipf_Freq",)
+    assert s.run is fn
+
+
+def test_feature_cluster_is_frozen():
+    c = FeatureCluster(
+        name="SUBTLEX",
+        toggle_keys=("freq_subtlex",),
+        output_csv="features",
+        requires_stages=("word_freq",),
+        emits_columns=("Zipf_Freq",),
+    )
+    with pytest.raises(FrozenInstanceError):
+        c.name = "y"
+
+
+def test_feature_cluster_fields():
+    c = FeatureCluster(
+        name="word prosody",
+        toggle_keys=("feat_prosody_pitch_mean", "feat_prosody_volume_mean"),
+        output_csv="features",
+        requires_stages=("word_prosody",),
+        emits_columns=("Pitch_Mean", "Volume_Mean"),
+    )
+    assert c.output_csv == "features"
+    assert "feat_prosody_pitch_mean" in c.toggle_keys
+
+
+def test_plan_is_frozen_dataclass():
+    p = Plan(
+        stages_to_run=("a", "b"),
+        output_csvs=frozenset({"features"}),
+        column_drops={"features": frozenset({"X"})},
+        stage_configs={"a": {"k": "v"}},
+    )
+    with pytest.raises(FrozenInstanceError):
+        p.stages_to_run = ("c",)
+
+
+def test_plan_field_reassignment_blocked():
+    p = Plan(stages_to_run=(), output_csvs=frozenset(),
+             column_drops={}, stage_configs={})
+    with pytest.raises(FrozenInstanceError):
+        p.column_drops = {}

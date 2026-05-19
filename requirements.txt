@@ -1,0 +1,69 @@
+# Core NLP
+spacy>=3.7
+wordfreq>=3.0
+num2words>=0.5
+
+# Forced alignment output parsing
+tgt>=1.4.4
+
+# Language model (surprisal)
+transformers>=4.30
+torch>=2.0
+
+# Data
+pandas>=2.0
+
+# Parquet reader for EWFG (Educator Word Frequency Guide) lookup at
+# dictionaries/edu_zipf.parquet. Without this, pd.read_parquet raises
+# ImportError, _load_lookup catches it, and Edu_Zipf_* silently become NaN.
+pyarrow>=14.0
+
+# ---
+# Montreal Forced Aligner (MFA) is NOT a pip package.
+# Install via conda:
+#
+#   conda create -n mfa python=3.10
+#   conda activate mfa
+#   conda install -c conda-forge montreal-forced-aligner
+#   mfa model download acoustic english_us_arpa
+#   mfa model download dictionary english_us_arpa
+#
+# Then install the pip packages above into the same environment:
+#   pip install -r requirements.txt
+#
+# spaCy English model (run once after pip install):
+#   python -m spacy download en_core_web_sm
+
+# Testing & system inspection
+pytest>=7.4
+psutil>=5.9
+
+# Semantic-domain backends
+empath>=0.89
+liwc>=0.5
+
+# LLM-cloze
+accelerate>=0.27
+bitsandbytes>=0.42  ; platform_system != "Darwin"
+openai>=1.10
+
+# Validation script
+scipy>=1.11
+
+# Readability
+textstat>=0.7
+
+# GUI (PySide6)
+PySide6>=6.6
+
+# Token counting for OpenAI cost estimate
+tiktoken>=0.6
+
+# Testing GUI widgets
+pytest-qt>=4.4
+
+# Acoustic prosody (Parselmouth wraps Praat for pitch, intensity, HNR)
+praat-parselmouth>=0.4
+
+# Syllable counting for articulation rate
+pyphen>=0.14

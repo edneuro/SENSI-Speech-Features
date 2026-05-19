@@ -1,0 +1,27 @@
+env/
+mfa_data/
+hf_cache/
+__pycache__/
+*.pyc
+*.csv
+
+# Editor / agent configs (local, not project state)
+.claude/
+.vscode/
+
+# Test artifacts
+.pytest_cache/
+htmlcov/
+*.egg-info/
+
+# Runtime config (license-bound or user-specific)
+config/preferences.json
+dictionaries/*.dic
+dictionaries/*.parquet
+dictionaries/*.csv
+
+# Run outputs
+output/
+
+# Provo validation cache
+data/provo/
