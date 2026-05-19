@@ -11,6 +11,7 @@ from gui.widgets import SectionHeader, ToggleRow
 from gui.preflight import compute_warnings
 from gui.cost_estimate import estimate, count_input_tokens
 from gui.run_dispatch import run as dispatch_run
+from gui.planner import plan_from_prefs
 from utils.preferences import load_preferences, save_preferences
 
 
@@ -95,6 +96,7 @@ class RunSection(QWidget):
 
     def refresh(self) -> None:
         prefs = load_preferences()
+        plan = plan_from_prefs(prefs)
         # Hard errors disable Run
         ok = bool(prefs["shared"].get("analyzer_name", "").strip()) \
              and Path(prefs["shared"].get("last_transcripts_folder", "")).is_dir() \
@@ -111,9 +113,9 @@ class RunSection(QWidget):
             self.warnings_label.setText(
                 "\n".join(f"• {w.message}" for w in warnings))
 
-        # Cost panel
+        # Cost panel — only when planner schedules llm_predict AND the model is an OpenAI one
         model = prefs["predictability"].get("llm_model", "")
-        if model.startswith("gpt-"):
+        if "llm_predict" in plan.stages_to_run and model.startswith("gpt-"):
             self.cost_panel.setVisible(True)
             t = Path(prefs["shared"].get("last_transcripts_folder", ""))
             if t.is_dir():
