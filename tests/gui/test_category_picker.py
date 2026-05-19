@@ -42,27 +42,28 @@ def test_picker_auto_saves_on_toggle(qtbot, tmp_path, monkeypatch):
     w.set_selection([])
     w._checks["friends"].setChecked(True)
     prefs = load_preferences()
-    assert "friends" in prefs["semantic"]["word_categories_empath"]
+    # v7: unified categories_<backend> key (no split word/doc keys)
+    assert "friends" in prefs["semantic"]["categories_empath"]
 
 
-def test_picker_word_level_uses_word_categories_key(qtbot, tmp_path, monkeypatch):
+def test_picker_word_level_uses_unified_categories_key(qtbot, tmp_path, monkeypatch):
+    """v7: word and doc levels both save to categories_<backend> (unified key)."""
     monkeypatch.setenv("SENSI_PREFS_PATH", str(tmp_path / "p.json"))
     from gui.category_picker import CategoryPicker
     from utils.preferences import load_preferences
     w = CategoryPicker(backend="empath", level="word")
     qtbot.addWidget(w)
     w.set_selection(["money"])
-    # Toggle one
     w._checks["money"].setChecked(True)
     prefs = load_preferences()
-    assert "money" in prefs["semantic"]["word_categories_empath"]
-    # Doc-level list should be untouched
-    assert "money" not in prefs["semantic"]["doc_categories_empath"] or \
-           prefs["semantic"]["doc_categories_empath"] != \
-           prefs["semantic"]["word_categories_empath"]
+    assert "money" in prefs["semantic"]["categories_empath"]
+    # Split keys must not exist in v7 prefs
+    assert "word_categories_empath" not in prefs["semantic"]
+    assert "doc_categories_empath" not in prefs["semantic"]
 
 
-def test_picker_doc_level_uses_doc_categories_key(qtbot, tmp_path, monkeypatch):
+def test_picker_doc_level_uses_unified_categories_key(qtbot, tmp_path, monkeypatch):
+    """v7: doc-level picker saves to the same unified categories_<backend> key."""
     monkeypatch.setenv("SENSI_PREFS_PATH", str(tmp_path / "p.json"))
     from gui.category_picker import CategoryPicker
     from utils.preferences import load_preferences
@@ -70,7 +71,7 @@ def test_picker_doc_level_uses_doc_categories_key(qtbot, tmp_path, monkeypatch):
     qtbot.addWidget(w)
     w._checks["money"].setChecked(True)
     prefs = load_preferences()
-    assert "money" in prefs["semantic"]["doc_categories_empath"]
+    assert "money" in prefs["semantic"]["categories_empath"]
 
 
 def test_picker_default_level_is_word_for_backward_compat(qtbot):
@@ -81,10 +82,10 @@ def test_picker_default_level_is_word_for_backward_compat(qtbot):
     assert w._level == "word"
 
 
-def test_picker_doc_level_writes_to_doc_not_document_key(qtbot, tmp_path, monkeypatch):
+def test_picker_doc_level_writes_to_unified_not_document_key(qtbot, tmp_path, monkeypatch):
     """Regression: the picker used to map level='document' to a key prefix
-    of 'document_' which doesn't match the schema's 'doc_' prefix. The doc-
-    level dialog's selections never reached the counter or the pipeline.
+    of 'document_' which doesn't match the schema's unified key. v7 uses
+    categories_<backend> for both word and doc levels.
     Verify by toggling a non-SOP category so the assertion isn't a false
     positive on the default selection."""
     monkeypatch.setenv("SENSI_PREFS_PATH", str(tmp_path / "p.json"))
@@ -99,15 +100,17 @@ def test_picker_doc_level_writes_to_doc_not_document_key(qtbot, tmp_path, monkey
     w._checks[non_sop].setChecked(True)
 
     prefs = load_preferences()
-    assert non_sop in prefs["semantic"]["doc_categories_empath"]
-    # And the bogus key MUST not appear in saved prefs.
+    assert non_sop in prefs["semantic"]["categories_empath"]
+    # Neither the old split key nor the old buggy key should appear.
+    assert "doc_categories_empath" not in prefs["semantic"]
     assert "document_categories_empath" not in prefs["semantic"]
 
 
-def test_load_preferences_migrates_document_key_into_doc_key(tmp_path, monkeypatch):
+def test_load_preferences_migrates_document_key_into_unified_key(tmp_path, monkeypatch):
     """If a user upgrades from a build that wrote to the buggy
-    `document_categories_*` key, load_preferences must move the value into
-    the canonical `doc_categories_*` slot so the selection isn't lost."""
+    `document_categories_*` key, load_preferences must repair it to
+    `doc_categories_*` (v5→v6 repair step) and then unify it into
+    `categories_*` (v6→v7 migration) so the selection isn't lost."""
     import json
     monkeypatch.setenv("SENSI_PREFS_PATH", str(tmp_path / "p.json"))
     prefs_path = tmp_path / "p.json"
@@ -121,5 +124,10 @@ def test_load_preferences_migrates_document_key_into_doc_key(tmp_path, monkeypat
 
     from utils.preferences import load_preferences
     prefs = load_preferences()
-    assert prefs["semantic"]["doc_categories_empath"] == ["violence", "love"]
+    # After repair (document→doc) and v7 union migration, selections land
+    # in the unified key.
+    cats = prefs["semantic"]["categories_empath"]
+    assert "violence" in cats
+    assert "love" in cats
     assert "document_categories_empath" not in prefs["semantic"]
+    assert "doc_categories_empath" not in prefs["semantic"]

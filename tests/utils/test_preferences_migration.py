@@ -21,12 +21,15 @@ def test_default_prefs_has_v4_sections():
     assert 'output' in DEFAULT_PREFS
 
 
-def test_default_prefs_semantic_has_four_category_lists():
+def test_default_prefs_semantic_has_unified_category_lists():
+    """v7 default uses unified categories_<backend> keys (split keys removed)."""
     s = DEFAULT_PREFS['semantic']
+    for k in ('categories_liwc', 'categories_empath'):
+        assert k in s, k
+    assert len(s['categories_empath']) >= 10
     for k in ('word_categories_liwc', 'word_categories_empath',
               'doc_categories_liwc', 'doc_categories_empath'):
-        assert k in s, k
-    assert len(s['word_categories_empath']) >= 10
+        assert k not in s, f"split key {k!r} should not exist in v7 defaults"
 
 
 def test_default_prefs_features_has_v4_keys(tmp_path, monkeypatch):
@@ -56,7 +59,7 @@ def test_default_prefs_features_has_v4_keys(tmp_path, monkeypatch):
 
 
 def test_load_v1_flat_schema_migrates_to_v4(tmp_path, monkeypatch):
-    """An old (batch-1) flat-shape v1 file is migrated through v2 → v3 → v4 → v5 → v6."""
+    """An old (batch-1) flat-shape v1 file is migrated through v2 → v3 → v4 → v5 → v6 → v7."""
     monkeypatch.setenv('SENSI_PREFS_PATH', str(tmp_path / 'p.json'))
     old = {
         'analyzer_name': 'Alice',
@@ -69,7 +72,7 @@ def test_load_v1_flat_schema_migrates_to_v4(tmp_path, monkeypatch):
     (tmp_path / 'p.json').write_text(json.dumps(old))
 
     prefs = load_preferences()
-    assert prefs['schema_version'] == 6
+    assert prefs['schema_version'] == 7
     assert prefs['shared']['analyzer_name'] == 'Alice'
     assert prefs['shared']['last_transcripts_folder'] == '/x/y'
     assert prefs['semantic']['backend'] == 'liwc'
@@ -165,10 +168,10 @@ def v2_prefs_file(tmp_path, monkeypatch):
 
 
 def test_v2_file_loads_as_v4(v2_prefs_file):
-    """v2 file chains through v3 → v4 → v5 → v6 on load."""
+    """v2 file chains through v3 → v4 → v5 → v6 → v7 on load."""
     from utils.preferences import load_preferences
     prefs = load_preferences()
-    assert prefs["schema_version"] == 6
+    assert prefs["schema_version"] == 7
 
 
 def test_v2_migration_carries_shared_fields(v2_prefs_file):
@@ -236,15 +239,16 @@ def test_v2_migration_maps_liwc_to_psych_through_to_v4(v2_prefs_file):
         assert f[k] is True, k
 
 
-def test_v2_migration_categories_duplicated_to_both_levels(v2_prefs_file):
+def test_v2_migration_categories_unified_in_v7(v2_prefs_file):
     """v2 dictionary_backend=liwc with semantic_categories=['social','cognition']
-    chains to v3 categories_liwc=[...] which then duplicates to both
-    word_categories_liwc and doc_categories_liwc in v4."""
+    chains to v3 categories_liwc=[...] → v4 word/doc split → v7 unified
+    categories_liwc=['social','cognition'] (lossless union, same in both)."""
     from utils.preferences import load_preferences
     prefs = load_preferences()
     s = prefs["semantic"]
-    assert s["word_categories_liwc"] == ["social", "cognition"]
-    assert s["doc_categories_liwc"] == ["social", "cognition"]
+    assert set(s["categories_liwc"]) == {"social", "cognition"}
+    assert "word_categories_liwc" not in s
+    assert "doc_categories_liwc" not in s
 
 
 def test_v2_migration_carries_llm_model(v2_prefs_file):
@@ -263,18 +267,23 @@ def test_v2_migration_rewrites_file_as_v4(v2_prefs_file):
     from utils.preferences import load_preferences
     load_preferences()
     on_disk = json.loads(Path(v2_prefs_file).read_text(encoding="utf-8"))
-    assert on_disk["schema_version"] == 6
+    assert on_disk["schema_version"] == 7
     assert "features" in on_disk
     assert "word_level" not in on_disk
     # v4-specific keys present after migration
     assert "feat_struct_doc_id" in on_disk["features"]
-    assert "word_categories_liwc" in on_disk["semantic"]
+    # v7: unified categories key (split keys removed)
+    assert "categories_liwc" in on_disk["semantic"]
+    assert "word_categories_liwc" not in on_disk["semantic"]
     # v5-specific keys also present
     assert "feat_prosody_pitch_mean" in on_disk["features"]
     assert "prosody" in on_disk
     # v6-specific keys also present
     assert "feat_syllable_onset" in on_disk["features"]
     assert "syllables_csv" in on_disk["output"]
+    # v7-specific master toggle keys present
+    assert "master_word_prosody" in on_disk["features"]
+    assert "master_doc_prosody" in on_disk["output"]
 
 
 # ---------------------------------------------------------------------------
@@ -336,7 +345,7 @@ def v3_prefs_file(tmp_path, monkeypatch):
 
 def test_v3_file_loads_as_v4(v3_prefs_file):
     prefs = load_preferences()
-    assert prefs["schema_version"] == 6
+    assert prefs["schema_version"] == 7
 
 
 def test_v3_migration_expands_structural_per_column(v3_prefs_file):
@@ -371,14 +380,15 @@ def test_v3_migration_expands_doc_counts_per_column(v3_prefs_file):
         assert o[k] is False, k
 
 
-def test_v3_migration_duplicates_categories_to_both_levels(v3_prefs_file):
+def test_v3_migration_categories_unified_in_v7(v3_prefs_file):
+    """v3 categories_liwc/empath → v4 word/doc split → v7 unified (lossless union)."""
     s = load_preferences()["semantic"]
-    assert s["word_categories_liwc"] == ["affect", "cogproc"]
-    assert s["doc_categories_liwc"] == ["affect", "cogproc"]
-    assert s["word_categories_empath"] == ["social", "money"]
-    assert s["doc_categories_empath"] == ["social", "money"]
-    assert "categories_liwc" not in s
-    assert "categories_empath" not in s
+    assert set(s["categories_liwc"]) == {"affect", "cogproc"}
+    assert set(s["categories_empath"]) == {"social", "money"}
+    assert "word_categories_liwc" not in s
+    assert "doc_categories_liwc" not in s
+    assert "word_categories_empath" not in s
+    assert "doc_categories_empath" not in s
 
 
 def test_v3_migration_preserves_unchanged_keys(v3_prefs_file):
@@ -392,7 +402,7 @@ def test_v3_migration_preserves_unchanged_keys(v3_prefs_file):
 def test_v3_migration_rewrites_file_as_v4(v3_prefs_file):
     load_preferences()
     on_disk = json.loads(Path(v3_prefs_file).read_text(encoding="utf-8"))
-    assert on_disk["schema_version"] == 6
+    assert on_disk["schema_version"] == 7
 
 
 # ---------------------------------------------------------------------------
@@ -416,7 +426,7 @@ def test_v4_to_v5_adds_prosody_defaults(tmp_path, monkeypatch):
 
     loaded = prefs_mod.load_preferences()
 
-    assert loaded["schema_version"] == 6
+    assert loaded["schema_version"] == 7
     # Pre-existing keys preserved
     assert loaded["features"]["feat_struct_doc_id"] is True
     assert loaded["features"]["feat_psych_authentic"] is False
@@ -461,7 +471,7 @@ def test_v5_round_trip_preserves_user_edits(tmp_path, monkeypatch):
         "prosody": {"pitch_units": "hz", "pitch_floor_hz": 60},
     })
     again = prefs_mod.load_preferences()
-    assert again["schema_version"] == 6
+    assert again["schema_version"] == 7
     assert again["features"]["feat_prosody_pitch_mean"] is False
     assert again["prosody"]["pitch_units"] == "hz"
     assert again["prosody"]["pitch_floor_hz"] == 60
@@ -484,8 +494,8 @@ def test_v5_to_v6_adds_subword_defaults(tmp_path, monkeypatch):
     }))
     monkeypatch.setenv("SENSI_PREFS_PATH", str(path))
     prefs = load_preferences()
-    assert prefs["schema_version"] == 6
-    # New v6 defaults
+    assert prefs["schema_version"] == 7
+    # New v6 defaults (carried through to v7)
     assert prefs["features"]["feat_syllable_onset"] is True
     assert prefs["features"]["feat_syllable_arpabet"] is False  # the lone default-off
     assert prefs["features"]["feat_phoneme_label"] is True
@@ -505,7 +515,105 @@ def test_v4_to_v6_chain_carries_keys_through(tmp_path, monkeypatch):
     }))
     monkeypatch.setenv("SENSI_PREFS_PATH", str(path))
     prefs = load_preferences()
-    assert prefs["schema_version"] == 6
+    assert prefs["schema_version"] == 7
     assert prefs["features"]["feat_psych_clout"] is False
     assert "feat_syllable_onset" in prefs["features"]
     assert "syllables_csv" in prefs["output"]
+
+
+# ---------------------------------------------------------------------------
+# v6 → v7 migration
+# ---------------------------------------------------------------------------
+
+def test_v6_to_v7_unions_categories_lossless(tmp_path, monkeypatch):
+    from utils.preferences import (
+        load_preferences, get_preferences_path,
+        SCHEMA_VERSION_V7, _migrate_v6_into_v7, DEFAULT_PREFS_V7,
+    )
+    import copy
+    v6 = {
+        "schema_version": 6,
+        "semantic": {
+            "backend": "empath",
+            "word_categories_empath": ["positive_emotion", "work"],
+            "doc_categories_empath":  ["family", "money", "work"],  # overlap
+            "word_categories_liwc":   [],
+            "doc_categories_liwc":    [],
+        },
+        "features": {}, "output": {},
+    }
+    target = copy.deepcopy(DEFAULT_PREFS_V7)
+    _migrate_v6_into_v7(target, v6)
+    assert target["schema_version"] == SCHEMA_VERSION_V7
+    cats = target["semantic"]["categories_empath"]
+    assert set(cats) == {"positive_emotion", "work", "family", "money"}
+    # Order: word entries first, then doc additions (lossless union)
+    assert cats.index("positive_emotion") < cats.index("family")
+    assert "word_categories_empath" not in target["semantic"]
+    assert "doc_categories_empath"  not in target["semantic"]
+
+
+def test_v6_to_v7_sets_master_defaults_true():
+    import copy
+    from utils.preferences import _migrate_v6_into_v7, DEFAULT_PREFS_V7
+    target = copy.deepcopy(DEFAULT_PREFS_V7)
+    _migrate_v6_into_v7(target, {"schema_version": 6, "features": {},
+                                  "output": {}, "semantic": {}})
+    for k in ("master_word_prosody", "master_psych_composite",
+             "master_syllable_intervals", "master_syllable_labels",
+             "master_syllable_prosody", "master_phoneme_intervals"):
+        assert target["features"][k] is True
+    for k in ("master_doc_prosody", "master_doc_articulation_rate"):
+        assert target["output"][k] is True
+
+
+def test_v6_to_v7_preserves_user_feature_toggles():
+    """User v6 settings are preserved through the migration."""
+    import copy
+    from utils.preferences import _migrate_v6_into_v7, DEFAULT_PREFS_V7
+    target = copy.deepcopy(DEFAULT_PREFS_V7)
+    _migrate_v6_into_v7(target, {
+        "schema_version": 6,
+        "features": {"freq_subtlex": False, "feat_prosody_pitch_mean": False},
+        "output":   {"word_level_csv": False},
+        "semantic": {},
+    })
+    assert target["features"]["freq_subtlex"] is False
+    assert target["features"]["feat_prosody_pitch_mean"] is False
+    assert target["output"]["word_level_csv"] is False
+    # Master defaults still True even though user touched other keys
+    assert target["features"]["master_word_prosody"] is True
+
+
+def test_v7_default_prefs_contain_all_master_keys():
+    from utils.preferences import DEFAULT_PREFS_V7
+    for k in ("master_word_prosody", "master_psych_composite",
+             "master_syllable_intervals", "master_syllable_labels",
+             "master_syllable_prosody", "master_phoneme_intervals"):
+        assert k in DEFAULT_PREFS_V7["features"]
+    for k in ("master_doc_prosody", "master_doc_articulation_rate"):
+        assert k in DEFAULT_PREFS_V7["output"]
+
+
+def test_v6_to_v7_union_includes_preexisting_unified_value():
+    """If a v6 file somehow already contains the unified categories_<backend>
+    key (e.g. from a forward-compat sniff or a hand-edit), the migration
+    must include those values in the union rather than overwriting them."""
+    import copy
+    from utils.preferences import _migrate_v6_into_v7, DEFAULT_PREFS_V7
+    target = copy.deepcopy(DEFAULT_PREFS_V7)
+    _migrate_v6_into_v7(target, {
+        "schema_version": 6,
+        "features": {}, "output": {},
+        "semantic": {
+            "categories_empath":      ["preexisting_cat"],
+            "word_categories_empath": ["word_cat"],
+            "doc_categories_empath":  ["doc_cat"],
+        },
+    })
+    cats = target["semantic"]["categories_empath"]
+    assert set(cats) >= {"preexisting_cat", "word_cat", "doc_cat"}
+    # Preserved order: preexisting first, then word, then doc additions
+    assert cats.index("preexisting_cat") < cats.index("word_cat") < cats.index("doc_cat")
+    assert "word_categories_empath" not in target["semantic"]
+    assert "doc_categories_empath"  not in target["semantic"]

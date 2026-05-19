@@ -58,12 +58,10 @@ class CategoryPicker(QWidget):
         super().__init__(parent)
         self._backend = backend
         self._level = level  # "word" or "document"
-        # Schema uses `doc_categories_*` / `word_categories_*` — map the
-        # public-facing "document" level value to the schema's "doc" prefix
-        # so selections actually land in the same key the counter, the
-        # main.py pipeline, and prefs migrations all read from.
-        prefs_level = "doc" if level == "document" else level
-        self._prefs_key = f"{prefs_level}_categories_{backend}"
+        # v7 schema: word and doc levels share a single `categories_<backend>`
+        # key — the word-level page is the canonical editor and the doc-level
+        # page reads the same key.
+        self._prefs_key = f"categories_{backend}"
         self._categories, load_error = _list_backend_categories(backend)
         self._checks: dict[str, QCheckBox] = {}
         self._sop = (_SOP_CATEGORIES_LIWC if backend == "liwc"

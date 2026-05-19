@@ -1,27 +1,30 @@
 """Load and save user preferences.
 
-Schema (v6 — active):
+Schema (v7 — active):
     {
-      "schema_version": 6,
+      "schema_version": 7,
       "shared":  {analyzer_name, last_*_folder, theme},
       "features": {feat_struct_*, lexling_*, freq_*, pred_*, sem_*,
                    feat_acoustic_*, feat_psych_*,
                    feat_prosody_* (10 word-level), feat_doc_prosody_* (16 doc-level),
-                   feat_syllable_* (9 syllable), feat_phoneme_* (4 phoneme)},
+                   feat_syllable_* (9 syllable), feat_phoneme_* (4 phoneme),
+                   master_* (6 cluster master toggles)},
       "predictability": {llm_model},
-      "semantic": {backend, word_categories_*, doc_categories_*},
+      "semantic": {backend, categories_liwc, categories_empath},
       "output":   {word_level_csv, document_summary, out_count_*, doc_*,
-                   syllables_csv, phonemes_csv},
+                   syllables_csv, phonemes_csv,
+                   master_doc_prosody, master_doc_articulation_rate},
       "prosody":  {pitch_units, pitch_floor_hz, pitch_ceiling_hz, pause_threshold_s}
     }
 
-Migration chain (all paths terminate at v6):
-  v1 → v2 → v3 → v4 → v5 → v6
-  v2 → v3 → v4 → v5 → v6
-  v3 → v4 → v5 → v6
-  v4 → v5 → v6
-  v5 → v6
-  v6 files are deep-merged against v6 defaults
+Migration chain (all paths terminate at v7):
+  v1 → v2 → v3 → v4 → v5 → v6 → v7
+  v2 → v3 → v4 → v5 → v6 → v7
+  v3 → v4 → v5 → v6 → v7
+  v4 → v5 → v6 → v7
+  v5 → v6 → v7
+  v6 → v7
+  v7 files are deep-merged against v7 defaults
 
 Default location: <project_root>/config/preferences.json
 Override via SENSI_PREFS_PATH environment variable.
@@ -361,11 +364,54 @@ DEFAULT_PREFS_V6: dict[str, Any] = {
 }
 
 # ---------------------------------------------------------------------------
+# v7 constants (active schema)
+#
+# GUI validation unification batch (2026-05-19) changes vs v6:
+#   - 8 master_* keys (6 features + 2 output) defaulting to True
+#   - semantic.{word,doc}_categories_<backend> → semantic.categories_<backend>
+#     (lossless union migration)
+# ---------------------------------------------------------------------------
+
+SCHEMA_VERSION_V7 = 7
+
+# Cluster master toggles introduced in v7. All default True so existing
+# user workflows behave identically until a master is explicitly toggled.
+_MASTERS_V7_FEATURES = {
+    "master_word_prosody":         True,
+    "master_psych_composite":      True,
+    "master_syllable_intervals":   True,
+    "master_syllable_labels":      True,
+    "master_syllable_prosody":     True,
+    "master_phoneme_intervals":    True,
+}
+
+_MASTERS_V7_OUTPUT = {
+    "master_doc_prosody":           True,
+    "master_doc_articulation_rate": True,
+}
+
+_FEATURES_DEFAULT_V7 = {**_FEATURES_DEFAULT_V6, **_MASTERS_V7_FEATURES}
+_OUTPUT_DEFAULT_V7   = {**_OUTPUT_DEFAULT_V6,   **_MASTERS_V7_OUTPUT}
+
+DEFAULT_PREFS_V7: dict[str, Any] = {
+    **DEFAULT_PREFS_V6,
+    "schema_version": SCHEMA_VERSION_V7,
+    "features": dict(_FEATURES_DEFAULT_V7),
+    "output":   dict(_OUTPUT_DEFAULT_V7),
+    "semantic": {
+        **{k: v for k, v in DEFAULT_PREFS_V6["semantic"].items()
+           if not (k.startswith("word_categories_") or k.startswith("doc_categories_"))},
+        "categories_liwc":   list(_SOP_CATEGORIES_LIWC),
+        "categories_empath": list(_SOP_CATEGORIES_EMPATH),
+    },
+}
+
+# ---------------------------------------------------------------------------
 # Active schema aliases
 # ---------------------------------------------------------------------------
 
-SCHEMA_VERSION = SCHEMA_VERSION_V6  # active version
-DEFAULT_PREFS: dict[str, Any] = DEFAULT_PREFS_V6  # active defaults
+SCHEMA_VERSION = SCHEMA_VERSION_V7  # active version
+DEFAULT_PREFS: dict[str, Any] = DEFAULT_PREFS_V7  # active defaults
 
 
 # ---------------------------------------------------------------------------
@@ -385,7 +431,7 @@ def get_preferences_path() -> Path:
 # ---------------------------------------------------------------------------
 
 def load_preferences() -> dict[str, Any]:
-    """Load preferences; auto-migrate from v1 or v2 schema if needed."""
+    """Load preferences; auto-migrate from any earlier schema version if needed."""
     path = get_preferences_path()
     merged: dict[str, Any] = deepcopy(DEFAULT_PREFS)
 
@@ -411,22 +457,31 @@ def load_preferences() -> dict[str, Any]:
             right_key = f'doc_categories_{backend}'
             if wrong_key in user_sem:
                 user_sem[right_key] = user_sem.pop(wrong_key)
-    if version == SCHEMA_VERSION_V6:
+    if version == SCHEMA_VERSION_V7:
         _deep_merge_current(merged, user)
+    elif version == SCHEMA_VERSION_V6:
+        _migrate_v6_into_v7(merged, user)
+        _write(path, merged)
     elif version == SCHEMA_VERSION_V5:
-        _migrate_v5_into_v6(merged, user)
+        v6_intermediate = deepcopy(DEFAULT_PREFS_V6)
+        _migrate_v5_into_v6(v6_intermediate, user)
+        _migrate_v6_into_v7(merged, v6_intermediate)
         _write(path, merged)
     elif version == SCHEMA_VERSION_V4:
         v5_intermediate = deepcopy(DEFAULT_PREFS_V5)
         _migrate_v4_into_v5(v5_intermediate, user)
-        _migrate_v5_into_v6(merged, v5_intermediate)
+        v6_intermediate = deepcopy(DEFAULT_PREFS_V6)
+        _migrate_v5_into_v6(v6_intermediate, v5_intermediate)
+        _migrate_v6_into_v7(merged, v6_intermediate)
         _write(path, merged)
     elif version == 3:
         v4_intermediate = deepcopy(DEFAULT_PREFS_V4)
         _migrate_v3_into_v4(v4_intermediate, user)
         v5_intermediate = deepcopy(DEFAULT_PREFS_V5)
         _migrate_v4_into_v5(v5_intermediate, v4_intermediate)
-        _migrate_v5_into_v6(merged, v5_intermediate)
+        v6_intermediate = deepcopy(DEFAULT_PREFS_V6)
+        _migrate_v5_into_v6(v6_intermediate, v5_intermediate)
+        _migrate_v6_into_v7(merged, v6_intermediate)
         _write(path, merged)
     elif version == 2:
         v3_intermediate = deepcopy(DEFAULT_PREFS_V3)
@@ -435,10 +490,12 @@ def load_preferences() -> dict[str, Any]:
         _migrate_v3_into_v4(v4_intermediate, v3_intermediate)
         v5_intermediate = deepcopy(DEFAULT_PREFS_V5)
         _migrate_v4_into_v5(v5_intermediate, v4_intermediate)
-        _migrate_v5_into_v6(merged, v5_intermediate)
+        v6_intermediate = deepcopy(DEFAULT_PREFS_V6)
+        _migrate_v5_into_v6(v6_intermediate, v5_intermediate)
+        _migrate_v6_into_v7(merged, v6_intermediate)
         _write(path, merged)
     else:
-        # v1 flat → v2 → v3 → v4 → v5 → v6
+        # v1 flat → v2 → v3 → v4 → v5 → v6 → v7
         v2_intermediate = deepcopy(_DEFAULT_PREFS_V2)
         _migrate_v1_into(v2_intermediate, user)
         v3_intermediate = deepcopy(DEFAULT_PREFS_V3)
@@ -447,7 +504,9 @@ def load_preferences() -> dict[str, Any]:
         _migrate_v3_into_v4(v4_intermediate, v3_intermediate)
         v5_intermediate = deepcopy(DEFAULT_PREFS_V5)
         _migrate_v4_into_v5(v5_intermediate, v4_intermediate)
-        _migrate_v5_into_v6(merged, v5_intermediate)
+        v6_intermediate = deepcopy(DEFAULT_PREFS_V6)
+        _migrate_v5_into_v6(v6_intermediate, v5_intermediate)
+        _migrate_v6_into_v7(merged, v6_intermediate)
         _write(path, merged)
 
     return merged
@@ -741,3 +800,38 @@ def _migrate_v5_into_v6(merged: dict, v5: dict) -> None:
             merged[section][k] = v
     for k, v in v5.get("features", {}).items():
         merged["features"][k] = v
+
+
+def _migrate_v6_into_v7(target: dict[str, Any], user_v6: dict[str, Any]) -> None:
+    """v6 → v7: copy user's v6 state into the v7-shaped target, then
+    union word/doc categories into the unified semantic.categories_<backend>
+    keys and drop the split keys.
+
+    Master toggle defaults (all True) come from the v7 defaults already
+    populated into target — we only need to copy over user-set values
+    where the user has them, then they will be preserved by _deep_merge_current.
+    """
+    _deep_merge_current(target, user_v6)
+    sem = target.setdefault("semantic", {})
+    # Read the user's pre-existing unified value (if any) directly from the
+    # v6 input, distinct from any SOP default that target may carry. A v6
+    # file with both the split keys AND a forward-compat unified key should
+    # not silently lose the unified value.
+    user_sem_in = user_v6.get("semantic", {}) if isinstance(user_v6.get("semantic"), dict) else {}
+    for backend in ("liwc", "empath"):
+        word_key = f"word_categories_{backend}"
+        doc_key  = f"doc_categories_{backend}"
+        unified  = f"categories_{backend}"
+        word_cats = sem.get(word_key, []) or []
+        doc_cats  = sem.get(doc_key,  []) or []
+        if word_cats or doc_cats:
+            # Lossless union (preserve order of first appearance). Include
+            # any unified value the user actually set in the v6 file (not
+            # the SOP default that target may carry).
+            user_unified = user_sem_in.get(unified, []) or []
+            sem[unified] = list(dict.fromkeys([*user_unified, *word_cats, *doc_cats]))
+        # If neither was set explicitly, leave the v7 default categories_<backend>
+        # already in target (DEFAULT_PREFS_V7 populated SOP defaults).
+        sem.pop(word_key, None)
+        sem.pop(doc_key, None)
+    target["schema_version"] = SCHEMA_VERSION_V7
