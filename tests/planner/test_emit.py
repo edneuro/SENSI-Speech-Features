@@ -6,10 +6,29 @@ from gui.planner.plan import plan_from_prefs
 from gui.planner.emit import to_namespace
 
 
+# v7 master toggle defaults (all True) — included in every test prefs dict
+# so individual tests that don't care about master gates still see clusters
+# as active (matching real v7 default behaviour).
+_MASTER_DEFAULTS_FEATURES = {
+    "master_word_prosody":       True,
+    "master_psych_composite":    True,
+    "master_syllable_intervals": True,
+    "master_syllable_labels":    True,
+    "master_syllable_prosody":   True,
+    "master_phoneme_intervals":  True,
+}
+_MASTER_DEFAULTS_OUTPUT = {
+    "master_doc_prosody":           True,
+    "master_doc_articulation_rate": True,
+}
+
+
 def _prefs(output: dict, features: dict, **kw) -> dict:
+    merged_features = {**_MASTER_DEFAULTS_FEATURES, **features}
+    merged_output   = {**_MASTER_DEFAULTS_OUTPUT,   **output}
     return {
-        "output":   output,
-        "features": features,
+        "output":   merged_output,
+        "features": merged_features,
         "semantic": kw.get("semantic", {"backend": "empath",
                                          "word_categories_empath": [],
                                          "doc_categories_empath": []}),
@@ -97,7 +116,12 @@ def test_doc_namespace_separate_no_flags():
 
 def test_feature_toggles_pass_through_verbatim():
     """main.py's _word_columns_to_drop reads feature_toggles directly,
-    so the planner must pass it through unchanged."""
+    so the planner must pass it through unchanged.
+
+    The full prefs features dict (including v7 master defaults) is passed
+    through; we assert that the caller-supplied keys are present with the
+    correct values and that the namespace dict is a superset of features_in.
+    """
     features_in = {"freq_subtlex": True, "feat_struct_doc_id": False,
                    "feat_acoustic_onset": False}
     prefs = _prefs(
@@ -107,7 +131,11 @@ def test_feature_toggles_pass_through_verbatim():
     )
     plan = plan_from_prefs(prefs)
     ns = to_namespace(plan, prefs, level="word")
-    assert ns.feature_toggles == features_in
+    # feature_toggles is the full prefs["features"] dict (a superset of
+    # features_in because _prefs merges v7 master defaults).
+    for key, val in features_in.items():
+        assert ns.feature_toggles.get(key) == val, \
+            f"feature_toggles[{key!r}] = {ns.feature_toggles.get(key)!r}, expected {val!r}"
 
 
 def test_prosody_config_propagates_to_namespace():

@@ -254,6 +254,7 @@ CLUSTERS: list[FeatureCluster] = [
         requires_stages=("spacy_parse", "mfa_align", "praat_contours", "word_prosody"),
         emits_columns=("Pitch_Mean", "Pitch_Min", "Pitch_Max", "Pitch_Std", "Pitch_Delta",
                        "Volume_Mean", "Volume_Min", "Volume_Max", "Volume_Std", "Volume_Delta"),
+        master_toggle="master_word_prosody",
     ),
 
     # --- Sub-word level (§2 of feature_dependencies.md) ---
@@ -266,17 +267,28 @@ CLUSTERS: list[FeatureCluster] = [
         output_csv="phonemes",
         requires_stages=("spacy_parse", "mfa_align", "syllabify_pairs"),
         emits_columns=("Label", "Onset", "End", "Duration"),
+        master_toggle="master_phoneme_intervals",
     ),
 
-    # §2.2 Syllabification + labels — syllable half (non-prosody)
+    # §2.2a Syllabification intervals (timing columns)
     FeatureCluster(
-        name="syllabification + labels",
+        name="syllabification intervals",
         toggle_keys=("feat_syllable_onset", "feat_syllable_end",
-                     "feat_syllable_duration", "feat_syllable_label",
-                     "feat_syllable_arpabet"),
+                     "feat_syllable_duration"),
         output_csv="syllables",
         requires_stages=("spacy_parse", "mfa_align", "syllabify_pairs"),
-        emits_columns=("Label", "ARPABET", "Onset", "End", "Duration"),
+        emits_columns=("Onset", "End", "Duration"),
+        master_toggle="master_syllable_intervals",
+    ),
+
+    # §2.2b Syllable labels (Label + ARPABET)
+    FeatureCluster(
+        name="syllable labels",
+        toggle_keys=("feat_syllable_label", "feat_syllable_arpabet"),
+        output_csv="syllables",
+        requires_stages=("spacy_parse", "mfa_align", "syllabify_pairs"),
+        emits_columns=("Label", "ARPABET"),
+        master_toggle="master_syllable_labels",
     ),
 
     # §2.3 Syllable prosody
@@ -288,6 +300,7 @@ CLUSTERS: list[FeatureCluster] = [
         requires_stages=("spacy_parse", "mfa_align", "praat_contours",
                          "syllabify_pairs", "syllable_prosody"),
         emits_columns=("Pitch_Mean", "Volume_Mean", "Pitch_Delta", "Volume_Delta"),
+        master_toggle="master_syllable_prosody",
     ),
 
     # --- Document level (§4 of feature_dependencies.md) ---
@@ -340,6 +353,8 @@ CLUSTERS: list[FeatureCluster] = [
         output_csv="documents_summary",
         requires_stages=("doc_liwc",),
         emits_columns=("psych_authentic", "psych_analytic", "psych_tone", "psych_clout"),
+        master_toggle="master_psych_composite",
+        available_when=("semantic.backend", "liwc"),
     ),
 
     # §4.6 Category proportions
@@ -373,6 +388,7 @@ CLUSTERS: list[FeatureCluster] = [
                        "doc_hnr",
                        "doc_pause_count", "doc_pause_mean_duration",
                        "doc_pause_total_duration", "doc_pause_pct_silence"),
+        master_toggle="master_doc_prosody",
     ),
 
     # §4.8 Articulation rate (split from doc prosody because of pyphen dep)
@@ -382,5 +398,6 @@ CLUSTERS: list[FeatureCluster] = [
         output_csv="documents_summary",
         requires_stages=("spacy_parse", "mfa_align", "doc_articulation_rate"),
         emits_columns=("doc_articulation_rate",),
+        master_toggle="master_doc_articulation_rate",
     ),
 ]

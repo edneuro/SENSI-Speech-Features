@@ -21,16 +21,19 @@ from gui.planner.registry import STAGES, CLUSTERS
 from gui.planner.stages import Plan, FeatureCluster
 
 
-# A handful of toggle_keys live in prefs["output"] rather than prefs["features"].
-# These are the doc-count output-format keys, not feature-selection keys.
-# All other cluster toggle_keys (per-column feat_* toggles, etc.) live in
-# prefs["features"]. See utils/preferences.py:_OUTPUT_DEFAULT_V4 for the
+# Toggle keys that live in prefs["output"] rather than prefs["features"]:
+# doc-count format keys, doc-level cluster activation toggles, and the two
+# doc-level cluster master gates added in v7 (master_doc_prosody,
+# master_doc_articulation_rate). All other cluster toggle_keys (per-column
+# feat_*, masters that gate features-section clusters) live in
+# prefs["features"]. See utils/preferences.py:_OUTPUT_DEFAULT_V7 for the
 # canonical set of output-keyed prefs.
 OUTPUT_KEYED_TOGGLES = frozenset({
     "out_count_tokens", "out_count_content_tokens",
     "out_count_sentences", "out_count_paragraphs",
     "doc_aggregates", "doc_lex_diversity", "doc_readability",
     "doc_category_proportions",
+    "master_doc_prosody", "master_doc_articulation_rate",  # NEW v7
 })
 
 _OUTPUT_CSV_MAP = {

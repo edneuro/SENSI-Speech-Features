@@ -9,12 +9,36 @@ import pytest
 from gui.planner.plan import plan_from_prefs
 
 
+# v7 master toggle defaults (all True) — included in every test prefs dict
+# so individual tests that don't care about master gates still see clusters
+# as active (matching real v7 default behaviour).
+_MASTER_DEFAULTS_FEATURES = {
+    "master_word_prosody":       True,
+    "master_psych_composite":    True,
+    "master_syllable_intervals": True,
+    "master_syllable_labels":    True,
+    "master_syllable_prosody":   True,
+    "master_phoneme_intervals":  True,
+}
+_MASTER_DEFAULTS_OUTPUT = {
+    "master_doc_prosody":           True,
+    "master_doc_articulation_rate": True,
+}
+
+
 def _prefs(output: dict, features: dict, *, semantic=None, prosody=None,
            predictability=None, shared=None) -> dict:
-    """Build a minimal prefs dict with sensible defaults for unspecified sections."""
+    """Build a minimal prefs dict with sensible defaults for unspecified sections.
+
+    Master toggle keys (v7) are included at True so tests that don't exercise
+    master gates don't inadvertently block clusters.  Individual tests may
+    override a master key by passing it explicitly in the output/features dicts.
+    """
+    merged_features = {**_MASTER_DEFAULTS_FEATURES, **features}
+    merged_output   = {**_MASTER_DEFAULTS_OUTPUT,   **output}
     return {
-        "output":   output,
-        "features": features,
+        "output":   merged_output,
+        "features": merged_features,
         "semantic": semantic or {"backend": "empath", "word_categories_empath": [],
                                   "doc_categories_empath": []},
         "prosody":  prosody or {"pitch_units": "semitones", "pitch_floor_hz": 75.0,
