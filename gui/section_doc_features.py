@@ -98,6 +98,9 @@ class DocFeaturesSection(QWidget):
             "dictionary. Approximations, not official LIWC-22 outputs.",
             master_key="master_psych_composite",
             master_label="Enable composite psych scores",
+            # `available` is captured at construction; switching backend on
+            # the Word-level page does not live-resync this card. Reopen the
+            # Document-level page (or restart the GUI) to pick up the change.
             available=(prefs["semantic"].get("backend") == "liwc"),
             disabled_subtitle="Requires LIWC backend (selected on the Word-level features page).",
         )

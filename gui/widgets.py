@@ -144,9 +144,7 @@ class ClusterCard(Card):
         self._available = available
         self._children: list[QWidget] = []
 
-        from utils.preferences import load_preferences, save_preferences
-        self._save = save_preferences
-
+        from utils.preferences import load_preferences
         prefs = load_preferences()
         initial = prefs.get(master_section, {}).get(master_key, True)
 
@@ -170,10 +168,16 @@ class ClusterCard(Card):
         widget.setEnabled(self._master.is_checked() and self._available)
 
     def add_child_layout(self, lay) -> None:
-        """Add a layout (e.g. QGridLayout) and recursively enable/disable
-        all widgets it contains as one logical child."""
+        """Add a layout (e.g. QGridLayout) and gate its direct-child widgets
+        on the master.
+
+        NOTE: nested layouts are NOT recursed — items whose `.widget()` is
+        None are silently skipped. Current callers pass flat grids of
+        ToggleRows, so this is sufficient. If a caller ever needs to wrap a
+        nested QHBoxLayout/QVBoxLayout, prefer add_child(wrapper_widget)
+        with a containing QWidget, or extend this method with recursion.
+        """
         self.add_layout(lay)
-        # Collect widgets from layout and treat them as children for gating
         for i in range(lay.count()):
             item = lay.itemAt(i)
             w = item.widget()
@@ -182,12 +186,14 @@ class ClusterCard(Card):
                 w.setEnabled(self._master.is_checked() and self._available)
 
     def master_toggle(self) -> ToggleRow:
-        """Expose the master row so callers can register it in _toggles or
-        connect to its toggled signal for cascading settings_changed."""
+        """Expose the master row. Used by tests (assertions on the inner
+        QCheckBox's enabled/checked state); section pages don't need it
+        because the master persists itself via _on_master_toggled."""
         return self._master
 
     def _on_master_toggled(self, v: bool) -> None:
-        self._save({self._master_section: {self._master_key: v}})
+        from utils.preferences import save_preferences
+        save_preferences({self._master_section: {self._master_key: v}})
         self._update_children_enabled(v and self._available)
         self.settings_changed.emit()
 
