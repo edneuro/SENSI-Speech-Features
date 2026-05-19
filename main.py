@@ -639,9 +639,9 @@ def run_word_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None
         from utils.preferences import load_preferences
         from utils.session_units import build_session_units
         _plan = plan_from_prefs(load_preferences())
-        _rows = build_session_units(_plan, load_preferences())
+        _rows = build_session_units(_plan)
         if _rows:
-            units_path = output_dir / f'{logger.run_ts}_word_session_units.csv'
+            units_path = output_dir / f'word_session_units_{logger.run_ts}.csv'
             pd.DataFrame(_rows).to_csv(units_path, index=False)
     except Exception:
         pass  # non-fatal; don't break existing batch output
@@ -813,9 +813,9 @@ def run_doc_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None:
         from utils.preferences import load_preferences
         from utils.session_units import build_session_units
         _plan = plan_from_prefs(load_preferences())
-        _rows = build_session_units(_plan, load_preferences())
+        _rows = build_session_units(_plan)
         if _rows:
-            units_path = output_dir / f'{logger.run_ts}_doc_session_units.csv'
+            units_path = output_dir / f'doc_session_units_{logger.run_ts}.csv'
             pd.DataFrame(_rows).to_csv(units_path, index=False)
     except Exception:
         pass  # non-fatal; don't break existing batch output

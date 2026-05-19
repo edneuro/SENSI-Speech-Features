@@ -14,25 +14,37 @@ from gui.planner.stages import Plan
 # resolved dynamically from plan.stage_configs (pitch_units toggle).
 _STATIC_UNITS: dict[tuple[str, str], str] = {
     # Word-level features CSV
-    ("features", "Word_Duration"):  "seconds",
-    ("features", "Word_Gap"):       "seconds",
-    ("features", "Onset"):          "seconds",
-    ("features", "End"):            "seconds",
-    ("features", "Volume_Mean"):    "dB",
-    ("features", "Volume_Min"):     "dB",
-    ("features", "Volume_Max"):     "dB",
-    ("features", "Volume_Std"):     "dB",
-    ("features", "Volume_Delta"):   "dB",
+    ("features", "Word_Duration"):    "seconds",
+    ("features", "Word_Gap"):         "seconds",
+    ("features", "Onset"):            "seconds",
+    ("features", "End"):              "seconds",
+    ("features", "Volume_Mean"):      "dB",
+    ("features", "Volume_Min"):       "dB",
+    ("features", "Volume_Max"):       "dB",
+    ("features", "Volume_Std"):       "dB",
+    ("features", "Volume_Delta"):     "dB",
+    # Frequency: Zipf is log10(per-billion-words) with a +3 offset (cf. wordfreq).
+    ("features", "Zipf_Freq"):        "Zipf (log10 per-billion + 3)",
+    ("features", "Edu_Zipf_K2"):      "Zipf (log10 per-billion + 3)",
+    ("features", "Edu_Zipf_3to5"):    "Zipf (log10 per-billion + 3)",
+    ("features", "Edu_Zipf_6to8"):    "Zipf (log10 per-billion + 3)",
+    ("features", "Edu_Zipf_9to12"):   "Zipf (log10 per-billion + 3)",
+    ("features", "Edu_Zipf_Overall"): "Zipf (log10 per-billion + 3)",
+    # Predictability
+    ("features", "Surprisal"):        "bits",
+    ("features", "LLM_Surprisal"):    "bits",
+    ("features", "LLM_Cloze"):        "probability (0-1)",
+    ("features", "LLM_TopMatch"):     "boolean",
     # Syllable sidecar
-    ("syllables", "Onset"):         "seconds",
-    ("syllables", "End"):           "seconds",
-    ("syllables", "Duration"):      "seconds",
-    ("syllables", "Volume_Mean"):   "dB",
-    ("syllables", "Volume_Delta"):  "dB",
+    ("syllables", "Onset"):           "seconds",
+    ("syllables", "End"):             "seconds",
+    ("syllables", "Duration"):        "seconds",
+    ("syllables", "Volume_Mean"):     "dB",
+    ("syllables", "Volume_Delta"):    "dB",
     # Phoneme sidecar
-    ("phonemes",  "Onset"):         "seconds",
-    ("phonemes",  "End"):           "seconds",
-    ("phonemes",  "Duration"):      "seconds",
+    ("phonemes",  "Onset"):           "seconds",
+    ("phonemes",  "End"):             "seconds",
+    ("phonemes",  "Duration"):        "seconds",
     # Doc-level summary
     ("documents_summary", "doc_volume_mean"):           "dB",
     ("documents_summary", "doc_volume_min"):            "dB",
@@ -45,6 +57,11 @@ _STATIC_UNITS: dict[tuple[str, str], str] = {
     ("documents_summary", "doc_pause_mean_duration"):   "seconds",
     ("documents_summary", "doc_pause_total_duration"):  "seconds",
     ("documents_summary", "doc_pause_pct_silence"):     "percent",
+    # Doc-level composite psych (Pennebaker LIWC-style scores, ~0-100)
+    ("documents_summary", "psych_authentic"):           "Pennebaker score (~0-100)",
+    ("documents_summary", "psych_analytic"):            "Pennebaker score (~0-100)",
+    ("documents_summary", "psych_tone"):                "Pennebaker score (~0-100)",
+    ("documents_summary", "psych_clout"):               "Pennebaker score (~0-100)",
 }
 
 # Pitch-bearing columns whose unit comes from plan.stage_configs.
@@ -72,13 +89,8 @@ def _resolve_pitch_units(plan: Plan) -> str:
     return "semitones"
 
 
-def build_session_units(plan: Plan, prefs: dict | None = None) -> list[dict]:
-    """Return one row per (active CSV x emitted column) with its unit string.
-
-    `prefs` is accepted but currently unused -- all needed values come from
-    the Plan. Kept in the signature for forward-compat with future
-    user-configurable unit overrides.
-    """
+def build_session_units(plan: Plan) -> list[dict]:
+    """Return one row per (active CSV x emitted column) with its unit string."""
     rows: list[dict] = []
     pitch_units = _resolve_pitch_units(plan)
 
