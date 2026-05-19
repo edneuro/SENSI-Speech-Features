@@ -49,3 +49,7 @@ def test_cost_panel_visible_when_llm_toggle_on(qtbot, prefs_tmp):
     # isHidden() reflects the widget's own explicit-hide flag — False means
     # setVisible(True) was called (the cost panel should be shown when rendered).
     assert not section.cost_panel.isHidden()
+    # And the gated branch actually populated cost_detail (rather than leaving the
+    # default empty QLabel text untouched, which would happen if we'd entered the
+    # hidden else-branch).
+    assert section.cost_detail.text() != ""
