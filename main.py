@@ -631,6 +631,21 @@ def run_word_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None
             on_pair_done(i + 1, len(pairing.pairs), pair.stimulus_id)
     logger.finalize()
 
+    # Write per-run column -> unit sidecar.
+    # Rebuilt from current prefs; if you ever mutate prefs mid-batch, capture
+    # this at batch start instead.
+    try:
+        from gui.planner import plan_from_prefs
+        from utils.preferences import load_preferences
+        from utils.session_units import build_session_units
+        _plan = plan_from_prefs(load_preferences())
+        _rows = build_session_units(_plan, load_preferences())
+        if _rows:
+            units_path = output_dir / f'{logger.run_ts}_word_session_units.csv'
+            pd.DataFrame(_rows).to_csv(units_path, index=False)
+    except Exception:
+        pass  # non-fatal; don't break existing batch output
+
 
 def run_doc_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None:
     """Process all matched pairs and emit a master documents_summary CSV."""
@@ -789,6 +804,21 @@ def run_doc_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None:
             )
         summary_df.to_csv(master_path, index=False)
     logger.finalize()
+
+    # Write per-run column -> unit sidecar.
+    # Rebuilt from current prefs; if you ever mutate prefs mid-batch, capture
+    # this at batch start instead.
+    try:
+        from gui.planner import plan_from_prefs
+        from utils.preferences import load_preferences
+        from utils.session_units import build_session_units
+        _plan = plan_from_prefs(load_preferences())
+        _rows = build_session_units(_plan, load_preferences())
+        if _rows:
+            units_path = output_dir / f'{logger.run_ts}_doc_session_units.csv'
+            pd.DataFrame(_rows).to_csv(units_path, index=False)
+    except Exception:
+        pass  # non-fatal; don't break existing batch output
 
 
 def _resolve_sem_backend(sem_dict_arg: str) -> tuple[str, 'Path | None']:
