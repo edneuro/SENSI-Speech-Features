@@ -7,7 +7,7 @@ from PySide6.QtWidgets import (
     QDoubleSpinBox,
 )
 
-from gui.widgets import Card, ToggleRow
+from gui.widgets import Card, ClusterCard, ToggleRow
 from utils.preferences import load_preferences, save_preferences
 
 
@@ -92,10 +92,16 @@ class DocFeaturesSection(QWidget):
         layout.addWidget(cat_card)
 
         # --- Composite psychological scores (per-column) ---
-        psych_card = Card(
+        psych_card = ClusterCard(
             "Composite psychological scores",
             "Pennebaker (2014) formulas applied to the loaded LIWC-style "
-            "dictionary. Approximations, not official LIWC-22 outputs.")
+            "dictionary. Approximations, not official LIWC-22 outputs.",
+            master_key="master_psych_composite",
+            master_label="Enable composite psych scores",
+            available=(prefs["semantic"].get("backend") == "liwc"),
+            disabled_subtitle="Requires LIWC backend (selected on the Word-level features page).",
+        )
+        psych_card.settings_changed.connect(self.settings_changed)
         psych_grid = QGridLayout()
         psych_keys = [
             ("feat_psych_authentic", "psych_authentic"),
@@ -108,14 +114,20 @@ class DocFeaturesSection(QWidget):
                 self._make_toggle(key, label, f[key], "features"),
                 i // 2, i % 2,
             )
-        psych_card.add_layout(psych_grid)
+        psych_card.add_child_layout(psych_grid)
         layout.addWidget(psych_card)
 
         # --- Prosody (per-column, 16 toggles) ---
-        pros_card = Card(
+        # master_doc_articulation_rate is gated by the per-feature toggle; no separate UI master needed
+        pros_card = ClusterCard(
             "Prosody",
             "Document-level pitch/volume aggregates, HNR, articulation rate, "
-            "and pause statistics. Requires alignment.")
+            "and pause statistics. Requires alignment.",
+            master_key="master_doc_prosody",
+            master_label="Enable doc prosody",
+            master_section="output",
+        )
+        pros_card.settings_changed.connect(self.settings_changed)
         pros_grid = QGridLayout()
         pros_keys = [
             # Row 0: pitch summaries
@@ -144,9 +156,9 @@ class DocFeaturesSection(QWidget):
                 self._make_toggle(key, label, f[key], "features"),
                 i // 4, i % 4,
             )
-        pros_card.add_layout(pros_grid)
+        pros_card.add_child_layout(pros_grid)
 
-        # Pause threshold spinbox
+        # Pause threshold spinbox — config UI, greys with master
         prosody_prefs = prefs.get("prosody", {})
         thresh_row = QHBoxLayout()
         thresh_row.addWidget(QLabel("Pause threshold (sec):"))
@@ -159,7 +171,7 @@ class DocFeaturesSection(QWidget):
         thresh_row.addWidget(self.pause_threshold_spin)
         thresh_row.addStretch(1)
         thresh_w = QWidget(); thresh_w.setLayout(thresh_row)
-        pros_card.add_widget(thresh_w)
+        pros_card.add_child(thresh_w)
         layout.addWidget(pros_card)
 
         layout.addStretch(1)

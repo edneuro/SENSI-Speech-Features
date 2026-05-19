@@ -1,9 +1,9 @@
-"""Sub-word features page — Syllables and Phonemes per-column toggles."""
+"""Sub-word features page — Syllables (3 cluster cards) and Phonemes per-column toggles."""
 
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QGridLayout
 
-from gui.widgets import Card, ToggleRow
+from gui.widgets import ClusterCard, ToggleRow
 from utils.preferences import load_preferences, save_preferences
 
 
@@ -20,37 +20,79 @@ class SubwordFeaturesSection(QWidget):
         layout.setContentsMargins(24, 16, 24, 16)
         layout.setSpacing(12)
 
-        # --- Syllables ---
-        syll_card = Card(
-            "Syllables",
-            "One row per syllable. Requires MFA alignment.")
-        syll_grid = QGridLayout()
-        syll_keys = [
-            # Timing
-            ("feat_syllable_onset",        "Onset"),
-            ("feat_syllable_end",          "End"),
-            ("feat_syllable_duration",     "Duration"),
-            # Label
-            ("feat_syllable_label",        "Label (orthographic, pyphen-derived)"),
-            ("feat_syllable_arpabet",      "ARPABET (dash-joined, with stress)"),
-            # Prosody
+        # --- Syllable timing ---
+        syll_timing_card = ClusterCard(
+            "Syllable timing",
+            "Onset/End/Duration of each syllable",
+            master_key="master_syllable_intervals",
+            master_label="Emit syllable interval columns",
+        )
+        syll_timing_grid = QGridLayout()
+        syll_timing_keys = [
+            ("feat_syllable_onset",    "Onset"),
+            ("feat_syllable_end",      "End"),
+            ("feat_syllable_duration", "Duration"),
+        ]
+        for i, (key, label) in enumerate(syll_timing_keys):
+            syll_timing_grid.addWidget(
+                self._make_toggle(key, label, f[key]),
+                i // 2, i % 2,
+            )
+        syll_timing_card.add_child_layout(syll_timing_grid)
+        syll_timing_card.settings_changed.connect(self.settings_changed)
+        layout.addWidget(syll_timing_card)
+
+        # --- Syllable labels ---
+        syll_labels_card = ClusterCard(
+            "Syllable labels",
+            "Orthographic + ARPABET labels",
+            master_key="master_syllable_labels",
+            master_label="Emit syllable label columns",
+        )
+        syll_labels_grid = QGridLayout()
+        syll_labels_keys = [
+            ("feat_syllable_label",   "Label (orthographic, pyphen-derived)"),
+            ("feat_syllable_arpabet", "ARPABET (dash-joined, with stress)"),
+        ]
+        for i, (key, label) in enumerate(syll_labels_keys):
+            syll_labels_grid.addWidget(
+                self._make_toggle(key, label, f[key]),
+                i // 2, i % 2,
+            )
+        syll_labels_card.add_child_layout(syll_labels_grid)
+        syll_labels_card.settings_changed.connect(self.settings_changed)
+        layout.addWidget(syll_labels_card)
+
+        # --- Syllable prosody ---
+        syll_pros_card = ClusterCard(
+            "Syllable prosody",
+            "Pitch/Volume means and deltas per syllable",
+            master_key="master_syllable_prosody",
+            master_label="Emit syllable prosody columns",
+        )
+        syll_pros_grid = QGridLayout()
+        syll_pros_keys = [
             ("feat_syllable_pitch_mean",   "Pitch_Mean"),
             ("feat_syllable_volume_mean",  "Volume_Mean"),
             ("feat_syllable_pitch_delta",  "Pitch_Delta"),
             ("feat_syllable_volume_delta", "Volume_Delta"),
         ]
-        for i, (key, label) in enumerate(syll_keys):
-            syll_grid.addWidget(
+        for i, (key, label) in enumerate(syll_pros_keys):
+            syll_pros_grid.addWidget(
                 self._make_toggle(key, label, f[key]),
                 i // 2, i % 2,
             )
-        syll_card.add_layout(syll_grid)
-        layout.addWidget(syll_card)
+        syll_pros_card.add_child_layout(syll_pros_grid)
+        syll_pros_card.settings_changed.connect(self.settings_changed)
+        layout.addWidget(syll_pros_card)
 
         # --- Phonemes ---
-        phon_card = Card(
+        phon_card = ClusterCard(
             "Phonemes",
-            "One row per phoneme. Requires MFA alignment.")
+            "One row per phoneme. Requires MFA alignment.",
+            master_key="master_phoneme_intervals",
+            master_label="Emit phoneme columns",
+        )
         phon_grid = QGridLayout()
         phon_keys = [
             ("feat_phoneme_label",    "Label (ARPABET incl. stress digit)"),
@@ -63,7 +105,8 @@ class SubwordFeaturesSection(QWidget):
                 self._make_toggle(key, label, f[key]),
                 i // 2, i % 2,
             )
-        phon_card.add_layout(phon_grid)
+        phon_card.add_child_layout(phon_grid)
+        phon_card.settings_changed.connect(self.settings_changed)
         layout.addWidget(phon_card)
 
         layout.addStretch(1)

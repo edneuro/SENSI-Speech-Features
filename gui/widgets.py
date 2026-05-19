@@ -1,6 +1,6 @@
 """Reusable Qt widgets used across the GUI."""
 
-from PySide6.QtCore import Signal, Qt
+from PySide6.QtCore import Signal
 from PySide6.QtWidgets import (
     QFrame, QHBoxLayout, QVBoxLayout,
     QLabel, QLineEdit, QPushButton, QCheckBox,
@@ -120,3 +120,77 @@ class Card(QFrame):
 
     def add_layout(self, lay: QLayout) -> None:
         self._content_layout.addLayout(lay)
+
+
+class ClusterCard(Card):
+    """Card with a master ToggleRow over a grid of child toggles.
+
+    When the master toggle is off (or `available` is False), all children
+    grey out and become non-interactable. The `available` predicate
+    represents a hard environment gate (e.g. backend != liwc) — when False,
+    the master itself is disabled.
+    """
+    settings_changed = Signal()
+
+    def __init__(self, title: str, subtitle: str,
+                 master_key: str, master_label: str,
+                 *, master_section: str = "features",
+                 available: bool = True,
+                 disabled_subtitle: str | None = None,
+                 parent=None):
+        super().__init__(title, subtitle, parent)
+        self._master_key = master_key
+        self._master_section = master_section
+        self._available = available
+        self._children: list[QWidget] = []
+
+        from utils.preferences import load_preferences, save_preferences
+        self._save = save_preferences
+
+        prefs = load_preferences()
+        initial = prefs.get(master_section, {}).get(master_key, True)
+
+        self._master = ToggleRow(label=master_label)
+        # When unavailable, force the master display to off and disable interaction.
+        self._master.set_checked(initial and available)
+        self._master.check.setEnabled(available)
+        self._master.toggled.connect(self._on_master_toggled)
+        self.add_widget(self._master)
+
+        if not available and disabled_subtitle:
+            note = QLabel(disabled_subtitle)
+            note.setObjectName("Subtitle")
+            self.add_widget(note)
+
+        self._update_children_enabled(initial and available)
+
+    def add_child(self, widget: QWidget) -> None:
+        self._children.append(widget)
+        self.add_widget(widget)
+        widget.setEnabled(self._master.is_checked() and self._available)
+
+    def add_child_layout(self, lay) -> None:
+        """Add a layout (e.g. QGridLayout) and recursively enable/disable
+        all widgets it contains as one logical child."""
+        self.add_layout(lay)
+        # Collect widgets from layout and treat them as children for gating
+        for i in range(lay.count()):
+            item = lay.itemAt(i)
+            w = item.widget()
+            if w is not None:
+                self._children.append(w)
+                w.setEnabled(self._master.is_checked() and self._available)
+
+    def master_toggle(self) -> ToggleRow:
+        """Expose the master row so callers can register it in _toggles or
+        connect to its toggled signal for cascading settings_changed."""
+        return self._master
+
+    def _on_master_toggled(self, v: bool) -> None:
+        self._save({self._master_section: {self._master_key: v}})
+        self._update_children_enabled(v and self._available)
+        self.settings_changed.emit()
+
+    def _update_children_enabled(self, enabled: bool) -> None:
+        for w in self._children:
+            w.setEnabled(enabled)

@@ -8,7 +8,7 @@ from PySide6.QtWidgets import (
     QDoubleSpinBox,
 )
 
-from gui.widgets import Card, ToggleRow
+from gui.widgets import Card, ClusterCard, ToggleRow
 from utils.preferences import load_preferences, save_preferences
 from extractors.llm_cloze import LLM_OPTIONS
 
@@ -197,10 +197,14 @@ class WordFeaturesSection(QWidget):
         layout.addWidget(ac_card)
 
         # --- Prosody (per-column) ---
-        pros_card = Card(
+        pros_card = ClusterCard(
             "Prosody",
             "Pitch and volume summaries within each MFA word interval. "
-            "Requires alignment.")
+            "Requires alignment.",
+            master_key="master_word_prosody",
+            master_label="Enable word prosody",
+        )
+        pros_card.settings_changed.connect(self.settings_changed)
         # 2×5 toggle grid (pitch row, volume row)
         pros_grid = QGridLayout()
         pros_keys = [
@@ -220,9 +224,9 @@ class WordFeaturesSection(QWidget):
                 self._make_toggle(key, label, f[key], "features"),
                 i // 5, i % 5,
             )
-        pros_card.add_layout(pros_grid)
+        pros_card.add_child_layout(pros_grid)
 
-        # Pitch units combo + floor/ceiling spinboxes
+        # Pitch units combo + floor/ceiling spinboxes — config UI, greys with master
         prosody_prefs = prefs.get("prosody", {})
         cfg_row = QHBoxLayout()
         cfg_row.addWidget(QLabel("Pitch units:"))
@@ -247,7 +251,7 @@ class WordFeaturesSection(QWidget):
             lambda v: save_preferences({"prosody": {"pitch_ceiling_hz": v}}))
         cfg_row.addWidget(self.pitch_ceiling_spin)
         cfg_w = QWidget(); cfg_w.setLayout(cfg_row)
-        pros_card.add_widget(cfg_w)
+        pros_card.add_child(cfg_w)
         layout.addWidget(pros_card)
 
         layout.addStretch(1)
