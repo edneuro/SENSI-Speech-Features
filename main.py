@@ -261,15 +261,14 @@ def run(args) -> pd.DataFrame:
     if args.sem_categories:
         sem_categories = args.sem_categories.split(',')
     else:
-        # v4+ prefs schema split categories per level. Default to the
-        # word-level list for the non-batch CLI path; batch callers
-        # (GUI dispatch) always pass --sem-categories explicitly via
-        # ns.sem_categories, so this fallback is reached for CLI runs.
+        # v7 prefs schema unifies categories across levels into a single
+        # `categories_<backend>` key. This fallback is reached for CLI
+        # runs; batch callers (GUI dispatch) always pass --sem-categories
+        # explicitly via ns.sem_categories.
         backend_hint = prefs.get('semantic', {}).get('backend', 'auto')
-        level_prefix = 'doc' if getattr(args, 'level', 'word') == 'document' else 'word'
         suffix = 'liwc' if backend_hint == 'liwc' else 'empath'
         sem_categories = prefs.get('semantic', {}).get(
-            f'{level_prefix}_categories_{suffix}', [])
+            f'categories_{suffix}', [])
 
     with open(args.transcript, 'r', encoding='utf-8') as f:
         text = f.read()
