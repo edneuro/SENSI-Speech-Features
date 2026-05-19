@@ -33,6 +33,10 @@ _FEATURE_MATRIX = [
                   "phonemes_csv": False, "document_summary": True,
                   "doc_aggregates": True},
        "features": {"freq_subtlex": True}}, "doc_aggregates"),
+    ({"output": {"word_level_csv": True, "syllables_csv": False,
+                  "phonemes_csv": False, "document_summary": False},
+       "features": {"sem_indicators": True},
+       "semantic": {"backend": "liwc"}}, "liwc_sem"),
 ]
 
 
@@ -65,5 +69,5 @@ def test_mfa_warning_attaches_to_no_toggle(prefs_tmp, monkeypatch):
                       "features": {"feat_syllable_onset": True}})
     warnings = compute_warnings(session_api_key="")
     mfa_warnings = [w for w in warnings if "MFA" in w.message]
-    if mfa_warnings:  # only if MFA isn't installed in the test env
-        assert all(w.toggle_key is None for w in mfa_warnings)
+    assert mfa_warnings, "Expected an MFA-missing warning given monkeypatched _mfa_available=False"
+    assert all(w.toggle_key is None for w in mfa_warnings)
