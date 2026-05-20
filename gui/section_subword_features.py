@@ -1,7 +1,7 @@
 """Sub-word features page — Syllables (3 cluster cards) and Phonemes per-column toggles."""
 
 from PySide6.QtCore import Signal
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QGridLayout
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QGridLayout, QHBoxLayout, QLabel, QDoubleSpinBox
 
 from gui.widgets import ClusterCard, ToggleRow
 from utils.preferences import load_preferences, save_preferences
@@ -108,6 +108,40 @@ class SubwordFeaturesSection(QWidget):
         phon_card.add_child_layout(phon_grid)
         phon_card.settings_changed.connect(self.settings_changed)
         layout.addWidget(phon_card)
+
+        # --- P-center ---
+        pcenter_card = ClusterCard(
+            "P-center",
+            "Perceptual onset of each syllable (Scott 1993). "
+            "Requires MFA alignment.",
+            master_key="master_syllable_pcenter",
+            master_label="Emit P_Center column",
+        )
+        pcenter_card.add_child(
+            self._make_toggle(
+                "feat_syllable_pcenter",
+                "P_Center (seconds from audio start)",
+                f["feat_syllable_pcenter"],
+            )
+        )
+        # k coefficient spinbox
+        _pros = prefs.get("prosody", {})
+        k_row = QHBoxLayout()
+        k_row.addWidget(QLabel("k coefficient (0–1):"))
+        self._pcenter_k_spin = QDoubleSpinBox()
+        self._pcenter_k_spin.setRange(0.0, 1.0)
+        self._pcenter_k_spin.setSingleStep(0.05)
+        self._pcenter_k_spin.setDecimals(2)
+        self._pcenter_k_spin.setValue(_pros.get("pcenter_k", 0.3))
+        self._pcenter_k_spin.valueChanged.connect(
+            lambda v: save_preferences({"prosody": {"pcenter_k": v}}))
+        k_row.addWidget(self._pcenter_k_spin)
+        k_row.addStretch(1)
+        k_w = QWidget()
+        k_w.setLayout(k_row)
+        pcenter_card.add_child(k_w)
+        pcenter_card.settings_changed.connect(self.settings_changed)
+        layout.addWidget(pcenter_card)
 
         layout.addStretch(1)
 
