@@ -324,7 +324,6 @@ CLUSTERS: list[FeatureCluster] = [
         output_csv="syllables",
         requires_stages=("spacy_parse", "mfa_align", "syllabify_pairs", "pcenter"),
         emits_columns=("P_Center",),
-        master_toggle="master_syllable_pcenter",
     ),
 
     # --- Document level (§4 of feature_dependencies.md) ---

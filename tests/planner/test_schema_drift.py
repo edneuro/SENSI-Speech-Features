@@ -17,6 +17,9 @@ _INTENTIONALLY_UNROUTED_FEATURES: set[str] = {
     "master_syllable_labels",
     "master_syllable_prosody",
     "master_phoneme_intervals",
+    # master_syllable_pcenter kept in prefs schema for migration compat but is
+    # no longer wired to a ClusterCard master toggle (P-center has only one
+    # toggle so the master is redundant; see gui/section_subword_features.py).
     "master_syllable_pcenter",
     # Word-level card-group masters
     "master_structural",
