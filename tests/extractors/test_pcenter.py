@@ -83,13 +83,30 @@ def test_k_zero_yields_nucleus_onset():
 
 
 def test_two_words_no_cross_contamination():
-    """Two tokens × one syllable each — FK grouping must not mix phonemes."""
-    phon1 = _phon_df(1, 1, [('B', 0.0, 0.05), ('AE1', 0.05, 0.15), ('T', 0.15, 0.20)])
-    phon2 = _phon_df(2, 1, [('K', 0.25, 0.30), ('AH1', 0.30, 0.45), ('T', 0.45, 0.50)])
-    phon = pd.concat([phon1, phon2], ignore_index=True)
-    syl1 = _syl_df(1, 1, 0.0, 0.20)
-    syl2 = _syl_df(2, 1, 0.25, 0.50)
-    syl = pd.concat([syl1, syl2], ignore_index=True)
+    """Two tokens × two syllables each — verifies both token_id and syllable_id in FK grouping."""
+    # Token 1, Syllable 1: [B, AE1, T] (onset 0.0–0.20)
+    phon_t1s1 = _phon_df(1, 1, [('B', 0.0, 0.05), ('AE1', 0.05, 0.15), ('T', 0.15, 0.20)])
+    # Token 1, Syllable 2: [K, AH1, T] (onset 0.22–0.45)
+    phon_t1s2 = _phon_df(1, 2, [('K', 0.22, 0.27), ('AH1', 0.27, 0.40), ('T', 0.40, 0.45)])
+    # Token 2, Syllable 1: [S, AY1] (onset 0.50–0.70) — vowel-initial
+    phon_t2s1 = _phon_df(2, 1, [('S', 0.50, 0.55), ('AY1', 0.55, 0.70)])
+    # Token 2, Syllable 2: [G, IH1, N] (onset 0.72–0.90)
+    phon_t2s2 = _phon_df(2, 2, [('G', 0.72, 0.77), ('IH1', 0.77, 0.85), ('N', 0.85, 0.90)])
+    phon = pd.concat([phon_t1s1, phon_t1s2, phon_t2s1, phon_t2s2], ignore_index=True)
+
+    syl_t1s1 = _syl_df(1, 1, 0.0, 0.20)
+    syl_t1s2 = _syl_df(1, 2, 0.22, 0.45)
+    syl_t2s1 = _syl_df(2, 1, 0.50, 0.70)
+    syl_t2s2 = _syl_df(2, 2, 0.72, 0.90)
+    syl = pd.concat([syl_t1s1, syl_t1s2, syl_t2s1, syl_t2s2], ignore_index=True)
+
     result = add_pcenter(syl, phon, k=0.3)
+
+    # Token 1, Syllable 1: nucleus_onset=0.05, onset_dur=0.05, P_Center=0.05-0.3*0.05=0.035
     assert abs(result['P_Center'].iloc[0] - round(0.05 - 0.3 * 0.05, 4)) < 1e-6
-    assert abs(result['P_Center'].iloc[1] - round(0.30 - 0.3 * 0.05, 4)) < 1e-6
+    # Token 1, Syllable 2: nucleus_onset=0.27, onset_dur=0.05, P_Center=0.27-0.3*0.05=0.255
+    assert abs(result['P_Center'].iloc[1] - round(0.27 - 0.3 * 0.05, 4)) < 1e-6
+    # Token 2, Syllable 1: vowel-initial, no onset consonant, P_Center=0.55
+    assert abs(result['P_Center'].iloc[2] - 0.55) < 1e-6
+    # Token 2, Syllable 2: nucleus_onset=0.77, onset_dur=0.05, P_Center=0.77-0.3*0.05=0.755
+    assert abs(result['P_Center'].iloc[3] - round(0.77 - 0.3 * 0.05, 4)) < 1e-6
