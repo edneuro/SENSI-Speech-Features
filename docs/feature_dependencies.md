@@ -166,6 +166,20 @@ Emits `<stim>_syllables.csv` and `<stim>_phonemes.csv`. **Always emitted as side
 - **Inputs:** §2.2 syllables_df + §0.3 Contours + pitch units from prefs
 - **Per-column toggles:** `feat_syllable_pitch_mean, feat_syllable_volume_mean, feat_syllable_pitch_delta, feat_syllable_volume_delta`
 
+### 2.4 Syllable P-center — `extractors/pcenter.py`
+
+- **Features:** `P_Center` (seconds from audio start) — one column added to `<stim>_syllables.csv`
+- **Library:** pure pandas/numpy (no external model)
+- **Inputs:** §2.2 syllables_df + §2.1 phonemes_df (for per-phoneme onset/duration + nucleus detection)
+- **Formula:** `P_Center = nucleus_onset − k × onset_consonant_duration`
+  - `nucleus_onset` = onset time of the first ARPABET vowel label (ending in `0`/`1`/`2`)
+  - `onset_consonant_duration` = sum of durations of phonemes before the nucleus
+  - `k` = Scott 1993 coefficient, default 0.3, stored at `prefs["prosody"]["pcenter_k"]`
+- **Edge cases:** vowel-initial → `onset_consonant_duration = 0`; no vowel nucleus → fallback to `syllable.Onset`; missing MFA alignment → `NaN`
+- **Per-column toggle:** `feat_syllable_pcenter`
+- **Master toggle:** `master_syllable_pcenter`
+- **Reference:** Marcus (1981), Scott (1993)
+
 ---
 
 ## 3. Sentence level

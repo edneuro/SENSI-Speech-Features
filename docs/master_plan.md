@@ -1,6 +1,6 @@
 # SensiExtractor — Master Plan
 
-**Last updated:** 2026-05-19
+**Last updated:** 2026-05-20
 
 This document is the single entry point for project state. Read this first; deeper specs / plans / batch designs are linked from here.
 
@@ -12,13 +12,19 @@ SensiExtractor is the standardized SOP tool for the SENSI naturalistic-EEG pipel
 
 ## 2. Current state — what we're working on RIGHT NOW
 
-**Active batch:** Acoustic prosody — **implemented, awaiting manual validation.**
+**Active batch:** P-center — **implemented, awaiting manual validation.**
+
+- Spec: [`docs/superpowers/specs/2026-05-20-pcenter-design.md`](superpowers/specs/2026-05-20-pcenter-design.md)
+- Plan: [`docs/superpowers/plans/2026-05-20-pcenter.md`](superpowers/plans/2026-05-20-pcenter.md)
+- Status: All 6 plan tasks complete; `P_Center` column added to `<stim>_syllables.csv`; new `extractors/pcenter.py`; prefs v7 → v8 additive (adds `feat_syllable_pcenter`, `master_syllable_pcenter`, `prosody.pcenter_k`); P-center card added to Sub-word features GUI page with k-coefficient spinbox; planner registry updated with `pcenter` stage and `p-center` cluster; CLI `--no-syl-pcenter` / `--pcenter-k` flags added.
+- Open: on a real ISC-Wu Tsai stimulus with MFA alignment, confirm `P_Center` column appears in `<stim>_syllables.csv` with values in a reasonable range (close to syllable `Onset`, slightly before nucleus onset for consonant-onset syllables).
+
+**Also awaiting manual validation:** Acoustic prosody (2026-05-12) — **implemented, full test suite green.**
 
 - Spec: [`docs/superpowers/specs/2026-05-12-prosody-design.md`](superpowers/specs/2026-05-12-prosody-design.md)
 - Plan: [`docs/superpowers/plans/2026-05-12-prosody.md`](superpowers/plans/2026-05-12-prosody.md)
 - Status: All 13 plan tasks complete; **231 tests pass** (after the 2026-05-12 GUI bug-fix sweep added regression tests); 1 intentional skip (synthetic-WAV MFA alignment). Requires `pyarrow` for EWFG parquet loading and a working `libsndfile` for soundfile (transitively pulled by transformers) — both added to requirements.txt / repaired via `pip install --force-reinstall --no-deps soundfile`.
-
-**Open action item before declaring the batch done:** run one real ISC-Wu Tsai stimulus end-to-end (`python gui.py`, both word-level and document-level) and eyeball the prosody columns against these expected ranges:
+- Open: run one real ISC-Wu Tsai stimulus end-to-end (`python gui.py`, both word-level and document-level) and eyeball the prosody columns against these expected ranges:
 
 | Column | Expected range | If way off, suspect… |
 |---|---|---|
@@ -28,8 +34,6 @@ SensiExtractor is the standardized SOP tool for the SENSI naturalistic-EEG pipel
 | `doc_hnr` (master CSV) | 10–25 dB for clear speech (positive) | Wildly negative → the unvoiced-sentinel fix in `460801b` didn't take. |
 | `doc_articulation_rate` (master CSV) | 3–6 syllables/sec | NaN → `pyphen` import / dict lang wrong; 0 → spoken_time was 0 (no aligned words). |
 | `doc_pause_count` (master CSV) | Reasonable integer for the duration | 0 on a stimulus with obvious pauses → check `--pause-threshold` (default 0.25s). |
-
-If a column is all NaN, MFA alignment likely didn't produce `Onset`/`End` for those words — check the `*_features.csv` to see if `Onset` is populated.
 
 **Also awaiting manual validation:** Phoneme / Syllable batch (2026-05-13) — **implemented, full test suite green (264 passed, 2 skipped).**
 
@@ -44,6 +48,7 @@ If a column is all NaN, MFA alignment likely didn't produce `Onset`/`End` for th
 
 | Date | Batch | Summary |
 |---|---|---|
+| 2026-05-20 | **P-center** | `P_Center` column added to `<stim>_syllables.csv`. Formula: `nucleus_onset − k × onset_consonant_duration` (Scott 1993, k=0.3 default). New `extractors/pcenter.py`; planner `pcenter` stage + `p-center` cluster; prefs v7 → v8 (adds `feat_syllable_pcenter`, `master_syllable_pcenter`, `prosody.pcenter_k`); P-center card in Sub-word features GUI page; CLI `--no-syl-pcenter` / `--pcenter-k`. Spec/plan: `docs/superpowers/specs/2026-05-20-pcenter-design.md`, `docs/superpowers/plans/2026-05-20-pcenter.md`. |
 | 2026-05-19 | **GUI validation unification + cluster UX** | The 2026-05-14 planner became the single source of truth for which stages run; this batch makes it the single source for everything that *consumes* that truth: preflight, the Run-tab cost panel, the cluster master toggles, and unit metadata. Two new declarative fields on `FeatureCluster` (`master_toggle`, `available_when`) enable per-cluster master toggles in the GUI (grayed-out children when off) and the LIWC-only psych composite gating. `gui/preflight.py` was rewritten to consume `plan.stages_to_run`; the cost panel hides when no LLM features are active; the Syllables card split into Intervals + Labels + Prosody sub-clusters. Semantic categories unified into `semantic.categories_<backend>` (word-level page is canonical editor; doc-level shows count + hint). Per-run `<output>/<run_ts>_<level>_session_units.csv` records column → unit. Prefs v6 → v7 additive migration. Spec/plan: `docs/superpowers/specs/2026-05-19-gui-unification-design.md`, `docs/superpowers/plans/2026-05-19-gui-unification.md`. |
 | 2026-05-15 | **Planner module** | Replaced `gui/run_dispatch.py:build_args_word_level / build_args_doc_level` (~200 lines of hand-rolled cascading rules) with a declarative `gui/planner/` package: `Stage` + `FeatureCluster` dataclasses, a `STAGES` + `CLUSTERS` registry derived from `docs/feature_dependencies.md`, a pure `plan_from_prefs` function (DAG closure + topo sort), and a `to_namespace` adapter that emits the same `argparse.Namespace` `main.py` already consumes. No changes to `main.py` or any extractor. Adding a new feature is now a single edit in `gui/planner/registry.py`. A `_word_only_stages` filter in `emit.py` prevents doc-level stage requirements from bleeding into the word-level namespace; `doc_prosody → no_prosody=False` forces word-prosody computation when doc-prosody needs the deltas. Schema-drift guard test prevents the registry from falling out of sync with prefs. 313 tests green (37 new in `tests/planner/`). Spec/plan: `docs/superpowers/specs/2026-05-14-planner-design.md`, `docs/superpowers/plans/2026-05-14-planner.md`. |
 | 2026-05-13 | **Phoneme / Syllable** | Two new sidecar CSVs per stimulus (`<stim>_syllables.csv`, `<stim>_phonemes.csv`) joined back to the word CSV via FK columns. Maximum Onset Principle syllabification on MFA's phones tier; syllable prosody (mean pitch/volume + deltas) reuses the existing Parselmouth `Contours` object. New "Sub-word features" GUI page with Syllables + Phonemes cards, Run-page master switches, preflight warnings for pyphen-missing and alignment-off. Prefs v5 → v6 additive (9 syllable + 4 phoneme keys + 2 sidecar output keys). Spec/plan linked in §2. |
@@ -62,7 +67,7 @@ Ordered roughly by priority, not committed. Each item gets its own brainstorm �
 
 | Item | Scope | Status | Notes |
 |---|---|---|---|
-| **P-center** | Perceptual onset of syllables (Scott 1993 / Villing 2010). Syllable level. | Not started | Depends on the phoneme/syllable batch (now shipped — see §3). |
+| **P-center** | Perceptual onset of syllables (Scott 1993 / Villing 2010). Syllable level. | **Shipped (2026-05-20)** | See §3 completed batches. |
 | **BERT contextual embeddings** | 768-dim vectors per word in a sidecar CSV (avoid bloating the main CSV). | Not started | |
 | **Human-rated cloze norms** | Not an extractor — data acquisition / collaboration with cloze-norming corpora. | Parked | |
 | **Document-level enrichment expansion** | Anything beyond what Batch 1.5 / Batch 3 already cover. | Mostly already done | Revisit only if a specific gap is identified. |
@@ -84,7 +89,7 @@ Each batch lives at:
 
 ## 6. Durable conventions
 
-- **Prefs schema:** versioned in `utils/preferences.py`. Each batch may bump the version, **always additively**. Migration chain handles all prior versions → current. Current version: **v7**.
+- **Prefs schema:** versioned in `utils/preferences.py`. Each batch may bump the version, **always additively**. Migration chain handles all prior versions → current. Current version: **v8**.
 - **Per-column drops:** GUI per-column toggles flow through `args.feature_toggles` (and `args.output_toggles` for output-section keys) → `_word_columns_to_drop` / `_doc_columns_to_drop` in `main.py`. CLI flags are group-level only.
 - **Tests:** Unit tests for extractors (synthetic fixtures, no real audio where avoidable), integration tests in `tests/integration/`, GUI tests in `tests/gui/` via `pytest-qt`. Target: `python -m pytest` green on every commit.
 - **Commits:** one per task during implementation; commit directly to `master` (per user preference). Feature plan referenced in commit message when applicable.
