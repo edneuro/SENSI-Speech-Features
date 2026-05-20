@@ -1,30 +1,32 @@
 """Load and save user preferences.
 
-Schema (v7 — active):
+Schema (v8 — active):
     {
-      "schema_version": 7,
+      "schema_version": 8,
       "shared":  {analyzer_name, last_*_folder, theme},
       "features": {feat_struct_*, lexling_*, freq_*, pred_*, sem_*,
                    feat_acoustic_*, feat_psych_*,
                    feat_prosody_* (10 word-level), feat_doc_prosody_* (16 doc-level),
-                   feat_syllable_* (9 syllable), feat_phoneme_* (4 phoneme),
-                   master_* (6 cluster master toggles)},
+                   feat_syllable_* (9 syllable), feat_syllable_pcenter,
+                   feat_phoneme_* (4 phoneme),
+                   master_* (6 cluster master toggles), master_syllable_pcenter},
       "predictability": {llm_model},
       "semantic": {backend, categories_liwc, categories_empath},
       "output":   {word_level_csv, document_summary, out_count_*, doc_*,
                    syllables_csv, phonemes_csv,
                    master_doc_prosody, master_doc_articulation_rate},
-      "prosody":  {pitch_units, pitch_floor_hz, pitch_ceiling_hz, pause_threshold_s}
+      "prosody":  {pitch_units, pitch_floor_hz, pitch_ceiling_hz, pause_threshold_s, pcenter_k}
     }
 
-Migration chain (all paths terminate at v7):
-  v1 → v2 → v3 → v4 → v5 → v6 → v7
-  v2 → v3 → v4 → v5 → v6 → v7
-  v3 → v4 → v5 → v6 → v7
-  v4 → v5 → v6 → v7
-  v5 → v6 → v7
-  v6 → v7
-  v7 files are deep-merged against v7 defaults
+Migration chain (all paths terminate at v8):
+  v1 → v2 → v3 → v4 → v5 → v6 → v7 → v8
+  v2 → v3 → v4 → v5 → v6 → v7 → v8
+  v3 → v4 → v5 → v6 → v7 → v8
+  v4 → v5 → v6 → v7 → v8
+  v5 → v6 → v7 → v8
+  v6 → v7 → v8
+  v7 → v8
+  v8 files are deep-merged against v8 defaults
 
 Default location: <project_root>/config/preferences.json
 Override via SENSI_PREFS_PATH environment variable.
@@ -428,11 +430,34 @@ DEFAULT_PREFS_V7: dict[str, Any] = {
 }
 
 # ---------------------------------------------------------------------------
+# v8 constants (active schema)
+#
+# P-center batch (2026-05-20) changes vs v7:
+#   - 2 new feature toggles: feat_syllable_pcenter, master_syllable_pcenter
+#   - 1 new prosody param: pcenter_k (default 0.3)
+# ---------------------------------------------------------------------------
+
+SCHEMA_VERSION_V8 = 8
+
+_FEATURES_DEFAULT_V8 = {
+    **_FEATURES_DEFAULT_V7,
+    "feat_syllable_pcenter":   True,
+    "master_syllable_pcenter": True,
+}
+
+DEFAULT_PREFS_V8: dict[str, Any] = {
+    **DEFAULT_PREFS_V7,
+    "schema_version": SCHEMA_VERSION_V8,
+    "features": dict(_FEATURES_DEFAULT_V8),
+    "prosody": {**DEFAULT_PREFS_V7["prosody"], "pcenter_k": 0.3},
+}
+
+# ---------------------------------------------------------------------------
 # Active schema aliases
 # ---------------------------------------------------------------------------
 
-SCHEMA_VERSION = SCHEMA_VERSION_V7  # active version
-DEFAULT_PREFS: dict[str, Any] = DEFAULT_PREFS_V7  # active defaults
+SCHEMA_VERSION = SCHEMA_VERSION_V8  # active version
+DEFAULT_PREFS: dict[str, Any] = DEFAULT_PREFS_V8  # active defaults
 
 
 # ---------------------------------------------------------------------------
@@ -478,22 +503,31 @@ def load_preferences() -> dict[str, Any]:
             right_key = f'doc_categories_{backend}'
             if wrong_key in user_sem:
                 user_sem[right_key] = user_sem.pop(wrong_key)
-    if version == SCHEMA_VERSION_V7:
+    if version == SCHEMA_VERSION_V8:
         _deep_merge_current(merged, user)
+    elif version == SCHEMA_VERSION_V7:
+        _migrate_v7_into_v8(merged, user)
+        _write(path, merged)
     elif version == SCHEMA_VERSION_V6:
-        _migrate_v6_into_v7(merged, user)
+        v7_intermediate = deepcopy(DEFAULT_PREFS_V7)
+        _migrate_v6_into_v7(v7_intermediate, user)
+        _migrate_v7_into_v8(merged, v7_intermediate)
         _write(path, merged)
     elif version == SCHEMA_VERSION_V5:
         v6_intermediate = deepcopy(DEFAULT_PREFS_V6)
         _migrate_v5_into_v6(v6_intermediate, user)
-        _migrate_v6_into_v7(merged, v6_intermediate)
+        v7_intermediate = deepcopy(DEFAULT_PREFS_V7)
+        _migrate_v6_into_v7(v7_intermediate, v6_intermediate)
+        _migrate_v7_into_v8(merged, v7_intermediate)
         _write(path, merged)
     elif version == SCHEMA_VERSION_V4:
         v5_intermediate = deepcopy(DEFAULT_PREFS_V5)
         _migrate_v4_into_v5(v5_intermediate, user)
         v6_intermediate = deepcopy(DEFAULT_PREFS_V6)
         _migrate_v5_into_v6(v6_intermediate, v5_intermediate)
-        _migrate_v6_into_v7(merged, v6_intermediate)
+        v7_intermediate = deepcopy(DEFAULT_PREFS_V7)
+        _migrate_v6_into_v7(v7_intermediate, v6_intermediate)
+        _migrate_v7_into_v8(merged, v7_intermediate)
         _write(path, merged)
     elif version == 3:
         v4_intermediate = deepcopy(DEFAULT_PREFS_V4)
@@ -502,7 +536,9 @@ def load_preferences() -> dict[str, Any]:
         _migrate_v4_into_v5(v5_intermediate, v4_intermediate)
         v6_intermediate = deepcopy(DEFAULT_PREFS_V6)
         _migrate_v5_into_v6(v6_intermediate, v5_intermediate)
-        _migrate_v6_into_v7(merged, v6_intermediate)
+        v7_intermediate = deepcopy(DEFAULT_PREFS_V7)
+        _migrate_v6_into_v7(v7_intermediate, v6_intermediate)
+        _migrate_v7_into_v8(merged, v7_intermediate)
         _write(path, merged)
     elif version == 2:
         v3_intermediate = deepcopy(DEFAULT_PREFS_V3)
@@ -513,10 +549,12 @@ def load_preferences() -> dict[str, Any]:
         _migrate_v4_into_v5(v5_intermediate, v4_intermediate)
         v6_intermediate = deepcopy(DEFAULT_PREFS_V6)
         _migrate_v5_into_v6(v6_intermediate, v5_intermediate)
-        _migrate_v6_into_v7(merged, v6_intermediate)
+        v7_intermediate = deepcopy(DEFAULT_PREFS_V7)
+        _migrate_v6_into_v7(v7_intermediate, v6_intermediate)
+        _migrate_v7_into_v8(merged, v7_intermediate)
         _write(path, merged)
     else:
-        # v1 flat → v2 → v3 → v4 → v5 → v6 → v7
+        # v1 flat → v2 → v3 → v4 → v5 → v6 → v7 → v8
         v2_intermediate = deepcopy(_DEFAULT_PREFS_V2)
         _migrate_v1_into(v2_intermediate, user)
         v3_intermediate = deepcopy(DEFAULT_PREFS_V3)
@@ -527,7 +565,9 @@ def load_preferences() -> dict[str, Any]:
         _migrate_v4_into_v5(v5_intermediate, v4_intermediate)
         v6_intermediate = deepcopy(DEFAULT_PREFS_V6)
         _migrate_v5_into_v6(v6_intermediate, v5_intermediate)
-        _migrate_v6_into_v7(merged, v6_intermediate)
+        v7_intermediate = deepcopy(DEFAULT_PREFS_V7)
+        _migrate_v6_into_v7(v7_intermediate, v6_intermediate)
+        _migrate_v7_into_v8(merged, v7_intermediate)
         _write(path, merged)
 
     return merged
@@ -856,3 +896,14 @@ def _migrate_v6_into_v7(target: dict[str, Any], user_v6: dict[str, Any]) -> None
         sem.pop(word_key, None)
         sem.pop(doc_key, None)
     target["schema_version"] = SCHEMA_VERSION_V7
+
+
+def _migrate_v7_into_v8(merged: dict, v7: dict) -> None:
+    """v7 → v8: additive only.
+
+    v8 defaults (already in merged) supply pcenter_k=0.3 and the two new
+    feature toggles. Any forward-compat value the user set in the v7 file
+    is preserved by deep-merging their data over the defaults.
+    """
+    _deep_merge_current(merged, v7)
+    merged["schema_version"] = SCHEMA_VERSION_V8

@@ -619,3 +619,55 @@ def test_v6_to_v7_union_includes_preexisting_unified_value():
     assert cats.index("preexisting_cat") < cats.index("word_cat") < cats.index("doc_cat")
     assert "word_categories_empath" not in target["semantic"]
     assert "doc_categories_empath"  not in target["semantic"]
+
+
+# ---------------------------------------------------------------------------
+# v7 → v8 migration
+# ---------------------------------------------------------------------------
+
+def test_v7_into_v8_adds_pcenter_defaults():
+    """v7 prefs migrate to v8 with pcenter_k=0.3 and new toggles True."""
+    from copy import deepcopy
+    from utils.preferences import (
+        DEFAULT_PREFS_V7,
+        DEFAULT_PREFS_V8,
+        _migrate_v7_into_v8,
+    )
+    target = deepcopy(DEFAULT_PREFS_V8)
+    _migrate_v7_into_v8(target, deepcopy(DEFAULT_PREFS_V7))
+    assert target['prosody']['pcenter_k'] == 0.3
+    assert target['features']['feat_syllable_pcenter'] is True
+    assert target['features']['master_syllable_pcenter'] is True
+
+
+def test_v7_into_v8_preserves_user_pcenter_k():
+    """If user set pcenter_k in a v7 file (forward-compat), migration preserves it."""
+    from copy import deepcopy
+    from utils.preferences import (
+        DEFAULT_PREFS_V7,
+        DEFAULT_PREFS_V8,
+        _migrate_v7_into_v8,
+    )
+    v7 = deepcopy(DEFAULT_PREFS_V7)
+    v7.setdefault('prosody', {})['pcenter_k'] = 0.5
+    target = deepcopy(DEFAULT_PREFS_V8)
+    _migrate_v7_into_v8(target, v7)
+    assert target['prosody']['pcenter_k'] == 0.5
+
+
+def test_load_v7_prefs_file_migrates_to_v8(tmp_path, monkeypatch):
+    """load_preferences() on a v7 file auto-migrates and writes v8 to disk."""
+    import json
+    from utils.preferences import (
+        DEFAULT_PREFS_V7,
+        load_preferences,
+        SCHEMA_VERSION_V8,
+    )
+    prefs_path = tmp_path / 'p.json'
+    prefs_path.write_text(json.dumps(DEFAULT_PREFS_V7))
+    monkeypatch.setenv('SENSI_PREFS_PATH', str(prefs_path))
+    loaded = load_preferences()
+    assert loaded['schema_version'] == SCHEMA_VERSION_V8
+    assert loaded['prosody']['pcenter_k'] == 0.3
+    on_disk = json.loads(prefs_path.read_text())
+    assert on_disk['schema_version'] == SCHEMA_VERSION_V8
