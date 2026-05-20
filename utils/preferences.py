@@ -445,6 +445,8 @@ _FEATURES_DEFAULT_V8 = {
     "master_syllable_pcenter": True,
 }
 
+_OUTPUT_DEFAULT_V8 = dict(_OUTPUT_DEFAULT_V7)  # No output schema changes in v8
+
 DEFAULT_PREFS_V8: dict[str, Any] = {
     **DEFAULT_PREFS_V7,
     "schema_version": SCHEMA_VERSION_V8,

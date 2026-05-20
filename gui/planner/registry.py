@@ -33,6 +33,7 @@ from extractors.prosody        import add_word_prosody
 from extractors.timing         import add_timing_columns
 from extractors.syllabify      import syllabify_pairs
 from extractors.syllable_prosody import add_syllable_prosody
+from extractors.pcenter        import add_pcenter     as _add_pcenter
 
 STAGES: list[Stage] = [
     # --- §0 Shared stages ---
@@ -97,6 +98,11 @@ STAGES: list[Stage] = [
           consumes=("syllables_df", "contours"),
           produces=("syllables_df.Prosody",),
           run=add_syllable_prosody),
+
+    Stage(name="pcenter",
+          consumes=("syllables_df", "phonemes_df"),
+          produces=("syllables_df.P_Center",),
+          run=_add_pcenter),
 
     # --- §4 Document level ---
     # Document stages are intentionally NOT extracted into separate functions
@@ -309,6 +315,16 @@ CLUSTERS: list[FeatureCluster] = [
                          "syllabify_pairs", "syllable_prosody"),
         emits_columns=("Pitch_Mean", "Volume_Mean", "Pitch_Delta", "Volume_Delta"),
         master_toggle="master_syllable_prosody",
+    ),
+
+    # §2.4 P-center
+    FeatureCluster(
+        name="p-center",
+        toggle_keys=("feat_syllable_pcenter",),
+        output_csv="syllables",
+        requires_stages=("spacy_parse", "mfa_align", "syllabify_pairs", "pcenter"),
+        emits_columns=("P_Center",),
+        master_toggle="master_syllable_pcenter",
     ),
 
     # --- Document level (§4 of feature_dependencies.md) ---
