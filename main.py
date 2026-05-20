@@ -143,6 +143,10 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument('--no-syl-volume-mean',   action='store_true')
     p.add_argument('--no-syl-pitch-delta',   action='store_true')
     p.add_argument('--no-syl-volume-delta',  action='store_true')
+    p.add_argument('--no-syl-pcenter', action='store_true',
+                   help='Skip P_Center column in syllables CSV.')
+    p.add_argument('--pcenter-k', type=float, default=0.3,
+                   help='Scott 1993 P-center coefficient (default 0.3).')
 
     p.add_argument('--no-phon-label',    action='store_true')
     p.add_argument('--no-phon-onset',    action='store_true')
@@ -459,6 +463,7 @@ _SYLLABLE_COLUMN_MAP = {
     "feat_syllable_volume_mean":  "Volume_Mean",
     "feat_syllable_pitch_delta":  "Pitch_Delta",
     "feat_syllable_volume_delta": "Volume_Delta",
+    "feat_syllable_pcenter":      "P_Center",
 }
 
 _PHONEME_COLUMN_MAP = {
@@ -579,6 +584,12 @@ def run_word_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None
                         getattr(args, '_contours', None),
                         pitch_units=getattr(args, 'pitch_units', 'semitones'),
                     )
+                    if len(phon_df) > 0:
+                        from extractors.pcenter import add_pcenter
+                        syll_df = add_pcenter(
+                            syll_df, phon_df,
+                            k=getattr(args, 'pcenter_k', 0.3),
+                        )
                     drop = _syllable_columns_to_drop(
                         getattr(args, 'feature_toggles', {}) or {})
                     if drop:

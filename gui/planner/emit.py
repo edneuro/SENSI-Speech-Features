@@ -142,6 +142,7 @@ def to_namespace(plan: Plan, prefs: dict, level: str) -> argparse.Namespace:
     ns.pitch_floor     = float(pros.get("pitch_floor_hz", 75.0))
     ns.pitch_ceiling   = float(pros.get("pitch_ceiling_hz", 500.0))
     ns.pause_threshold = float(pros.get("pause_threshold_s", 0.25))
+    ns.pcenter_k       = float(pros.get("pcenter_k", 0.3))
 
     # Doc-level extra flags
     if level == "doc":
