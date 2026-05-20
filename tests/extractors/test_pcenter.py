@@ -1,0 +1,95 @@
+"""Unit tests for extractors.pcenter.add_pcenter."""
+import math
+import pandas as pd
+import pytest
+
+from extractors.pcenter import add_pcenter
+
+
+def _phon_df(token_id, syl_id, phonemes):
+    """phonemes: list of (label, onset, end)"""
+    rows = []
+    for i, (label, onset, end) in enumerate(phonemes):
+        rows.append({
+            'doc_id': 'd', 'sentence_id': 1, 'token_id': token_id,
+            'token': 'w', 'syllable_id': syl_id, 'phoneme_id': i + 1,
+            'Label': label, 'Onset': onset, 'End': end,
+            'Duration': round(end - onset, 4),
+        })
+    return pd.DataFrame(rows)
+
+
+def _syl_df(token_id, syl_id, onset, end):
+    return pd.DataFrame([{
+        'doc_id': 'd', 'sentence_id': 1, 'token_id': token_id,
+        'token': 'w', 'syllable_id': syl_id,
+        'Label': 'x', 'ARPABET': 'x',
+        'Onset': onset, 'End': end,
+        'Duration': round(end - onset, 4) if not math.isnan(onset) else float('nan'),
+    }])
+
+
+def test_standard_onset_cluster():
+    """BAT [B, AE1, T] with k=0.3 -> nucleus_onset=0.05, onset_dur=0.05."""
+    phon = _phon_df(1, 1, [('B', 0.0, 0.05), ('AE1', 0.05, 0.15), ('T', 0.15, 0.20)])
+    syl = _syl_df(1, 1, 0.0, 0.20)
+    result = add_pcenter(syl, phon, k=0.3)
+    expected = round(0.05 - 0.3 * 0.05, 4)
+    assert abs(result['P_Center'].iloc[0] - expected) < 1e-6
+
+
+def test_vowel_initial_syllable():
+    """[AE1, T] — onset_consonant_duration=0 -> P_Center == nucleus_onset."""
+    phon = _phon_df(1, 1, [('AE1', 0.10, 0.20), ('T', 0.20, 0.25)])
+    syl = _syl_df(1, 1, 0.10, 0.25)
+    result = add_pcenter(syl, phon, k=0.3)
+    assert abs(result['P_Center'].iloc[0] - 0.10) < 1e-6
+
+
+def test_no_vowel_syllable_falls_back_to_acoustic_onset():
+    """[HH, M] — no nucleus -> P_Center == syllable.Onset."""
+    phon = _phon_df(1, 1, [('HH', 0.05, 0.10), ('M', 0.10, 0.20)])
+    syl = _syl_df(1, 1, 0.05, 0.20)
+    result = add_pcenter(syl, phon, k=0.3)
+    assert abs(result['P_Center'].iloc[0] - 0.05) < 1e-6
+
+
+def test_multi_consonant_onset():
+    """[S, T, R, AY1, NG] — correction = sum(S+T+R) * k."""
+    phon = _phon_df(1, 1, [
+        ('S', 0.0, 0.05), ('T', 0.05, 0.10), ('R', 0.10, 0.15),
+        ('AY1', 0.15, 0.30), ('NG', 0.30, 0.40),
+    ])
+    syl = _syl_df(1, 1, 0.0, 0.40)
+    result = add_pcenter(syl, phon, k=0.3)
+    expected = round(0.15 - 0.3 * 0.15, 4)
+    assert abs(result['P_Center'].iloc[0] - expected) < 1e-6
+
+
+def test_nan_when_syllable_onset_is_nan():
+    """MFA alignment missing (Onset=NaN) -> P_Center=NaN."""
+    phon = _phon_df(1, 1, [('B', 0.0, 0.05), ('AE1', 0.05, 0.15)])
+    syl = _syl_df(1, 1, float('nan'), float('nan'))
+    result = add_pcenter(syl, phon, k=0.3)
+    assert math.isnan(result['P_Center'].iloc[0])
+
+
+def test_k_zero_yields_nucleus_onset():
+    """k=0 means no correction: P_Center == nucleus_onset exactly."""
+    phon = _phon_df(1, 1, [('B', 0.0, 0.05), ('AE1', 0.05, 0.15), ('T', 0.15, 0.20)])
+    syl = _syl_df(1, 1, 0.0, 0.20)
+    result = add_pcenter(syl, phon, k=0.0)
+    assert abs(result['P_Center'].iloc[0] - 0.05) < 1e-6
+
+
+def test_two_words_no_cross_contamination():
+    """Two tokens × one syllable each — FK grouping must not mix phonemes."""
+    phon1 = _phon_df(1, 1, [('B', 0.0, 0.05), ('AE1', 0.05, 0.15), ('T', 0.15, 0.20)])
+    phon2 = _phon_df(2, 1, [('K', 0.25, 0.30), ('AH1', 0.30, 0.45), ('T', 0.45, 0.50)])
+    phon = pd.concat([phon1, phon2], ignore_index=True)
+    syl1 = _syl_df(1, 1, 0.0, 0.20)
+    syl2 = _syl_df(2, 1, 0.25, 0.50)
+    syl = pd.concat([syl1, syl2], ignore_index=True)
+    result = add_pcenter(syl, phon, k=0.3)
+    assert abs(result['P_Center'].iloc[0] - round(0.05 - 0.3 * 0.05, 4)) < 1e-6
+    assert abs(result['P_Center'].iloc[1] - round(0.30 - 0.3 * 0.05, 4)) < 1e-6
