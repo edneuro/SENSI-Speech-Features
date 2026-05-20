@@ -1,10 +1,11 @@
 """Reusable Qt widgets used across the GUI."""
 
-from PySide6.QtCore import Signal
+from PySide6.QtCore import Signal, QEvent, Qt
+from PySide6.QtGui import QCursor
 from PySide6.QtWidgets import (
     QFrame, QHBoxLayout, QVBoxLayout,
     QLabel, QLineEdit, QPushButton, QCheckBox,
-    QFileDialog, QWidget, QLayout,
+    QFileDialog, QWidget, QLayout, QToolTip,
 )
 
 
@@ -98,9 +99,22 @@ class ToggleRow(QWidget):
 class AmberDotIndicator(QLabel):
     def __init__(self, tooltip: str, parent=None):
         super().__init__("⚠", parent)
-        self.setToolTip(tooltip)
-        self.setFixedWidth(22)
+        self._tip = tooltip
+        self.setToolTip(tooltip)        # keeps toolTip() accessor working
+        self.setFixedSize(26, 22)
         self.setStyleSheet("color: #C77A00; font-size: 14px;")
+        # WA_Hover ensures Qt sends Enter/Leave events even inside scroll areas.
+        self.setAttribute(Qt.WidgetAttribute.WA_Hover)
+
+    def enterEvent(self, event) -> None:
+        # Show immediately on hover — bypasses the tooltip-timer pipeline that
+        # scroll-area viewports can swallow before it reaches child widgets.
+        QToolTip.showText(QCursor.pos(), self._tip, self, self.rect())
+        super().enterEvent(event)
+
+    def leaveEvent(self, event) -> None:
+        QToolTip.hideText()
+        super().leaveEvent(event)
 
 
 class Card(QFrame):

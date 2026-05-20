@@ -17,26 +17,26 @@ from utils.preferences import load_preferences, save_preferences
 _AGG_STAGE_REQ: dict[str, tuple[str, str]] = {
     "output_doc_agg_zipf_freq": (
         "word_freq",
-        "Will output NaN — SUBTLEX frequency is not in the run plan.\n"
-        "• Enable SUBTLEX corpus frequency on the Word-level features page\n"
+        "<b>Will output NaN</b> — SUBTLEX frequency is not in the run plan.<br>"
+        "• Enable SUBTLEX corpus frequency on the Word-level features page<br>"
         "• Ensure Word-level CSVs output is on (Run tab)",
     ),
     "output_doc_agg_edu_zipf": (
         "ewfg_freq",
-        "Will output NaN — EWFG grade-band frequency is not in the run plan.\n"
-        "• Enable at least one EWFG band on the Word-level features page\n"
+        "<b>Will output NaN</b> — EWFG grade-band frequency is not in the run plan.<br>"
+        "• Enable at least one EWFG band on the Word-level features page<br>"
         "• Ensure Word-level CSVs output is on (Run tab)",
     ),
     "output_doc_agg_surprisal": (
         "gpt2_surprisal",
-        "Will output NaN — GPT-2 surprisal is not in the run plan.\n"
-        "• Enable GPT-2 surprisal on the Word-level features page\n"
+        "<b>Will output NaN</b> — GPT-2 surprisal is not in the run plan.<br>"
+        "• Enable GPT-2 surprisal on the Word-level features page<br>"
         "• Ensure Word-level CSVs output is on (Run tab)",
     ),
     "output_doc_agg_llm": (
         "llm_predict",
-        "Will output NaN — LLM predictability is not in the run plan.\n"
-        "• Enable at least one LLM feature (Cloze / Surprisal / TopMatch) on the Word-level features page\n"
+        "<b>Will output NaN</b> — LLM predictability is not in the run plan.<br>"
+        "• Enable at least one LLM feature (Cloze / Surprisal / TopMatch) on the Word-level features page<br>"
         "• Ensure Word-level CSVs output is on (Run tab)",
     ),
 }
