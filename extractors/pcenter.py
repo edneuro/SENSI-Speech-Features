@@ -49,9 +49,7 @@ def add_pcenter(
     phon_sorted = phonemes_df.sort_values(_FK + ['phoneme_id'])
     pcenter_map: dict[tuple, float] = {}
     for key, group in phon_sorted.groupby(_FK, sort=False):
-        pcenter_map[tuple(key) if not isinstance(key, tuple) else key] = (
-            _pcenter_raw(group, k)
-        )
+        pcenter_map[key] = _pcenter_raw(group, k)
 
     values: list[float] = []
     for row in df.itertuples(index=False):

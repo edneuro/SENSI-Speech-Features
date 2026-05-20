@@ -1,7 +1,6 @@
 """Unit tests for extractors.pcenter.add_pcenter."""
 import math
 import pandas as pd
-import pytest
 
 from extractors.pcenter import add_pcenter
 
@@ -82,14 +81,25 @@ def test_k_zero_yields_nucleus_onset():
     assert abs(result['P_Center'].iloc[0] - 0.05) < 1e-6
 
 
+def test_syllable_with_no_phoneme_rows_falls_back_to_acoustic_onset():
+    """Syllable FK absent from phonemes_df -> falls back to syllable.Onset."""
+    phon = _phon_df(1, 1, [('B', 0.0, 0.05), ('AE1', 0.05, 0.15)])
+    syl = pd.concat([
+        _syl_df(1, 1, 0.0, 0.15),
+        _syl_df(1, 2, 0.15, 0.25),  # syllable_id=2 has no phonemes
+    ], ignore_index=True)
+    result = add_pcenter(syl, phon, k=0.3)
+    assert abs(result['P_Center'].iloc[1] - 0.15) < 1e-6
+
+
 def test_two_words_no_cross_contamination():
     """Two tokens × two syllables each — verifies both token_id and syllable_id in FK grouping."""
     # Token 1, Syllable 1: [B, AE1, T] (onset 0.0–0.20)
     phon_t1s1 = _phon_df(1, 1, [('B', 0.0, 0.05), ('AE1', 0.05, 0.15), ('T', 0.15, 0.20)])
     # Token 1, Syllable 2: [K, AH1, T] (onset 0.22–0.45)
     phon_t1s2 = _phon_df(1, 2, [('K', 0.22, 0.27), ('AH1', 0.27, 0.40), ('T', 0.40, 0.45)])
-    # Token 2, Syllable 1: [S, AY1] (onset 0.50–0.70)
-    phon_t2s1 = _phon_df(2, 1, [('S', 0.50, 0.55), ('AY1', 0.55, 0.70)])
+    # Token 2, Syllable 1: [AY1, NG] (onset 0.50–0.70) — vowel-initial
+    phon_t2s1 = _phon_df(2, 1, [('AY1', 0.50, 0.65), ('NG', 0.65, 0.70)])
     # Token 2, Syllable 2: [G, IH1, N] (onset 0.72–0.90)
     phon_t2s2 = _phon_df(2, 2, [('G', 0.72, 0.77), ('IH1', 0.77, 0.85), ('N', 0.85, 0.90)])
     phon = pd.concat([phon_t1s1, phon_t1s2, phon_t2s1, phon_t2s2], ignore_index=True)
@@ -106,7 +116,7 @@ def test_two_words_no_cross_contamination():
     assert abs(result['P_Center'].iloc[0] - round(0.05 - 0.3 * 0.05, 4)) < 1e-6
     # Token 1, Syllable 2: nucleus_onset=0.27, onset_dur=0.05, P_Center=0.27-0.3*0.05=0.255
     assert abs(result['P_Center'].iloc[1] - round(0.27 - 0.3 * 0.05, 4)) < 1e-6
-    # Token 2, Syllable 1: nucleus_onset=0.55, onset_dur=0.05 (S), P_Center=0.55-0.3*0.05=0.535
-    assert abs(result['P_Center'].iloc[2] - round(0.55 - 0.3 * 0.05, 4)) < 1e-6
+    # Token 2, Syllable 1: vowel-initial, onset_dur=0, P_Center=nucleus_onset=0.50
+    assert abs(result['P_Center'].iloc[2] - 0.50) < 1e-6
     # Token 2, Syllable 2: nucleus_onset=0.77, onset_dur=0.05, P_Center=0.77-0.3*0.05=0.755
     assert abs(result['P_Center'].iloc[3] - round(0.77 - 0.3 * 0.05, 4)) < 1e-6
