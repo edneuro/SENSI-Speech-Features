@@ -13,6 +13,11 @@ from gui.planner.plan import plan_from_prefs
 # so individual tests that don't care about master gates still see clusters
 # as active (matching real v7 default behaviour).
 _MASTER_DEFAULTS_FEATURES = {
+    "master_structural":         True,
+    "master_lexling":            True,
+    "master_frequency":          True,
+    "master_predictability":     True,
+    "master_acoustic":           True,
     "master_word_prosody":       True,
     "master_psych_composite":    True,
     "master_syllable_intervals": True,
@@ -23,6 +28,7 @@ _MASTER_DEFAULTS_FEATURES = {
 _MASTER_DEFAULTS_OUTPUT = {
     "master_doc_prosody":           True,
     "master_doc_articulation_rate": True,
+    "master_doc_counts":            True,
 }
 
 

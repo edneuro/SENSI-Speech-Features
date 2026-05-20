@@ -162,6 +162,7 @@ CLUSTERS: list[FeatureCluster] = [
         requires_stages=("spacy_parse",),
         emits_columns=("doc_id", "paragraph_id", "sentence_id", "sentence",
                        "start", "end", "term_id", "token_id"),
+        master_toggle="master_structural",
     ),
 
     # §1.2 Lex-ling — also passthrough from spacy_parse
@@ -172,6 +173,7 @@ CLUSTERS: list[FeatureCluster] = [
         requires_stages=("spacy_parse",),
         emits_columns=("token", "lemma", "upos", "xpos", "feats",
                        "dep_rel", "head_token_id", "deps", "misc"),
+        master_toggle="master_lexling",
     ),
 
     # §1.3 SUBTLEX frequency
@@ -181,6 +183,7 @@ CLUSTERS: list[FeatureCluster] = [
         output_csv="features",
         requires_stages=("spacy_parse", "word_freq"),
         emits_columns=("Zipf_Freq",),
+        master_toggle="master_frequency",
     ),
 
     # §1.4 EWFG — one cluster covering all 5 bands; the band-subset choice
@@ -193,6 +196,7 @@ CLUSTERS: list[FeatureCluster] = [
         requires_stages=("spacy_parse", "ewfg_freq"),
         emits_columns=("Edu_Zipf_K2", "Edu_Zipf_3to5", "Edu_Zipf_6to8",
                        "Edu_Zipf_9to12", "Edu_Zipf_Overall"),
+        master_toggle="master_frequency",
     ),
 
     # §1.5 GPT-2 surprisal
@@ -202,6 +206,7 @@ CLUSTERS: list[FeatureCluster] = [
         output_csv="features",
         requires_stages=("spacy_parse", "gpt2_surprisal"),
         emits_columns=("Surprisal",),
+        master_toggle="master_predictability",
     ),
 
     # §1.6 LLM predictability — three columns, three toggles, one stage
@@ -211,6 +216,7 @@ CLUSTERS: list[FeatureCluster] = [
         output_csv="features",
         requires_stages=("spacy_parse", "llm_predict"),
         emits_columns=("LLM_Surprisal", "LLM_Cloze", "LLM_TopMatch"),
+        master_toggle="master_predictability",
     ),
 
     # §1.7 Semantic indicators — single master toggle; categories selection
@@ -230,6 +236,7 @@ CLUSTERS: list[FeatureCluster] = [
         output_csv="features",
         requires_stages=("mfa_align",),
         emits_columns=("Onset", "End"),
+        master_toggle="master_acoustic",
     ),
 
     # §1.9 Derived timing
@@ -239,6 +246,7 @@ CLUSTERS: list[FeatureCluster] = [
         output_csv="features",
         requires_stages=("mfa_align", "word_timing"),
         emits_columns=("Word_Duration", "Word_Gap"),
+        master_toggle="master_acoustic",
     ),
 
     # §1.10 Word prosody — 10 columns, 10 toggles, one stage
@@ -313,18 +321,40 @@ CLUSTERS: list[FeatureCluster] = [
         output_csv="documents_summary",
         requires_stages=("spacy_parse", "doc_counts"),
         emits_columns=("n_tokens", "n_content_tokens", "n_sentences", "n_paragraphs"),
+        master_toggle="master_doc_counts",
     ),
 
-    # §4.2 Word-feature aggregates (means)
+    # §4.2 Word-feature aggregates — four independent toggles, one shared stage.
+    # Each toggle controls one family of aggregate means in the doc summary.
     FeatureCluster(
-        name="doc word-feature aggregates",
-        toggle_keys=("doc_aggregates",),
+        name="doc agg zipf freq",
+        toggle_keys=("doc_agg_zipf_freq",),
         output_csv="documents_summary",
         requires_stages=("spacy_parse", "doc_aggregates"),
-        emits_columns=("mean_zipf_freq", "mean_edu_zipf_k2", "mean_edu_zipf_3to5",
-                       "mean_edu_zipf_6to8", "mean_edu_zipf_9to12", "mean_edu_zipf_overall",
-                       "mean_surprisal", "mean_llm_surprisal",
-                       "mean_llm_cloze", "mean_llm_top_match_prop"),
+        emits_columns=("mean_zipf_freq",),
+    ),
+    FeatureCluster(
+        name="doc agg edu zipf",
+        toggle_keys=("doc_agg_edu_zipf",),
+        output_csv="documents_summary",
+        requires_stages=("spacy_parse", "doc_aggregates"),
+        emits_columns=("mean_edu_zipf_k2", "mean_edu_zipf_3to5",
+                       "mean_edu_zipf_6to8", "mean_edu_zipf_9to12",
+                       "mean_edu_zipf_overall"),
+    ),
+    FeatureCluster(
+        name="doc agg surprisal",
+        toggle_keys=("doc_agg_surprisal",),
+        output_csv="documents_summary",
+        requires_stages=("spacy_parse", "doc_aggregates"),
+        emits_columns=("mean_surprisal",),
+    ),
+    FeatureCluster(
+        name="doc agg llm",
+        toggle_keys=("doc_agg_llm",),
+        output_csv="documents_summary",
+        requires_stages=("spacy_parse", "doc_aggregates"),
+        emits_columns=("mean_llm_surprisal", "mean_llm_cloze", "mean_llm_top_match_prop"),
     ),
 
     # §4.3 Lex diversity

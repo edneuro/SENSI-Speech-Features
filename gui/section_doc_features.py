@@ -8,7 +8,38 @@ from PySide6.QtWidgets import (
 )
 
 from gui.widgets import Card, ClusterCard, ToggleRow
+from gui.planner import plan_from_prefs
 from utils.preferences import load_preferences, save_preferences
+
+# Maps each doc-aggregate output toggle to (required_stage, hover_tooltip).
+# If the aggregate is enabled but the required stage is absent from the plan,
+# a warning indicator is shown on that toggle row.
+_AGG_STAGE_REQ: dict[str, tuple[str, str]] = {
+    "output_doc_agg_zipf_freq": (
+        "word_freq",
+        "Will output NaN — SUBTLEX frequency is not in the run plan.\n"
+        "• Enable SUBTLEX corpus frequency on the Word-level features page\n"
+        "• Ensure Word-level CSVs output is on (Run tab)",
+    ),
+    "output_doc_agg_edu_zipf": (
+        "ewfg_freq",
+        "Will output NaN — EWFG grade-band frequency is not in the run plan.\n"
+        "• Enable at least one EWFG band on the Word-level features page\n"
+        "• Ensure Word-level CSVs output is on (Run tab)",
+    ),
+    "output_doc_agg_surprisal": (
+        "gpt2_surprisal",
+        "Will output NaN — GPT-2 surprisal is not in the run plan.\n"
+        "• Enable GPT-2 surprisal on the Word-level features page\n"
+        "• Ensure Word-level CSVs output is on (Run tab)",
+    ),
+    "output_doc_agg_llm": (
+        "llm_predict",
+        "Will output NaN — LLM predictability is not in the run plan.\n"
+        "• Enable at least one LLM feature (Cloze / Surprisal / TopMatch) on the Word-level features page\n"
+        "• Ensure Word-level CSVs output is on (Run tab)",
+    ),
+}
 
 
 class DocFeaturesSection(QWidget):
@@ -30,9 +61,14 @@ class DocFeaturesSection(QWidget):
         # about configuring WHICH columns appear in that summary CSV.
 
         # --- Counts (per-column) ---
-        counts_card = Card(
+        counts_card = ClusterCard(
             "Counts",
-            "Aggregate counts for the document-level summary CSV.")
+            "Aggregate counts for the document-level summary CSV.",
+            master_key="master_doc_counts",
+            master_label="Enable all counts",
+            master_section="output",
+        )
+        counts_card.settings_changed.connect(self.settings_changed)
         counts_grid = QGridLayout()
         counts_keys = [
             ("output_out_count_tokens", "n_tokens"),
@@ -45,16 +81,23 @@ class DocFeaturesSection(QWidget):
                 self._make_toggle(key, label, o[key[len("output_"):]], "output"),
                 i // 2, i % 2,
             )
-        counts_card.add_layout(counts_grid)
+        counts_card.add_child_layout(counts_grid)
         layout.addWidget(counts_card)
 
-        # --- Aggregates ---
+        # --- Aggregates (individual per-family toggle) ---
         agg_card = Card("Aggregates", "Means of word-level metrics.")
-        agg_card.add_widget(self._make_toggle(
-            "output_doc_aggregates",
-            "mean_zipf_freq, mean_edu_zipf_*, mean_surprisal, "
-            "mean_llm_cloze, mean_llm_surprisal",
-            o["doc_aggregates"], "output"))
+        for key, label in [
+            ("output_doc_agg_zipf_freq",
+             "mean_zipf_freq  (SUBTLEX corpus mean)"),
+            ("output_doc_agg_edu_zipf",
+             "mean_edu_zipf_*  (EWFG grade-band means: K2/3–5/6–8/9–12/Overall)"),
+            ("output_doc_agg_surprisal",
+             "mean_surprisal  (GPT-2 surprisal mean)"),
+            ("output_doc_agg_llm",
+             "mean_llm_cloze + mean_llm_surprisal + mean_llm_top_match_prop"),
+        ]:
+            agg_card.add_widget(
+                self._make_toggle(key, label, o[key[len("output_"):]], "output"))
         layout.addWidget(agg_card)
 
         # --- Lexical diversity ---
@@ -96,12 +139,10 @@ class DocFeaturesSection(QWidget):
             "dictionary. Approximations, not official LIWC-22 outputs.",
             master_key="master_psych_composite",
             master_label="Enable composite psych scores",
-            # `available` is captured at construction; switching backend on
-            # the Word-level page does not live-resync this card. Reopen the
-            # Document-level page (or restart the GUI) to pick up the change.
             available=(prefs["semantic"].get("backend") == "liwc"),
             disabled_subtitle="Requires LIWC backend (selected on the Word-level features page).",
         )
+        self._psych_card = psych_card
         psych_card.settings_changed.connect(self.settings_changed)
         psych_grid = QGridLayout()
         psych_keys = [
@@ -176,6 +217,7 @@ class DocFeaturesSection(QWidget):
         layout.addWidget(pros_card)
 
         layout.addStretch(1)
+        self._refresh_agg_warnings()
 
     def toggle(self, key: str): return self._toggles.get(key)
 
@@ -193,6 +235,38 @@ class DocFeaturesSection(QWidget):
         else:
             save_preferences({section: {key: value}})
         self.settings_changed.emit()
+
+    def refresh_from_prefs(self) -> None:
+        """Re-read prefs and update dynamic labels, card states, and aggregate warnings."""
+        self.cats_count_label.setText(self._cats_count_text())
+        prefs = load_preferences()
+        backend = prefs["semantic"].get("backend", "auto")
+        if backend == "auto":
+            from extractors.semantic_domain import detect_backend
+            backend, _ = detect_backend()
+        self._psych_card.set_available(backend == "liwc")
+        self._refresh_agg_warnings()
+
+    def _refresh_agg_warnings(self) -> None:
+        """Show/hide warning indicators on doc-aggregate toggles.
+
+        A warning appears when the aggregate is enabled but the word-level
+        stage it depends on is not in the current run plan (either because
+        the feature toggle is off or Word-level CSVs output is off).
+        """
+        prefs = load_preferences()
+        plan = plan_from_prefs(prefs)
+        in_plan = plan.stages_to_run
+        o = prefs["output"]
+        for toggle_key, (stage, msg) in _AGG_STAGE_REQ.items():
+            row = self._toggles.get(toggle_key)
+            if row is None:
+                continue
+            agg_key = toggle_key[len("output_"):]
+            if o.get(agg_key, False) and stage not in in_plan:
+                row.set_warning(msg)
+            else:
+                row.set_warning(None)
 
     def _cats_count_text(self) -> str:
         prefs = load_preferences()

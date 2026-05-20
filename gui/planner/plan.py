@@ -31,9 +31,12 @@ from gui.planner.stages import Plan, FeatureCluster
 OUTPUT_KEYED_TOGGLES = frozenset({
     "out_count_tokens", "out_count_content_tokens",
     "out_count_sentences", "out_count_paragraphs",
-    "doc_aggregates", "doc_lex_diversity", "doc_readability",
+    # Individual aggregate toggles (replaced single doc_aggregates in v7)
+    "doc_agg_zipf_freq", "doc_agg_edu_zipf", "doc_agg_surprisal", "doc_agg_llm",
+    "doc_lex_diversity", "doc_readability",
     "doc_category_proportions",
-    "master_doc_prosody", "master_doc_articulation_rate",  # NEW v7
+    "master_doc_prosody", "master_doc_articulation_rate",
+    "master_doc_counts",
 })
 
 _OUTPUT_CSV_MAP = {

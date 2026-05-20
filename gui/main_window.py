@@ -90,6 +90,14 @@ class MainWindow(QMainWindow):
         self.word_features.settings_changed.connect(self.run_section.refresh)
         self.doc_features.settings_changed.connect(self.run_section.refresh)
         self.subword_section.settings_changed.connect(self.run_section.refresh)
+        # Word-level changes (backend switch, category edits) must also refresh
+        # the doc-level page so its category count and psych-card availability
+        # stay in sync without a restart.
+        self.word_features.settings_changed.connect(self.doc_features.refresh_from_prefs)
+        # Doc-level toggle changes and Run-tab output toggle changes (e.g. word_level_csv)
+        # must also refresh aggregate warnings on the doc-level page.
+        self.doc_features.settings_changed.connect(self.doc_features.refresh_from_prefs)
+        self.run_section.settings_changed.connect(self.doc_features.refresh_from_prefs)
         # Sidebar footer follows the analyzer-name field in Inputs
         self.inputs_section.settings_changed.connect(self._refresh_sidebar_footer)
         # Logs tab live-tails the active run; stop on completion.

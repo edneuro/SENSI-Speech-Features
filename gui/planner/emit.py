@@ -153,16 +153,12 @@ def to_namespace(plan: Plan, prefs: dict, level: str) -> argparse.Namespace:
             ns.no_prosody = False
 
         ns.no_doc_counts          = "doc_counts" not in in_plan
-        ns.no_doc_mean_zipf       = ("doc_aggregates" not in in_plan
-                                      or not features.get("freq_subtlex", False))
-        ns.no_doc_mean_edu_zipf   = ("doc_aggregates" not in in_plan
-                                      or ns.edu_bands is None)
-        ns.no_doc_mean_surprisal  = ("doc_aggregates" not in in_plan
-                                      or not features.get("pred_surprisal_gpt2", False))
-        ns.no_doc_mean_llm_cloze  = ("doc_aggregates" not in in_plan or not (
-            features.get("pred_surprisal_llm", False)
-            or features.get("pred_cloze", False)
-            or features.get("pred_topmatch", False)))
+        # Each aggregate family has its own output toggle; the extractor
+        # does not re-run — it aggregates whatever columns word_df already has.
+        ns.no_doc_mean_zipf       = not output.get("doc_agg_zipf_freq", False)
+        ns.no_doc_mean_edu_zipf   = not output.get("doc_agg_edu_zipf", False) or ns.edu_bands is None
+        ns.no_doc_mean_surprisal  = not output.get("doc_agg_surprisal", False)
+        ns.no_doc_mean_llm_cloze  = not output.get("doc_agg_llm", False)
         ns.no_doc_ttr             = "doc_lex_diversity" not in in_plan
         ns.no_doc_mtld            = "doc_lex_diversity" not in in_plan
         ns.no_doc_flesch_ease     = "doc_readability"   not in in_plan

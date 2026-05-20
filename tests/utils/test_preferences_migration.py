@@ -223,7 +223,9 @@ def test_v2_migration_maps_doc_toggles_through_to_v4(v2_prefs_file):
     for k in ("out_count_tokens", "out_count_content_tokens",
               "out_count_sentences", "out_count_paragraphs"):
         assert o[k] is True, k
-    assert o["doc_aggregates"] is True
+    for k in ("doc_agg_zipf_freq", "doc_agg_edu_zipf",
+              "doc_agg_surprisal", "doc_agg_llm"):
+        assert o[k] is True, k
     assert o["doc_lex_diversity"] is True
     assert o["doc_readability"] is True
     assert o["doc_category_proportions"] is True

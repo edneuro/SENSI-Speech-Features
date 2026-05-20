@@ -97,9 +97,10 @@ class ToggleRow(QWidget):
 
 class AmberDotIndicator(QLabel):
     def __init__(self, tooltip: str, parent=None):
-        super().__init__("🟡", parent)
+        super().__init__("⚠", parent)
         self.setToolTip(tooltip)
-        self.setFixedWidth(20)
+        self.setFixedWidth(22)
+        self.setStyleSheet("color: #C77A00; font-size: 14px;")
 
 
 class Card(QFrame):
@@ -190,6 +191,28 @@ class ClusterCard(Card):
         QCheckBox's enabled/checked state); section pages don't need it
         because the master persists itself via _on_master_toggled."""
         return self._master
+
+    def set_available(self, available: bool) -> None:
+        """Update the hard environment gate without restarting the app.
+
+        Restores the master to its persisted value when re-enabling so the
+        user's prior choice is not silently lost.
+        """
+        self._available = available
+        self._master.check.setEnabled(available)
+        if not available:
+            self._master.check.blockSignals(True)
+            self._master.check.setChecked(False)
+            self._master.check.blockSignals(False)
+            self._update_children_enabled(False)
+        else:
+            from utils.preferences import load_preferences
+            prefs = load_preferences()
+            saved = prefs.get(self._master_section, {}).get(self._master_key, True)
+            self._master.check.blockSignals(True)
+            self._master.check.setChecked(saved)
+            self._master.check.blockSignals(False)
+            self._update_children_enabled(saved)
 
     def _on_master_toggled(self, v: bool) -> None:
         from utils.preferences import save_preferences

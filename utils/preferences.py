@@ -383,15 +383,36 @@ _MASTERS_V7_FEATURES = {
     "master_syllable_labels":      True,
     "master_syllable_prosody":     True,
     "master_phoneme_intervals":    True,
+    # Card-level masters for word-level feature groups
+    "master_structural":           True,
+    "master_lexling":              True,
+    "master_frequency":            True,
+    "master_predictability":       True,
+    "master_acoustic":             True,
 }
 
 _MASTERS_V7_OUTPUT = {
     "master_doc_prosody":           True,
     "master_doc_articulation_rate": True,
+    "master_doc_counts":            True,
+}
+
+# Individual doc-level aggregate toggles (replaced single doc_aggregates key).
+# Existing prefs that have doc_aggregates:true will carry it forward as a
+# stale unknown key; the new keys default True so behaviour is preserved.
+_AGG_KEYS_V7 = {
+    "doc_agg_zipf_freq": True,
+    "doc_agg_edu_zipf":  True,
+    "doc_agg_surprisal": True,
+    "doc_agg_llm":       True,
 }
 
 _FEATURES_DEFAULT_V7 = {**_FEATURES_DEFAULT_V6, **_MASTERS_V7_FEATURES}
-_OUTPUT_DEFAULT_V7   = {**_OUTPUT_DEFAULT_V6,   **_MASTERS_V7_OUTPUT}
+_OUTPUT_DEFAULT_V7   = {
+    **{k: v for k, v in _OUTPUT_DEFAULT_V6.items() if k != "doc_aggregates"},
+    **_AGG_KEYS_V7,
+    **_MASTERS_V7_OUTPUT,
+}
 
 DEFAULT_PREFS_V7: dict[str, Any] = {
     **DEFAULT_PREFS_V6,

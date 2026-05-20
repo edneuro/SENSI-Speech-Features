@@ -17,6 +17,12 @@ _INTENTIONALLY_UNROUTED_FEATURES: set[str] = {
     "master_syllable_labels",
     "master_syllable_prosody",
     "master_phoneme_intervals",
+    # Word-level card-group masters
+    "master_structural",
+    "master_lexling",
+    "master_frequency",
+    "master_predictability",
+    "master_acoustic",
 }
 
 # Output keys NOT routed via clusters (the master output toggles that
@@ -28,6 +34,7 @@ _OUTPUT_KEYS_VIA_CSV_MAP: set[str] = {
     # FeatureCluster.master_toggle, not toggle_keys.
     "master_doc_prosody",
     "master_doc_articulation_rate",
+    "master_doc_counts",
 }
 
 

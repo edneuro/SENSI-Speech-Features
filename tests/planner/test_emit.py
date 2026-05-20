@@ -16,10 +16,20 @@ _MASTER_DEFAULTS_FEATURES = {
     "master_syllable_labels":    True,
     "master_syllable_prosody":   True,
     "master_phoneme_intervals":  True,
+    "master_structural":         True,
+    "master_lexling":            True,
+    "master_frequency":          True,
+    "master_predictability":     True,
+    "master_acoustic":           True,
 }
 _MASTER_DEFAULTS_OUTPUT = {
     "master_doc_prosody":           True,
     "master_doc_articulation_rate": True,
+    "master_doc_counts":            True,
+    "doc_agg_zipf_freq":            True,
+    "doc_agg_edu_zipf":             True,
+    "doc_agg_surprisal":            True,
+    "doc_agg_llm":                  True,
 }
 
 
@@ -97,7 +107,8 @@ def test_doc_namespace_separate_no_flags():
     prefs = _prefs(
         output={"word_level_csv": False, "syllables_csv": False,
                 "phonemes_csv": False, "document_summary": True,
-                "doc_aggregates": True,
+                "doc_agg_zipf_freq": True, "doc_agg_edu_zipf": False,
+                "doc_agg_surprisal": False, "doc_agg_llm": False,
                 "doc_lex_diversity": True, "doc_readability": False,
                 "doc_category_proportions": False,
                 "out_count_tokens": True, "out_count_content_tokens": False,
@@ -107,7 +118,8 @@ def test_doc_namespace_separate_no_flags():
     plan = plan_from_prefs(prefs)
     ns = to_namespace(plan, prefs, level="doc")
     assert ns.no_doc_counts is False
-    assert ns.no_doc_mean_zipf is False
+    assert ns.no_doc_mean_zipf is False     # doc_agg_zipf_freq True
+    assert ns.no_doc_mean_surprisal is True  # doc_agg_surprisal False
     assert ns.no_doc_ttr is False
     assert ns.no_doc_flesch_ease is True
     assert ns.no_doc_category_proportions is True
@@ -168,20 +180,23 @@ def test_edu_bands_string_for_runtime():
         assert "overall" in ns.edu_bands
 
 
-def test_doc_aggregates_gates_on_word_extractor_presence():
-    """If doc_aggregates is on but pred_surprisal_gpt2 is OFF, no_doc_mean_surprisal
-    must be True — main.py forces the extractor back on otherwise (paying GPT-2 cost
-    even though the user disabled it)."""
+def test_individual_agg_toggles_control_no_doc_mean_flags():
+    """Each doc_agg_* output toggle independently controls the corresponding
+    no_doc_mean_* flag — they are no longer linked to word-level feature toggles."""
     prefs = _prefs(
         output={"word_level_csv": False, "document_summary": True,
                 "syllables_csv": False, "phonemes_csv": False,
-                "doc_aggregates": True},
-        features={"freq_subtlex": True, "pred_surprisal_gpt2": False},
+                "doc_agg_zipf_freq": True,
+                "doc_agg_edu_zipf": False,
+                "doc_agg_surprisal": False,
+                "doc_agg_llm": True},
+        features={"freq_subtlex": True, "pred_surprisal_gpt2": True},
     )
     plan = plan_from_prefs(prefs)
     ns = to_namespace(plan, prefs, level="doc")
-    assert ns.no_doc_mean_surprisal is True
-    assert ns.no_doc_mean_zipf is False
+    assert ns.no_doc_mean_zipf is False       # doc_agg_zipf_freq is True
+    assert ns.no_doc_mean_surprisal is True   # doc_agg_surprisal is False
+    assert ns.no_doc_mean_llm_cloze is False  # doc_agg_llm is True
 
 
 def test_sem_categories_unified_key_used_for_both_levels():

@@ -141,9 +141,9 @@ def test_doc_args_no_prosody_when_all_doc_toggles_off(prefs_tmp):
 
 def test_doc_args_skip_llm_when_word_llm_toggles_off(prefs_tmp):
     """If the user turned off every word-level LLM toggle, the doc-level args
-    must NOT request the LLM-cloze extractor or its doc aggregate. Otherwise
-    main.run() invokes the OpenAI backend (or a local Llama) and a missing
-    API key crashes every stimulus, yielding zero summary rows and no CSV.
+    must NOT request the LLM-cloze extractor. The crash path (missing API key)
+    is gated by no_llm_cloze; no_doc_mean_llm_cloze is now independently
+    controlled by the doc_agg_llm output toggle.
     Regression for the 2026-05-12 'OpenAIError: Missing credentials' bug.
     """
     from utils.preferences import save_preferences
@@ -154,19 +154,24 @@ def test_doc_args_skip_llm_when_word_llm_toggles_off(prefs_tmp):
         "pred_topmatch": False,
     }})
     args = build_args_doc_level()
+    # Extractor must be skipped — this is what prevents the crash.
     assert args.no_llm_cloze is True
-    assert args.no_doc_mean_llm_cloze is True
+    # Aggregate flag depends on the doc_agg_llm output toggle (default True),
+    # not on word-level feature toggles. doc_summary.py gracefully handles
+    # absent LLM columns without crashing.
+    assert args.no_doc_mean_llm_cloze is False
 
 
 def test_doc_args_skip_surprisal_when_word_gpt2_off(prefs_tmp):
-    """Symmetric to the LLM case: GPT-2 surprisal must not run when the user
-    turned off its word-level toggle, even with doc_aggregates on."""
+    """GPT-2 surprisal extractor must not run when the user turned off its
+    word-level toggle. The aggregate flag is independently controlled by
+    doc_agg_surprisal (default True); doc_summary.py skips absent columns."""
     from utils.preferences import save_preferences
     from gui.run_dispatch import build_args_doc_level
     save_preferences({"features": {"pred_surprisal_gpt2": False}})
     args = build_args_doc_level()
     assert args.no_surprisal is True
-    assert args.no_doc_mean_surprisal is True
+    assert args.no_doc_mean_surprisal is False  # doc_agg_surprisal defaults True
 
 
 def test_doc_args_enable_llm_when_any_word_llm_toggle_on(prefs_tmp):
@@ -284,7 +289,8 @@ def test_doc_args_skip_freq_when_word_freq_off_and_no_aggregate(prefs_tmp):
             "freq_ewfg_6to8": False, "freq_ewfg_9to12": False,
             "freq_ewfg_overall": False,
         },
-        "output": {"doc_aggregates": False},  # no mean_* needed
+        "output": {"doc_agg_zipf_freq": False, "doc_agg_edu_zipf": False,
+                   "doc_agg_surprisal": False, "doc_agg_llm": False},  # no mean_* needed
     })
     args = build_args_doc_level()
     assert args.no_freq is True

@@ -16,6 +16,7 @@ from pathlib import Path
 
 from utils.preferences import load_preferences
 from gui.planner import plan_from_prefs
+from extractors.llm_cloze import LLM_OPTIONS
 
 
 @dataclass(frozen=True)
@@ -91,7 +92,7 @@ def compute_warnings(session_api_key: str = "") -> list[Warning]:
 
     # OpenAI without API key
     if "llm_predict" in in_plan:
-        llm_model = prefs["predictability"].get("llm_model", "")
+        llm_model = prefs["predictability"].get("llm_model", "") or LLM_OPTIONS[0][0]
         if llm_model.startswith("gpt-") and not session_api_key:
             for k in ("pred_surprisal_llm", "pred_cloze", "pred_topmatch"):
                 if prefs["features"].get(k, False):

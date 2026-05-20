@@ -31,10 +31,14 @@ class WordFeaturesSection(QWidget):
         # configuring WHICH columns appear in that CSV.
 
         # --- Structural (per-column) ---
-        struct_card = Card(
+        struct_card = ClusterCard(
             "Structural",
             "Document position and offsets — from spaCy. "
-            "Pick which columns appear in the word-level CSV.")
+            "Pick which columns appear in the word-level CSV.",
+            master_key="master_structural",
+            master_label="Enable all structural columns",
+        )
+        struct_card.settings_changed.connect(self.settings_changed)
         struct_grid = QGridLayout()
         struct_keys = [
             ("feat_struct_doc_id", "doc_id"),
@@ -51,31 +55,40 @@ class WordFeaturesSection(QWidget):
                 self._make_toggle(key, label, f[key], "features"),
                 i // 2, i % 2,
             )
-        struct_card.add_layout(struct_grid)
+        struct_card.add_child_layout(struct_grid)
         layout.addWidget(struct_card)
 
         # --- Lexical-linguistic ---
-        lex_card = Card(
+        lex_card = ClusterCard(
             "Lexical–linguistic",
-            "Linguistic annotation from spaCy (en_core_web_sm).")
+            "Linguistic annotation from spaCy (en_core_web_sm).",
+            master_key="master_lexling",
+            master_label="Enable all lex-ling columns",
+        )
+        lex_card.settings_changed.connect(self.settings_changed)
         for key, label in [
             ("lexling_tokens", "Tokenization & lemmatization (token, lemma)"),
             ("lexling_pos",    "Part-of-speech tags (upos, xpos)"),
             ("lexling_morph",  "Morphological features (feats)"),
             ("lexling_dep",    "Dependency parse (dep_rel, head_token_id, deps, misc)"),
         ]:
-            lex_card.add_widget(self._make_toggle(key, label, f[key], "features"))
+            lex_card.add_child(self._make_toggle(key, label, f[key], "features"))
         layout.addWidget(lex_card)
 
         # --- Frequency ---
-        freq_card = Card("Frequency", "Lexical-corpus frequency lookups.")
-        freq_card.add_widget(self._make_toggle(
+        freq_card = ClusterCard(
+            "Frequency", "Lexical-corpus frequency lookups.",
+            master_key="master_frequency",
+            master_label="Enable all frequency columns",
+        )
+        freq_card.settings_changed.connect(self.settings_changed)
+        freq_card.add_child(self._make_toggle(
             "freq_subtlex",
             "General-corpus frequency (SUBTLEX-US, Zipf scale) → Zipf_Freq",
             f["freq_subtlex"], "features"))
         ewfg_label = QLabel("Grade-banded (EWFG):")
         ewfg_label.setObjectName("Subtitle")
-        freq_card.add_widget(ewfg_label)
+        freq_card.add_child(ewfg_label)
         ewfg_grid = QGridLayout()
         ewfg_keys = [
             ("freq_ewfg_k2", "K–2 → Edu_Zipf_K2"),
@@ -89,29 +102,39 @@ class WordFeaturesSection(QWidget):
                 self._make_toggle(key, label, f[key], "features"),
                 i // 2, i % 2,
             )
-        freq_card.add_layout(ewfg_grid)
+        freq_card.add_child_layout(ewfg_grid)
         layout.addWidget(freq_card)
 
         # --- Predictability ---
-        pred_card = Card("Predictability", "Context-conditional probability features.")
-        pred_card.add_widget(QLabel("Surprisal — -log₂ P(word | preceding context), in bits."))
-        pred_card.add_widget(self._make_toggle(
+        # Feature toggles are gated by the master; model picker and API key
+        # are configuration widgets added via add_widget (non-gated path) so
+        # they remain accessible even when the master is off.
+        pred_card = ClusterCard(
+            "Predictability", "Context-conditional probability features.",
+            master_key="master_predictability",
+            master_label="Enable all predictability columns",
+        )
+        pred_card.settings_changed.connect(self.settings_changed)
+        surp_label = QLabel("Surprisal — -log₂ P(word | preceding context), in bits.")
+        pred_card.add_child(surp_label)
+        pred_card.add_child(self._make_toggle(
             "pred_surprisal_gpt2",
             "From GPT-2 → column: Surprisal (legacy baseline)",
             f["pred_surprisal_gpt2"], "features"))
-        pred_card.add_widget(self._make_toggle(
+        pred_card.add_child(self._make_toggle(
             "pred_surprisal_llm",
             "From LLM → column: LLM_Surprisal",
             f["pred_surprisal_llm"], "features"))
-        pred_card.add_widget(QLabel("Cloze features (LLM forward pass)"))
-        pred_card.add_widget(self._make_toggle(
+        cloze_label = QLabel("Cloze features (LLM forward pass)")
+        pred_card.add_child(cloze_label)
+        pred_card.add_child(self._make_toggle(
             "pred_cloze", "Cloze probability → LLM_Cloze",
             f["pred_cloze"], "features"))
-        pred_card.add_widget(self._make_toggle(
+        pred_card.add_child(self._make_toggle(
             "pred_topmatch", "Top-1 match → LLM_TopMatch",
             f["pred_topmatch"], "features"))
 
-        # Model picker
+        # Model picker — non-gated (config, not output)
         mp = QHBoxLayout()
         mp.addWidget(QLabel("LLM model:"))
         self.llm_model_combo = QComboBox()
@@ -123,9 +146,10 @@ class WordFeaturesSection(QWidget):
         self.llm_model_combo.setCurrentText(saved_label)
         self.llm_model_combo.currentTextChanged.connect(self._on_model_change)
         mp.addWidget(self.llm_model_combo, 1)
-        pred_card.add_layout(mp)
+        mp_w = QWidget(); mp_w.setLayout(mp)
+        pred_card.add_widget(mp_w)
 
-        # API key row (only for OpenAI)
+        # API key row (only for OpenAI) — non-gated
         self.api_key_row = QWidget()
         ak = QHBoxLayout(self.api_key_row); ak.setContentsMargins(0, 0, 0, 0)
         ak.addWidget(QLabel("API key:"))
@@ -142,6 +166,10 @@ class WordFeaturesSection(QWidget):
         ak.addWidget(show_btn)
         pred_card.add_widget(self.api_key_row)
         self._refresh_api_key_visibility()
+        if not saved_model:
+            # api_key_row exists now — safe to call. Persists the displayed
+            # default so preflight and the cost panel see a real model ID.
+            self._on_model_change(self.llm_model_combo.currentText())
         layout.addWidget(pred_card)
 
         # --- Semantic indicators ---
@@ -178,9 +206,13 @@ class WordFeaturesSection(QWidget):
         layout.addWidget(sem_card)
 
         # --- Acoustic (per-column) ---
-        ac_card = Card(
+        ac_card = ClusterCard(
             "Acoustic",
-            "True acoustic word boundaries from audio (forced alignment, MFA).")
+            "True acoustic word boundaries from audio (forced alignment, MFA).",
+            master_key="master_acoustic",
+            master_label="Enable all acoustic columns",
+        )
+        ac_card.settings_changed.connect(self.settings_changed)
         ac_grid = QGridLayout()
         ac_keys = [
             ("feat_acoustic_onset", "Onset"),
@@ -193,7 +225,7 @@ class WordFeaturesSection(QWidget):
                 self._make_toggle(key, label, f[key], "features"),
                 i // 2, i % 2,
             )
-        ac_card.add_layout(ac_grid)
+        ac_card.add_child_layout(ac_grid)
         layout.addWidget(ac_card)
 
         # --- Prosody (per-column) ---

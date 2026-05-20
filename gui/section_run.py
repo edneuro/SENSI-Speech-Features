@@ -13,11 +13,13 @@ from gui.cost_estimate import estimate, count_input_tokens
 from gui.run_dispatch import run as dispatch_run
 from gui.planner import plan_from_prefs
 from utils.preferences import load_preferences, save_preferences
+from extractors.llm_cloze import LLM_OPTIONS
 
 
 class RunSection(QWidget):
     run_started = Signal()
     run_finished = Signal(str)
+    settings_changed = Signal()   # emitted when output toggles change
     # Internal cross-thread bridges. dispatch_run invokes its progress/done
     # callbacks from a worker thread; emitting a Qt signal auto-upgrades to
     # QueuedConnection so the connected slots run on the main (GUI) thread.
@@ -49,22 +51,22 @@ class RunSection(QWidget):
         self.word_csv_toggle = ToggleRow("Word-level CSVs (one per stimulus)")
         self.word_csv_toggle.set_checked(prefs["output"]["word_level_csv"])
         self.word_csv_toggle.toggled.connect(
-            lambda v: save_preferences({"output": {"word_level_csv": v}}))
+            lambda v: [save_preferences({"output": {"word_level_csv": v}}), self.refresh(), self.settings_changed.emit()])
         layout.addWidget(self.word_csv_toggle)
         self.doc_sum_toggle = ToggleRow("Document-level summary (single CSV)")
         self.doc_sum_toggle.set_checked(prefs["output"]["document_summary"])
         self.doc_sum_toggle.toggled.connect(
-            lambda v: save_preferences({"output": {"document_summary": v}}))
+            lambda v: [save_preferences({"output": {"document_summary": v}}), self.refresh(), self.settings_changed.emit()])
         layout.addWidget(self.doc_sum_toggle)
         self.syllables_csv_toggle = ToggleRow("Syllables CSV (one per stimulus)")
         self.syllables_csv_toggle.set_checked(prefs["output"]["syllables_csv"])
         self.syllables_csv_toggle.toggled.connect(
-            lambda v: save_preferences({"output": {"syllables_csv": v}}))
+            lambda v: [save_preferences({"output": {"syllables_csv": v}}), self.refresh(), self.settings_changed.emit()])
         layout.addWidget(self.syllables_csv_toggle)
         self.phonemes_csv_toggle = ToggleRow("Phonemes CSV (one per stimulus)")
         self.phonemes_csv_toggle.set_checked(prefs["output"]["phonemes_csv"])
         self.phonemes_csv_toggle.toggled.connect(
-            lambda v: save_preferences({"output": {"phonemes_csv": v}}))
+            lambda v: [save_preferences({"output": {"phonemes_csv": v}}), self.refresh(), self.settings_changed.emit()])
         layout.addWidget(self.phonemes_csv_toggle)
 
         # Readiness
@@ -113,8 +115,11 @@ class RunSection(QWidget):
             self.warnings_label.setText(
                 "\n".join(f"• {w.message}" for w in warnings))
 
-        # Cost panel — only when planner schedules llm_predict AND the model is an OpenAI one
-        model = prefs["predictability"].get("llm_model", "")
+        # Cost panel — only when planner schedules llm_predict AND the model is an OpenAI one.
+        # llm_model defaults to "" (never persisted when user keeps the combo's default);
+        # treat "" as LLM_OPTIONS[0][0] (gpt-4o-mini) — what the combo shows and what
+        # select_model() would pick at runtime when the key is unset.
+        model = prefs["predictability"].get("llm_model", "") or LLM_OPTIONS[0][0]
         if "llm_predict" in plan.stages_to_run and model.startswith("gpt-"):
             self.cost_panel.setVisible(True)
             t = Path(prefs["shared"].get("last_transcripts_folder", ""))
