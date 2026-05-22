@@ -12,12 +12,19 @@ SensiExtractor is the standardized SOP tool for the SENSI naturalistic-EEG pipel
 
 ## 2. Current state — what we're working on RIGHT NOW
 
-**Active batch:** P-center — **implemented, awaiting manual validation.**
+**Active batch:** Output reorganization — **implemented, awaiting test run confirmation.**
+
+- Spec: [`docs/superpowers/specs/2026-05-22-output-reorganization-design.md`](superpowers/specs/2026-05-22-output-reorganization-design.md)
+- Plan: [`docs/superpowers/plans/2026-05-22-output-reorganization.md`](superpowers/plans/2026-05-22-output-reorganization.md)
+- Status: All 5 plan tasks complete; `_level_dir` helper added to `main.py`; 6 path sites updated; 7 new tests in `tests/integration/test_output_paths.py`; existing integration tests updated to new paths.
+- Open: Run `python -m pytest` to confirm full suite green. Validate with a real ISC-Wu Tsai stimulus that output appears in `word/`, `syllable/`, `phoneme/`, `document/` subfolders as expected.
+
+**Also awaiting manual validation:** P-center (2026-05-20) — **implemented, full test suite green.**
 
 - Spec: [`docs/superpowers/specs/2026-05-20-pcenter-design.md`](superpowers/specs/2026-05-20-pcenter-design.md)
 - Plan: [`docs/superpowers/plans/2026-05-20-pcenter.md`](superpowers/plans/2026-05-20-pcenter.md)
-- Status: All 6 plan tasks complete; `P_Center` column added to `<stim>_syllables.csv`; new `extractors/pcenter.py`; prefs v7 → v8 additive (adds `feat_syllable_pcenter`, `master_syllable_pcenter`, `prosody.pcenter_k`); P-center card added to Sub-word features GUI page with k-coefficient spinbox; planner registry updated with `pcenter` stage and `p-center` cluster; CLI `--no-syl-pcenter` / `--pcenter-k` flags added.
-- Open: on a real ISC-Wu Tsai stimulus with MFA alignment, confirm `P_Center` column appears in `<stim>_syllables.csv` with values in a reasonable range (close to syllable `Onset`, slightly before nucleus onset for consonant-onset syllables).
+- Status: All 6 plan tasks complete; `P_Center` column added to `<stim>_syllables.csv` (now in `syllable/` subfolder); new `extractors/pcenter.py`; prefs v7 → v8 additive; P-center card in Sub-word features GUI; CLI `--no-syl-pcenter` / `--pcenter-k`.
+- Open: on a real ISC-Wu Tsai stimulus with MFA alignment, confirm `P_Center` column appears in `syllable/<stim>_syllables.csv` with values in a reasonable range.
 
 **Also awaiting manual validation:** Acoustic prosody (2026-05-12) — **implemented, full test suite green.**
 
@@ -48,6 +55,7 @@ SensiExtractor is the standardized SOP tool for the SENSI naturalistic-EEG pipel
 
 | Date | Batch | Summary |
 |---|---|---|
+| 2026-05-22 | **Output reorganization** | Per-level subfolders: `word/`, `syllable/`, `phoneme/`, `document/` under the output root. Lazy mkdir (folder created only when output written). `session_units` CSVs moved to `logs/`. `_level_dir` helper in `main.py`; 6 path sites updated; 7 new integration tests. **Breaking change** to all output paths. Spec/plan: `docs/superpowers/specs/2026-05-22-output-reorganization-design.md`, `docs/superpowers/plans/2026-05-22-output-reorganization.md`. |
 | 2026-05-20 | **P-center** | `P_Center` column added to `<stim>_syllables.csv`. Formula: `nucleus_onset − k × onset_consonant_duration` (Scott 1993, k=0.3 default). New `extractors/pcenter.py`; planner `pcenter` stage + `p-center` cluster; prefs v7 → v8 (adds `feat_syllable_pcenter`, `master_syllable_pcenter`, `prosody.pcenter_k`); P-center card in Sub-word features GUI page; CLI `--no-syl-pcenter` / `--pcenter-k`. Spec/plan: `docs/superpowers/specs/2026-05-20-pcenter-design.md`, `docs/superpowers/plans/2026-05-20-pcenter.md`. |
 | 2026-05-19 | **GUI validation unification + cluster UX** | The 2026-05-14 planner became the single source of truth for which stages run; this batch makes it the single source for everything that *consumes* that truth: preflight, the Run-tab cost panel, the cluster master toggles, and unit metadata. Two new declarative fields on `FeatureCluster` (`master_toggle`, `available_when`) enable per-cluster master toggles in the GUI (grayed-out children when off) and the LIWC-only psych composite gating. `gui/preflight.py` was rewritten to consume `plan.stages_to_run`; the cost panel hides when no LLM features are active; the Syllables card split into Intervals + Labels + Prosody sub-clusters. Semantic categories unified into `semantic.categories_<backend>` (word-level page is canonical editor; doc-level shows count + hint). Per-run `<output>/<run_ts>_<level>_session_units.csv` records column → unit. Prefs v6 → v7 additive migration. Spec/plan: `docs/superpowers/specs/2026-05-19-gui-unification-design.md`, `docs/superpowers/plans/2026-05-19-gui-unification.md`. |
 | 2026-05-15 | **Planner module** | Replaced `gui/run_dispatch.py:build_args_word_level / build_args_doc_level` (~200 lines of hand-rolled cascading rules) with a declarative `gui/planner/` package: `Stage` + `FeatureCluster` dataclasses, a `STAGES` + `CLUSTERS` registry derived from `docs/feature_dependencies.md`, a pure `plan_from_prefs` function (DAG closure + topo sort), and a `to_namespace` adapter that emits the same `argparse.Namespace` `main.py` already consumes. No changes to `main.py` or any extractor. Adding a new feature is now a single edit in `gui/planner/registry.py`. A `_word_only_stages` filter in `emit.py` prevents doc-level stage requirements from bleeding into the word-level namespace; `doc_prosody → no_prosody=False` forces word-prosody computation when doc-prosody needs the deltas. Schema-drift guard test prevents the registry from falling out of sync with prefs. 313 tests green (37 new in `tests/planner/`). Spec/plan: `docs/superpowers/specs/2026-05-14-planner-design.md`, `docs/superpowers/plans/2026-05-14-planner.md`. |
