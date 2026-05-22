@@ -56,8 +56,13 @@ def add_word_prosody(df: pd.DataFrame, contours: Contours,
     elif pitch_units != "hz":
         raise ValueError(f"pitch_units must be 'hz' or 'semitones', got {pitch_units!r}")
 
-    onsets = df["Onset"].to_numpy() if "Onset" in df.columns else np.full(len(df), np.nan)
-    ends = df["End"].to_numpy() if "End" in df.columns else np.full(len(df), np.nan)
+    # pd.to_numeric + float cast guards against pandas.NA (object dtype) in
+    # the Onset/End columns when MFA alignment produced no matches — pandas.NA
+    # is not numeric and np.isfinite(pandas.NA) raises TypeError in NumPy 2.0.
+    onsets = (pd.to_numeric(df["Onset"], errors='coerce').to_numpy(dtype=float, na_value=np.nan)
+              if "Onset" in df.columns else np.full(len(df), np.nan))
+    ends = (pd.to_numeric(df["End"], errors='coerce').to_numpy(dtype=float, na_value=np.nan)
+            if "End" in df.columns else np.full(len(df), np.nan))
 
     pitch_aggs, vol_aggs = [], []
     for on, en in zip(onsets, ends):
