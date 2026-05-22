@@ -12,12 +12,12 @@ SensiExtractor is the standardized SOP tool for the SENSI naturalistic-EEG pipel
 
 ## 2. Current state — what we're working on RIGHT NOW
 
-**Active batch:** Output reorganization — **implemented, awaiting test run confirmation.**
+**Active batch:** Output reorganization — **implemented, full test suite green (362 passed, 1 skipped).**
 
 - Spec: [`docs/superpowers/specs/2026-05-22-output-reorganization-design.md`](superpowers/specs/2026-05-22-output-reorganization-design.md)
 - Plan: [`docs/superpowers/plans/2026-05-22-output-reorganization.md`](superpowers/plans/2026-05-22-output-reorganization.md)
-- Status: All 5 plan tasks complete; `_level_dir` helper added to `main.py`; 6 path sites updated; 7 new tests in `tests/integration/test_output_paths.py`; existing integration tests updated to new paths.
-- Open: Run `python -m pytest` to confirm full suite green. Validate with a real ISC-Wu Tsai stimulus that output appears in `word/`, `syllable/`, `phoneme/`, `document/` subfolders as expected.
+- Status: All 5 plan tasks complete; `_level_dir` helper in `main.py`; 6 path sites updated; 7 new integration tests. Two NumPy 2.0 / pandas.NA compatibility fixes applied (`audio_features.py`, `prosody.py`).
+- Open: Validate with a real ISC-Wu Tsai stimulus that output appears in `word/`, `syllable/`, `phoneme/`, `document/` subfolders as expected.
 
 **Also awaiting manual validation:** P-center (2026-05-20) — **implemented, full test suite green.**
 
