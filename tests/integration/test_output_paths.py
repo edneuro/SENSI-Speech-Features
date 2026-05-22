@@ -126,10 +126,14 @@ def test_sidecars_disabled_folders_not_created(tmp_path):
 
 
 def test_session_units_not_at_word_output_root(tmp_path):
-    """word_session_units_*.csv must NOT appear directly in the output folder."""
+    """word_session_units_*.csv must be in logs/, never at the output root."""
     run_word_level_batch(_word_args(tmp_path))
-    assert not list((tmp_path / 'out').glob('word_session_units_*.csv')), \
+    out = tmp_path / 'out'
+    assert not list(out.glob('word_session_units_*.csv')), \
         'word_session_units found at root — must be in logs/'
+    logs_units = list((out / 'logs').glob('word_session_units_*.csv'))
+    assert logs_units, \
+        'word_session_units not found in logs/ — either path is wrong or session_units block silently errored'
 
 
 # ---------------------------------------------------------------------------
@@ -146,7 +150,11 @@ def test_doc_summary_lands_in_document_subfolder(tmp_path):
 
 
 def test_session_units_not_at_doc_output_root(tmp_path):
-    """doc_session_units_*.csv must NOT appear directly in the output folder."""
+    """doc_session_units_*.csv must be in logs/, never at the output root."""
     run_doc_level_batch(_doc_args(tmp_path))
-    assert not list((tmp_path / 'out').glob('doc_session_units_*.csv')), \
+    out = tmp_path / 'out'
+    assert not list(out.glob('doc_session_units_*.csv')), \
         'doc_session_units found at root — must be in logs/'
+    logs_units = list((out / 'logs').glob('doc_session_units_*.csv'))
+    assert logs_units, \
+        'doc_session_units not found in logs/ — either path is wrong or session_units block silently errored'
