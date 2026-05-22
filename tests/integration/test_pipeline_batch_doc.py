@@ -28,7 +28,7 @@ def test_doc_level_emits_master_csv(tmp_path):
     args = _args(tmp_path)
     run_doc_level_batch(args)
     out = tmp_path / 'out'
-    masters = list(out.glob('documents_summary_*.csv'))
+    masters = list((out / 'document').glob('documents_summary_*.csv'))
     assert len(masters) == 1
 
 
@@ -46,7 +46,7 @@ def test_doc_level_master_csv_columns(tmp_path):
     args = _args(tmp_path)
     run_doc_level_batch(args)
     out = tmp_path / 'out'
-    master = next(out.glob('documents_summary_*.csv'))
+    master = next((out / 'document').glob('documents_summary_*.csv'))
     with master.open() as f:
         rows = list(csv.DictReader(f))
     assert len(rows) >= 1  # at least one matched pair processed
@@ -59,7 +59,7 @@ def test_doc_level_does_not_emit_word_level_csvs(tmp_path):
     args = _args(tmp_path)
     run_doc_level_batch(args)
     out = tmp_path / 'out'
-    assert not list(out.glob('*_features.csv'))
+    assert not (out / 'word').exists()
 
 
 def test_main_dispatches_level_word_by_default(tmp_path):

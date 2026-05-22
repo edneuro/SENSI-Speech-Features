@@ -507,6 +507,13 @@ def _doc_columns_to_drop(output: dict, features: dict) -> set:
     return drop
 
 
+def _level_dir(output_dir: Path, level: str) -> Path:
+    """Return output_dir/level, creating it if needed (lazy mkdir)."""
+    d = output_dir / level
+    d.mkdir(parents=True, exist_ok=True)
+    return d
+
+
 def run_word_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None:
     """Process all matched (transcript, audio) pairs in the configured folders."""
     transcripts_dir = Path(args.transcripts_folder)
@@ -594,7 +601,7 @@ def run_word_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None
                         getattr(args, 'feature_toggles', {}) or {})
                     if drop:
                         syll_df = syll_df.drop(columns=[c for c in drop if c in syll_df.columns])
-                    syll_path = output_dir / f'{pair.stimulus_id}_syllables.csv'
+                    syll_path = _level_dir(output_dir, 'syllable') / f'{pair.stimulus_id}_syllables.csv'
                     syll_df.to_csv(syll_path, index=False)
 
                 if not getattr(args, 'no_phonemes', False) and len(phon_df) > 0:
@@ -602,7 +609,7 @@ def run_word_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None
                         getattr(args, 'feature_toggles', {}) or {})
                     if drop:
                         phon_df = phon_df.drop(columns=[c for c in drop if c in phon_df.columns])
-                    phon_path = output_dir / f'{pair.stimulus_id}_phonemes.csv'
+                    phon_path = _level_dir(output_dir, 'phoneme') / f'{pair.stimulus_id}_phonemes.csv'
                     phon_df.to_csv(phon_path, index=False)
 
             # Drop per-column toggled-off output columns (schema v4 word-level)
@@ -615,7 +622,7 @@ def run_word_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None
             # Gate the features.csv write on the no_word_csv flag so a
             # sidecars-only run doesn't emit the word-level CSV.
             if not getattr(args, 'no_word_csv', False):
-                features_path = output_dir / f'{pair.stimulus_id}_features.csv'
+                features_path = _level_dir(output_dir, 'word') / f'{pair.stimulus_id}_features.csv'
                 df.to_csv(features_path, index=False)
             else:
                 features_path = None
@@ -652,7 +659,7 @@ def run_word_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None
         _plan = plan_from_prefs(load_preferences())
         _rows = build_session_units(_plan)
         if _rows:
-            units_path = output_dir / f'word_session_units_{logger.run_ts}.csv'
+            units_path = logger.logs_dir / f'word_session_units_{logger.run_ts}.csv'
             pd.DataFrame(_rows).to_csv(units_path, index=False)
     except Exception:
         pass  # non-fatal; don't break existing batch output
@@ -720,7 +727,7 @@ def run_doc_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None:
         logger.record_unmatched_audio(unmatched)
 
     summary_rows: list[dict] = []
-    master_path = output_dir / f'documents_summary_{logger.run_ts}.csv'
+    master_path = _level_dir(output_dir, 'document') / f'documents_summary_{logger.run_ts}.csv'
 
     # Build an extraction args copy that forces on any word-level extractor whose
     # output is needed by an enabled doc-level toggle.  Word-level toggles only
@@ -826,7 +833,7 @@ def run_doc_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None:
         _plan = plan_from_prefs(load_preferences())
         _rows = build_session_units(_plan)
         if _rows:
-            units_path = output_dir / f'doc_session_units_{logger.run_ts}.csv'
+            units_path = logger.logs_dir / f'doc_session_units_{logger.run_ts}.csv'
             pd.DataFrame(_rows).to_csv(units_path, index=False)
     except Exception:
         pass  # non-fatal; don't break existing batch output

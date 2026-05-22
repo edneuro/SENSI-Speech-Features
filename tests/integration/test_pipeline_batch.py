@@ -28,10 +28,10 @@ def test_batch_processes_all_pairs(tmp_path):
     args = _args_for_batch(tmp_path)
     run_word_level_batch(args)
     out = tmp_path / 'out'
-    assert (out / 'story1_features.csv').exists()
-    assert (out / 'story2_features.csv').exists()
+    assert (out / 'word' / 'story1_features.csv').exists()
+    assert (out / 'word' / 'story2_features.csv').exists()
     # story3 has no audio match — should NOT have features.csv emitted
-    assert not (out / 'story3_features.csv').exists()
+    assert not (out / 'word' / 'story3_features.csv').exists()
     # No per-stim summary sidecar in word-level runs anymore
     assert not (out / 'story1_summary.csv').exists()
     assert not (out / 'story2_summary.csv').exists()
@@ -95,15 +95,15 @@ def test_batch_emits_syllables_and_phonemes_sidecars(tmp_path):
     ])
     run_word_level_batch(args)
 
-    csv_path = out_dir / 'tone_features.csv'
+    csv_path = out_dir / 'word' / 'tone_features.csv'
     if not csv_path.exists():
         pytest.skip(
             "Pipeline didn't produce CSV (MFA likely couldn't align synthetic input). "
             "Sidecar check skipped."
         )
 
-    syll = list(out_dir.glob('*_syllables.csv'))
-    phon = list(out_dir.glob('*_phonemes.csv'))
+    syll = list((out_dir / 'syllable').glob('*_syllables.csv'))
+    phon = list((out_dir / 'phoneme').glob('*_phonemes.csv'))
     assert syll, 'expected at least one syllables sidecar'
     assert phon, 'expected at least one phonemes sidecar'
 
@@ -156,7 +156,7 @@ def test_word_level_batch_emits_prosody_columns(tmp_path):
     ])
     run_word_level_batch(args)
 
-    csv_path = out_dir / 'tone_features.csv'
+    csv_path = out_dir / 'word' / 'tone_features.csv'
     if not csv_path.exists():
         pytest.skip(
             "Pipeline didn't produce CSV (MFA likely couldn't align synthetic input). "
@@ -249,8 +249,8 @@ def test_sidecars_emit_when_struct_and_acoustic_per_column_toggles_off(
 
     run_word_level_batch(args)
 
-    syll_files = list(out_dir.glob('*_syllables.csv'))
-    phon_files = list(out_dir.glob('*_phonemes.csv'))
+    syll_files = list((out_dir / 'syllable').glob('*_syllables.csv'))
+    phon_files = list((out_dir / 'phoneme').glob('*_phonemes.csv'))
     assert syll_files, "sidecar bug regressed: no syllables CSV emitted"
     assert phon_files, "sidecar bug regressed: no phonemes CSV emitted"
     syll_df = pd.read_csv(syll_files[0])
@@ -258,4 +258,4 @@ def test_sidecars_emit_when_struct_and_acoustic_per_column_toggles_off(
     assert len(syll_df) > 0, "syllables sidecar is empty — drop ran before emission"
     assert len(phon_df) > 0, "phonemes sidecar is empty — drop ran before emission"
     # And the features CSV must NOT be written when no_word_csv=True
-    assert not list(out_dir.glob('*_features.csv'))
+    assert not (out_dir / 'word').exists()
