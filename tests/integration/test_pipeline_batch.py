@@ -102,6 +102,16 @@ def test_batch_emits_syllables_and_phonemes_sidecars(tmp_path):
             "Sidecar check skipped."
         )
 
+    # Sidecars require phoneme-level alignment data. spaCy always runs so the
+    # word CSV is written regardless; check that Onset is not all-NaN (which
+    # happens when the synthetic token is OOV in the MFA English lexicon).
+    _df_check = pd.read_csv(csv_path)
+    if _df_check["Onset"].isna().all():
+        pytest.skip(
+            "MFA aligned the audio but produced no phone matches for the "
+            "synthetic token (OOV). Sidecar check skipped."
+        )
+
     syll = list((out_dir / 'syllable').glob('*_syllables.csv'))
     phon = list((out_dir / 'phoneme').glob('*_phonemes.csv'))
     assert syll, 'expected at least one syllables sidecar'
