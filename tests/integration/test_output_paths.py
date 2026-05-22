@@ -1,0 +1,152 @@
+"""Per-level output folder structure — lazy mkdir contract.
+
+Each test verifies that a level subfolder (word/, syllable/, phoneme/,
+document/) is created only when output is actually written there, and that
+session_units CSVs land in logs/ not the output root.
+
+All tests fail until Task 2 and Task 3 update main.py.
+"""
+from pathlib import Path
+
+import pandas as pd
+import pytest
+
+import main
+from main import build_parser, run_word_level_batch, run_doc_level_batch
+
+FIXTURES = Path(__file__).parent.parent / 'fixtures'
+
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+def _word_args(tmp_path):
+    return build_parser().parse_args([
+        '--transcripts-folder', str(FIXTURES / 'transcripts'),
+        '--audio-folder', str(FIXTURES / 'audio'),
+        '--output-folder', str(tmp_path / 'out'),
+        '--analyzer', 'TestRunner',
+        '--no-align',
+        '--no-llm-cloze',
+        '--no-edu-freq',
+    ])
+
+
+def _doc_args(tmp_path):
+    return build_parser().parse_args([
+        '--transcript', '',
+        '--transcripts-folder', str(FIXTURES / 'transcripts'),
+        '--audio-folder', str(FIXTURES / 'audio'),
+        '--output-folder', str(tmp_path / 'out'),
+        '--analyzer', 'TestRunner',
+        '--level', 'document',
+        '--no-align',
+        '--no-llm-cloze',
+        '--no-doc-mean-llm-cloze',
+        '--no-edu-freq',
+        '--no-doc-mean-edu-zipf',
+    ])
+
+
+# ---------------------------------------------------------------------------
+# Word level
+# ---------------------------------------------------------------------------
+
+def test_word_features_land_in_word_subfolder(tmp_path):
+    run_word_level_batch(_word_args(tmp_path))
+    out = tmp_path / 'out'
+    assert (out / 'word' / 'story1_features.csv').exists()
+    assert (out / 'word' / 'story2_features.csv').exists()
+    assert not list(out.glob('*_features.csv')), 'features CSV found at root'
+
+
+def test_word_csv_disabled_no_word_folder_not_created(tmp_path):
+    """When word CSV is off and --no-align (so no sidecars), word/ must not exist."""
+    args = _word_args(tmp_path)
+    args.no_word_csv = True   # not a CLI flag; set directly
+    run_word_level_batch(args)
+    assert not (tmp_path / 'out' / 'word').exists()
+
+
+def test_sidecars_land_in_subfolders(tmp_path, monkeypatch):
+    """syllables → syllable/, phonemes → phoneme/."""
+    fake_word_df = pd.DataFrame({
+        'doc_id': [0, 0], 'sentence_id': [0, 0], 'token_id': [0, 1],
+        'token': ['hello', 'world'],
+        'Onset': [0.0, 0.5], 'End': [0.4, 0.9],
+    })
+    fake_phone_df = pd.DataFrame({
+        'phone':  ['HH', 'EH1', 'L',  'OW1', 'W',  'ER1', 'L',  'D'],
+        'onset':  [0.00, 0.10, 0.20, 0.30, 0.50, 0.60, 0.75, 0.85],
+        'offset': [0.10, 0.20, 0.30, 0.40, 0.60, 0.75, 0.85, 0.90],
+    })
+
+    def _fake_run(args):
+        args._phones_df = fake_phone_df
+        args._contours = None
+        return fake_word_df.copy()
+
+    monkeypatch.setattr(main, 'run', _fake_run)
+
+    txt_dir = tmp_path / 'txt'
+    txt_dir.mkdir()
+    audio_dir = tmp_path / 'audio'
+    audio_dir.mkdir()
+    out_dir = tmp_path / 'out'
+    (txt_dir / 'tone.txt').write_text('hello world')
+    (audio_dir / 'tone.wav').write_bytes(b'RIFF\x00\x00\x00\x00WAVE')
+
+    args = build_parser().parse_args([
+        '--transcripts-folder', str(txt_dir),
+        '--audio-folder', str(audio_dir),
+        '--output-folder', str(out_dir),
+        '--analyzer', 'tester',
+        '--no-align', '--no-llm-cloze', '--no-edu-freq',
+    ])
+    args.no_syllables = False
+    args.no_phonemes = False
+    run_word_level_batch(args)
+
+    assert list((out_dir / 'syllable').glob('*_syllables.csv')), 'syllables not in syllable/'
+    assert list((out_dir / 'phoneme').glob('*_phonemes.csv')), 'phonemes not in phoneme/'
+    assert not list(out_dir.glob('*_syllables.csv')), 'syllables found at root'
+    assert not list(out_dir.glob('*_phonemes.csv')), 'phonemes found at root'
+
+
+def test_sidecars_disabled_folders_not_created(tmp_path):
+    """With --no-align (phones_df=None) and sidecars off, no sidecar folder created."""
+    args = _word_args(tmp_path)
+    args.no_syllables = True
+    args.no_phonemes = True
+    run_word_level_batch(args)
+    out = tmp_path / 'out'
+    assert not (out / 'syllable').exists()
+    assert not (out / 'phoneme').exists()
+
+
+def test_session_units_not_at_word_output_root(tmp_path):
+    """word_session_units_*.csv must NOT appear directly in the output folder."""
+    run_word_level_batch(_word_args(tmp_path))
+    assert not list((tmp_path / 'out').glob('word_session_units_*.csv')), \
+        'word_session_units found at root — must be in logs/'
+
+
+# ---------------------------------------------------------------------------
+# Document level
+# ---------------------------------------------------------------------------
+
+def test_doc_summary_lands_in_document_subfolder(tmp_path):
+    run_doc_level_batch(_doc_args(tmp_path))
+    out = tmp_path / 'out'
+    assert list((out / 'document').glob('documents_summary_*.csv')), \
+        'documents_summary not in document/'
+    assert not list(out.glob('documents_summary_*.csv')), \
+        'documents_summary found at root'
+
+
+def test_session_units_not_at_doc_output_root(tmp_path):
+    """doc_session_units_*.csv must NOT appear directly in the output folder."""
+    run_doc_level_batch(_doc_args(tmp_path))
+    assert not list((tmp_path / 'out').glob('doc_session_units_*.csv')), \
+        'doc_session_units found at root — must be in logs/'
