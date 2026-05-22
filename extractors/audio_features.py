@@ -52,17 +52,23 @@ def extract(audio_path: str, *,
         pitch_floor=pitch_floor_hz,
         pitch_ceiling=pitch_ceiling_hz,
     )
-    pitch_values = pitch.selected_array['frequency'].astype(float)
+    # np.asarray with explicit dtype guards against NumPy 2.0's stricter
+    # ufunc casting rules when parselmouth returns non-standard array types.
+    pitch_raw = np.asarray(pitch.selected_array['frequency'], dtype=np.float64)
+    # selected_array['frequency'] may be 2D (n_frames, n_candidates) in some
+    # parselmouth versions; take the first column (best candidate).
+    if pitch_raw.ndim > 1:
+        pitch_raw = pitch_raw[:, 0]
     # Unvoiced frames come back as 0.0 in Praat; convert to NaN.
-    pitch_values[pitch_values == 0.0] = np.nan
-    pitch_times = pitch.xs().astype(float)
+    pitch_values = np.where(pitch_raw == 0.0, np.nan, pitch_raw)
+    pitch_times = np.asarray(pitch.xs(), dtype=np.float64).ravel()
 
     intensity = snd.to_intensity(
         minimum_pitch=pitch_floor_hz,
         time_step=time_step_s,
     )
-    int_values = intensity.values.flatten().astype(float)
-    int_times = intensity.xs().astype(float)
+    int_values = np.asarray(intensity.values, dtype=np.float64).ravel()
+    int_times = np.asarray(intensity.xs(), dtype=np.float64).ravel()
 
     # Resample intensity onto pitch's time grid (handles minor edge offsets).
     intensity_db = np.interp(pitch_times, int_times, int_values,
@@ -73,14 +79,13 @@ def extract(audio_path: str, *,
     speaker_median = float(np.median(voiced)) if voiced.size else float('nan')
 
     # HNR (mean over voiced frames). Praat marks unvoiced frames with the
-    # sentinel value -200 dB; np.isfinite would let those through and drag
-    # the mean down to ~-50 on real speech with silences. Drop them.
+    # sentinel value -200 dB; drop them before averaging.
     try:
         harmonicity = snd.to_harmonicity_cc(
             time_step=time_step_s,
             minimum_pitch=pitch_floor_hz,
         )
-        hnr_vals = harmonicity.values.flatten()
+        hnr_vals = np.asarray(harmonicity.values, dtype=np.float64).ravel()
         hnr_vals = hnr_vals[np.isfinite(hnr_vals) & (hnr_vals > -200.0)]
         hnr_mean = float(np.mean(hnr_vals)) if hnr_vals.size else float('nan')
     except Exception:
