@@ -7,6 +7,8 @@ extract(audio_path, ...) -> Contours dataclass holding:
     frame_rate_hz: int (default 100, i.e. 10 ms time step)
     speaker_median_pitch_hz: float — semitone reference
     hnr_db: float — mean Harmonics-to-Noise Ratio over voiced frames
+    hnr_frame_db: np.ndarray | None — per-frame HNR (NaN=unvoiced), harmonicity time grid
+    hnr_frame_times: np.ndarray | None — timestamps matching hnr_frame_db
 
 Raises ProsodyUnavailable if parselmouth isn't importable.
 """
@@ -34,6 +36,8 @@ class Contours:
     frame_rate_hz: int
     speaker_median_pitch_hz: float
     hnr_db: float
+    hnr_frame_db: np.ndarray | None = None    # per-frame HNR, NaN=unvoiced
+    hnr_frame_times: np.ndarray | None = None  # timestamps matching hnr_frame_db
 
 
 def extract(audio_path: str, *,
@@ -80,16 +84,23 @@ def extract(audio_path: str, *,
 
     # HNR (mean over voiced frames). Praat marks unvoiced frames with the
     # sentinel value -200 dB; drop them before averaging.
+    hnr_mean = float('nan')
+    hnr_frame_db_arr: np.ndarray | None = None
+    hnr_frame_times_arr: np.ndarray | None = None
     try:
         harmonicity = snd.to_harmonicity_cc(
             time_step=time_step_s,
             minimum_pitch=pitch_floor_hz,
         )
-        hnr_vals = np.asarray(harmonicity.values, dtype=np.float64).ravel()
-        hnr_vals = hnr_vals[np.isfinite(hnr_vals) & (hnr_vals > -200.0)]
-        hnr_mean = float(np.mean(hnr_vals)) if hnr_vals.size else float('nan')
+        hnr_vals_raw = np.asarray(harmonicity.values, dtype=np.float64).ravel()
+        hnr_times_raw = np.asarray(harmonicity.xs(), dtype=np.float64).ravel()
+        hnr_vals_clean = np.where(hnr_vals_raw <= -200.0, np.nan, hnr_vals_raw)
+        voiced_hnr = hnr_vals_clean[np.isfinite(hnr_vals_clean)]
+        hnr_mean = float(np.mean(voiced_hnr)) if voiced_hnr.size else float('nan')
+        hnr_frame_db_arr = hnr_vals_clean
+        hnr_frame_times_arr = hnr_times_raw
     except Exception:
-        hnr_mean = float('nan')
+        pass  # hnr_mean stays nan; frame arrays stay None
 
     return Contours(
         pitch_hz=pitch_values,
@@ -98,4 +109,6 @@ def extract(audio_path: str, *,
         frame_rate_hz=int(round(1.0 / time_step_s)),
         speaker_median_pitch_hz=speaker_median,
         hnr_db=hnr_mean,
+        hnr_frame_db=hnr_frame_db_arr,
+        hnr_frame_times=hnr_frame_times_arr,
     )

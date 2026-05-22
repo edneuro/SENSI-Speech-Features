@@ -88,3 +88,15 @@ def test_extract_hnr_excludes_unvoiced_sentinel(tmp_path):
         f"HNR mean {contours.hnr_db} suggests unvoiced sentinels (-200 dB) "
         "are still being included in the average"
     )
+
+
+def test_extract_populates_hnr_frame_arrays(tmp_path):
+    wav = tmp_path / "sine.wav"
+    _write_sine_wav(wav, freq_hz=200.0)
+    contours = extract(str(wav), pitch_floor_hz=75, pitch_ceiling_hz=500)
+    assert contours.hnr_frame_db is not None
+    assert contours.hnr_frame_times is not None
+    assert contours.hnr_frame_db.ndim == 1
+    assert len(contours.hnr_frame_db) == len(contours.hnr_frame_times)
+    finite_mask = np.isfinite(contours.hnr_frame_db)
+    assert finite_mask.any(), "Sine wave should have some voiced (finite HNR) frames"
