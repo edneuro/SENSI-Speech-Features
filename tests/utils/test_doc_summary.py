@@ -152,7 +152,7 @@ def test_independence_doc_mean_zipf_when_word_freq_disabled(tmp_path):
 
     run_doc_level_batch(args)
 
-    masters = list((tmp_path / 'out').glob('documents_summary_*.csv'))
+    masters = list((tmp_path / 'out' / 'document').glob('documents_summary_*.csv'))
     assert masters, (
         'No documents_summary CSV created — run_doc_level_batch produced no output. '
         'Check run log for errors.'
@@ -208,7 +208,7 @@ def test_independence_doc_mean_surprisal_when_word_surprisal_disabled(tmp_path):
 
     run_doc_level_batch(args)
 
-    masters = list((tmp_path / 'out').glob('documents_summary_*.csv'))
+    masters = list((tmp_path / 'out' / 'document').glob('documents_summary_*.csv'))
     assert masters, (
         'No documents_summary CSV created — run_doc_level_batch produced no output. '
         'Check run log for errors.'
