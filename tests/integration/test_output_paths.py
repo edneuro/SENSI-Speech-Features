@@ -192,3 +192,78 @@ def test_sentence_csv_suppressed_by_no_sentences_flag(tmp_path):
     run_word_level_batch(args)
     out = tmp_path / 'out'
     assert not (out / 'sentence').exists()
+
+
+# ---------------------------------------------------------------------------
+# Embedding .mat output paths
+# ---------------------------------------------------------------------------
+
+def _fake_w2v(word_df, **kwargs):
+    import numpy as np
+    return np.zeros((len(word_df), 300), dtype='float32')
+
+
+def _fake_bert(word_df, **kwargs):
+    import numpy as np
+    n = len(word_df)
+    n_sent = word_df['sentence_id'].nunique() if 'sentence_id' in word_df.columns else 1
+    return (
+        np.zeros((n, 12, 768), dtype='float32'),
+        np.zeros((n_sent, 12, 768), dtype='float32'),
+    )
+
+
+def test_word2vec_mat_lands_in_word_subfolder(tmp_path, monkeypatch):
+    import extractors.word2vec_embed as w2v_module
+    monkeypatch.setattr(w2v_module, 'embed_word2vec', _fake_w2v)
+
+    args = _word_args(tmp_path)
+    args.no_word2vec = False
+    run_word_level_batch(args)
+    out = tmp_path / 'out'
+    assert list((out / 'word').glob('*_word2vec.mat')), 'word2vec.mat not found in word/'
+    assert not list(out.glob('*_word2vec.mat')), 'word2vec.mat found at output root'
+
+
+def test_word2vec_disabled_mat_not_created(tmp_path):
+    args = _word_args(tmp_path)
+    args.no_word2vec = True
+    run_word_level_batch(args)
+    out = tmp_path / 'out'
+    assert not list((out / 'word').glob('*_word2vec.mat'))
+
+
+def test_bert_word_mat_lands_in_word_subfolder(tmp_path, monkeypatch):
+    import extractors.bert_embed as bert_module
+    monkeypatch.setattr(bert_module, 'embed_bert_words_and_sentences', _fake_bert)
+
+    args = _word_args(tmp_path)
+    args.no_bert_word = False
+    args.no_bert_sentence = True
+    run_word_level_batch(args)
+    out = tmp_path / 'out'
+    assert list((out / 'word').glob('*_bert_word.mat')), 'bert_word.mat not found in word/'
+    assert not list((out / 'sentence').glob('*_bert_sentence.mat'))
+
+
+def test_bert_sentence_mat_lands_in_sentence_subfolder(tmp_path, monkeypatch):
+    import extractors.bert_embed as bert_module
+    monkeypatch.setattr(bert_module, 'embed_bert_words_and_sentences', _fake_bert)
+
+    args = _word_args(tmp_path)
+    args.no_bert_word = True
+    args.no_bert_sentence = False
+    run_word_level_batch(args)
+    out = tmp_path / 'out'
+    assert list((out / 'sentence').glob('*_bert_sentence.mat')), 'bert_sentence.mat not found in sentence/'
+    assert not list((out / 'word').glob('*_bert_word.mat'))
+
+
+def test_bert_disabled_mats_not_created(tmp_path):
+    args = _word_args(tmp_path)
+    args.no_bert_word = True
+    args.no_bert_sentence = True
+    run_word_level_batch(args)
+    out = tmp_path / 'out'
+    assert not list((out / 'word').glob('*_bert_word.mat'))
+    assert not list((out / 'sentence').glob('*_bert_sentence.mat'))
