@@ -1,6 +1,6 @@
 # SensiExtractor — Master Plan
 
-**Last updated:** 2026-05-20
+**Last updated:** 2026-05-22
 
 This document is the single entry point for project state. Read this first; deeper specs / plans / batch designs are linked from here.
 
@@ -12,7 +12,20 @@ SensiExtractor is the standardized SOP tool for the SENSI naturalistic-EEG pipel
 
 ## 2. Current state — what we're working on RIGHT NOW
 
-**Active batch:** Output reorganization — **implemented, full test suite green (362 passed, 1 skipped).**
+**Active batch:** Embeddings (Word2Vec + BERT) — **in progress.**
+
+- Spec: [`docs/superpowers/specs/2026-05-22-embeddings-design.md`](superpowers/specs/2026-05-22-embeddings-design.md)
+- Plan: [`docs/superpowers/plans/2026-05-22-embeddings.md`](superpowers/plans/2026-05-22-embeddings.md)
+- Status: Plan written; implementation not yet started. Depends on sentence-level tier (v9) which is complete.
+
+**Just completed:** Sentence-level tier (2026-05-22) — **implemented, full test suite green (375 passed, 2 skipped).**
+
+- Spec: [`docs/superpowers/specs/2026-05-22-sentence-level-tier-design.md`](superpowers/specs/2026-05-22-sentence-level-tier-design.md)
+- Plan: [`docs/superpowers/plans/2026-05-22-sentence-level-tier.md`](superpowers/plans/2026-05-22-sentence-level-tier.md)
+- Status: All 8 plan tasks complete; new `sentence/<stim>_sentences.csv` sidecar; `extractors/sentence_prosody.py`; prefs v8→v9 additive (16 new keys); planner wired; CLI `--no-sentences`; GUI "Sentence features" page (timing + prosody ClusterCards).
+- Open: Validate with a real ISC-Wu Tsai stimulus that `sentence/<stim>_sentences.csv` appears with correct timing and HNR values.
+
+**Also completed:** Output reorganization (2026-05-22) — **implemented, full test suite green.**
 
 - Spec: [`docs/superpowers/specs/2026-05-22-output-reorganization-design.md`](superpowers/specs/2026-05-22-output-reorganization-design.md)
 - Plan: [`docs/superpowers/plans/2026-05-22-output-reorganization.md`](superpowers/plans/2026-05-22-output-reorganization.md)
@@ -55,6 +68,7 @@ SensiExtractor is the standardized SOP tool for the SENSI naturalistic-EEG pipel
 
 | Date | Batch | Summary |
 |---|---|---|
+| 2026-05-22 | **Sentence-level tier** | New `sentence/<stim>_sentences.csv` sidecar per stimulus — sentence timing (min/max Onset/End over words) + 11 prosody columns (Pitch_{Mean,Min,Max,Std,Delta}, Volume_{Mean,Min,Max,Std,Delta}, HNR). New `extractors/sentence_prosody.py`; prefs v8→v9 additive (14 `feat_sentence_*` + 2 master toggles + `sentences_csv`); planner `sentence_prosody` stage + 2 clusters; CLI `--no-sentences`; GUI "Sentence features" page. Spec/plan: `docs/superpowers/specs/2026-05-22-sentence-level-tier-design.md`, `docs/superpowers/plans/2026-05-22-sentence-level-tier.md`. |
 | 2026-05-22 | **Output reorganization** | Per-level subfolders: `word/`, `syllable/`, `phoneme/`, `document/` under the output root. Lazy mkdir (folder created only when output written). `session_units` CSVs moved to `logs/`. `_level_dir` helper in `main.py`; 6 path sites updated; 7 new integration tests. **Breaking change** to all output paths. Spec/plan: `docs/superpowers/specs/2026-05-22-output-reorganization-design.md`, `docs/superpowers/plans/2026-05-22-output-reorganization.md`. |
 | 2026-05-20 | **P-center** | `P_Center` column added to `<stim>_syllables.csv`. Formula: `nucleus_onset − k × onset_consonant_duration` (Scott 1993, k=0.3 default). New `extractors/pcenter.py`; planner `pcenter` stage + `p-center` cluster; prefs v7 → v8 (adds `feat_syllable_pcenter`, `master_syllable_pcenter`, `prosody.pcenter_k`); P-center card in Sub-word features GUI page; CLI `--no-syl-pcenter` / `--pcenter-k`. Spec/plan: `docs/superpowers/specs/2026-05-20-pcenter-design.md`, `docs/superpowers/plans/2026-05-20-pcenter.md`. |
 | 2026-05-19 | **GUI validation unification + cluster UX** | The 2026-05-14 planner became the single source of truth for which stages run; this batch makes it the single source for everything that *consumes* that truth: preflight, the Run-tab cost panel, the cluster master toggles, and unit metadata. Two new declarative fields on `FeatureCluster` (`master_toggle`, `available_when`) enable per-cluster master toggles in the GUI (grayed-out children when off) and the LIWC-only psych composite gating. `gui/preflight.py` was rewritten to consume `plan.stages_to_run`; the cost panel hides when no LLM features are active; the Syllables card split into Intervals + Labels + Prosody sub-clusters. Semantic categories unified into `semantic.categories_<backend>` (word-level page is canonical editor; doc-level shows count + hint). Per-run `<output>/<run_ts>_<level>_session_units.csv` records column → unit. Prefs v6 → v7 additive migration. Spec/plan: `docs/superpowers/specs/2026-05-19-gui-unification-design.md`, `docs/superpowers/plans/2026-05-19-gui-unification.md`. |
@@ -97,7 +111,7 @@ Each batch lives at:
 
 ## 6. Durable conventions
 
-- **Prefs schema:** versioned in `utils/preferences.py`. Each batch may bump the version, **always additively**. Migration chain handles all prior versions → current. Current version: **v8**.
+- **Prefs schema:** versioned in `utils/preferences.py`. Each batch may bump the version, **always additively**. Migration chain handles all prior versions → current. Current version: **v9**.
 - **Per-column drops:** GUI per-column toggles flow through `args.feature_toggles` (and `args.output_toggles` for output-section keys) → `_word_columns_to_drop` / `_doc_columns_to_drop` in `main.py`. CLI flags are group-level only.
 - **Tests:** Unit tests for extractors (synthetic fixtures, no real audio where avoidable), integration tests in `tests/integration/`, GUI tests in `tests/gui/` via `pytest-qt`. Target: `python -m pytest` green on every commit.
 - **Commits:** one per task during implementation; commit directly to `master` (per user preference). Feature plan referenced in commit message when applicable.
