@@ -18,7 +18,6 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 import torch
-from pathlib import Path
 
 _DEFAULT_MODEL_NAME = "bert-base-uncased"
 _MAX_EFFECTIVE_TOKENS = 510   # 512 - 2 for [CLS] and [SEP]
@@ -82,8 +81,7 @@ def embed_bert_words_and_sentences(
     idx_to_pos = {idx: i for i, idx in enumerate(word_df.index.tolist())}
 
     for s_pos, s in enumerate(groups):
-        # Separate current sentence into content words and PUNCT words.
-        # PUNCT tokens are excluded from the BERT input so their presence
+        # PUNCT tokens are excluded from BERT input so their presence
         # does not alter attention-derived representations of content words.
         content_indices = [
             (orig_idx, tok)
@@ -142,7 +140,7 @@ def embed_bert_words_and_sentences(
             positions = [p for p, wid in enumerate(word_ids) if wid == w_global]
             if not positions:
                 continue
-            word_vec = stacked[positions].mean(axis=0)  # (n_layers, hidden)
+            word_vec = stacked[positions].mean(axis=0)
             word_emb[idx_to_pos[orig_idx]] = word_vec
             content_positions.extend(positions)
 
