@@ -12,7 +12,8 @@ from gui.preflight import compute_warnings
 
 def _no_outputs(features=None):
     return {"output": {"word_level_csv": False, "document_summary": False,
-                       "syllables_csv": False, "phonemes_csv": False},
+                       "syllables_csv": False, "phonemes_csv": False,
+                       "sentences_csv": False},
             "features": features or {}}
 
 

@@ -487,7 +487,8 @@ def test_word_args_no_subword_no_align_force(prefs_tmp):
     from utils.preferences import save_preferences
     from gui.run_dispatch import build_args_word_level
     save_preferences({
-        "output": {"syllables_csv": False, "phonemes_csv": False},
+        "output": {"syllables_csv": False, "phonemes_csv": False,
+                   "sentences_csv": False},
         "features": {
             # All acoustic toggles off
             "feat_acoustic_onset": False, "feat_acoustic_end": False,
