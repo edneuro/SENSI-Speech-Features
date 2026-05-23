@@ -1,13 +1,17 @@
 """Word2Vec embedding extractor (Google News 300d via gensim).
 
-Expected model: hf_cache/word2vec/GoogleNews-vectors-negative300.bin
-Download from: https://code.google.com/archive/p/word2vec/
-               (GoogleNews-vectors-negative300.bin.gz, ~1.7 GB compressed)
+If the model binary is not found at the default path, it is downloaded
+automatically from the gensim model repository on first use (~1.7 GB,
+cached by gensim in ~/gensim-data/ for subsequent runs).
+
+Optional local override: place GoogleNews-vectors-negative300.bin at
+hf_cache/word2vec/GoogleNews-vectors-negative300.bin to skip the download.
 
 OOV words receive a zero vector (300 float32 zeros).
 """
 from __future__ import annotations
 
+import sys
 import numpy as np
 import pandas as pd
 from pathlib import Path
@@ -24,21 +28,30 @@ class Word2VecUnavailable(RuntimeError):
 
 
 def _load_model(model_path: str | Path) -> Any:
-    p = Path(model_path)
-    if not p.exists():
-        raise Word2VecUnavailable(
-            f"Word2Vec model not found at {p}. "
-            "Download GoogleNews-vectors-negative300.bin from "
-            "https://code.google.com/archive/p/word2vec/ and place it in "
-            "hf_cache/word2vec/"
-        )
     try:
         from gensim.models import KeyedVectors  # type: ignore
+        import gensim.downloader as gensim_dl   # type: ignore
     except ImportError:
         raise Word2VecUnavailable(
             "gensim is not installed. Run: pip install gensim"
         )
-    return KeyedVectors.load_word2vec_format(str(p), binary=True)
+    p = Path(model_path)
+    if p.exists():
+        return KeyedVectors.load_word2vec_format(str(p), binary=True)
+    # Auto-download on first use; gensim caches in ~/gensim-data/.
+    print(
+        "[word2vec] Model not found locally — downloading Google News 300d "
+        "(~1.7 GB, one-time). Subsequent runs use gensim's local cache.",
+        file=sys.stderr,
+    )
+    try:
+        return gensim_dl.load("word2vec-google-news-300")
+    except Exception as exc:
+        raise Word2VecUnavailable(
+            f"Word2Vec auto-download failed: {exc}. "
+            "Check your internet connection or place "
+            "GoogleNews-vectors-negative300.bin in hf_cache/word2vec/ manually."
+        ) from exc
 
 
 def embed_word2vec(
