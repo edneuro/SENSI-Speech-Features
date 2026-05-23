@@ -158,3 +158,37 @@ def test_session_units_not_at_doc_output_root(tmp_path):
     logs_units = list((out / 'logs').glob('doc_session_units_*.csv'))
     assert logs_units, \
         'doc_session_units not found in logs/ — either path is wrong or session_units block silently errored'
+
+
+def test_sentence_csv_lands_in_sentence_subfolder(tmp_path, monkeypatch):
+    """Sentence CSV lands in sentence/ subfolder when add_sentence_prosody succeeds."""
+    import extractors.sentence_prosody as sp_module
+
+    def _fake_sentence_prosody(word_df, contours=None, *, pitch_units="semitones"):
+        doc_ids = word_df["doc_id"].unique() if "doc_id" in word_df.columns else ["doc1"]
+        rows = [{"doc_id": d, "sentence_id": 0, "sentence": "Hello world.",
+                  "Onset": float("nan"), "End": float("nan"),
+                  "Pitch_Mean": float("nan"), "Pitch_Min": float("nan"),
+                  "Pitch_Max": float("nan"), "Pitch_Std": float("nan"),
+                  "Pitch_Delta": float("nan"),
+                  "Volume_Mean": float("nan"), "Volume_Min": float("nan"),
+                  "Volume_Max": float("nan"), "Volume_Std": float("nan"),
+                  "Volume_Delta": float("nan"), "HNR": float("nan")}
+                 for d in doc_ids]
+        return pd.DataFrame(rows)
+
+    monkeypatch.setattr(sp_module, "add_sentence_prosody", _fake_sentence_prosody)
+
+    run_word_level_batch(_word_args(tmp_path))
+    out = tmp_path / 'out'
+    assert (out / 'sentence' / 'story1_sentences.csv').exists()
+    assert (out / 'sentence' / 'story2_sentences.csv').exists()
+
+
+def test_sentence_csv_suppressed_by_no_sentences_flag(tmp_path):
+    """Setting no_sentences=True means no sentence/ subfolder is created."""
+    args = _word_args(tmp_path)
+    args.no_sentences = True
+    run_word_level_batch(args)
+    out = tmp_path / 'out'
+    assert not (out / 'sentence').exists()
