@@ -12,13 +12,16 @@ SensiExtractor is the standardized SOP tool for the SENSI naturalistic-EEG pipel
 
 ## 2. Current state — what we're working on RIGHT NOW
 
-**Active batch:** Embeddings (Word2Vec + BERT) — **in progress.**
+**No active batch.** All planned features are implemented. Next step: manual end-to-end validation on a real ISC-Wu Tsai stimulus.
+
+**Just completed:** Embeddings — Word2Vec + BERT (2026-05-22) — **implemented, full test suite green (393 passed, 2 skipped).**
 
 - Spec: [`docs/superpowers/specs/2026-05-22-embeddings-design.md`](superpowers/specs/2026-05-22-embeddings-design.md)
 - Plan: [`docs/superpowers/plans/2026-05-22-embeddings.md`](superpowers/plans/2026-05-22-embeddings.md)
-- Status: Plan written; implementation not yet started. Depends on sentence-level tier (v9) which is complete.
+- Status: All 9 plan tasks complete; `extractors/word2vec_embed.py` (gensim, Google News 300d, OOV→zero); `extractors/bert_embed.py` (bert-base-uncased, all 12 layers, sliding window, PUNCT excluded from input); `gensim>=4.3` added to requirements.txt; download_models.py updated; prefs v9→v10 additive (3 feature + 3 output keys); planner `word2vec_embed` + `bert_embed` stages + 3 clusters (master-toggle-only, empty toggle_keys); main.py writes `word/<stim>_word2vec.mat`, `word/<stim>_bert_word.mat`, `sentence/<stim>_bert_sentence.mat`; GUI "Embeddings" sidebar page.
+- Open: (1) Download Google News Word2Vec model and validate `.mat` output on a real stimulus. (2) Validate BERT `.mat` shapes and content on a real stimulus.
 
-**Just completed:** Sentence-level tier (2026-05-22) — **implemented, full test suite green (375 passed, 2 skipped).**
+**Also completed:** Sentence-level tier (2026-05-22) — **implemented, full test suite green.**
 
 - Spec: [`docs/superpowers/specs/2026-05-22-sentence-level-tier-design.md`](superpowers/specs/2026-05-22-sentence-level-tier-design.md)
 - Plan: [`docs/superpowers/plans/2026-05-22-sentence-level-tier.md`](superpowers/plans/2026-05-22-sentence-level-tier.md)
@@ -68,6 +71,7 @@ SensiExtractor is the standardized SOP tool for the SENSI naturalistic-EEG pipel
 
 | Date | Batch | Summary |
 |---|---|---|
+| 2026-05-22 | **Embeddings (Word2Vec + BERT)** | Three new `.mat` sidecars per stimulus: `word/<stim>_word2vec.mat` (n_words × 300 float32), `word/<stim>_bert_word.mat` (n_words × 12 × 768 float32), `sentence/<stim>_bert_sentence.mat` (n_sentences × 12 × 768 float32). New `extractors/word2vec_embed.py` (gensim, Google News 300d, OOV→zero, lowercase fallback) and `extractors/bert_embed.py` (bert-base-uncased, all 12 layers, 510-token sliding window, PUNCT excluded from input). Prefs v9→v10 additive (3 feature masters + 3 output keys); planner `word2vec_embed` + `bert_embed` stages + 3 master-toggle-only clusters; main.py writes .mat via scipy.io.savemat; GUI "Embeddings" sidebar page. Spec/plan: `docs/superpowers/specs/2026-05-22-embeddings-design.md`, `docs/superpowers/plans/2026-05-22-embeddings.md`. |
 | 2026-05-22 | **Sentence-level tier** | New `sentence/<stim>_sentences.csv` sidecar per stimulus — sentence timing (min/max Onset/End over words) + 11 prosody columns (Pitch_{Mean,Min,Max,Std,Delta}, Volume_{Mean,Min,Max,Std,Delta}, HNR). New `extractors/sentence_prosody.py`; prefs v8→v9 additive (14 `feat_sentence_*` + 2 master toggles + `sentences_csv`); planner `sentence_prosody` stage + 2 clusters; CLI `--no-sentences`; GUI "Sentence features" page. Spec/plan: `docs/superpowers/specs/2026-05-22-sentence-level-tier-design.md`, `docs/superpowers/plans/2026-05-22-sentence-level-tier.md`. |
 | 2026-05-22 | **Output reorganization** | Per-level subfolders: `word/`, `syllable/`, `phoneme/`, `document/` under the output root. Lazy mkdir (folder created only when output written). `session_units` CSVs moved to `logs/`. `_level_dir` helper in `main.py`; 6 path sites updated; 7 new integration tests. **Breaking change** to all output paths. Spec/plan: `docs/superpowers/specs/2026-05-22-output-reorganization-design.md`, `docs/superpowers/plans/2026-05-22-output-reorganization.md`. |
 | 2026-05-20 | **P-center** | `P_Center` column added to `<stim>_syllables.csv`. Formula: `nucleus_onset − k × onset_consonant_duration` (Scott 1993, k=0.3 default). New `extractors/pcenter.py`; planner `pcenter` stage + `p-center` cluster; prefs v7 → v8 (adds `feat_syllable_pcenter`, `master_syllable_pcenter`, `prosody.pcenter_k`); P-center card in Sub-word features GUI page; CLI `--no-syl-pcenter` / `--pcenter-k`. Spec/plan: `docs/superpowers/specs/2026-05-20-pcenter-design.md`, `docs/superpowers/plans/2026-05-20-pcenter.md`. |
@@ -90,7 +94,7 @@ Ordered roughly by priority, not committed. Each item gets its own brainstorm �
 | Item | Scope | Status | Notes |
 |---|---|---|---|
 | **P-center** | Perceptual onset of syllables (Scott 1993 / Villing 2010). Syllable level. | **Shipped (2026-05-20)** | See §3 completed batches. |
-| **BERT contextual embeddings** | 768-dim vectors per word in a sidecar CSV (avoid bloating the main CSV). | Not started | |
+| **BERT contextual embeddings** | 768-dim vectors per word in a sidecar .mat (all 12 layers). | **Shipped (2026-05-22)** | See §3 completed batches. Includes Word2Vec 300d. |
 | **Human-rated cloze norms** | Not an extractor — data acquisition / collaboration with cloze-norming corpora. | Parked | |
 | **Document-level enrichment expansion** | Anything beyond what Batch 1.5 / Batch 3 already cover. | Mostly already done | Revisit only if a specific gap is identified. |
 | **Correctness scoring** | Either MFA alignment confidence (cheap) or ASR-vs-transcript agreement (medium). | Parked | Needs collaborator clarification on which they want. |
@@ -111,7 +115,7 @@ Each batch lives at:
 
 ## 6. Durable conventions
 
-- **Prefs schema:** versioned in `utils/preferences.py`. Each batch may bump the version, **always additively**. Migration chain handles all prior versions → current. Current version: **v9**.
+- **Prefs schema:** versioned in `utils/preferences.py`. Each batch may bump the version, **always additively**. Migration chain handles all prior versions → current. Current version: **v10**.
 - **Per-column drops:** GUI per-column toggles flow through `args.feature_toggles` (and `args.output_toggles` for output-section keys) → `_word_columns_to_drop` / `_doc_columns_to_drop` in `main.py`. CLI flags are group-level only.
 - **Tests:** Unit tests for extractors (synthetic fixtures, no real audio where avoidable), integration tests in `tests/integration/`, GUI tests in `tests/gui/` via `pytest-qt`. Target: `python -m pytest` green on every commit.
 - **Commits:** one per task during implementation; commit directly to `master` (per user preference). Feature plan referenced in commit message when applicable.
