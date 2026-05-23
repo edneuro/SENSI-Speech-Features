@@ -24,12 +24,6 @@ class Word2VecUnavailable(RuntimeError):
 
 
 def _load_model(model_path: str | Path) -> Any:
-    try:
-        from gensim.models import KeyedVectors  # type: ignore
-    except ImportError:
-        raise Word2VecUnavailable(
-            "gensim is not installed. Run: pip install gensim"
-        )
     p = Path(model_path)
     if not p.exists():
         raise Word2VecUnavailable(
@@ -37,6 +31,12 @@ def _load_model(model_path: str | Path) -> Any:
             "Download GoogleNews-vectors-negative300.bin from "
             "https://code.google.com/archive/p/word2vec/ and place it in "
             "hf_cache/word2vec/"
+        )
+    try:
+        from gensim.models import KeyedVectors  # type: ignore
+    except ImportError:
+        raise Word2VecUnavailable(
+            "gensim is not installed. Run: pip install gensim"
         )
     return KeyedVectors.load_word2vec_format(str(p), binary=True)
 
