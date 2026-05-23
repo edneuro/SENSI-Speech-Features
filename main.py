@@ -157,6 +157,11 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument('--no-sentences', action='store_true',
                    help='Skip <stim>_sentences.csv emission.')
 
+    # Note: embedding .mat output (word2vec, bert_word, bert_sentence) is
+    # controlled by ns.no_word2vec / ns.no_bert_word / ns.no_bert_sentence
+    # set by gui/planner/emit.py. CLI does not expose these flags because the
+    # models require large downloads; use the GUI to enable embeddings.
+
     # Sentence per-column toggles
     p.add_argument('--no-sent-text',          action='store_true')
     p.add_argument('--no-sent-onset',         action='store_true')
@@ -675,6 +680,43 @@ def run_word_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None
                         sent_df.to_csv(sent_path, index=False)
                 except Exception as exc:
                     print(f'[sentence] failed for {pair.stimulus_id}: {exc}',
+                          file=sys.stderr)
+
+            # Word2Vec embedding (.mat)
+            # getattr default True → skip unless emit.py explicitly sets False.
+            if not getattr(args, 'no_word2vec', True):
+                try:
+                    import scipy.io
+                    from extractors.word2vec_embed import embed_word2vec, Word2VecUnavailable
+                    w2v_mat = embed_word2vec(df)
+                    mat_path = _level_dir(output_dir, 'word') / f'{pair.stimulus_id}_word2vec.mat'
+                    scipy.io.savemat(str(mat_path), {'embeddings': w2v_mat})
+                except Word2VecUnavailable as exc:
+                    print(f'[word2vec] skipped for {pair.stimulus_id}: {exc}',
+                          file=sys.stderr)
+                except Exception as exc:
+                    print(f'[word2vec] failed for {pair.stimulus_id}: {exc}',
+                          file=sys.stderr)
+
+            # BERT embeddings (.mat) — shared forward pass for word + sentence.
+            # getattr default True → skip unless emit.py explicitly sets False.
+            run_bert_word = not getattr(args, 'no_bert_word', True)
+            run_bert_sent = not getattr(args, 'no_bert_sentence', True)
+            if run_bert_word or run_bert_sent:
+                try:
+                    import scipy.io
+                    from extractors.bert_embed import embed_bert_words_and_sentences
+                    word_emb, sent_emb = embed_bert_words_and_sentences(df)
+                    if run_bert_word:
+                        mat_path = (_level_dir(output_dir, 'word')
+                                    / f'{pair.stimulus_id}_bert_word.mat')
+                        scipy.io.savemat(str(mat_path), {'embeddings': word_emb})
+                    if run_bert_sent:
+                        mat_path = (_level_dir(output_dir, 'sentence')
+                                    / f'{pair.stimulus_id}_bert_sentence.mat')
+                        scipy.io.savemat(str(mat_path), {'embeddings': sent_emb})
+                except Exception as exc:
+                    print(f'[bert] failed for {pair.stimulus_id}: {exc}',
                           file=sys.stderr)
 
             # Drop per-column toggled-off output columns (schema v4 word-level)
