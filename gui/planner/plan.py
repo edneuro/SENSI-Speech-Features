@@ -43,6 +43,7 @@ _OUTPUT_CSV_MAP = {
     "word_level_csv":   "features",
     "syllables_csv":    "syllables",
     "phonemes_csv":     "phonemes",
+    "sentences_csv":    "sentences",
     "document_summary": "documents_summary",
 }
 
@@ -199,6 +200,8 @@ def _stage_configs(prefs: dict, stages_to_run: tuple[str, ...]) -> dict[str, dic
         configs["word_prosody"] = {"pitch_units": pitch_units}
     if "syllable_prosody" in in_plan:
         configs["syllable_prosody"] = {"pitch_units": pitch_units}
+    if "sentence_prosody" in in_plan:
+        configs["sentence_prosody"] = {"pitch_units": pitch_units}
     if "doc_prosody" in in_plan:
         configs["doc_prosody"] = {
             "pitch_units":     pitch_units,

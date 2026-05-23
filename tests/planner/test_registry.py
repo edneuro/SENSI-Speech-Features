@@ -69,7 +69,7 @@ def test_every_cluster_required_stage_exists():
 
 
 def test_every_cluster_output_csv_is_valid():
-    VALID = {"features", "syllables", "phonemes", "documents_summary"}
+    VALID = {"features", "syllables", "phonemes", "sentences", "documents_summary"}
     for c in CLUSTERS:
         assert c.output_csv in VALID, \
             f"Cluster {c.name!r} has invalid output_csv {c.output_csv!r}"

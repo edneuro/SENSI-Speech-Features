@@ -34,6 +34,7 @@ from extractors.timing         import add_timing_columns
 from extractors.syllabify      import syllabify_pairs
 from extractors.syllable_prosody import add_syllable_prosody
 from extractors.pcenter        import add_pcenter     as _add_pcenter
+from extractors.sentence_prosody import add_sentence_prosody as _add_sentence_prosody
 
 STAGES: list[Stage] = [
     # --- §0 Shared stages ---
@@ -103,6 +104,12 @@ STAGES: list[Stage] = [
           consumes=("syllables_df", "phonemes_df"),
           produces=("syllables_df.P_Center",),
           run=_add_pcenter),
+
+    # --- §3 Sentence level ---
+    Stage(name="sentence_prosody",
+          consumes=("word_df", "contours"),
+          produces=("sentence_df",),
+          run=_add_sentence_prosody),
 
     # --- §4 Document level ---
     # Document stages are intentionally NOT extracted into separate functions
@@ -324,6 +331,38 @@ CLUSTERS: list[FeatureCluster] = [
         output_csv="syllables",
         requires_stages=("spacy_parse", "mfa_align", "syllabify_pairs", "pcenter"),
         emits_columns=("P_Center",),
+    ),
+
+    # --- Sentence level (§3) ---
+
+    FeatureCluster(
+        name="sentence timing",
+        toggle_keys=("feat_sentence_text", "feat_sentence_onset", "feat_sentence_end"),
+        output_csv="sentences",
+        requires_stages=("spacy_parse", "mfa_align"),
+        emits_columns=("sentence", "Onset", "End"),
+        master_toggle="master_sentence_timing",
+    ),
+
+    FeatureCluster(
+        name="sentence prosody",
+        toggle_keys=(
+            "feat_sentence_pitch_mean", "feat_sentence_pitch_min",
+            "feat_sentence_pitch_max",  "feat_sentence_pitch_std",
+            "feat_sentence_pitch_delta",
+            "feat_sentence_volume_mean", "feat_sentence_volume_min",
+            "feat_sentence_volume_max",  "feat_sentence_volume_std",
+            "feat_sentence_volume_delta",
+            "feat_sentence_hnr",
+        ),
+        output_csv="sentences",
+        requires_stages=("spacy_parse", "mfa_align", "praat_contours", "sentence_prosody"),
+        emits_columns=(
+            "Pitch_Mean", "Pitch_Min", "Pitch_Max", "Pitch_Std", "Pitch_Delta",
+            "Volume_Mean", "Volume_Min", "Volume_Max", "Volume_Std", "Volume_Delta",
+            "HNR",
+        ),
+        master_toggle="master_sentence_prosody",
     ),
 
     # --- Document level (§4 of feature_dependencies.md) ---
