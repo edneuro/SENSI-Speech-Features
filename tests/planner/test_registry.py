@@ -69,12 +69,18 @@ def test_every_cluster_required_stage_exists():
 
 
 def test_every_cluster_output_csv_is_valid():
-    VALID = {"features", "syllables", "phonemes", "sentences", "documents_summary"}
+    VALID = {
+        "features", "syllables", "phonemes", "sentences", "documents_summary",
+        "word2vec", "bert_word", "bert_sentence",
+    }
     for c in CLUSTERS:
         assert c.output_csv in VALID, \
             f"Cluster {c.name!r} has invalid output_csv {c.output_csv!r}"
 
 
-def test_every_cluster_has_at_least_one_toggle_key():
+def test_every_cluster_has_at_least_one_toggle_key_or_master():
     for c in CLUSTERS:
-        assert c.toggle_keys, f"Cluster {c.name!r} has no toggle_keys"
+        assert c.toggle_keys or c.master_toggle, (
+            f"Cluster {c.name!r} has no toggle_keys and no master_toggle "
+            f"(would be permanently inactive)"
+        )

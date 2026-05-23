@@ -35,6 +35,8 @@ from extractors.syllabify      import syllabify_pairs
 from extractors.syllable_prosody import add_syllable_prosody
 from extractors.pcenter        import add_pcenter     as _add_pcenter
 from extractors.sentence_prosody import add_sentence_prosody as _add_sentence_prosody
+from extractors.word2vec_embed  import embed_word2vec        as _embed_word2vec
+from extractors.bert_embed      import embed_bert_words_and_sentences as _embed_bert
 
 STAGES: list[Stage] = [
     # --- §0 Shared stages ---
@@ -110,6 +112,17 @@ STAGES: list[Stage] = [
           consumes=("word_df", "contours"),
           produces=("sentence_df",),
           run=_add_sentence_prosody),
+
+    # --- §5 Embeddings ---
+    Stage(name="word2vec_embed",
+          consumes=("word_df",),
+          produces=("word2vec_mat",),
+          run=_embed_word2vec),
+
+    Stage(name="bert_embed",
+          consumes=("word_df",),
+          produces=("bert_word_mat", "bert_sentence_mat"),
+          run=_embed_bert),
 
     # --- §4 Document level ---
     # Document stages are intentionally NOT extracted into separate functions
@@ -363,6 +376,35 @@ CLUSTERS: list[FeatureCluster] = [
             "HNR",
         ),
         master_toggle="master_sentence_prosody",
+    ),
+
+    # --- Embeddings (§5) ---
+
+    FeatureCluster(
+        name="word2vec",
+        toggle_keys=(),
+        output_csv="word2vec",
+        requires_stages=("spacy_parse", "word2vec_embed"),
+        emits_columns=(),
+        master_toggle="master_word2vec",
+    ),
+
+    FeatureCluster(
+        name="bert word embeddings",
+        toggle_keys=(),
+        output_csv="bert_word",
+        requires_stages=("spacy_parse", "bert_embed"),
+        emits_columns=(),
+        master_toggle="master_bert_word",
+    ),
+
+    FeatureCluster(
+        name="bert sentence embeddings",
+        toggle_keys=(),
+        output_csv="bert_sentence",
+        requires_stages=("spacy_parse", "bert_embed"),
+        emits_columns=(),
+        master_toggle="master_bert_sentence",
     ),
 
     # --- Document level (§4 of feature_dependencies.md) ---

@@ -14,7 +14,10 @@ from gui.planner.stages import Plan
 # Word-level output CSVs — used to filter which stages are relevant for the
 # word-level namespace (so doc-level stage requirements don't bleed into
 # word-level no_* flags like no_align).
-_WORD_LEVEL_CSVS = frozenset({"features", "syllables", "phonemes", "sentences"})
+_WORD_LEVEL_CSVS = frozenset({
+    "features", "syllables", "phonemes", "sentences",
+    "word2vec", "bert_word", "bert_sentence",
+})
 
 _WORD_STAGE_FLAGS = {
     # stage name -> attr name on the namespace (no_X is True iff stage NOT in plan)
@@ -54,7 +57,7 @@ def _word_only_stages(plan: Plan, prefs: dict) -> frozenset[str]:
             continue
         if c.output_csv not in plan.output_csvs:
             continue
-        if not any(_toggle_value(k) for k in c.toggle_keys):
+        if c.toggle_keys and not any(_toggle_value(k) for k in c.toggle_keys):
             continue
         required.update(c.requires_stages)
     return frozenset(required)
@@ -126,7 +129,10 @@ def to_namespace(plan: Plan, prefs: dict, level: str) -> argparse.Namespace:
     ns.no_word_csv  = "features" not in plan.output_csvs
     ns.no_syllables = "syllables" not in plan.output_csvs
     ns.no_phonemes  = "phonemes" not in plan.output_csvs
-    ns.no_sentences = "sentences" not in plan.output_csvs
+    ns.no_sentences     = "sentences"    not in plan.output_csvs
+    ns.no_word2vec      = "word2vec"     not in plan.output_csvs
+    ns.no_bert_word     = "bert_word"    not in plan.output_csvs
+    ns.no_bert_sentence = "bert_sentence" not in plan.output_csvs
 
     # Pass-throughs that main.py reads directly from args
     ns.feature_toggles = dict(features)

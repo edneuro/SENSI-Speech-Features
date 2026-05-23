@@ -40,11 +40,14 @@ OUTPUT_KEYED_TOGGLES = frozenset({
 })
 
 _OUTPUT_CSV_MAP = {
-    "word_level_csv":   "features",
-    "syllables_csv":    "syllables",
-    "phonemes_csv":     "phonemes",
-    "sentences_csv":    "sentences",
-    "document_summary": "documents_summary",
+    "word_level_csv":    "features",
+    "syllables_csv":     "syllables",
+    "phonemes_csv":      "phonemes",
+    "sentences_csv":     "sentences",
+    "word2vec_mat":      "word2vec",
+    "bert_word_mat":     "bert_word",
+    "bert_sentence_mat": "bert_sentence",
+    "document_summary":  "documents_summary",
 }
 
 
@@ -87,9 +90,10 @@ def _active_clusters(prefs: dict, active_csvs: frozenset[str]) -> list[FeatureCl
         # 3. output_csv must be wanted
         if c.output_csv not in active_csvs:
             continue
-        # 4. any child toggle on
-        if any(_toggle_value(prefs, k) for k in c.toggle_keys):
-            actives.append(c)
+        # 4. any child toggle on (empty toggle_keys = always active when output_csv + master pass)
+        if c.toggle_keys and not any(_toggle_value(prefs, k) for k in c.toggle_keys):
+            continue
+        actives.append(c)
     return actives
 
 
