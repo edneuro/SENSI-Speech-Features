@@ -153,6 +153,26 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument('--no-phon-end',      action='store_true')
     p.add_argument('--no-phon-duration', action='store_true')
 
+    # Sentence-level sidecar master toggle
+    p.add_argument('--no-sentences', action='store_true',
+                   help='Skip <stim>_sentences.csv emission.')
+
+    # Sentence per-column toggles
+    p.add_argument('--no-sent-text',          action='store_true')
+    p.add_argument('--no-sent-onset',         action='store_true')
+    p.add_argument('--no-sent-end',           action='store_true')
+    p.add_argument('--no-sent-pitch-mean',    action='store_true')
+    p.add_argument('--no-sent-pitch-min',     action='store_true')
+    p.add_argument('--no-sent-pitch-max',     action='store_true')
+    p.add_argument('--no-sent-pitch-std',     action='store_true')
+    p.add_argument('--no-sent-pitch-delta',   action='store_true')
+    p.add_argument('--no-sent-volume-mean',   action='store_true')
+    p.add_argument('--no-sent-volume-min',    action='store_true')
+    p.add_argument('--no-sent-volume-max',    action='store_true')
+    p.add_argument('--no-sent-volume-std',    action='store_true')
+    p.add_argument('--no-sent-volume-delta',  action='store_true')
+    p.add_argument('--no-sent-hnr',           action='store_true')
+
     return p
 
 
@@ -486,6 +506,29 @@ def _phoneme_columns_to_drop(features: dict) -> set:
             if not features.get(key, True)}
 
 
+_SENTENCE_COLUMN_MAP = {
+    "feat_sentence_text":          "sentence",
+    "feat_sentence_onset":         "Onset",
+    "feat_sentence_end":           "End",
+    "feat_sentence_pitch_mean":    "Pitch_Mean",
+    "feat_sentence_pitch_min":     "Pitch_Min",
+    "feat_sentence_pitch_max":     "Pitch_Max",
+    "feat_sentence_pitch_std":     "Pitch_Std",
+    "feat_sentence_pitch_delta":   "Pitch_Delta",
+    "feat_sentence_volume_mean":   "Volume_Mean",
+    "feat_sentence_volume_min":    "Volume_Min",
+    "feat_sentence_volume_max":    "Volume_Max",
+    "feat_sentence_volume_std":    "Volume_Std",
+    "feat_sentence_volume_delta":  "Volume_Delta",
+    "feat_sentence_hnr":           "HNR",
+}
+
+
+def _sentence_columns_to_drop(features: dict) -> set:
+    return {col for key, col in _SENTENCE_COLUMN_MAP.items()
+            if not features.get(key, True)}
+
+
 def _word_columns_to_drop(features: dict) -> set:
     """Return the set of word-level CSV columns to drop based on v4 toggles."""
     return {col for key, col in _WORD_FEATURE_COLUMN_MAP.items()
@@ -611,6 +654,28 @@ def run_word_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None
                         phon_df = phon_df.drop(columns=[c for c in drop if c in phon_df.columns])
                     phon_path = _level_dir(output_dir, 'phoneme') / f'{pair.stimulus_id}_phonemes.csv'
                     phon_df.to_csv(phon_path, index=False)
+
+            # Sentence-level sidecar — emits sentence/ subfolder CSV.
+            if not getattr(args, 'no_sentences', False):
+                try:
+                    from extractors.sentence_prosody import add_sentence_prosody
+                    sent_df = add_sentence_prosody(
+                        df,
+                        getattr(args, '_contours', None),
+                        pitch_units=getattr(args, 'pitch_units', 'semitones'),
+                    )
+                    if len(sent_df) > 0:
+                        drop = _sentence_columns_to_drop(
+                            getattr(args, 'feature_toggles', {}) or {})
+                        if drop:
+                            sent_df = sent_df.drop(
+                                columns=[c for c in drop if c in sent_df.columns])
+                        sent_path = (_level_dir(output_dir, 'sentence')
+                                     / f'{pair.stimulus_id}_sentences.csv')
+                        sent_df.to_csv(sent_path, index=False)
+                except Exception as exc:
+                    print(f'[sentence] failed for {pair.stimulus_id}: {exc}',
+                          file=sys.stderr)
 
             # Drop per-column toggled-off output columns (schema v4 word-level)
             # — only affects the features CSV write below; sidecars already ran.
