@@ -65,5 +65,8 @@ pytest-qt>=4.4
 # Acoustic prosody (Parselmouth wraps Praat for pitch, intensity, HNR)
 praat-parselmouth>=0.4
 
+# Word2Vec embeddings
+gensim>=4.3
+
 # Syllable counting for articulation rate
 pyphen>=0.14

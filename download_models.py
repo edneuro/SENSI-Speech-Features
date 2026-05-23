@@ -32,3 +32,14 @@ for model_type, model_name in [
         sys.exit(1)
 
 print('\nDone. MFA models are ready.')
+
+print('\n--- Word2Vec (manual download required) ---')
+print(
+    'Google News 300d is ~1.7 GB compressed (~3.6 GB on disk).\n'
+    'Automated download is not available. To use Word2Vec embeddings:\n'
+    '  1. Download: https://code.google.com/archive/p/word2vec/\n'
+    '     File: GoogleNews-vectors-negative300.bin.gz\n'
+    '  2. Decompress: gunzip GoogleNews-vectors-negative300.bin.gz\n'
+    '  3. Place at: hf_cache/word2vec/GoogleNews-vectors-negative300.bin\n'
+    '  (BERT embeddings work without this file.)'
+)
