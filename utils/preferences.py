@@ -1,32 +1,35 @@
 """Load and save user preferences.
 
-Schema (v8 — active):
+Schema (v9 — active):
     {
-      "schema_version": 8,
+      "schema_version": 9,
       "shared":  {analyzer_name, last_*_folder, theme},
       "features": {feat_struct_*, lexling_*, freq_*, pred_*, sem_*,
                    feat_acoustic_*, feat_psych_*,
                    feat_prosody_* (10 word-level), feat_doc_prosody_* (16 doc-level),
                    feat_syllable_* (9 syllable), feat_syllable_pcenter,
                    feat_phoneme_* (4 phoneme),
-                   master_* (6 cluster master toggles), master_syllable_pcenter},
+                   feat_sentence_* (14 sentence-level),
+                   master_* (6 cluster master toggles), master_syllable_pcenter,
+                   master_sentence_timing, master_sentence_prosody},
       "predictability": {llm_model},
       "semantic": {backend, categories_liwc, categories_empath},
       "output":   {word_level_csv, document_summary, out_count_*, doc_*,
-                   syllables_csv, phonemes_csv,
+                   syllables_csv, phonemes_csv, sentences_csv,
                    master_doc_prosody, master_doc_articulation_rate},
       "prosody":  {pitch_units, pitch_floor_hz, pitch_ceiling_hz, pause_threshold_s, pcenter_k}
     }
 
-Migration chain (all paths terminate at v8):
-  v1 → v2 → v3 → v4 → v5 → v6 → v7 → v8
-  v2 → v3 → v4 → v5 → v6 → v7 → v8
-  v3 → v4 → v5 → v6 → v7 → v8
-  v4 → v5 → v6 → v7 → v8
-  v5 → v6 → v7 → v8
-  v6 → v7 → v8
-  v7 → v8
-  v8 files are deep-merged against v8 defaults
+Migration chain (all paths terminate at v9):
+  v1 → v2 → v3 → v4 → v5 → v6 → v7 → v8 → v9
+  v2 → v3 → v4 → v5 → v6 → v7 → v8 → v9
+  v3 → v4 → v5 → v6 → v7 → v8 → v9
+  v4 → v5 → v6 → v7 → v8 → v9
+  v5 → v6 → v7 → v8 → v9
+  v6 → v7 → v8 → v9
+  v7 → v8 → v9
+  v8 → v9
+  v9 files are deep-merged against v9 defaults
 
 Default location: <project_root>/config/preferences.json
 Override via SENSI_PREFS_PATH environment variable.
@@ -455,11 +458,54 @@ DEFAULT_PREFS_V8: dict[str, Any] = {
 }
 
 # ---------------------------------------------------------------------------
+# v9 constants
+#
+# Sentence-level tier (2026-05-22) adds vs v8:
+#   - 14 new feature toggles: feat_sentence_* (11 prosody + onset + end + text)
+#     plus 2 master toggles: master_sentence_timing, master_sentence_prosody
+#   - 1 new output toggle: sentences_csv
+# ---------------------------------------------------------------------------
+
+SCHEMA_VERSION_V9 = 9
+
+_FEATURES_DEFAULT_V9 = {
+    **_FEATURES_DEFAULT_V8,
+    "feat_sentence_text":           True,
+    "feat_sentence_onset":          True,
+    "feat_sentence_end":            True,
+    "feat_sentence_pitch_mean":     True,
+    "feat_sentence_pitch_min":      True,
+    "feat_sentence_pitch_max":      True,
+    "feat_sentence_pitch_std":      True,
+    "feat_sentence_pitch_delta":    True,
+    "feat_sentence_volume_mean":    True,
+    "feat_sentence_volume_min":     True,
+    "feat_sentence_volume_max":     True,
+    "feat_sentence_volume_std":     True,
+    "feat_sentence_volume_delta":   True,
+    "feat_sentence_hnr":            True,
+    "master_sentence_timing":       True,
+    "master_sentence_prosody":      True,
+}
+
+_OUTPUT_DEFAULT_V9 = {
+    **_OUTPUT_DEFAULT_V8,
+    "sentences_csv": True,
+}
+
+DEFAULT_PREFS_V9: dict[str, Any] = {
+    **DEFAULT_PREFS_V8,
+    "schema_version": SCHEMA_VERSION_V9,
+    "features": dict(_FEATURES_DEFAULT_V9),
+    "output":   dict(_OUTPUT_DEFAULT_V9),
+}
+
+# ---------------------------------------------------------------------------
 # Active schema aliases
 # ---------------------------------------------------------------------------
 
-SCHEMA_VERSION = SCHEMA_VERSION_V8  # active version
-DEFAULT_PREFS: dict[str, Any] = DEFAULT_PREFS_V8  # active defaults
+SCHEMA_VERSION = SCHEMA_VERSION_V9  # active version
+DEFAULT_PREFS: dict[str, Any] = DEFAULT_PREFS_V9  # active defaults
 
 
 # ---------------------------------------------------------------------------
@@ -505,22 +551,31 @@ def load_preferences() -> dict[str, Any]:
             right_key = f'doc_categories_{backend}'
             if wrong_key in user_sem:
                 user_sem[right_key] = user_sem.pop(wrong_key)
-    if version == SCHEMA_VERSION_V8:
+    if version == SCHEMA_VERSION_V9:
         _deep_merge_current(merged, user)
+    elif version == SCHEMA_VERSION_V8:
+        _migrate_v8_into_v9(merged, user)
+        _write(path, merged)
     elif version == SCHEMA_VERSION_V7:
-        _migrate_v7_into_v8(merged, user)
+        v8_intermediate = deepcopy(DEFAULT_PREFS_V8)
+        _migrate_v7_into_v8(v8_intermediate, user)
+        _migrate_v8_into_v9(merged, v8_intermediate)
         _write(path, merged)
     elif version == SCHEMA_VERSION_V6:
         v7_intermediate = deepcopy(DEFAULT_PREFS_V7)
         _migrate_v6_into_v7(v7_intermediate, user)
-        _migrate_v7_into_v8(merged, v7_intermediate)
+        v8_intermediate = deepcopy(DEFAULT_PREFS_V8)
+        _migrate_v7_into_v8(v8_intermediate, v7_intermediate)
+        _migrate_v8_into_v9(merged, v8_intermediate)
         _write(path, merged)
     elif version == SCHEMA_VERSION_V5:
         v6_intermediate = deepcopy(DEFAULT_PREFS_V6)
         _migrate_v5_into_v6(v6_intermediate, user)
         v7_intermediate = deepcopy(DEFAULT_PREFS_V7)
         _migrate_v6_into_v7(v7_intermediate, v6_intermediate)
-        _migrate_v7_into_v8(merged, v7_intermediate)
+        v8_intermediate = deepcopy(DEFAULT_PREFS_V8)
+        _migrate_v7_into_v8(v8_intermediate, v7_intermediate)
+        _migrate_v8_into_v9(merged, v8_intermediate)
         _write(path, merged)
     elif version == SCHEMA_VERSION_V4:
         v5_intermediate = deepcopy(DEFAULT_PREFS_V5)
@@ -529,7 +584,9 @@ def load_preferences() -> dict[str, Any]:
         _migrate_v5_into_v6(v6_intermediate, v5_intermediate)
         v7_intermediate = deepcopy(DEFAULT_PREFS_V7)
         _migrate_v6_into_v7(v7_intermediate, v6_intermediate)
-        _migrate_v7_into_v8(merged, v7_intermediate)
+        v8_intermediate = deepcopy(DEFAULT_PREFS_V8)
+        _migrate_v7_into_v8(v8_intermediate, v7_intermediate)
+        _migrate_v8_into_v9(merged, v8_intermediate)
         _write(path, merged)
     elif version == 3:
         v4_intermediate = deepcopy(DEFAULT_PREFS_V4)
@@ -540,7 +597,9 @@ def load_preferences() -> dict[str, Any]:
         _migrate_v5_into_v6(v6_intermediate, v5_intermediate)
         v7_intermediate = deepcopy(DEFAULT_PREFS_V7)
         _migrate_v6_into_v7(v7_intermediate, v6_intermediate)
-        _migrate_v7_into_v8(merged, v7_intermediate)
+        v8_intermediate = deepcopy(DEFAULT_PREFS_V8)
+        _migrate_v7_into_v8(v8_intermediate, v7_intermediate)
+        _migrate_v8_into_v9(merged, v8_intermediate)
         _write(path, merged)
     elif version == 2:
         v3_intermediate = deepcopy(DEFAULT_PREFS_V3)
@@ -553,10 +612,12 @@ def load_preferences() -> dict[str, Any]:
         _migrate_v5_into_v6(v6_intermediate, v5_intermediate)
         v7_intermediate = deepcopy(DEFAULT_PREFS_V7)
         _migrate_v6_into_v7(v7_intermediate, v6_intermediate)
-        _migrate_v7_into_v8(merged, v7_intermediate)
+        v8_intermediate = deepcopy(DEFAULT_PREFS_V8)
+        _migrate_v7_into_v8(v8_intermediate, v7_intermediate)
+        _migrate_v8_into_v9(merged, v8_intermediate)
         _write(path, merged)
     else:
-        # v1 flat → v2 → v3 → v4 → v5 → v6 → v7 → v8
+        # v1 flat → v2 → v3 → v4 → v5 → v6 → v7 → v8 → v9
         v2_intermediate = deepcopy(_DEFAULT_PREFS_V2)
         _migrate_v1_into(v2_intermediate, user)
         v3_intermediate = deepcopy(DEFAULT_PREFS_V3)
@@ -569,7 +630,9 @@ def load_preferences() -> dict[str, Any]:
         _migrate_v5_into_v6(v6_intermediate, v5_intermediate)
         v7_intermediate = deepcopy(DEFAULT_PREFS_V7)
         _migrate_v6_into_v7(v7_intermediate, v6_intermediate)
-        _migrate_v7_into_v8(merged, v7_intermediate)
+        v8_intermediate = deepcopy(DEFAULT_PREFS_V8)
+        _migrate_v7_into_v8(v8_intermediate, v7_intermediate)
+        _migrate_v8_into_v9(merged, v8_intermediate)
         _write(path, merged)
 
     return merged
@@ -909,3 +972,12 @@ def _migrate_v7_into_v8(merged: dict, v7: dict) -> None:
     """
     _deep_merge_current(merged, v7)
     merged["schema_version"] = SCHEMA_VERSION_V8
+
+
+def _migrate_v8_into_v9(merged: dict, v8: dict) -> None:
+    """v8 → v9: additive only.
+
+    v9 defaults (already in merged) supply all sentence-level keys.
+    """
+    _deep_merge_current(merged, v8)
+    merged["schema_version"] = SCHEMA_VERSION_V9

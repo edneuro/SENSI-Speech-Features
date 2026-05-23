@@ -72,7 +72,7 @@ def test_load_v1_flat_schema_migrates_to_v4(tmp_path, monkeypatch):
     (tmp_path / 'p.json').write_text(json.dumps(old))
 
     prefs = load_preferences()
-    assert prefs['schema_version'] == 8
+    assert prefs['schema_version'] == SCHEMA_VERSION
     assert prefs['shared']['analyzer_name'] == 'Alice'
     assert prefs['shared']['last_transcripts_folder'] == '/x/y'
     assert prefs['semantic']['backend'] == 'liwc'
@@ -168,10 +168,10 @@ def v2_prefs_file(tmp_path, monkeypatch):
 
 
 def test_v2_file_loads_as_v4(v2_prefs_file):
-    """v2 file chains through v3 → v4 → v5 → v6 → v7 → v8 on load."""
-    from utils.preferences import load_preferences
+    """v2 file chains through v3 → v4 → v5 → v6 → v7 → v8 → v9 on load."""
+    from utils.preferences import load_preferences, SCHEMA_VERSION
     prefs = load_preferences()
-    assert prefs["schema_version"] == 8
+    assert prefs["schema_version"] == SCHEMA_VERSION
 
 
 def test_v2_migration_carries_shared_fields(v2_prefs_file):
@@ -266,10 +266,10 @@ def test_v2_migration_carries_dictionary_backend(v2_prefs_file):
 
 
 def test_v2_migration_rewrites_file_as_v4(v2_prefs_file):
-    from utils.preferences import load_preferences
+    from utils.preferences import load_preferences, SCHEMA_VERSION
     load_preferences()
     on_disk = json.loads(Path(v2_prefs_file).read_text(encoding="utf-8"))
-    assert on_disk["schema_version"] == 8
+    assert on_disk["schema_version"] == SCHEMA_VERSION
     assert "features" in on_disk
     assert "word_level" not in on_disk
     # v4-specific keys present after migration
@@ -347,7 +347,7 @@ def v3_prefs_file(tmp_path, monkeypatch):
 
 def test_v3_file_loads_as_v4(v3_prefs_file):
     prefs = load_preferences()
-    assert prefs["schema_version"] == 8
+    assert prefs["schema_version"] == SCHEMA_VERSION
 
 
 def test_v3_migration_expands_structural_per_column(v3_prefs_file):
@@ -404,7 +404,7 @@ def test_v3_migration_preserves_unchanged_keys(v3_prefs_file):
 def test_v3_migration_rewrites_file_as_v4(v3_prefs_file):
     load_preferences()
     on_disk = json.loads(Path(v3_prefs_file).read_text(encoding="utf-8"))
-    assert on_disk["schema_version"] == 8
+    assert on_disk["schema_version"] == SCHEMA_VERSION
 
 
 # ---------------------------------------------------------------------------
@@ -428,7 +428,7 @@ def test_v4_to_v5_adds_prosody_defaults(tmp_path, monkeypatch):
 
     loaded = prefs_mod.load_preferences()
 
-    assert loaded["schema_version"] == 8
+    assert loaded["schema_version"] == prefs_mod.SCHEMA_VERSION
     # Pre-existing keys preserved
     assert loaded["features"]["feat_struct_doc_id"] is True
     assert loaded["features"]["feat_psych_authentic"] is False
@@ -473,7 +473,7 @@ def test_v5_round_trip_preserves_user_edits(tmp_path, monkeypatch):
         "prosody": {"pitch_units": "hz", "pitch_floor_hz": 60},
     })
     again = prefs_mod.load_preferences()
-    assert again["schema_version"] == 8
+    assert again["schema_version"] == prefs_mod.SCHEMA_VERSION
     assert again["features"]["feat_prosody_pitch_mean"] is False
     assert again["prosody"]["pitch_units"] == "hz"
     assert again["prosody"]["pitch_floor_hz"] == 60
@@ -496,8 +496,8 @@ def test_v5_to_v6_adds_subword_defaults(tmp_path, monkeypatch):
     }))
     monkeypatch.setenv("SENSI_PREFS_PATH", str(path))
     prefs = load_preferences()
-    assert prefs["schema_version"] == 8
-    # New v6 defaults (carried through to v8)
+    assert prefs["schema_version"] == SCHEMA_VERSION
+    # New v6 defaults (carried through to v9)
     assert prefs["features"]["feat_syllable_onset"] is True
     assert prefs["features"]["feat_syllable_arpabet"] is False  # the lone default-off
     assert prefs["features"]["feat_phoneme_label"] is True
@@ -517,7 +517,7 @@ def test_v4_to_v6_chain_carries_keys_through(tmp_path, monkeypatch):
     }))
     monkeypatch.setenv("SENSI_PREFS_PATH", str(path))
     prefs = load_preferences()
-    assert prefs["schema_version"] == 8
+    assert prefs["schema_version"] == SCHEMA_VERSION
     assert prefs["features"]["feat_psych_clout"] is False
     assert "feat_syllable_onset" in prefs["features"]
     assert "syllables_csv" in prefs["output"]
@@ -656,18 +656,67 @@ def test_v7_into_v8_preserves_user_pcenter_k():
 
 
 def test_load_v7_prefs_file_migrates_to_v8(tmp_path, monkeypatch):
-    """load_preferences() on a v7 file auto-migrates and writes v8 to disk."""
+    """load_preferences() on a v7 file auto-migrates and writes v9 to disk."""
     import json
     from utils.preferences import (
         DEFAULT_PREFS_V7,
         load_preferences,
-        SCHEMA_VERSION_V8,
+        SCHEMA_VERSION_V9,
     )
     prefs_path = tmp_path / 'p.json'
     prefs_path.write_text(json.dumps(DEFAULT_PREFS_V7))
     monkeypatch.setenv('SENSI_PREFS_PATH', str(prefs_path))
     loaded = load_preferences()
-    assert loaded['schema_version'] == SCHEMA_VERSION_V8
+    assert loaded['schema_version'] == SCHEMA_VERSION_V9
     assert loaded['prosody']['pcenter_k'] == 0.3
     on_disk = json.loads(prefs_path.read_text())
-    assert on_disk['schema_version'] == SCHEMA_VERSION_V8
+    assert on_disk['schema_version'] == SCHEMA_VERSION_V9
+
+
+# ---------------------------------------------------------------------------
+# v8 → v9 migration
+# ---------------------------------------------------------------------------
+
+def test_v8_into_v9_adds_sentence_defaults():
+    """v8 prefs migrate to v9 with all sentence-level feature toggles True."""
+    from copy import deepcopy
+    from utils.preferences import (
+        DEFAULT_PREFS_V8,
+        DEFAULT_PREFS_V9,
+        _migrate_v8_into_v9,
+    )
+    target = deepcopy(DEFAULT_PREFS_V9)
+    _migrate_v8_into_v9(target, deepcopy(DEFAULT_PREFS_V8))
+    assert target['features']['feat_sentence_onset'] is True
+    assert target['features']['feat_sentence_pitch_mean'] is True
+    assert target['features']['master_sentence_timing'] is True
+    assert target['features']['master_sentence_prosody'] is True
+    assert target['output']['sentences_csv'] is True
+
+
+def test_v8_into_v9_preserves_existing_features():
+    """v8 user feature values survive migration to v9."""
+    from copy import deepcopy
+    from utils.preferences import DEFAULT_PREFS_V8, DEFAULT_PREFS_V9, _migrate_v8_into_v9
+
+    v8 = deepcopy(DEFAULT_PREFS_V8)
+    v8['features']['feat_syllable_pcenter'] = False  # a v8 key the user turned off
+    target = deepcopy(DEFAULT_PREFS_V9)
+    _migrate_v8_into_v9(target, v8)
+    assert target['features']['feat_syllable_pcenter'] is False
+
+
+def test_load_v8_prefs_file_migrates_to_v9(tmp_path, monkeypatch):
+    """load_preferences() on a v8 file auto-migrates and writes v9 to disk."""
+    import json
+    from utils.preferences import DEFAULT_PREFS_V8, load_preferences, SCHEMA_VERSION_V9
+
+    prefs_path = tmp_path / 'p.json'
+    prefs_path.write_text(json.dumps(DEFAULT_PREFS_V8))
+    monkeypatch.setenv('SENSI_PREFS_PATH', str(prefs_path))
+    loaded = load_preferences()
+    assert loaded['schema_version'] == SCHEMA_VERSION_V9
+    assert loaded['features']['feat_sentence_onset'] is True
+    assert loaded['output']['sentences_csv'] is True
+    on_disk = json.loads(prefs_path.read_text())
+    assert on_disk['schema_version'] == SCHEMA_VERSION_V9
