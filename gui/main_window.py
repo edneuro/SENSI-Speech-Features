@@ -14,7 +14,6 @@ from gui.section_word_features import WordFeaturesSection
 from gui.section_doc_features import DocFeaturesSection
 from gui.section_subword_features import SubwordFeaturesSection
 from gui.section_sentence_features import SentenceFeaturesSection
-from gui.section_embeddings import EmbeddingsSection
 from gui.section_run import RunSection
 from gui.section_logs import LogsSection
 from utils.preferences import load_preferences
@@ -24,7 +23,7 @@ APP_NAME = "SENSI-FeatureExtractor"
 
 
 SECTIONS = ["Inputs", "Word-level features", "Document-level features",
-            "Sub-word features", "Sentence features", "Embeddings", "Run", "Logs"]
+            "Sub-word features", "Sentence features", "Run", "Logs"]
 
 
 class MainWindow(QMainWindow):
@@ -84,7 +83,6 @@ class MainWindow(QMainWindow):
         self.doc_features = DocFeaturesSection()
         self.subword_section = SubwordFeaturesSection()
         self.sentence_section = SentenceFeaturesSection()
-        self.embeddings_section = EmbeddingsSection()
         self.run_section = RunSection(
             get_session_api_key=self.word_features.session_api_key,
             status_strip=self.status_strip,
@@ -96,7 +94,6 @@ class MainWindow(QMainWindow):
         self.doc_features.settings_changed.connect(self.run_section.refresh)
         self.subword_section.settings_changed.connect(self.run_section.refresh)
         self.sentence_section.settings_changed.connect(self.run_section.refresh)
-        self.embeddings_section.settings_changed.connect(self.run_section.refresh)
         # Word-level changes (backend switch, category edits) must also refresh
         # the doc-level page so its category count and psych-card availability
         # stay in sync without a restart.
@@ -117,7 +114,6 @@ class MainWindow(QMainWindow):
             self.doc_features,
             self.subword_section,
             self.sentence_section,
-            self.embeddings_section,
             self.run_section,
             self.logs_section,
         ]

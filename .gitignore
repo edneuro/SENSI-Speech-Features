@@ -8,6 +8,8 @@ __pycache__/
 # Editor / agent configs (local, not project state)
 .claude/
 .vscode/
+.idea
+.mcp.json
 
 # Test artifacts
 .pytest_cache/

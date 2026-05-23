@@ -205,6 +205,23 @@ class WordFeaturesSection(QWidget):
         sem_card.add_widget(cats_w)
         layout.addWidget(sem_card)
 
+        # --- Semantic similarity (embeddings) ---
+        sim_card = Card(
+            "Semantic similarity",
+            "Pretrained word embeddings saved as .mat sidecars in word/. "
+            "Word2Vec requires a one-time manual download — see download_models.py.",
+        )
+        sim_card.add_widget(self._make_embed_toggle(
+            "master_word2vec", "Word2Vec — Google News 300-d → <stim>_word2vec.mat",
+            f.get("master_word2vec", True), "word2vec_mat",
+        ))
+        sim_card.add_widget(self._make_embed_toggle(
+            "master_bert_word",
+            "BERT — bert-base-uncased, 12 layers × 768 d → <stim>_bert_word.mat",
+            f.get("master_bert_word", True), "bert_word_mat",
+        ))
+        layout.addWidget(sim_card)
+
         # --- Acoustic (per-column) ---
         ac_card = ClusterCard(
             "Acoustic",
@@ -308,6 +325,22 @@ class WordFeaturesSection(QWidget):
             save_preferences({"output": {key[len(prefix):]: value}})
         else:
             save_preferences({section: {key: value}})
+        self.settings_changed.emit()
+
+    def _make_embed_toggle(self, feat_key: str, label: str, initial: bool,
+                           out_key: str) -> ToggleRow:
+        """Embedding master toggles drive both a feature flag and an output flag
+        (the same value), so the planner master switch and the .mat sidecar
+        emission stay in lockstep."""
+        row = ToggleRow(label=label)
+        row.set_checked(initial)
+        row.toggled.connect(
+            lambda v, fk=feat_key, ok=out_key: self._on_embed_toggle(fk, v, ok))
+        self._toggles[feat_key] = row
+        return row
+
+    def _on_embed_toggle(self, feat_key: str, value: bool, out_key: str) -> None:
+        save_preferences({"features": {feat_key: value}, "output": {out_key: value}})
         self.settings_changed.emit()
 
     def refresh_warnings(self, session_api_key: str = "") -> None:
