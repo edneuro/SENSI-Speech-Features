@@ -77,6 +77,7 @@ class SentenceFeaturesSection(QWidget):
         )
         sim_row = ToggleRow(
             label="BERT — bert-base-uncased, 12 layers × 768 d → <stim>_bert_sentence.mat",
+            info_key="master_bert_sentence",
         )
         sim_row.set_checked(f.get("master_bert_sentence", True))
         sim_row.toggled.connect(self._on_bert_sentence_toggle)
@@ -87,7 +88,7 @@ class SentenceFeaturesSection(QWidget):
         layout.addStretch()
 
     def _make_toggle(self, key: str, label: str, initial: bool) -> ToggleRow:
-        row = ToggleRow(label=label)
+        row = ToggleRow(label=label, info_key=key)
         row.set_checked(initial)
         row.toggled.connect(lambda v, k=key: self._on_toggle(k, v))
         self._toggles[key] = row

@@ -25,12 +25,14 @@ SensiExtractor/
 ├── setup.bat / setup.sh   # One-time setup scripts
 ├── gui/
 │   ├── __init__.py
-│   ├── main_window.py        # Main QMainWindow + 5-item sidebar + status strip
+│   ├── main_window.py        # Main QMainWindow + 7-item sidebar (Inputs, Word/Doc/Sub-word/Sentence features, Run, Logs) + status strip
 │   ├── theme.py              # QSS stylesheets (SENSI cyan accent, light only)
-│   ├── widgets.py            # Reusable widgets (SectionHeader, Card, FolderRow, ToggleRow, AmberDotIndicator)
+│   ├── widgets.py            # Reusable widgets (SectionHeader, Card, FolderRow, ToggleRow, AmberDotIndicator); ToggleRow auto-renders ⓘ info-icon when a docs/features/<key>.md exists
 │   ├── section_inputs.py     # Inputs page
-│   ├── section_word_features.py  # Word-level features page (Structural × 8, Lex-ling, Freq, Predictability, Semantic, Acoustic × 4)
-│   ├── section_doc_features.py   # Document-level features page (Counts × 4, Aggregates, Lex diversity, Readability, Category proportions, Composite psych × 4)
+│   ├── section_word_features.py     # Word-level features page (Structural × 8, Lex-ling × 4, Freq, Predictability, Semantic indicators, Semantic similarity (Word2Vec + BERT word), Acoustic × 4, Prosody × 10)
+│   ├── section_doc_features.py      # Document-level features page (Counts × 4, Aggregates × 4, Lex diversity, Readability, Category proportions, Composite psych × 4, Doc prosody × 16)
+│   ├── section_subword_features.py  # Sub-word page (Syllable timing/labels/prosody, P-center, Phonemes)
+│   ├── section_sentence_features.py # Sentence-level page (timing, prosody × 11, BERT sentence similarity)
 │   ├── section_run.py        # Run page (output checkboxes, readiness, cost panel, Run button)
 │   ├── section_logs.py       # Logs page (live viewer, past runs)
 │   ├── status_strip.py       # Persistent bottom status strip
@@ -38,10 +40,17 @@ SensiExtractor/
 │   ├── category_dialog.py    # Modal dialog wrapping CategoryPicker (one per level)
 │   ├── preflight.py          # Continuous warning engine
 │   ├── cost_estimate.py      # OpenAI cost estimation via tiktoken
-│   └── run_dispatch.py       # Background-thread orchestrator
+│   ├── run_dispatch.py       # Background-thread orchestrator
+│   ├── feature_docs.py       # Per-feature docs loader + _SHARED_DOC_MAP (toggle key → docs/features/*.md)
+│   └── info_popup.py         # InfoIcon button + FeatureInfoDialog (renders the .md via QTextBrowser)
 ├── assets/
 │   ├── icon.svg              # App icon (title bar, taskbar) — SENSI cyan glyph
+│   ├── info.svg              # Info-icon glyph used by gui/info_popup.py
 │   ├── check.svg, dash.svg, dot.svg  # Checkbox / radio indicator graphics
+├── docs/
+│   ├── master_plan.md        # Single entry point for project state (read first)
+│   ├── features/             # Per-feature .md registry — one file per documented toggle (or one shared file for related toggles), surfaced in the GUI via gui/info_popup.py
+│   └── superpowers/          # Batch specs + plans (one per feature batch)
 ├── extractors/
 │   ├── text_parser.py     # spaCy annotation
 │   ├── aligner.py         # MFA forced alignment

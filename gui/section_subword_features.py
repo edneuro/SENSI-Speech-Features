@@ -150,7 +150,7 @@ class SubwordFeaturesSection(QWidget):
     # page), so the simpler signature suffices. Add a `section` parameter if
     # an output toggle is ever added to this page.
     def _make_toggle(self, key, label, initial):
-        row = ToggleRow(label=label)
+        row = ToggleRow(label=label, info_key=key)
         row.set_checked(initial)
         row.toggled.connect(lambda v, k=key: self._on_toggle(k, v))
         self._toggles[key] = row

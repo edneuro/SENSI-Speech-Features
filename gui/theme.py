@@ -119,6 +119,14 @@ QPushButton#Primary {{
 QPushButton#Primary:hover {{ background: {ACCENT_HOVER}; }}
 QPushButton#Primary:disabled {{ background: {ACCENT_DISABLED}; }}
 
+QPushButton#InfoIcon {{
+    background: transparent;
+    border: none;
+    padding: 0;
+    border-radius: 11px;
+}}
+QPushButton#InfoIcon:hover {{ background: {ACCENT_SOFT}; }}
+
 QLabel {{ color: {TEXT_PRIMARY}; }}
 QLabel#SectionHeader {{
     font-size: 14px;

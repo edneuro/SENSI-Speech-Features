@@ -70,13 +70,20 @@ class FolderRow(QWidget):
 class ToggleRow(QWidget):
     toggled = Signal(bool)
 
-    def __init__(self, label: str, parent=None):
+    def __init__(self, label: str, *, info_key: str | None = None, parent=None):
         super().__init__(parent)
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         self.check = QCheckBox(label)
         self.check.toggled.connect(self.toggled)
         layout.addWidget(self.check)
+        # Info icon appears iff a docs/features/<info_key>.md exists. Cluster
+        # master toggles pass info_key=None, so they remain icon-free.
+        if info_key is not None:
+            from gui.feature_docs import has_feature_doc
+            if has_feature_doc(info_key):
+                from gui.info_popup import InfoIcon
+                layout.addWidget(InfoIcon(info_key, self))
         layout.addStretch(1)
         self.warning = None  # populated by set_warning
 

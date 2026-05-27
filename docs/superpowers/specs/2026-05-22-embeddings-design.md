@@ -1,7 +1,7 @@
 # Embeddings Batch — Design Spec
 
 **Date:** 2026-05-22  
-**Status:** Design finalized; plan at `docs/superpowers/plans/2026-05-22-embeddings.md`
+**Status:** Shipped 2026-05-22 (master_plan §3). Implementation plan removed in the 2026-05-24 docs curation.
 
 ---
 

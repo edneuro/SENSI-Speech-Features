@@ -454,7 +454,6 @@ Auto-migration runs once on first launch; subsequent loads use v3. Old v2 files 
 ### Design and planning documents
 
 - **Spec:** `docs/superpowers/specs/2026-05-11-gui-redesign-design.md`
-- **Plan:** `docs/superpowers/plans/2026-05-11-gui-redesign.md`
 
 ---
 
@@ -511,7 +510,6 @@ The full v1 → v2 → v3 → v4 chain runs on load so files from any prior batc
 ### Design and planning documents
 
 - **Spec:** `docs/superpowers/specs/2026-05-11-batch-3-design.md`
-- **Plan:** `docs/superpowers/plans/2026-05-11-batch-3.md`
 
 
 ---
@@ -574,4 +572,3 @@ Both are in `requirements.txt`. The preflight panel warns if either is missing o
 ### Design and planning documents
 
 - **Spec:** `docs/superpowers/specs/2026-05-12-prosody-design.md`
-- **Plan:** `docs/superpowers/plans/2026-05-12-prosody.md`

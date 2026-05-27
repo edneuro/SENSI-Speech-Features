@@ -313,7 +313,7 @@ class WordFeaturesSection(QWidget):
         return self.api_key_line.text() if self.api_key_row.isVisible() else ""
 
     def _make_toggle(self, key, label, initial, section):
-        row = ToggleRow(label=label)
+        row = ToggleRow(label=label, info_key=key)
         row.set_checked(initial)
         row.toggled.connect(lambda v, k=key, s=section: self._on_toggle(s, k, v))
         self._toggles[key] = row
@@ -332,7 +332,7 @@ class WordFeaturesSection(QWidget):
         """Embedding master toggles drive both a feature flag and an output flag
         (the same value), so the planner master switch and the .mat sidecar
         emission stay in lockstep."""
-        row = ToggleRow(label=label)
+        row = ToggleRow(label=label, info_key=feat_key)
         row.set_checked(initial)
         row.toggled.connect(
             lambda v, fk=feat_key, ok=out_key: self._on_embed_toggle(fk, v, ok))

@@ -222,7 +222,7 @@ class DocFeaturesSection(QWidget):
     def toggle(self, key: str): return self._toggles.get(key)
 
     def _make_toggle(self, key, label, initial, section):
-        row = ToggleRow(label=label)
+        row = ToggleRow(label=label, info_key=key)
         row.set_checked(initial)
         row.toggled.connect(lambda v, k=key, s=section: self._on_toggle(s, k, v))
         self._toggles[key] = row
