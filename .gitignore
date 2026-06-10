@@ -22,6 +22,15 @@ dictionaries/*.dic
 dictionaries/*.parquet
 dictionaries/*.csv
 
+# ...but DO track the freely-redistributable lexical-norm tables built by
+# download_lexical_norms.py (EWFG/MRC and any other local files stay ignored).
+!dictionaries/aoa_kuperman.parquet
+!dictionaries/aoa_kuperman.csv
+!dictionaries/concreteness_brysbaert.parquet
+!dictionaries/concreteness_brysbaert.csv
+!dictionaries/warriner_vad.parquet
+!dictionaries/warriner_vad.csv
+
 # Run outputs
 output/
 
