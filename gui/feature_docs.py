@@ -65,6 +65,16 @@ _SHARED_DOC_MAP: dict[str, str] = {
     "output_doc_agg_edu_zipf":  "doc_aggregates.md",
     "output_doc_agg_surprisal": "doc_aggregates.md",
     "output_doc_agg_llm":       "doc_aggregates.md",
+    # Lexical norms — all eight word toggles + the doc aggregate share one doc
+    "feat_norm_aoa_mean":     "lexical_norms.md",
+    "feat_norm_aoa_sd":       "lexical_norms.md",
+    "feat_norm_concreteness": "lexical_norms.md",
+    "feat_norm_imageability": "lexical_norms.md",
+    "feat_norm_familiarity":  "lexical_norms.md",
+    "feat_norm_valence":      "lexical_norms.md",
+    "feat_norm_arousal":      "lexical_norms.md",
+    "feat_norm_dominance":    "lexical_norms.md",
+    "output_doc_agg_lexical_norms": "lexical_norms.md",
     # Composite psych scores (Pennebaker) — all four share one explainer
     "feat_psych_authentic": "doc_psych_composite.md",
     "feat_psych_analytic":  "doc_psych_composite.md",

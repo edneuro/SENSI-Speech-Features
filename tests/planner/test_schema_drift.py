@@ -2,7 +2,12 @@
 must be referenced by some FeatureCluster's toggle_keys — otherwise
 the planner silently ignores it."""
 from gui.planner.registry import CLUSTERS
-from utils.preferences import _FEATURES_DEFAULT_V10, _OUTPUT_DEFAULT_V10
+from utils.preferences import DEFAULT_PREFS
+
+# Track the *active* prefs schema (not a pinned version) so new batches that
+# add keys are validated against the registry automatically.
+_FEATURES_DEFAULT_V10 = DEFAULT_PREFS["features"]
+_OUTPUT_DEFAULT_V10 = DEFAULT_PREFS["output"]
 
 
 # Keys that are intentionally NOT in any cluster's toggle_keys (config
@@ -27,6 +32,7 @@ _INTENTIONALLY_UNROUTED_FEATURES: set[str] = {
     "master_frequency",
     "master_predictability",
     "master_acoustic",
+    "master_lexical_norms",     # routes via master_toggle field
     "master_sentence_timing",   # routes via master_toggle field
     "master_sentence_prosody",  # routes via master_toggle field
     "master_word2vec",          # routes via master_toggle field

@@ -40,7 +40,30 @@ DOC_FEATURE_KEYS = (
     'psych_analytic',
     'psych_tone',
     'psych_clout',
+    'lexical_norms_agg',
 )
+
+# Word-level norm column → doc-level mean column.
+_LEXNORM_MEAN_COLS = {
+    'Concreteness': 'mean_concreteness',
+    'Imageability': 'mean_imageability',
+    'Familiarity':  'mean_familiarity',
+    'Valence':      'mean_valence',
+    'Arousal':      'mean_arousal',
+    'Dominance':    'mean_dominance',
+}
+
+# Word-level norm column → doc-level coverage column (fraction of content
+# tokens that matched the norm).
+_LEXNORM_COVERAGE_COLS = {
+    'AoA_Mean':     'aoa_coverage',
+    'Concreteness': 'concreteness_coverage',
+    'Imageability': 'imageability_coverage',
+    'Familiarity':  'familiarity_coverage',
+    'Valence':      'valence_coverage',
+    'Arousal':      'arousal_coverage',
+    'Dominance':    'dominance_coverage',
+}
 
 
 def build_doc_summary(
@@ -54,6 +77,7 @@ def build_doc_summary(
     contours=None,                       # extractors.audio_features.Contours | None
     pause_threshold_s: float = 0.25,
     pitch_units: str = 'semitones',
+    late_acquired_threshold: float = 10.0,
 ) -> dict:
     """Aggregate a per-word DataFrame into a one-row summary dict."""
     df = token_df
@@ -141,6 +165,9 @@ def build_doc_summary(
             if toggles.get(full_key):
                 summary[full_key] = scores[short_key]
 
+    if toggles.get('lexical_norms_agg'):
+        summary.update(_lexical_norm_aggregates(df, late_acquired_threshold))
+
     # Prosody — single master toggle. Emits all 16 cols; per-column dropping
     # happens later in main.py's CSV writer via _doc_columns_to_drop.
     if contours is not None and toggles.get('doc_prosody'):
@@ -160,3 +187,39 @@ def _mean(series: pd.Series) -> float | None:
     if series.notna().any():
         return float(series.mean())
     return None
+
+
+def _lexical_norm_aggregates(df: pd.DataFrame, late_acquired_threshold: float) -> dict:
+    """Document-level aggregates of the per-word lexical-norm columns.
+
+    Means/spread are computed over **content words** (CONTENT_POS); coverage
+    is the fraction of content tokens that matched each norm. Absent word-level
+    columns are simply skipped.
+    """
+    out: dict = {}
+    if 'upos' not in df.columns:
+        return out
+    content = df[df['upos'].isin(CONTENT_POS)]
+    n_content = len(content)
+
+    if 'AoA_Mean' in df.columns:
+        aoa = content['AoA_Mean']
+        matched = aoa.notna()
+        out['mean_aoa'] = _mean(aoa)
+        out['median_aoa'] = float(aoa.median()) if matched.any() else None
+        out['max_aoa'] = float(aoa.max()) if matched.any() else None
+        out['sd_aoa'] = float(aoa.std()) if matched.sum() > 1 else None
+        out['prop_late_acquired'] = (
+            float((aoa > late_acquired_threshold).sum() / matched.sum())
+            if matched.any() else None
+        )
+
+    for col, dst in _LEXNORM_MEAN_COLS.items():
+        if col in df.columns:
+            out[dst] = _mean(content[col])
+
+    for col, dst in _LEXNORM_COVERAGE_COLS.items():
+        if col in df.columns:
+            out[dst] = float(content[col].notna().mean()) if n_content else 0.0
+
+    return out

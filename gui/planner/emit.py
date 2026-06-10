@@ -29,6 +29,7 @@ _WORD_STAGE_FLAGS = {
     "gpt2_surprisal": "no_surprisal",
     "llm_predict":    "no_llm_cloze",
     "sem_domain":     "no_sem_domain",
+    "lexical_norms":  "no_lexical_norms",
     "word_prosody":   "no_prosody",
 }
 
@@ -142,6 +143,9 @@ def to_namespace(plan: Plan, prefs: dict, level: str) -> argparse.Namespace:
     ns.sem_categories  = _categories_for_level(prefs, level)
     ns.llm_model       = prefs.get("predictability", {}).get("llm_model", "") or None
     ns.edu_freq_lookup = None
+    _norms = prefs.get("lexical_norms", {})
+    ns.lexical_norms_paths = _norms.get("paths") or None
+    ns.late_acquired_threshold = float(_norms.get("late_acquired_threshold", 10.0))
 
     # Prosody runtime params
     pros = prefs.get("prosody", {})
@@ -171,6 +175,7 @@ def to_namespace(plan: Plan, prefs: dict, level: str) -> argparse.Namespace:
         ns.no_doc_mtld            = "doc_lex_diversity" not in in_plan
         ns.no_doc_flesch_ease     = "doc_readability"   not in in_plan
         ns.no_doc_fk_grade        = "doc_readability"   not in in_plan
+        ns.no_doc_lexical_norms   = not output.get("doc_agg_lexical_norms", False)
         ns.no_doc_psych_authentic = "doc_psych"         not in in_plan
         ns.no_doc_psych_analytic  = "doc_psych"         not in in_plan
         ns.no_doc_psych_tone      = "doc_psych"         not in in_plan

@@ -553,11 +553,61 @@ DEFAULT_PREFS_V11: dict[str, Any] = {
 }
 
 # ---------------------------------------------------------------------------
+# v12 constants
+#
+# Lexical-norms batch (2026-06-10): per-word AoA / concreteness / imageability
+# / familiarity / valence-arousal-dominance from user-supplied parquets.
+# Opt-in (no data ships): master defaults OFF; per-column children default ON
+# so flipping the master on yields all columns. Additive only.
+# ---------------------------------------------------------------------------
+
+SCHEMA_VERSION_V12 = 12
+
+_NORM_FEATURE_KEYS = {
+    "master_lexical_norms":   False,   # opt-in: no norm data ships
+    "feat_norm_aoa_mean":     True,
+    "feat_norm_aoa_sd":       True,
+    "feat_norm_concreteness": True,
+    "feat_norm_imageability": True,
+    "feat_norm_familiarity":  True,
+    "feat_norm_valence":      True,
+    "feat_norm_arousal":      True,
+    "feat_norm_dominance":    True,
+}
+
+# EWFG is disabled (its source is print-only / not digitized — see
+# docs/features/edu_zipf.md). Default the grade-band toggles + the doc
+# aggregate OFF so a fresh install / planner run does not emit all-NaN
+# Edu_Zipf_* columns. (Existing user prefs keep their values; the GUI
+# additionally greys these out.)
+_EWFG_DISABLED_DEFAULTS = {
+    "freq_ewfg_k2": False, "freq_ewfg_3to5": False, "freq_ewfg_6to8": False,
+    "freq_ewfg_9to12": False, "freq_ewfg_overall": False,
+}
+
+_FEATURES_DEFAULT_V12 = {
+    **_FEATURES_DEFAULT_V10, **_NORM_FEATURE_KEYS, **_EWFG_DISABLED_DEFAULTS,
+}
+_OUTPUT_DEFAULT_V12 = {
+    **_OUTPUT_DEFAULT_V10,
+    "doc_agg_lexical_norms": False,
+    "doc_agg_edu_zipf": False,
+}
+
+DEFAULT_PREFS_V12: dict[str, Any] = {
+    **DEFAULT_PREFS_V11,
+    "schema_version": SCHEMA_VERSION_V12,
+    "features": dict(_FEATURES_DEFAULT_V12),
+    "output":   dict(_OUTPUT_DEFAULT_V12),
+    "lexical_norms": {"paths": {}, "late_acquired_threshold": 10},
+}
+
+# ---------------------------------------------------------------------------
 # Active schema aliases
 # ---------------------------------------------------------------------------
 
-SCHEMA_VERSION = SCHEMA_VERSION_V11  # active version
-DEFAULT_PREFS: dict[str, Any] = DEFAULT_PREFS_V11  # active defaults
+SCHEMA_VERSION = SCHEMA_VERSION_V12  # active version
+DEFAULT_PREFS: dict[str, Any] = DEFAULT_PREFS_V12  # active defaults
 
 
 # ---------------------------------------------------------------------------
@@ -603,10 +653,11 @@ def load_preferences() -> dict[str, Any]:
             right_key = f'doc_categories_{backend}'
             if wrong_key in user_sem:
                 user_sem[right_key] = user_sem.pop(wrong_key)
-    if version in (SCHEMA_VERSION_V10, SCHEMA_VERSION_V11):
-        # v10 and v11 share the same shape; the only v11 change is the
-        # semantic.backend default + the liwc→empath coercion applied in the
-        # finalize step below. A v10 source is upgraded there (and rewritten).
+    if version in (SCHEMA_VERSION_V10, SCHEMA_VERSION_V11, SCHEMA_VERSION_V12):
+        # v10–v12 are additive: missing keys are filled from the current
+        # defaults (merged starts as DEFAULT_PREFS). v11's backend coercion and
+        # the version stamp are applied in the finalize step below, which
+        # rewrites the file for any source older than the current version.
         _deep_merge_current(merged, user)
     elif version == SCHEMA_VERSION_V9:
         _migrate_v9_into_v10(merged, user)
@@ -764,7 +815,7 @@ def _deep_merge_v3(into: dict, src: dict) -> None:
 
 
 _CURRENT_SECTIONS = ('shared', 'features', 'predictability',
-                     'semantic', 'output', 'prosody')
+                     'semantic', 'output', 'prosody', 'lexical_norms')
 
 
 def _deep_merge_current(into: dict, src: dict) -> None:

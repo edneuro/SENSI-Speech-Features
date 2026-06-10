@@ -29,6 +29,7 @@ from extractors.educator_freq  import add_edu_freq
 from extractors.surprisal      import add_surprisal
 from extractors.llm_cloze      import add_llm_cloze
 from extractors.semantic_domain import add_semantic_domain
+from extractors.lexical_norms import add_lexical_norms as _add_lexical_norms
 from extractors.prosody        import add_word_prosody
 from extractors.timing         import add_timing_columns
 from extractors.syllabify      import syllabify_pairs
@@ -80,6 +81,11 @@ STAGES: list[Stage] = [
           consumes=("word_df",),
           produces=("word_df.Sem",),
           run=add_semantic_domain),
+
+    Stage(name="lexical_norms",
+          consumes=("word_df",),
+          produces=("word_df.Norms",),
+          run=_add_lexical_norms),
 
     Stage(name="word_timing",
           consumes=("word_df", "word_alignment"),
@@ -253,6 +259,22 @@ CLUSTERS: list[FeatureCluster] = [
         output_csv="features",
         requires_stages=("spacy_parse", "sem_domain"),
         emits_columns=("Sem_Categories",),  # plus dynamic Sem_<Backend>_<cat> columns
+    ),
+
+    # §1.7b Lexical norms — user-supplied AoA / concreteness / imageability /
+    # familiarity / valence-arousal-dominance. Opt-in (master defaults off);
+    # no data ships.
+    FeatureCluster(
+        name="lexical norms",
+        toggle_keys=("feat_norm_aoa_mean", "feat_norm_aoa_sd",
+                     "feat_norm_concreteness", "feat_norm_imageability",
+                     "feat_norm_familiarity", "feat_norm_valence",
+                     "feat_norm_arousal", "feat_norm_dominance"),
+        output_csv="features",
+        requires_stages=("spacy_parse", "lexical_norms"),
+        emits_columns=("AoA_Mean", "AoA_SD", "Concreteness", "Imageability",
+                       "Familiarity", "Valence", "Arousal", "Dominance"),
+        master_toggle="master_lexical_norms",
     ),
 
     # §1.8 Word acoustic alignment — Onset, End columns
@@ -481,6 +503,17 @@ CLUSTERS: list[FeatureCluster] = [
         requires_stages=("doc_psych",),
         emits_columns=("psych_authentic", "psych_analytic", "psych_tone", "psych_clout"),
         master_toggle="master_psych_composite",
+    ),
+
+    # §4.5b Document-level lexical-norm aggregates (means, AoA spread,
+    # prop_late_acquired, coverage). Single output toggle; computed in
+    # doc_summary from the word-level norm columns.
+    FeatureCluster(
+        name="doc lexical norms",
+        toggle_keys=("doc_agg_lexical_norms",),
+        output_csv="documents_summary",
+        requires_stages=("spacy_parse", "lexical_norms", "doc_aggregates"),
+        emits_columns=(),  # dynamic — means + coverage columns
     ),
 
     # §4.6 Category proportions

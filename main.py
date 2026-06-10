@@ -74,11 +74,33 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument('--no-surprisal', action='store_true', help='Skip GPT-2 surprisal.')
 
     # New batch 1 feature flags
-    p.add_argument('--no-edu-freq',     action='store_true', help='Skip EWFG grade-band frequencies.')
+    # EWFG is opt-in: its source (Zeno et al. 1995) is print-only / not
+    # digitized, so it is off by default. --no-edu-freq is kept (now redundant
+    # with the default) for backward compatibility.
+    p.add_argument('--edu-freq', dest='no_edu_freq', action='store_false',
+                   help='Enable EWFG grade-band frequencies (off by default; '
+                        'requires a user-supplied dictionaries/edu_zipf.parquet).')
+    p.add_argument('--no-edu-freq', dest='no_edu_freq', action='store_true',
+                   help='(default) Skip EWFG grade-band frequencies.')
+    p.set_defaults(no_edu_freq=True)
     p.add_argument('--edu-freq-lookup', default=None, help='Override path to EWFG lookup parquet.')
     p.add_argument('--edu-bands',       default=None,
                    help='Comma-separated EWFG bands to emit: k2,3to5,6to8,9to12,overall. '
                         'Default (omit flag) = all five bands.')
+
+    # Lexical norms are opt-in (no data ships; user supplies parquet files).
+    p.add_argument('--lexical-norms', dest='no_lexical_norms', action='store_false',
+                   default=True,
+                   help='Compute lexical-norm columns (AoA / concreteness / '
+                        'imageability / familiarity / valence-arousal-dominance) '
+                        'from user-supplied parquets in dictionaries/.')
+    p.add_argument('--doc-lexical-norms', dest='no_doc_lexical_norms',
+                   action='store_false', default=True,
+                   help='Emit document-level lexical-norm aggregates (means, '
+                        'AoA spread, prop_late_acquired, coverage).')
+    p.add_argument('--late-acquired-threshold', type=float, default=10.0,
+                   help='AoA (years) above which a word counts as late-acquired '
+                        'for prop_late_acquired (default 10).')
 
     p.add_argument('--no-sem-domain',   action='store_true', help='Skip semantic-domain columns and doc summary.')
     p.add_argument('--sem-dict',        default='auto',
@@ -327,6 +349,12 @@ def run(args) -> pd.DataFrame:
         )
         df = add_edu_freq(df, lookup_path=args.edu_freq_lookup, bands=edu_bands)
 
+    if not getattr(args, 'no_lexical_norms', True) and df is not None:
+        from extractors.lexical_norms import add_lexical_norms
+        print('[norms] Computing lexical norms (AoA / concreteness / imageability '
+              '/ familiarity / valence-arousal-dominance)…')
+        df = add_lexical_norms(df, paths=getattr(args, 'lexical_norms_paths', None))
+
     if not args.no_sem_domain and df is not None:
         from extractors.semantic_domain import add_semantic_domain
         backend, dict_path = _resolve_sem_backend(args.sem_dict)
@@ -446,6 +474,15 @@ _WORD_FEATURE_COLUMN_MAP = {
     "feat_prosody_volume_max":   "Volume_Max",
     "feat_prosody_volume_std":   "Volume_Std",
     "feat_prosody_volume_delta": "Volume_Delta",
+    # Lexical norms (user-supplied; one column per toggle)
+    "feat_norm_aoa_mean":     "AoA_Mean",
+    "feat_norm_aoa_sd":       "AoA_SD",
+    "feat_norm_concreteness": "Concreteness",
+    "feat_norm_imageability": "Imageability",
+    "feat_norm_familiarity":  "Familiarity",
+    "feat_norm_valence":      "Valence",
+    "feat_norm_arousal":      "Arousal",
+    "feat_norm_dominance":    "Dominance",
 }
 
 _DOC_OUTPUT_COLUMN_MAP = {
@@ -808,6 +845,7 @@ def run_doc_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None:
         'psych_analytic':        not args.no_doc_psych_analytic,
         'psych_tone':            not args.no_doc_psych_tone,
         'psych_clout':           not args.no_doc_psych_clout,
+        'lexical_norms_agg':     not getattr(args, 'no_doc_lexical_norms', True),
         # Prosody — single master gate. compute_doc_prosody returns all 16
         # cols when this is on; per-column dropping is handled at CSV write
         # time via _doc_columns_to_drop / args.feature_toggles.
@@ -854,6 +892,10 @@ def run_doc_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None:
         extract_args.no_surprisal = False
     if doc_toggles.get('mean_llm_cloze'):
         extract_args.no_llm_cloze = False
+    if doc_toggles.get('lexical_norms_agg'):
+        # Doc aggregates read the word-level norm columns; force the
+        # word-level extractor on regardless of the word-CSV toggle.
+        extract_args.no_lexical_norms = False
     if doc_toggles.get('category_proportions') or any(
         doc_toggles.get(k) for k in ('psych_authentic', 'psych_analytic',
                                       'psych_tone', 'psych_clout')
@@ -893,6 +935,7 @@ def run_doc_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None:
                 contours=getattr(extract_args, '_contours', None),
                 pause_threshold_s=getattr(extract_args, 'pause_threshold', 0.25),
                 pitch_units=getattr(extract_args, 'pitch_units', 'semitones'),
+                late_acquired_threshold=getattr(args, 'late_acquired_threshold', 10.0),
             )
             summary['transcript_path'] = str(pair.transcript_path)
             summary['audio_path'] = str(pair.audio_path)

@@ -792,11 +792,13 @@ def test_v10_to_v11_coerces_liwc_backend_and_bumps_version(tmp_path, monkeypatch
     monkeypatch.setenv('SENSI_PREFS_PATH', str(prefs_path))
 
     loaded = load_preferences()
-    assert SCHEMA_VERSION == SCHEMA_VERSION_V11
-    assert loaded['schema_version'] == SCHEMA_VERSION_V11
+    # The liwc→empath coercion happens on the way to the current schema
+    # (the version itself has since moved past v11).
+    assert SCHEMA_VERSION >= SCHEMA_VERSION_V11
+    assert loaded['schema_version'] == SCHEMA_VERSION
     assert loaded['semantic']['backend'] == 'empath'
     on_disk = json.loads(prefs_path.read_text())
-    assert on_disk['schema_version'] == SCHEMA_VERSION_V11
+    assert on_disk['schema_version'] == SCHEMA_VERSION
     assert on_disk['semantic']['backend'] == 'empath'
 
 

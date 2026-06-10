@@ -120,6 +120,34 @@ def test_psych_summary_computed_regardless_of_backend():
         assert other not in summary
 
 
+def test_lexical_norm_aggregates():
+    df = _basic_df()  # the/cat/sat ; content = cat (NOUN), sat (VERB)
+    df['AoA_Mean'] = [None, 4.0, 12.0]      # 'the' is function → ignored
+    df['Concreteness'] = [None, 5.0, 1.0]
+    toggles = _all_off()
+    toggles['lexical_norms_agg'] = True
+    summary = build_doc_summary(
+        df, stimulus_id='s', dictionary_used='Empath',
+        text='The cat sat.', toggles=toggles, late_acquired_threshold=10.0,
+    )
+    assert summary['mean_aoa'] == pytest.approx(8.0)         # (4 + 12)/2
+    assert summary['max_aoa'] == 12.0
+    assert summary['prop_late_acquired'] == pytest.approx(0.5)  # 1 of 2 > 10
+    assert summary['mean_concreteness'] == pytest.approx(3.0)
+    assert summary['aoa_coverage'] == pytest.approx(1.0)     # both content matched
+
+
+def test_lexical_norm_aggregates_absent_when_toggled_off():
+    df = _basic_df()
+    df['AoA_Mean'] = [None, 4.0, 12.0]
+    toggles = _all_off()
+    summary = build_doc_summary(
+        df, stimulus_id='s', dictionary_used='Empath',
+        text='The cat sat.', toggles=toggles,
+    )
+    assert 'mean_aoa' not in summary
+
+
 # ---------------------------------------------------------------------------
 # Pipeline independence tests: doc-level must not depend on word-level toggles
 # ---------------------------------------------------------------------------

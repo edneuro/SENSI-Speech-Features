@@ -45,6 +45,23 @@ def test_word_section_lexling_freq_predict_sem_carried_over(qtbot):
         assert w.toggle(k) is not None, k
 
 
+def test_ewfg_toggles_are_disabled_unavailable(qtbot, prefs_tmp):
+    """EWFG has no digital source (print-only), so its toggles are hard-disabled
+    and unchecked — even though the SUBTLEX toggle in the same card is fine."""
+    from gui.section_word_features import WordFeaturesSection
+    section = WordFeaturesSection()
+    qtbot.addWidget(section)
+    for key in ("freq_ewfg_k2", "freq_ewfg_3to5", "freq_ewfg_6to8",
+                "freq_ewfg_9to12", "freq_ewfg_overall"):
+        row = section.toggle(key)
+        assert row is not None, key
+        assert row._perma_disabled is True, key
+        assert not row.check.isEnabled(), key
+        assert not row.is_checked(), key
+    # SUBTLEX (same card) is unaffected
+    assert section.toggle("freq_subtlex")._perma_disabled is False
+
+
 def test_word_prosody_card_has_ten_toggles(qtbot, prefs_tmp):
     from gui.section_word_features import WordFeaturesSection
     section = WordFeaturesSection()

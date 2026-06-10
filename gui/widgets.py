@@ -86,12 +86,27 @@ class ToggleRow(QWidget):
                 layout.addWidget(InfoIcon(info_key, self))
         layout.addStretch(1)
         self.warning = None  # populated by set_warning
+        self._perma_disabled = False
 
     def set_checked(self, v: bool) -> None:
         self.check.setChecked(v)
 
     def is_checked(self) -> bool:
         return self.check.isChecked()
+
+    def set_permanently_disabled(self, tooltip: str = "") -> None:
+        """Hard-disable this toggle regardless of any parent master state.
+
+        Used for features whose backing data/resource is unavailable (e.g.
+        EWFG, whose source is not digitized). Unchecks the box so the feature
+        is also off in saved preferences, and parks it greyed-out; a
+        ClusterCard master toggle will not re-enable it.
+        """
+        self._perma_disabled = True
+        self.check.setChecked(False)
+        self.check.setEnabled(False)
+        if tooltip:
+            self.check.setToolTip(tooltip)
 
     def set_warning(self, message: str | None) -> None:
         if self.warning is not None:
@@ -187,7 +202,8 @@ class ClusterCard(Card):
     def add_child(self, widget: QWidget) -> None:
         self._children.append(widget)
         self.add_widget(widget)
-        widget.setEnabled(self._master.is_checked() and self._available)
+        widget.setEnabled(self._master.is_checked() and self._available
+                          and not getattr(widget, "_perma_disabled", False))
 
     def add_child_layout(self, lay) -> None:
         """Add a layout (e.g. QGridLayout) and gate its direct-child widgets
@@ -205,7 +221,8 @@ class ClusterCard(Card):
             w = item.widget()
             if w is not None:
                 self._children.append(w)
-                w.setEnabled(self._master.is_checked() and self._available)
+                w.setEnabled(self._master.is_checked() and self._available
+                             and not getattr(w, "_perma_disabled", False))
 
     def master_toggle(self) -> ToggleRow:
         """Expose the master row. Used by tests (assertions on the inner
@@ -243,4 +260,4 @@ class ClusterCard(Card):
 
     def _update_children_enabled(self, enabled: bool) -> None:
         for w in self._children:
-            w.setEnabled(enabled)
+            w.setEnabled(enabled and not getattr(w, "_perma_disabled", False))

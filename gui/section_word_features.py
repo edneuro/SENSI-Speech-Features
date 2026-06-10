@@ -103,6 +103,30 @@ class WordFeaturesSection(QWidget):
                 i // 2, i % 2,
             )
         freq_card.add_child_layout(ewfg_grid)
+        # EWFG grade-band frequencies are unavailable: the source — The
+        # Educator's Word Frequency Guide (Zeno et al. 1995) — exists only in
+        # print and has not been digitized, so there is no lookup data. Disable
+        # the toggles (the extractor code is kept for if/when the data arrives).
+        _ewfg_tip = (
+            "Unavailable: the Educator's Word Frequency Guide (Zeno et al. 1995) "
+            "exists only in print and has not been digitized, so there is no "
+            "lookup data. Disabled until the norms are obtained."
+        )
+        for key, _ in ewfg_keys:
+            self._toggles[key].set_permanently_disabled(_ewfg_tip)
+        ewfg_note = QLabel(
+            "Grade-band (EWFG) frequencies are <b>unavailable</b>: their source "
+            "— <i>The Educator's Word Frequency Guide</i> (Zeno et al. 1995) — "
+            "exists only in print and has not been digitized. These toggles are "
+            "disabled for now and may be added later. "
+            '<a href="https://books.google.com/books/about/'
+            'The_Educator_s_Word_Frequency_Guide.html?id=jsJ1QgAACAAJ">'
+            "Book reference</a>."
+        )
+        ewfg_note.setObjectName("Subtitle")
+        ewfg_note.setWordWrap(True)
+        ewfg_note.setOpenExternalLinks(True)
+        freq_card.add_widget(ewfg_note)
         layout.addWidget(freq_card)
 
         # --- Predictability ---
@@ -241,6 +265,36 @@ class WordFeaturesSection(QWidget):
             f.get("master_bert_word", True), "bert_word_mat",
         ))
         layout.addWidget(sim_card)
+
+        # --- Lexical norms (per-column; user-supplied data) ---
+        norms_card = ClusterCard(
+            "Lexical norms",
+            "Per-word psycholinguistic norms from user-supplied tables (no data "
+            "ships — see the ⓘ for the expected file schemas): age of "
+            "acquisition, concreteness, imageability, familiarity, and "
+            "valence/arousal/dominance.",
+            master_key="master_lexical_norms",
+            master_label="Enable lexical norms",
+        )
+        norms_card.settings_changed.connect(self.settings_changed)
+        norms_grid = QGridLayout()
+        norms_keys = [
+            ("feat_norm_aoa_mean",     "AoA_Mean"),
+            ("feat_norm_aoa_sd",       "AoA_SD"),
+            ("feat_norm_concreteness", "Concreteness"),
+            ("feat_norm_imageability", "Imageability"),
+            ("feat_norm_familiarity",  "Familiarity"),
+            ("feat_norm_valence",      "Valence"),
+            ("feat_norm_arousal",      "Arousal"),
+            ("feat_norm_dominance",    "Dominance"),
+        ]
+        for i, (key, label) in enumerate(norms_keys):
+            norms_grid.addWidget(
+                self._make_toggle(key, label, f[key], "features"),
+                i // 2, i % 2,
+            )
+        norms_card.add_child_layout(norms_grid)
+        layout.addWidget(norms_card)
 
         # --- Acoustic (per-column) ---
         ac_card = ClusterCard(

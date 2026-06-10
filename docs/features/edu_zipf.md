@@ -5,9 +5,19 @@ levels: [word]
 gui_toggles: [freq_ewfg_k2, freq_ewfg_3to5, freq_ewfg_6to8, freq_ewfg_9to12, freq_ewfg_overall]
 output_columns: [Edu_Zipf_K2, Edu_Zipf_3to5, Edu_Zipf_6to8, Edu_Zipf_9to12, Edu_Zipf_Overall]
 libraries: [pyarrow]
-status: implemented
+status: unavailable
 depth: deep
 ---
+
+> ⚠️ **Unavailable in SensiExtractor — no data.** These grade-band
+> frequencies are **not produced**. Their source, *The Educator's Word
+> Frequency Guide* ([Zeno 1995]), exists **only in print and has never
+> been digitized**, so there is no lookup table to query. The toggles are
+> **disabled** in the app and the extractor code (kept for if/when the
+> norms are obtained) would emit all-`NaN` columns. We may add this later
+> if a digital version becomes available.
+> Book reference:
+> [The Educator's Word Frequency Guide](https://books.google.com/books/about/The_Educator_s_Word_Frequency_Guide.html?id=jsJ1QgAACAAJ).
 
 ## Meaning
 Per-word Zipf-scale frequencies derived from the *Educator's Word
@@ -86,12 +96,19 @@ Source: `extractors/educator_freq.py:add_edu_freq`.
   `NaN`-everywhere than to break the column contract.
 
 ## Data acquisition
-The EWFG parquet ships with the project at
-`dictionaries/edu_zipf.parquet`. If a collaborator clones the repo and
-the file is absent, the extractor logs a warning and emits all-NaN
-columns — see `dictionaries/README.md` (or the prior batch's spec) for
-how to regenerate the parquet from the original Educator's Word
-Frequency Guide source.
+**No digital source exists.** *The Educator's Word Frequency Guide*
+([Zeno 1995]) was published as a print reference and, as far as we have
+been able to determine, has never been released in machine-readable
+form. SensiExtractor therefore ships **no** `dictionaries/edu_zipf.parquet`
+with real data, and the extractor's missing-file path (all-`NaN` columns
++ a logged warning) is the permanent state rather than a fallback.
+
+To enable these columns in future, a `dictionaries/edu_zipf.parquet`
+would need to be built — indexed by `word`, with columns
+`edu_zipf_k2, edu_zipf_3to5, edu_zipf_6to8, edu_zipf_9to12,
+edu_zipf_overall` — from a digitized copy of the guide (book reference:
+<https://books.google.com/books/about/The_Educator_s_Word_Frequency_Guide.html?id=jsJ1QgAACAAJ>).
+Until then the toggles remain disabled.
 
 ## Library
 The lookup is a plain pandas-on-pyarrow read:

@@ -95,9 +95,43 @@ class DocFeaturesSection(QWidget):
              "mean_surprisal  (GPT-2 surprisal mean)"),
             ("output_doc_agg_llm",
              "mean_llm_cloze + mean_llm_surprisal + mean_llm_top_match_prop"),
+            ("output_doc_agg_lexical_norms",
+             "Lexical-norm aggregates (mean AoA/concreteness/…, prop_late_acquired, coverage)"),
         ]:
             agg_card.add_widget(
                 self._make_toggle(key, label, o[key[len("output_"):]], "output"))
+        # EWFG is unavailable (source only in print; see Word-level features),
+        # so its document-level aggregate has nothing to aggregate — disable it.
+        self._toggles["output_doc_agg_edu_zipf"].set_permanently_disabled(
+            "Unavailable: the Educator's Word Frequency Guide (Zeno et al. 1995) "
+            "is not digitized, so the word-level EWFG columns it averages do not "
+            "exist. Disabled until the norms are obtained."
+        )
+        edu_agg_note = QLabel(
+            "<i>mean_edu_zipf_*</i> is <b>disabled</b>: the EWFG word-level "
+            "frequencies it averages are unavailable (their source exists only "
+            "in print). See the Frequency card on the Word-level features page."
+        )
+        edu_agg_note.setObjectName("Subtitle")
+        edu_agg_note.setWordWrap(True)
+        agg_card.add_widget(edu_agg_note)
+        # Late-acquired AoA threshold (used by prop_late_acquired in the
+        # lexical-norm aggregates). Configurable here.
+        thr_row = QHBoxLayout()
+        thr_lbl = QLabel("Late-acquired AoA threshold (years):")
+        thr_lbl.setObjectName("Subtitle")
+        self._late_aoa_spin = QDoubleSpinBox()
+        self._late_aoa_spin.setRange(0.0, 25.0)
+        self._late_aoa_spin.setSingleStep(0.5)
+        self._late_aoa_spin.setDecimals(1)
+        self._late_aoa_spin.setValue(
+            float(prefs.get("lexical_norms", {}).get("late_acquired_threshold", 10)))
+        self._late_aoa_spin.valueChanged.connect(self._on_late_aoa_changed)
+        thr_row.addWidget(thr_lbl)
+        thr_row.addWidget(self._late_aoa_spin)
+        thr_row.addStretch(1)
+        thr_w = QWidget(); thr_w.setLayout(thr_row)
+        agg_card.add_widget(thr_w)
         layout.addWidget(agg_card)
 
         # --- Lexical diversity ---
@@ -233,6 +267,10 @@ class DocFeaturesSection(QWidget):
             save_preferences({"output": {key[len(prefix):]: value}})
         else:
             save_preferences({section: {key: value}})
+        self.settings_changed.emit()
+
+    def _on_late_aoa_changed(self, value: float) -> None:
+        save_preferences({"lexical_norms": {"late_acquired_threshold": float(value)}})
         self.settings_changed.emit()
 
     def refresh_from_prefs(self) -> None:
