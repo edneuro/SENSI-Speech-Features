@@ -31,8 +31,9 @@ available; for naturalistic-EEG / MEG:
 - **Phoneme-class regressors** (e.g. plosive vs. fricative vs.
   vowel) reveal feature-specific neural responses that word-level
   analyses average over ([Mesgarani 2014]).
-- **Stress-marked vowels** (`Label` ending in `1`) anchor
-  stress-tracking analyses ([Tilsen 2016]).
+- **Stress-marked vowels** (`Label` ending in `1`) identify
+  primary-stressed nuclei, which are the anchor points for
+  stress-tracking analyses.
 - Phoneme `Duration` is the foundation for [`P_Center`](feat_syllable_pcenter.md)
   — which depends on the duration of onset consonants preceding the
   syllable's nucleus.
@@ -57,12 +58,10 @@ dictionary; the alignment step writes them directly into the TextGrid
 - <a name="khalighinejad-2017"></a>**[Khalighinejad 2017]** Khalighinejad, Cruzatto da Silva, Mesgarani. *Dynamic encoding of acoustic features in neural responses to continuous speech.* J. Neuroscience. [doi:10.1523/JNEUROSCI.2383-16.2017](https://doi.org/10.1523/JNEUROSCI.2383-16.2017)
 - <a name="brodbeck-2018"></a>**[Brodbeck 2018]** Brodbeck, Hong, Simon. *Rapid transformation from auditory to linguistic representations of continuous speech.* Current Biology. [doi:10.1016/j.cub.2018.10.042](https://doi.org/10.1016/j.cub.2018.10.042)
 - <a name="mesgarani-2014"></a>**[Mesgarani 2014]** Mesgarani, Cheung, Johnson, Chang. *Phonetic feature encoding in human superior temporal gyrus.* Science. [doi:10.1126/science.1245994](https://doi.org/10.1126/science.1245994)
-- <a name="tilsen-2016"></a>**[Tilsen 2016]** Tilsen. *Selection and coordination: The articulatory basis for the emergence of phonological structure.* J. Phonetics. [doi:10.1016/j.wocn.2015.11.005](https://doi.org/10.1016/j.wocn.2015.11.005)
 
 [Khalighinejad 2017]: #khalighinejad-2017
 [Brodbeck 2018]: #brodbeck-2018
 [Mesgarani 2014]: #mesgarani-2014
-[Tilsen 2016]: #tilsen-2016
 
 ## Datasets
 <!-- auto-populated from docs/datasets/*.md once the dataset registry exists -->

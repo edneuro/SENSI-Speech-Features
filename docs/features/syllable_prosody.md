@@ -30,14 +30,15 @@ Syllable-level prosody is the **finest grain at which prominence
 contrasts can be expressed acoustically**. For naturalistic-EEG:
 
 - Stressed-vs-unstressed-syllable contrasts on the same word are the
-  cleanest prominence-isolation paradigm and produce reliable
-  early-pitch-tracking responses ([Park 2020], [Kayser 2015]).
+  cleanest prominence-isolation paradigm; pitch accents on stressed
+  syllables elicit a P200 ERP response whose amplitude is modulated by
+  the onset latency of the F0 peak ([Heim 2006]).
 - Syllable-onset-locked envelope tracking benefits from
   syllable-aligned pitch / intensity covariates rather than
   word-averaged ones.
 - The within-word `Pitch_Delta` captures **intra-word pitch contour
   shape** — a useful regressor for studies of intonational phrase
-  structure ([Cole 2017]).
+  structure.
 
 ## Implementation in SensiExtractor
 Source: `extractors/syllable_prosody.py`. Reuses the same `Contours`
@@ -61,15 +62,12 @@ word-level extractor — there is no separate per-extractor toggle.
 ## Papers
 - See [`prosody_pitch`](prosody_pitch.md) and
   [`prosody_volume`](prosody_volume.md) for the foundational pitch /
-  intensity references — syllable-level summaries inherit the same
-  rationale.
-- <a name="park-2020"></a>**[Park 2020]** Park, Ince, Schyns, Thut, Gross. *Frontal top-down signals increase coupling of auditory low-frequency oscillations to continuous speech.* Current Biology. [doi:10.1016/j.cub.2014.11.075](https://doi.org/10.1016/j.cub.2014.11.075)
-- <a name="kayser-2015"></a>**[Kayser 2015]** Kayser, Ince, Gross, Kayser. *Irregular speech rate dissociates auditory cortical entrainment, evoked responses, and frontal alpha.* J. Neuroscience. [doi:10.1523/JNEUROSCI.0890-15.2015](https://doi.org/10.1523/JNEUROSCI.0890-15.2015)
-- <a name="cole-2017"></a>**[Cole 2017]** Cole, Hualde, Smith, Eager, Mahrt, Napoleão de Souza. *Sound, structure and meaning: The bases of prominence ratings.* J. Phonetics. [doi:10.1016/j.wocn.2018.05.002](https://doi.org/10.1016/j.wocn.2018.05.002)
+  intensity references (including Boersma 2018, Steinhauer 1999,
+  Heim 2006, Wagner 2010, Heilbron 2022, Zelger 2024, Cole 2019) —
+  syllable-level summaries inherit the same rationale.
+- <a name="heim-2006"></a>**[Heim 2006]** Heim & Alter. *Prosodic pitch accents in language comprehension and production: ERP data and acoustic analyses.* Acta Neurobiologiae Experimentalis 66(1), 55–68. [doi:10.55782/ane-2006-1587](https://doi.org/10.55782/ane-2006-1587) — P200 elicited by pitch accents on stressed syllables; amplitude modulated by F0-peak onset latency.
 
-[Park 2020]: #park-2020
-[Kayser 2015]: #kayser-2015
-[Cole 2017]: #cole-2017
+[Heim 2006]: #heim-2006
 
 ## Datasets
 <!-- auto-populated from docs/datasets/*.md once the dataset registry exists -->

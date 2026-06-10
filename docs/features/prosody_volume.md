@@ -23,8 +23,7 @@ in dB SPL), computed within each word's MFA-aligned acoustic window
 | `Volume_Delta` | `Volume_Mean[i] − Volume_Mean[i-1]` | Word-to-word loudness change. `NaN` for first word. |
 
 Units are **dB SPL** as Praat returns them. For clean studio
-recordings, `Volume_Mean` typically lies in **50–75 dB SPL** (range
-from `master_plan.md`). Values way outside this range usually indicate
+recordings, `Volume_Mean` typically lies in **50–75 dB SPL**. Values way outside this range usually indicate
 the audio was not normalized to Praat's expected reference, not a bug
 in the extractor.
 
@@ -36,11 +35,15 @@ Intensity is the second primary acoustic carrier of **prosodic
 prominence** (along with [pitch](prosody_pitch.md)). For
 naturalistic-EEG analyses:
 
-- Louder words mark focused / emphasized constituents and elicit
-  larger early auditory components (N100/P200) — direct effects of
-  acoustic energy ([Sanders 2003], [Picton 2013]).
-- Volume modulation contributes to prominence-driven attentional
-  effects, even after pitch is regressed out ([Cole 2017]).
+- N100 amplitude scales linearly with sound pressure level in
+  controlled auditory paradigms ([Zelger 2024]) — the loudness
+  dependence of the early auditory evoked response. At the word level
+  in continuous speech, louder words inherit this scaling as a direct
+  acoustic-energy effect on the N100 (and the subsequent P200 in the
+  N1–P2 complex).
+- Intensity is one of the **acoustic cues to perceived prominence**,
+  alongside F0 (pitch) and phone-rate, in cross-linguistic prominence
+  ratings ([Cole 2019]).
 - `Volume_Delta` captures *loudness contours across the discourse* —
   useful as a continuous regressor for amplitude-driven prediction
   models.
@@ -69,13 +72,13 @@ The two extractor columns are populated together in
 triggers the same prosody stage. Per-column toggles control output
 emission, not compute.
 
-**Why** *(⚠️ flags my interpolation):*
+**Why:**
 
 - *Robust percentiles for min/max* — same reasoning as
   [`Pitch_Min/Max`](prosody_pitch.md).
 - *No reference-level normalization* — the extractor reports dB SPL
   directly from Praat without an audio-level normalization pass.
-  ⚠️ The assumption is that input audio is already loudness-normalized
+  The assumption is that input audio is already loudness-normalized
   upstream of SensiExtractor; for cross-stimulus volume comparisons,
   perform your own normalization before invoking the extractor.
 
@@ -93,14 +96,12 @@ times = intensity.xs()
 
 **Intensity / loudness in speech processing:**
 - <a name="boersma-2018"></a>**[Boersma 2018]** Boersma & Weenink. *Praat: doing phonetics by computer.* [praat.org](https://www.praat.org/) — Praat reference; intensity estimation (`To Intensity`).
-- <a name="sanders-2003"></a>**[Sanders 2003]** Sanders & Neville. *An ERP study of continuous speech processing II. Segmentation, semantics, and syntax in non-native speakers.* Cognitive Brain Research. [doi:10.1016/S0926-6410(03)00112-0](https://doi.org/10.1016/S0926-6410(03)00112-0)
-- <a name="picton-2013"></a>**[Picton 2013]** Picton. *Hearing in time: Evoked potential studies of temporal processing.* Ear and Hearing. [doi:10.1097/AUD.0b013e31827ada02](https://doi.org/10.1097/AUD.0b013e31827ada02)
-- <a name="cole-2017"></a>**[Cole 2017]** Cole, Hualde, Smith, Eager, Mahrt, Napoleão de Souza. *Sound, structure and meaning: The bases of prominence ratings in English, French and Spanish.* J. Phonetics. [doi:10.1016/j.wocn.2018.05.002](https://doi.org/10.1016/j.wocn.2018.05.002)
+- <a name="zelger-2024"></a>**[Zelger 2024]** Zelger, Seebacher, Graf, Rossi. *Is it too loud? Ask your brain!* NeuroImage 299, 120796. [doi:10.1016/j.neuroimage.2024.120796](https://doi.org/10.1016/j.neuroimage.2024.120796) — EEG study of 27 normal-hearing adults presented with 500 ms noise stimuli at 55–95 dB; N100 amplitude shows a linear dependency on sound level and on subjective loudness rating.
+- <a name="cole-2019"></a>**[Cole 2019]** Cole, Hualde, Smith, Eager, Mahrt, Napoleão de Souza. *Sound, structure and meaning: The bases of prominence ratings in English, French and Spanish.* J. Phonetics 75, 113–147. [doi:10.1016/j.wocn.2019.05.002](https://doi.org/10.1016/j.wocn.2019.05.002) — listener prominence ratings in three languages are jointly driven by F0, intensity, and phone-rate; intensity is one of the converging acoustic cues to perceived prominence.
 
 [Boersma 2018]: #boersma-2018
-[Sanders 2003]: #sanders-2003
-[Picton 2013]: #picton-2013
-[Cole 2017]: #cole-2017
+[Zelger 2024]: #zelger-2024
+[Cole 2019]: #cole-2019
 
 ## Datasets
 <!-- auto-populated from docs/datasets/*.md once the dataset registry exists -->

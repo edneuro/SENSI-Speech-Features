@@ -19,9 +19,11 @@ computed with a modern LLM instead of GPT-2:
 The active LLM is configurable from the GUI's Predictability card
 (default `gpt-4o-mini` if `OPENAI_API_KEY` is set, otherwise the
 largest Llama-3 that fits the GPU). Better LMs produce surprisal
-estimates that predict reading time and N400 amplitude more tightly
-([Goodkind 2018], [Wilcox 2020]) — `LLM_Surprisal` is the column to
-use for new analyses; `Surprisal` (GPT-2) is kept as a baseline.
+estimates that predict **reading time** more tightly
+([Goodkind 2018], [Wilcox 2020]) and predict more variance in
+fMRI / ECoG responses to language ([Schrimpf 2021], [Goldstein 2022])
+— `LLM_Surprisal` is the column to use for new analyses; `Surprisal`
+(GPT-2) is kept as a baseline.
 
 ## EEG rationale
 See [`Surprisal` § EEG rationale](pred_surprisal_gpt2.md#eeg-rationale)
@@ -41,12 +43,17 @@ the same file.
 1. Selects a backend based on `model_id` (or via `select_model()` —
    prefer OpenAI if `OPENAI_API_KEY` set, otherwise a Llama-3 sized to
    available VRAM).
-2. Runs a single forward pass over the **whole transcript**:
+2. Scores the transcript:
    - Local backend (`_HuggingFaceBackend`): autoregressive LM forward
      pass; 4-bit quantization via `BitsAndBytesConfig` when supported,
-     fp16 fallback otherwise.
+     fp16 fallback otherwise. **Single forward pass when the tokenised
+     transcript fits the model's context window; chunked sliding
+     window otherwise** — see *Long-text handling* below.
    - OpenAI backend (`_OpenAIBackend`): calls `/v1/completions` with
      `echo=True, max_tokens=0, logprobs=5` to score the prompt itself.
+     Tokenises locally with `tiktoken` and **raises** `ValueError`
+     before the API call if the prompt exceeds the model's context
+     limit — see *Long-text handling*.
 3. Per spaCy token, finds the contiguous run of LLM subwords whose
    character offsets overlap that token, sums their log-probabilities,
    and converts to bits: `-Σ log_e P / log_e 2`.
@@ -56,9 +63,10 @@ This **also produces** [`LLM_Cloze`](pred_cloze.md) and
 [`LLM_TopMatch`](pred_topmatch.md) from the same forward pass — they're
 three views of the same per-token prediction. Enabling any of the three
 in the GUI triggers the full extractor; cost (and runtime) is the same
-whether you enable one or all three.
+whether you enable one or all three. The long-text handling described
+below applies to all three columns simultaneously.
 
-**Why** *(⚠️ flags my interpolation):*
+**Why:**
 
 - *Three columns from one forward pass* — cloze probability,
   surprisal, and top-match are all cheap byproducts of the same scoring
@@ -70,6 +78,41 @@ whether you enable one or all three.
 - *4-bit quantization via bitsandbytes on the local backend* —
   Llama-3-8B fits in ~6 GB VRAM at 4-bit (vs ~16 GB at fp16), so most
   researcher-grade GPUs can run it. fp16/CPU is a graceful fallback.
+
+### Long-text handling
+
+Each backend in `LLM_OPTIONS` has its own context-window limit:
+
+| Model | Context window | Behaviour past the limit |
+|---|---|---|
+| gpt-4o-mini             | 128K subwords | `ValueError` before API call (`tiktoken`-counted) |
+| gpt-4o                  | 128K subwords | `ValueError` before API call |
+| meta-llama/Llama-3.2-3B | 128K subwords | Chunked sliding window (`_chunk_slices`) |
+| meta-llama/Llama-3-8B   | 8K  subwords  | Chunked sliding window |
+| meta-llama/Llama-3-70B  | 8K  subwords  | Chunked sliding window |
+
+**Local HuggingFace backends chunk automatically** when the input
+exceeds `model.config.max_position_embeddings`. The strategy is the
+same one [`Surprisal` (GPT-2) uses](pred_surprisal_gpt2.md#long-transcripts--1024-subwords-chunked-bounded-preceding-context):
+stride = `window // 2` (e.g. 4096 for the 8K Llama models), so every
+position past the initial window sees at least `window // 2` preceding
+subwords inside its forward pass. See `extractors/llm_cloze.py:_chunk_slices`
+for the iteration helper and `_HuggingFaceBackend.score` for the
+integration. *Within each chunk* the scoring is exact; *across chunks*
+the earliest subwords drop out of the model's view — the same
+approximation cost discussed in the GPT-2 doc.
+
+**The OpenAI backend cannot chunk via the public API** (no way to score
+"these tokens conditioned on a separate prefix"), so it pre-tokenises
+with `tiktoken` and raises `ValueError` if the stimulus exceeds the
+model's context limit. In practice this only fires for transcripts of
+~100K+ words — well beyond any realistic SENSI stimulus. If you do hit
+it, split the transcript or switch to a local Llama backend.
+
+⚠️ **Adding a new OpenAI model to `LLM_OPTIONS` requires also adding
+its context limit to `_OPENAI_CONTEXT_LIMITS`** in `extractors/llm_cloze.py`.
+A guardrail test (`test_openai_context_limit_table_covers_listed_models`)
+fails CI if you forget.
 
 ## Cost / runtime notes (from `LLM_OPTIONS`)
 | Model | Cost / stim | r vs human cloze | Requirement |
@@ -93,8 +136,8 @@ dict per spaCy token with keys `{p, surprisal, top_match}`.
 ## Papers
 
 **Surprisal ↔ LM quality:**
-- <a name="goodkind-2018"></a>**[Goodkind 2018]** Goodkind & Bicknell. *Predictive power of word surprisal for reading times is a linear function of language model quality.* CMCL 2018. [arXiv:1804.10742](https://arxiv.org/abs/1804.10742)
-- <a name="wilcox-2020"></a>**[Wilcox 2020]** Wilcox, Gauthier, Hu, Qian, Levy. *On the Predictive Power of Neural Language Models for Human Real-Time Comprehension Behavior.* CogSci 2020. [arXiv:2006.01912](https://arxiv.org/abs/2006.01912)
+- <a name="goodkind-2018"></a>**[Goodkind 2018]** Goodkind & Bicknell. *Predictive power of word surprisal for reading times is a linear function of language model quality.* CMCL 2018, 10–18. [ACL Anthology W18-0102](https://aclanthology.org/W18-0102/) — better language models yield surprisal estimates that linearly improve reading-time prediction.
+- <a name="wilcox-2020"></a>**[Wilcox 2020]** Wilcox, Gauthier, Hu, Qian, Levy. *On the Predictive Power of Neural Language Models for Human Real-Time Comprehension Behavior.* CogSci 2020. [arXiv:2006.01912](https://arxiv.org/abs/2006.01912) — across architectures, better next-word prediction correlates with stronger prediction of human reading times and eye movements.
 
 **Modern LM ↔ neural data:**
 - <a name="schrimpf-2021"></a>**[Schrimpf 2021]** Schrimpf et al. *The neural architecture of language: Integrative modeling converges on predictive processing.* PNAS. [doi:10.1073/pnas.2105646118](https://doi.org/10.1073/pnas.2105646118)

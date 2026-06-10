@@ -34,14 +34,14 @@ Accurate word-onset times in audio are the **anchor for every
 word-locked EEG/MEG analysis** of naturalistic listening. The N400,
 P200, and other word-locked components are all defined relative to
 audio onset, and ms-level errors in `Onset` translate directly into
-smeared / mis-aligned event-related responses ([Brennan 2018]).
+smeared / mis-aligned event-related responses.
 
 MFA's onset estimates are derived from **phoneme-level acoustic models**
 ([McAuliffe 2017]), so they reflect real acoustic boundaries — not
-heuristic guesses from text-to-time interpolation. For naturalistic
-EEG / MEG with continuous speech, this level of precision is the
-standard prerequisite for word-level encoding analyses
-([Broderick 2018], [Heilbron 2022]).
+heuristic guesses from text-to-time interpolation. Published
+naturalistic-EEG / MEG analyses of continuous speech rely on this kind
+of alignment precision to regress neural responses against per-word
+linguistic features ([Broderick 2018], [Heilbron 2022]).
 
 `End` is the symmetric per-word audio offset; word duration
 ([`Word_Duration`](acoustic_durations.md)) is `End − Onset`.
@@ -72,7 +72,7 @@ This is also the **upstream step** for the syllable and phoneme
 sidecars and for the prosody extractors — they all consume the same
 `.TextGrid` (via `parse_phones` for the sub-word tier).
 
-**Why** *(⚠️ flags my interpolation):*
+**Why:**
 
 - *MFA over Gentle / Aeneas / heuristic alignment* — MFA is the
   current state-of-the-art for acoustic forced alignment with active
@@ -80,8 +80,7 @@ sidecars and for the prosody extractors — they all consume the same
   ([McAuliffe 2017]). Heuristic time-warp alignment (e.g.
   scaling text to audio duration) introduces 50–200 ms errors that
   smear EEG responses unacceptably for word-level analysis.
-- *English-US ARPA acoustic + dictionary models* — chosen because the
-  SENSI stimuli are American English audiobook / podcast material.
+- *English-US ARPA acoustic + dictionary models* — chosen for spoken English stimuli (audiobook, podcast, spoken narration, etc).
   Other locales would require swapping the model names and possibly
   the dictionary.
 - *Silence intervals dropped* — they would otherwise appear as `<eps>`
@@ -101,12 +100,10 @@ words_df, phones_df = align_with_phones("stimulus.wav", transcript_text)
 
 ## Papers
 - <a name="mcauliffe-2017"></a>**[McAuliffe 2017]** McAuliffe, Socolof, Mihuc, Wagner, Sonderegger. *Montreal Forced Aligner: trainable text-speech alignment using Kaldi.* Interspeech 2017. [doi:10.21437/Interspeech.2017-1386](https://doi.org/10.21437/Interspeech.2017-1386) — the MFA tool itself.
-- <a name="brennan-2018"></a>**[Brennan 2018]** Brennan. *Naturalistic Sentence Comprehension in the Brain.* Language and Linguistics Compass. [doi:10.1111/lnc3.12299](https://doi.org/10.1111/lnc3.12299) — methodology review for naturalistic EEG/MEG including alignment requirements.
-- <a name="broderick-2018"></a>**[Broderick 2018]** Broderick, Anderson, Di Liberto, Crosse, Lalor. *Electrophysiological Correlates of Semantic Dissimilarity Reflect the Comprehension of Natural, Narrative Speech.* Current Biology. [doi:10.1016/j.cub.2018.01.080](https://doi.org/10.1016/j.cub.2018.01.080)
-- <a name="heilbron-2022"></a>**[Heilbron 2022]** Heilbron, Armeni, Schoffelen, Hagoort, De Lange. *A hierarchy of linguistic predictions during natural language comprehension.* PNAS. [doi:10.1073/pnas.2201968119](https://doi.org/10.1073/pnas.2201968119)
+- <a name="broderick-2018"></a>**[Broderick 2018]** Broderick, Anderson, Di Liberto, Crosse, Lalor. *Electrophysiological Correlates of Semantic Dissimilarity Reflect the Comprehension of Natural, Narrative Speech.* Current Biology 28(5), 803–809. [doi:10.1016/j.cub.2018.01.080](https://doi.org/10.1016/j.cub.2018.01.080) — regresses EEG against per-word semantic dissimilarity in continuous narrative speech.
+- <a name="heilbron-2022"></a>**[Heilbron 2022]** Heilbron, Armeni, Schoffelen, Hagoort, De Lange. *A hierarchy of linguistic predictions during natural language comprehension.* PNAS 119(32), e2201968119. [doi:10.1073/pnas.2201968119](https://doi.org/10.1073/pnas.2201968119) — regresses EEG/MEG against GPT-2 surprisal in naturalistic audiobook listening.
 
 [McAuliffe 2017]: #mcauliffe-2017
-[Brennan 2018]: #brennan-2018
 [Broderick 2018]: #broderick-2018
 [Heilbron 2022]: #heilbron-2022
 

@@ -8,13 +8,17 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from PySide6.QtCore import Qt, QSize
-from PySide6.QtGui import QIcon
+from PySide6.QtCore import Qt, QSize, QUrl
+from PySide6.QtGui import QIcon, QDesktopServices
 from PySide6.QtWidgets import (
     QDialog, QHBoxLayout, QLabel, QPushButton, QTextBrowser, QVBoxLayout,
 )
 
-from gui.feature_docs import FeatureDoc, load_feature_doc
+from gui.feature_docs import (
+    FeatureDoc, load_feature_doc, load_doc_file, resolve_doc_link,
+)
+
+_EXTERNAL_SCHEMES = {"http", "https", "mailto", "ftp"}
 
 
 _INFO_ICON_PATH = (
@@ -53,41 +57,84 @@ class FeatureInfoDialog(QDialog):
         super().__init__(parent)
         self._toggle_key = toggle_key
         self._doc: FeatureDoc | None = load_feature_doc(toggle_key)
+        self._history: list[FeatureDoc] = []   # back-stack for in-place nav
 
-        title = self._doc.name if self._doc else toggle_key
-        self.setWindowTitle(f"Feature: {title}")
         self.resize(760, 640)
 
         root = QVBoxLayout(self)
         root.setContentsMargins(16, 16, 16, 16)
         root.setSpacing(8)
 
-        # Header strip — quick-glance frontmatter facts
-        header_text = self._build_header()
-        if header_text:
-            header = QLabel(header_text)
-            header.setObjectName("Subtitle")
-            header.setWordWrap(True)
-            root.addWidget(header)
+        # Header strip — quick-glance frontmatter facts (updated on navigation)
+        self._header = QLabel()
+        self._header.setObjectName("Subtitle")
+        self._header.setWordWrap(True)
+        root.addWidget(self._header)
 
         self.browser = QTextBrowser()
-        self.browser.setOpenExternalLinks(True)
-        if self._doc is None:
-            self.browser.setPlainText(
-                f"No documentation file found for '{toggle_key}'.\n\n"
-                f"Expected at docs/features/{toggle_key}.md"
-            )
-        else:
-            self.browser.setMarkdown(self._doc.body)
+        # Take over link handling: QTextBrowser's default behaviour navigates
+        # the document on any click, which blanks the view for relative
+        # `.md` links. We route clicks ourselves in _on_anchor_clicked.
+        self.browser.setOpenLinks(False)
+        self.browser.setOpenExternalLinks(False)
+        self.browser.anchorClicked.connect(self._on_anchor_clicked)
         root.addWidget(self.browser, 1)
 
-        # Close button row
+        # Button row: Back (in-place navigation) + Close
         btn_row = QHBoxLayout()
+        self._back_btn = QPushButton("← Back")
+        self._back_btn.clicked.connect(self._go_back)
+        btn_row.addWidget(self._back_btn)
         btn_row.addStretch(1)
         close_btn = QPushButton("Close")
         close_btn.clicked.connect(self.accept)
         btn_row.addWidget(close_btn)
         root.addLayout(btn_row)
+
+        self._render(self._doc, missing_key=toggle_key)
+
+    def _render(self, doc: FeatureDoc | None, *, missing_key: str | None = None) -> None:
+        """Show `doc` (or a not-found message) and refresh title/header/back."""
+        self._doc = doc
+        title = doc.name if doc else (missing_key or self._toggle_key)
+        self.setWindowTitle(f"Feature: {title}")
+        self._header.setText(self._build_header())
+        self._header.setVisible(bool(self._header.text()))
+        if doc is None:
+            key = missing_key or self._toggle_key
+            self.browser.setPlainText(
+                f"No documentation file found for '{key}'.\n\n"
+                f"Expected at docs/features/{key}.md"
+            )
+        else:
+            self.browser.setMarkdown(doc.body)
+        self._back_btn.setVisible(bool(self._history))
+
+    def _on_anchor_clicked(self, url: QUrl) -> None:
+        """Route a clicked link instead of letting QTextBrowser blank itself."""
+        # External resources → open in the system browser / mail client.
+        if url.scheme().lower() in _EXTERNAL_SCHEMES or url.host():
+            QDesktopServices.openUrl(url)
+            return
+        href = url.toString()
+        # Cross-link to another feature doc → load it in place.
+        filename = resolve_doc_link(href)
+        if filename:
+            target = load_doc_file(filename)
+            if target is not None:
+                if self._doc is not None:
+                    self._history.append(self._doc)
+                self._render(target)
+            return
+        # Pure in-page anchor (e.g. "#meaning") → scroll if the anchor exists.
+        if url.fragment() and not url.path():
+            self.browser.scrollToAnchor(url.fragment())
+            return
+        # Anything else (e.g. a source-file path) → ignore; never blank.
+
+    def _go_back(self) -> None:
+        if self._history:
+            self._render(self._history.pop())
 
     def _build_header(self) -> str:
         """Render frontmatter fields (libraries, status, levels) as a header strip."""

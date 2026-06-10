@@ -107,6 +107,73 @@ def test_offsets_doc_resolves_for_both_offset_toggles():
     assert a.body == b.body
 
 
+def test_load_doc_file_by_filename():
+    doc = feature_docs.load_doc_file("prosody_pitch.md")
+    assert doc is not None
+    assert doc.key == "prosody_pitch"
+    # works without the .md suffix too
+    assert feature_docs.load_doc_file("prosody_pitch") is not None
+
+
+def test_load_doc_file_unknown_returns_none():
+    assert feature_docs.load_doc_file("not_a_real_doc.md") is None
+
+
+def test_resolve_doc_link_variants():
+    # existing doc, with and without fragment / directory parts
+    assert feature_docs.resolve_doc_link("prosody_pitch.md") == "prosody_pitch.md"
+    assert feature_docs.resolve_doc_link("prosody_pitch.md#meaning") == "prosody_pitch.md"
+    assert feature_docs.resolve_doc_link("../features/phoneme.md") == "phoneme.md"
+    # not feature docs
+    assert feature_docs.resolve_doc_link("https://example.com") is None
+    assert feature_docs.resolve_doc_link("../../gui/widgets.py") is None
+    assert feature_docs.resolve_doc_link("#meaning") is None
+    assert feature_docs.resolve_doc_link("definitely_missing.md") is None
+
+
+def test_dialog_md_link_navigates_in_place(qtbot):
+    from gui.info_popup import FeatureInfoDialog
+    from PySide6.QtCore import QUrl
+    dlg = FeatureInfoDialog("feat_prosody_pitch_mean")   # → prosody_pitch.md
+    qtbot.addWidget(dlg)
+    # isHidden() reflects the explicit flag even though the dialog isn't shown.
+    assert dlg._back_btn.isHidden()        # no history yet
+
+    dlg._on_anchor_clicked(QUrl("prosody_volume.md"))
+    assert dlg._doc.key == "prosody_volume"   # navigated to the linked doc
+    assert not dlg._back_btn.isHidden()       # back becomes available
+
+    dlg._go_back()
+    assert dlg._doc.key == "feat_prosody_pitch_mean"   # original toggle's doc
+    assert dlg._back_btn.isHidden()
+
+
+def test_dialog_external_link_opens_in_system_browser(qtbot, monkeypatch):
+    from gui.info_popup import FeatureInfoDialog
+    from PySide6.QtCore import QUrl
+    from PySide6.QtGui import QDesktopServices
+    dlg = FeatureInfoDialog("feat_prosody_pitch_mean")
+    qtbot.addWidget(dlg)
+
+    opened = []
+    monkeypatch.setattr(QDesktopServices, "openUrl",
+                        lambda url: opened.append(url.toString()) or True)
+    dlg._on_anchor_clicked(QUrl("https://example.com/page"))
+    assert opened == ["https://example.com/page"]
+    # external click must NOT replace the current doc
+    assert dlg._doc.key == "feat_prosody_pitch_mean"
+
+
+def test_dialog_unresolvable_link_does_not_blank(qtbot):
+    from gui.info_popup import FeatureInfoDialog
+    from PySide6.QtCore import QUrl
+    dlg = FeatureInfoDialog("feat_prosody_pitch_mean")
+    qtbot.addWidget(dlg)
+    before = dlg.browser.toMarkdown()
+    dlg._on_anchor_clicked(QUrl("../../gui/widgets.py"))   # source-file link
+    assert dlg.browser.toMarkdown() == before               # unchanged, not blank
+
+
 def test_info_icon_opens_dialog_on_click(qtbot, monkeypatch):
     from gui.info_popup import InfoIcon, FeatureInfoDialog
     icon = InfoIcon("master_bert_word")

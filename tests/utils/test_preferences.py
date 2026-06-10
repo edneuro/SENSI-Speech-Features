@@ -20,11 +20,12 @@ def test_save_then_load_roundtrip(tmp_path, monkeypatch):
     monkeypatch.setenv('SENSI_PREFS_PATH', str(tmp_path / 'p.json'))
     save_preferences({
         'shared': {'analyzer_name': 'Alice'},
-        'semantic': {'backend': 'liwc'},
+        'semantic': {'backend': 'empath'},
     })
     loaded = load_preferences()
     assert loaded['shared']['analyzer_name'] == 'Alice'
-    assert loaded['semantic']['backend'] == 'liwc'
+    # 'empath' round-trips; 'liwc' would be coerced away (disabled, EULA).
+    assert loaded['semantic']['backend'] == 'empath'
     # Defaults preserved
     assert 'features' in loaded
     assert 'output' in loaded

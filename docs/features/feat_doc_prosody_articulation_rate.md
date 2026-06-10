@@ -26,12 +26,13 @@ naturalistic-EEG:
 
 - Stimulus matching: two stimuli that differ in speech rate produce
   systematically different time-locked responses because the same
-  ~250 ms post-onset window covers more linguistic content in fast
-  speech ([Reilly 2007]). Speech-rate matching is essential for any
+  fixed-duration post-onset window covers more linguistic content in
+  fast speech. Speech-rate matching is essential for any
   cross-stimulus contrast.
-- Tracking responses (e.g. cortical envelope tracking): slower speech
-  produces stronger low-frequency neural tracking; rate is a known
-  modulator of those responses ([Ding 2014]).
+- Tracking responses (e.g. cortical envelope tracking): low-frequency
+  cortical activity entrains to the syllabic rhythm of speech
+  ([Ding 2014] review), and irregular speech rate dissociates this
+  entrainment from sound-onset-evoked responses ([Kayser 2015]).
 
 Note this is **articulation rate**, not **speech rate** — the former
 excludes pauses, the latter includes them. The two diverge when a
@@ -85,13 +86,13 @@ n_syllables_in_unbelievable = dic.inserted("unbelievable").count("-") + 1
 ```
 
 ## Papers
-- <a name="tauroza-1990"></a>**[Tauroza 1990]** Tauroza & Allison. *Speech Rates in British English.* Applied Linguistics. [doi:10.1093/applin/11.1.90](https://doi.org/10.1093/applin/11.1.90) — establishes typical conversational ranges.
-- <a name="reilly-2007"></a>**[Reilly 2007]** Reilly. *Speech rate and listener processing.* J. Communication Disorders. [doi:10.1016/j.jcomdis.2006.10.005](https://doi.org/10.1016/j.jcomdis.2006.10.005)
-- <a name="ding-2014"></a>**[Ding 2014]** Ding & Simon. *Cortical entrainment to continuous speech: functional roles and interpretations.* Frontiers in Human Neuroscience. [doi:10.3389/fnhum.2014.00311](https://doi.org/10.3389/fnhum.2014.00311) — rate as a modulator of cortical tracking.
+- <a name="tauroza-1990"></a>**[Tauroza 1990]** Tauroza & Allison. *Speech Rates in British English.* Applied Linguistics 11(1), 90–105. [doi:10.1093/applin/11.1.90](https://doi.org/10.1093/applin/11.1.90) — establishes typical conversational ranges.
+- <a name="ding-2014"></a>**[Ding 2014]** Ding & Simon. *Cortical entrainment to continuous speech: functional roles and interpretations.* Frontiers in Human Neuroscience 8, 311. [doi:10.3389/fnhum.2014.00311](https://doi.org/10.3389/fnhum.2014.00311) — rate as a modulator of cortical tracking.
+- <a name="kayser-2015"></a>**[Kayser 2015]** Kayser, Ince, Gross, Kayser. *Irregular speech rate dissociates auditory cortical entrainment, evoked responses, and frontal alpha.* J. Neuroscience 35(44), 14691–14701. [doi:10.1523/JNEUROSCI.2243-15.2015](https://doi.org/10.1523/JNEUROSCI.2243-15.2015) — speech-rate manipulations and cortical entrainment.
 
 [Tauroza 1990]: #tauroza-1990
-[Reilly 2007]: #reilly-2007
 [Ding 2014]: #ding-2014
+[Kayser 2015]: #kayser-2015
 
 ## Datasets
 <!-- auto-populated from docs/datasets/*.md once the dataset registry exists -->

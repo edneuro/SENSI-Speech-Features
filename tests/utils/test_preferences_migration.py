@@ -75,7 +75,9 @@ def test_load_v1_flat_schema_migrates_to_v4(tmp_path, monkeypatch):
     assert prefs['schema_version'] == SCHEMA_VERSION
     assert prefs['shared']['analyzer_name'] == 'Alice'
     assert prefs['shared']['last_transcripts_folder'] == '/x/y'
-    assert prefs['semantic']['backend'] == 'liwc'
+    # LIWC is disabled (EULA): the v11 finalize coerces a stored "liwc"
+    # backend to "empath".
+    assert prefs['semantic']['backend'] == 'empath'
     assert prefs['predictability']['llm_model'] == 'gpt-4o-mini'
     assert prefs['features']['freq_subtlex'] is False   # zipf_freq was False
     # spacy_parse was True → all per-column structural toggles True
@@ -259,10 +261,12 @@ def test_v2_migration_carries_llm_model(v2_prefs_file):
     assert prefs["predictability"]["llm_model"] == "gpt-4o-mini"
 
 
-def test_v2_migration_carries_dictionary_backend(v2_prefs_file):
+def test_v2_migration_coerces_disabled_liwc_backend_to_empath(v2_prefs_file):
+    # v2 stored dictionary_backend="liwc"; LIWC is now disabled under its
+    # EULA, so the v11 finalize coerces it to "empath".
     from utils.preferences import load_preferences
     prefs = load_preferences()
-    assert prefs["semantic"]["backend"] == "liwc"
+    assert prefs["semantic"]["backend"] == "empath"
 
 
 def test_v2_migration_rewrites_file_as_v4(v2_prefs_file):
@@ -398,7 +402,8 @@ def test_v3_migration_preserves_unchanged_keys(v3_prefs_file):
     assert prefs["features"]["lexling_morph"] is False
     assert prefs["features"]["pred_surprisal_gpt2"] is True
     assert prefs["predictability"]["llm_model"] == "gpt-4o-mini"
-    assert prefs["semantic"]["backend"] == "liwc"
+    # LIWC disabled (EULA): stored "liwc" backend is coerced to "empath".
+    assert prefs["semantic"]["backend"] == "empath"
 
 
 def test_v3_migration_rewrites_file_as_v4(v3_prefs_file):
@@ -752,17 +757,49 @@ def test_v9_into_v10_preserves_existing_features():
     assert target['features']['feat_sentence_pitch_mean'] is False
 
 
-def test_load_v9_prefs_file_migrates_to_v10(tmp_path, monkeypatch):
-    """load_preferences() on a v9 file auto-migrates to v10."""
+def test_load_v9_prefs_file_migrates_to_current(tmp_path, monkeypatch):
+    """load_preferences() on a v9 file auto-migrates through to the current
+    schema (adds the v10 embedding keys along the way)."""
     import json
-    from utils.preferences import DEFAULT_PREFS_V9, load_preferences, SCHEMA_VERSION_V10
+    from utils.preferences import DEFAULT_PREFS_V9, load_preferences, SCHEMA_VERSION
 
     prefs_path = tmp_path / 'p.json'
     prefs_path.write_text(json.dumps(DEFAULT_PREFS_V9))
     monkeypatch.setenv('SENSI_PREFS_PATH', str(prefs_path))
     loaded = load_preferences()
-    assert loaded['schema_version'] == SCHEMA_VERSION_V10
+    assert loaded['schema_version'] == SCHEMA_VERSION
     assert loaded['output']['word2vec_mat'] is True
     assert loaded['features']['master_word2vec'] is True
     on_disk = json.loads(prefs_path.read_text())
-    assert on_disk['schema_version'] == SCHEMA_VERSION_V10
+    assert on_disk['schema_version'] == SCHEMA_VERSION
+
+
+def test_v10_to_v11_coerces_liwc_backend_and_bumps_version(tmp_path, monkeypatch):
+    """A v10 file with semantic.backend='liwc' migrates to v11 with the
+    backend coerced to 'empath' (LIWC disabled under its EULA), and the
+    upgrade is persisted to disk."""
+    import json
+    from copy import deepcopy
+    from utils.preferences import (
+        DEFAULT_PREFS_V10, load_preferences,
+        SCHEMA_VERSION, SCHEMA_VERSION_V11,
+    )
+
+    v10 = deepcopy(DEFAULT_PREFS_V10)
+    v10['semantic']['backend'] = 'liwc'
+    prefs_path = tmp_path / 'p.json'
+    prefs_path.write_text(json.dumps(v10))
+    monkeypatch.setenv('SENSI_PREFS_PATH', str(prefs_path))
+
+    loaded = load_preferences()
+    assert SCHEMA_VERSION == SCHEMA_VERSION_V11
+    assert loaded['schema_version'] == SCHEMA_VERSION_V11
+    assert loaded['semantic']['backend'] == 'empath'
+    on_disk = json.loads(prefs_path.read_text())
+    assert on_disk['schema_version'] == SCHEMA_VERSION_V11
+    assert on_disk['semantic']['backend'] == 'empath'
+
+
+def test_v11_default_backend_is_empath():
+    from utils.preferences import DEFAULT_PREFS
+    assert DEFAULT_PREFS['semantic']['backend'] == 'empath'

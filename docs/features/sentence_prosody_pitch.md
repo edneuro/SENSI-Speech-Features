@@ -60,4 +60,4 @@ dominate the per-sentence extrema.
 ## Papers
 See [`prosody_pitch`](prosody_pitch.md) — sentence-level summaries
 inherit the same foundational references (Boersma 2018, Steinhauer 1999,
-Wagner 2010, Brennan 2018).
+Heim 2006, Wagner 2010, Heilbron 2022).

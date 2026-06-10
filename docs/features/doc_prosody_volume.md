@@ -26,13 +26,16 @@ The first four operate on the **raw intensity contour** (all frames),
 the last on word-to-word averaged deltas.
 
 ## EEG rationale
-- `doc_volume_mean` is a **gross-level acoustic confound** — louder
-  stimuli produce larger early auditory ERPs across the board, so it's
-  essential to either equalize loudness across stimuli during
-  preparation or include this column as a regression nuisance.
+- `doc_volume_mean` is a **gross-level acoustic confound** — sound
+  level drives the amplitude of the N100 component of the auditory
+  evoked response in a linear fashion ([Zelger 2024]), so loudness
+  differences across stimuli will be reflected in early ERPs
+  irrespective of any linguistic contrast. Either equalize loudness
+  during stimulus preparation or include this column as a regression
+  nuisance.
 - `doc_volume_std` captures dynamic-range variability — useful as a
   matching covariate when comparing studio-quality vs.
-  in-the-wild recordings ([Wagner 2010]).
+  in-the-wild recordings.
 - `doc_volume_delta_mean` is the document-level analogue of the
   word-level `Volume_Delta` average — captures how much loudness
   *changes* from word to word, a continuous proxy for prosodic
@@ -45,8 +48,9 @@ full audio. `doc_volume_delta_mean` is the NaN-aware mean of the
 word-level `Volume_Delta` column.
 
 ## Papers
-- See [`prosody_volume`](prosody_volume.md) for the foundational
-  references; document-level summaries inherit the same rationale.
+See [`prosody_volume`](prosody_volume.md) — document-level summaries
+inherit the same foundational references (Boersma 2018, Zelger 2024,
+Cole 2019).
 
 ## Datasets
 <!-- auto-populated from docs/datasets/*.md once the dataset registry exists -->

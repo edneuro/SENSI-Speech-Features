@@ -23,12 +23,13 @@ coefficients to put one on a "ease" scale and the other on a "grade
 level" scale — see [Kincaid 1975] for the derivation history.
 
 ## EEG rationale
-Readability is a coarse **stimulus-difficulty descriptor** —
-useful as a single-number covariate when matching stimuli for grade
-level (e.g. an educational EEG study, or a developmental design).
-ERP amplitudes and latencies are sensitive to overall difficulty:
-harder texts produce longer fixations and larger N400 / P600
-amplitudes across the board ([Just 1980], [Penolazzi 2008]).
+Readability indices are passage-level numbers combining sentence
+length and syllables-per-word into a single scale. Both ingredients
+are established correlates of reading time: longer sentences and
+longer / more-polysyllabic words produce longer eye fixations
+([Just 1980]). The Flesch and Flesch–Kincaid scores are typically
+used as a single-number covariate for matching stimuli on overall
+text difficulty (e.g. educational or developmental designs).
 
 The Flesch family is not the most sensitive difficulty measure
 available — [`MTLD`](output_doc_lex_diversity.md) and the
@@ -52,13 +53,11 @@ textstat.flesch_kincaid_grade(text)       # US grade level
 ## Papers
 - <a name="flesch-1948"></a>**[Flesch 1948]** Flesch. *A new readability yardstick.* J. Applied Psychology. [doi:10.1037/h0057532](https://doi.org/10.1037/h0057532) — original Flesch Reading Ease.
 - <a name="kincaid-1975"></a>**[Kincaid 1975]** Kincaid, Fishburne, Rogers, Chissom. *Derivation of new readability formulas (Automated Readability Index, Fog Count, and Flesch Reading Ease formula) for Navy enlisted personnel.* Naval Air Station Memphis. — Flesch–Kincaid Grade Level.
-- <a name="just-1980"></a>**[Just 1980]** Just & Carpenter. *A theory of reading: From eye fixations to comprehension.* Psychological Review. [doi:10.1037/0033-295X.87.4.329](https://doi.org/10.1037/0033-295X.87.4.329) — reading difficulty / processing-load model.
-- <a name="penolazzi-2008"></a>**[Penolazzi 2008]** Penolazzi, Hauk, Pulvermüller. *Early semantic context integration and lexical access as revealed by event-related brain potentials.* Biological Psychology. [doi:10.1016/j.biopsycho.2007.04.010](https://doi.org/10.1016/j.biopsycho.2007.04.010)
+- <a name="just-1980"></a>**[Just 1980]** Just & Carpenter. *A theory of reading: From eye fixations to comprehension.* Psychological Review 87(4), 329–354. [doi:10.1037/0033-295X.87.4.329](https://doi.org/10.1037/0033-295X.87.4.329) — eye-fixation model showing readers pause longer at points of higher processing load (infrequent words, clause boundaries, sentence-end inferences).
 
 [Flesch 1948]: #flesch-1948
 [Kincaid 1975]: #kincaid-1975
 [Just 1980]: #just-1980
-[Penolazzi 2008]: #penolazzi-2008
 
 ## Datasets
 <!-- auto-populated from docs/datasets/*.md once the dataset registry exists -->

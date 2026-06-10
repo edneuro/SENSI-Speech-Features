@@ -135,12 +135,11 @@ class DocFeaturesSection(QWidget):
         # --- Composite psychological scores (per-column) ---
         psych_card = ClusterCard(
             "Composite psychological scores",
-            "Pennebaker (2014) formulas applied to the loaded LIWC-style "
-            "dictionary. Approximations, not official LIWC-22 outputs.",
+            "Pennebaker (2014) formulas computed license-clean from spaCy "
+            "POS/morphology + VADER valence. Approximations, not official "
+            "LIWC-22 outputs.",
             master_key="master_psych_composite",
             master_label="Enable composite psych scores",
-            available=(prefs["semantic"].get("backend") == "liwc"),
-            disabled_subtitle="Requires LIWC backend (selected on the Word-level features page).",
         )
         self._psych_card = psych_card
         psych_card.settings_changed.connect(self.settings_changed)
@@ -239,12 +238,9 @@ class DocFeaturesSection(QWidget):
     def refresh_from_prefs(self) -> None:
         """Re-read prefs and update dynamic labels, card states, and aggregate warnings."""
         self.cats_count_label.setText(self._cats_count_text())
-        prefs = load_preferences()
-        backend = prefs["semantic"].get("backend", "auto")
-        if backend == "auto":
-            from extractors.semantic_domain import detect_backend
-            backend, _ = detect_backend()
-        self._psych_card.set_available(backend == "liwc")
+        # Composite psych scores are license-clean (spaCy + VADER) and no
+        # longer depend on the semantic backend, so the card is always
+        # available.
         self._refresh_agg_warnings()
 
     def _refresh_agg_warnings(self) -> None:

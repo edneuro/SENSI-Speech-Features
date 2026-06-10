@@ -33,7 +33,8 @@ alternative to word-locked analyses:
   speech-rhythm entrainment ([Giraud 2012], [Ding 2014]).
 - For analyses of stress or prosody, syllable-level timing is more
   faithful than word-level timing because stress placement falls on
-  syllables, not words ([Park 2020]).
+  syllables, not words ([Hayes 2009] — standard phonological
+  treatment).
 - The combination of `Onset` and [`P_Center`](feat_syllable_pcenter.md)
   gives two complementary syllable anchors — `Onset` for envelope
   alignment, `P_Center` for perceptual-rhythm alignment.
@@ -68,12 +69,10 @@ phones generates ≥ 1 syllable rows.
 - <a name="hayes-2009"></a>**[Hayes 2009]** Hayes. *Introductory Phonology.* Wiley-Blackwell. — Maximum Onset Principle reference.
 - <a name="giraud-2012"></a>**[Giraud 2012]** Giraud & Poeppel. *Cortical oscillations and speech processing: Emerging computational principles and operations.* Nature Neuroscience. [doi:10.1038/nn.3063](https://doi.org/10.1038/nn.3063) — syllable-rate cortical tracking.
 - <a name="ding-2014"></a>**[Ding 2014]** Ding & Simon. *Cortical entrainment to continuous speech: functional roles and interpretations.* Frontiers in Human Neuroscience. [doi:10.3389/fnhum.2014.00311](https://doi.org/10.3389/fnhum.2014.00311)
-- <a name="park-2020"></a>**[Park 2020]** Park, Ince, Schyns, Thut, Gross. *Frontal top-down signals increase coupling of auditory low-frequency oscillations to continuous speech in human listeners.* Current Biology. [doi:10.1016/j.cub.2014.11.075](https://doi.org/10.1016/j.cub.2014.11.075)
 
 [Hayes 2009]: #hayes-2009
 [Giraud 2012]: #giraud-2012
 [Ding 2014]: #ding-2014
-[Park 2020]: #park-2020
 
 ## Datasets
 <!-- auto-populated from docs/datasets/*.md once the dataset registry exists -->

@@ -149,8 +149,8 @@ STAGES: list[Stage] = [
           produces=("doc_row.flesch", "doc_row.fk_grade"),
           run=lambda *a, **kw: None),
 
-    Stage(name="doc_liwc",
-          consumes=("text",),
+    Stage(name="doc_psych",
+          consumes=("word_df",),
           produces=("doc_row.psych",),
           run=lambda *a, **kw: None),
 
@@ -198,7 +198,7 @@ CLUSTERS: list[FeatureCluster] = [
         output_csv="features",
         requires_stages=("spacy_parse",),
         emits_columns=("token", "lemma", "upos", "xpos", "feats",
-                       "dep_rel", "head_token_id", "deps", "misc"),
+                       "dep_rel", "head_token_id"),
         master_toggle="master_lexling",
     ),
 
@@ -471,16 +471,16 @@ CLUSTERS: list[FeatureCluster] = [
         emits_columns=("flesch_reading_ease", "flesch_kincaid_grade"),
     ),
 
-    # §4.5 LIWC composite
+    # §4.5 Composite psychological scores (license-clean, spaCy + VADER).
+    # No backend gate: the scores no longer depend on a LIWC dictionary.
     FeatureCluster(
-        name="doc LIWC composite",
+        name="doc composite psych",
         toggle_keys=("feat_psych_authentic", "feat_psych_analytic",
                      "feat_psych_tone", "feat_psych_clout"),
         output_csv="documents_summary",
-        requires_stages=("doc_liwc",),
+        requires_stages=("doc_psych",),
         emits_columns=("psych_authentic", "psych_analytic", "psych_tone", "psych_clout"),
         master_toggle="master_psych_composite",
-        available_when=("semantic.backend", "liwc"),
     ),
 
     # §4.6 Category proportions

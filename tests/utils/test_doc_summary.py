@@ -102,15 +102,22 @@ def test_category_proportions_toggled():
     assert summary['prop_animal'] == pytest.approx(1 / 2)
 
 
-def test_psych_summary_columns_absent_when_empath():
+def test_psych_summary_computed_regardless_of_backend():
+    # Composite psych is now license-clean (spaCy + VADER) and no longer
+    # depends on the semantic backend — it is emitted whenever toggled on,
+    # even when the active dictionary backend is Empath.
     df = _basic_df()
     toggles = _all_off()
-    toggles['psych_authentic'] = True  # requested but Empath active
+    toggles['psych_authentic'] = True
     summary = build_doc_summary(
         df, stimulus_id='s', dictionary_used='Empath',
         text='Hello world.', toggles=toggles,
     )
-    assert 'psych_authentic' not in summary
+    assert 'psych_authentic' in summary
+    assert isinstance(summary['psych_authentic'], float)
+    # Only the requested column is emitted.
+    for other in ('psych_analytic', 'psych_tone', 'psych_clout'):
+        assert other not in summary
 
 
 # ---------------------------------------------------------------------------
@@ -144,8 +151,8 @@ def test_independence_doc_mean_zipf_when_word_freq_disabled(tmp_path):
         '--no-doc-mean-surprisal',  # doc-level surprisal OFF
         '--no-sem-domain',      # word-level sem-domain OFF
         '--no-doc-category-proportions',
-        '--no-doc-liwc-authentic', '--no-doc-liwc-analytic',
-        '--no-doc-liwc-tone', '--no-doc-liwc-clout',
+        '--no-doc-psych-authentic', '--no-doc-psych-analytic',
+        '--no-doc-psych-tone', '--no-doc-psych-clout',
         '--no-freq',            # word-level Zipf OFF  ← this is the toggle under test
         # doc-level mean_zipf_freq is ON (no --no-doc-mean-zipf)
     ])
@@ -200,8 +207,8 @@ def test_independence_doc_mean_surprisal_when_word_surprisal_disabled(tmp_path):
         '--no-doc-mean-zipf',       # doc-level Zipf OFF
         '--no-sem-domain',
         '--no-doc-category-proportions',
-        '--no-doc-liwc-authentic', '--no-doc-liwc-analytic',
-        '--no-doc-liwc-tone', '--no-doc-liwc-clout',
+        '--no-doc-psych-authentic', '--no-doc-psych-analytic',
+        '--no-doc-psych-tone', '--no-doc-psych-clout',
         '--no-surprisal',           # word-level surprisal OFF  ← toggle under test
         # doc-level mean_surprisal is ON (no --no-doc-mean-surprisal)
     ])

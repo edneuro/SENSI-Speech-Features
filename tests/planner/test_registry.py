@@ -50,7 +50,7 @@ def test_subword_stages_present():
 def test_doc_stages_present():
     names = {s.name for s in STAGES}
     for n in ("doc_counts", "doc_aggregates", "doc_lex_diversity",
-              "doc_readability", "doc_liwc", "doc_category_proportions",
+              "doc_readability", "doc_psych", "doc_category_proportions",
               "doc_prosody", "doc_articulation_rate"):
         assert n in names, f"missing doc stage {n}"
 

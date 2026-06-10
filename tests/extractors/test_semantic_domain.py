@@ -17,11 +17,12 @@ def test_detect_backend_returns_empath_when_no_dic(tmp_path, monkeypatch):
     assert dict_path is None
 
 
-def test_detect_backend_returns_liwc_when_dic_present(tmp_path):
+def test_detect_backend_never_auto_selects_liwc_even_with_dic(tmp_path):
+    # LIWC is disabled under its EULA — a stray .dic must NOT activate it.
     (tmp_path / 'liwc-2022.dic').write_text('% header %\n')
     backend, dict_path = detect_backend(dictionaries_dir=tmp_path)
-    assert backend == 'liwc'
-    assert dict_path == tmp_path / 'liwc-2022.dic'
+    assert backend == 'empath'
+    assert dict_path is None
 
 
 def test_empath_basic_categories(tmp_path):

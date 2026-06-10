@@ -70,7 +70,7 @@ class WordFeaturesSection(QWidget):
             ("lexling_tokens", "Tokenization & lemmatization (token, lemma)"),
             ("lexling_pos",    "Part-of-speech tags (upos, xpos)"),
             ("lexling_morph",  "Morphological features (feats)"),
-            ("lexling_dep",    "Dependency parse (dep_rel, head_token_id, deps, misc)"),
+            ("lexling_dep",    "Dependency parse (dep_rel, head_token_id)"),
         ]:
             lex_card.add_child(self._make_toggle(key, label, f[key], "features"))
         layout.addWidget(lex_card)
@@ -179,9 +179,21 @@ class WordFeaturesSection(QWidget):
         backend_row = QHBoxLayout()
         backend_row.addWidget(QLabel("Backend:"))
         self._backend_group = QButtonGroup(self)
-        saved_backend = prefs["semantic"].get("backend", "auto")
+        saved_backend = prefs["semantic"].get("backend", "empath")
+        if saved_backend == "liwc":
+            # LIWC is disabled; never show a disabled radio as the active one.
+            saved_backend = "empath"
+        _liwc_tooltip = (
+            "LIWC is disabled. The LIWC-22 license agreement forbids using its "
+            "dictionary outside LIWC's own software, so SensiExtractor cannot "
+            "ship it. Empath is the open-source default. See the ⓘ info for how "
+            "to license LIWC for your own offline use."
+        )
         for value, label in [("auto", "Auto"), ("liwc", "LIWC"), ("empath", "Empath")]:
             rb = QRadioButton(label)
+            if value == "liwc":
+                rb.setEnabled(False)
+                rb.setToolTip(_liwc_tooltip)
             rb.setChecked(value == saved_backend)
             rb.toggled.connect(
                 lambda checked, v=value: checked and self._on_backend_change(v))
@@ -190,6 +202,14 @@ class WordFeaturesSection(QWidget):
         backend_row.addStretch(1)
         br_w = QWidget(); br_w.setLayout(backend_row)
         sem_card.add_widget(br_w)
+        liwc_note = QLabel(
+            "LIWC backend removed due to its license agreement. Empath (free, "
+            "open-source) is the default. Click the ⓘ next to “Per-word category "
+            "indicators” for details and where to obtain a LIWC license."
+        )
+        liwc_note.setObjectName("Subtitle")
+        liwc_note.setWordWrap(True)
+        sem_card.add_widget(liwc_note)
         sem_card.add_widget(self._make_toggle(
             "sem_indicators", "Per-word category indicators",
             f["sem_indicators"], "features"))

@@ -35,26 +35,25 @@ unaligned syllables → `NaN`.
 
 ## EEG rationale
 The **perceptual centre is the right anchor for rhythm-related
-analyses** of speech ([Scott 1998], [Villing 2010]). Whereas physical
+analyses** of speech ([Scott 1998], [Villing 2011]). Whereas physical
 syllable onsets vary with consonant cluster length (an /st/ onset is
 longer than an /n/ onset), perceptual centres are quasi-isochronous
 in connected speech — they're what listeners synchronize to when
 tapping along.
 
 For EEG specifically:
-- **Cortical envelope tracking** anchored on P-centres often produces
-  cleaner delta/theta-band responses than tracking on physical onsets
-  ([Doelling 2019]).
-- **Beat-induced expectations** during music-rhythm-style speech
-  analyses use P-centres as the regular pulse ([Lerdahl 1983]).
+- **Cortical envelope tracking**: acoustic landmarks like the
+  sharpness of temporal envelope fluctuations drive delta/theta
+  cortical oscillations and support perceptual parsing of speech
+  ([Doelling 2014]). P-centres formalise a specific class of such
+  landmarks at the syllable grain.
 - In any analysis where the question is "when does the listener
   perceive this syllable to start?", `P_Center` is the answer;
   `Onset` answers "when did the audio waveform start for this
-  syllable" — a different question.
+  syllable" — a different question ([Villing 2011]).
 
 ## Implementation in SensiExtractor
-Source: `extractors/pcenter.py:add_pcenter`. Spec:
-`docs/superpowers/specs/2026-05-20-pcenter-design.md`.
+Source: `extractors/pcenter.py:add_pcenter`
 
 **What the code does:**
 
@@ -70,7 +69,7 @@ Source: `extractors/pcenter.py:add_pcenter`. Spec:
    fallback.
 5. PUNCT / unaligned syllables → `NaN`.
 
-**Why** *(spec-derived where stated; ⚠️ flags my interpolation):*
+**Why:**
 
 - *k = 0.3 default* — the original [Scott 1993] empirically derived
   value for English speech. Configurable for studies that want
@@ -94,19 +93,17 @@ The implementation is pure pandas / numpy — no third-party library
 beyond the ARPABET data already provided by MFA.
 
 ## Papers
-- <a name="marcus-1981"></a>**[Marcus 1981]** Marcus. *Acoustic determinants of perceptual centre (P-centre) location.* Perception & Psychophysics. [doi:10.3758/BF03204357](https://doi.org/10.3758/BF03204357) — first formalisation of P-centre offset from physical onset.
+- <a name="marcus-1981"></a>**[Marcus 1981]** Marcus. *Acoustic determinants of perceptual center (P-center) location.* Perception & Psychophysics 30(3), 247–256. [doi:10.3758/BF03214280](https://doi.org/10.3758/BF03214280) — first formalisation of P-centre offset from physical onset.
 - <a name="scott-1993"></a>**[Scott 1993]** Scott. *Recognition of an Auditory Pattern Based on Time Marked by a Perceptual Centre.* PhD thesis, University College London. — the linear formula with empirical `k = 0.3` for English.
-- <a name="scott-1998"></a>**[Scott 1998]** Scott. *The point of P-centres.* Psychological Research. [doi:10.1007/s004260050050](https://doi.org/10.1007/s004260050050)
-- <a name="villing-2010"></a>**[Villing 2010]** Villing, Repp, Ward, Timoney. *Measuring perceptual centers using the phase correction response.* Attention, Perception, & Psychophysics. [doi:10.3758/APP.72.5.1389](https://doi.org/10.3758/APP.72.5.1389) — modern P-centre measurement validation.
-- <a name="doelling-2019"></a>**[Doelling 2019]** Doelling, Arnal, Ghitza, Poeppel. *Acoustic landmarks drive delta–theta oscillations to enable speech comprehension by facilitating perceptual parsing.* NeuroImage. [doi:10.1016/j.neuroimage.2014.05.054](https://doi.org/10.1016/j.neuroimage.2014.05.054) — perceptual onsets and cortical tracking.
-- <a name="lerdahl-1983"></a>**[Lerdahl 1983]** Lerdahl & Jackendoff. *A Generative Theory of Tonal Music.* MIT Press. — beat / perceptual-pulse framework.
+- <a name="scott-1998"></a>**[Scott 1998]** Scott. *The point of P-centres.* Psychological Research 61, 4–11. [doi:10.1007/PL00008162](https://doi.org/10.1007/PL00008162)
+- <a name="villing-2011"></a>**[Villing 2011]** Villing, Repp, Ward, Timoney. *Measuring perceptual centers using the phase correction response.* Attention, Perception, & Psychophysics 73(5), 1614–1629. [doi:10.3758/s13414-011-0110-1](https://doi.org/10.3758/s13414-011-0110-1) — modern P-centre measurement validation.
+- <a name="doelling-2014"></a>**[Doelling 2014]** Doelling, Arnal, Ghitza, Poeppel. *Acoustic landmarks drive delta–theta oscillations to enable speech comprehension by facilitating perceptual parsing.* NeuroImage 85, 761–768. [doi:10.1016/j.neuroimage.2013.06.035](https://doi.org/10.1016/j.neuroimage.2013.06.035) — sharpness of temporal envelope fluctuations cues syllabic rate and drives delta-theta cortical tracking.
 
 [Marcus 1981]: #marcus-1981
 [Scott 1993]: #scott-1993
 [Scott 1998]: #scott-1998
-[Villing 2010]: #villing-2010
-[Doelling 2019]: #doelling-2019
-[Lerdahl 1983]: #lerdahl-1983
+[Villing 2011]: #villing-2011
+[Doelling 2014]: #doelling-2014
 
 ## Datasets
 <!-- auto-populated from docs/datasets/*.md once the dataset registry exists -->

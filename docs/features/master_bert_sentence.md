@@ -37,8 +37,7 @@ sentence-level EEG / fMRI prediction is task- and ROI-dependent
 ([Toneva 2019]).
 
 ## Implementation in SensiExtractor
-Source: `extractors/bert_embed.py:embed_bert_words_and_sentences`.
-Design spec: `docs/superpowers/specs/2026-05-22-embeddings-design.md` §2.
+Source: `extractors/bert_embed.py:embed_bert_words_and_sentences`
 
 **What the code does** (verified against the source):
 
@@ -65,7 +64,7 @@ belonging to non-PUNCT words in the current sentence.
 3. Sentences whose every content word failed alignment / tokenization
    produce a zero vector.
 
-**Why** *(spec-derived where stated; ⚠️ flags my interpolation):*
+**Why:**
 
 - *Mean-pool over content words rather than over all subwords* — the
   spec is explicit: aggregation is over non-PUNCT word embeddings.

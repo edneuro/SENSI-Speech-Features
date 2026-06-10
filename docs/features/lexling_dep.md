@@ -3,7 +3,7 @@ key: lexling_dep
 name: Dependency parse
 levels: [word]
 gui_toggle: lexling_dep
-output_columns: [dep_rel, head_token_id, deps, misc]
+output_columns: [dep_rel, head_token_id]
 libraries: [spaCy]
 status: implemented
 depth: deep
@@ -18,8 +18,13 @@ which every word points to its syntactic governor.
 |---|---|
 | `dep_rel` | Dependency relation label from spaCy's tagset (a superset of Universal Dependencies, [De Marneffe 2021]). Common values: `nsubj`, `obj`, `det`, `amod`, `advmod`, `aux`, `prep`, `pobj`, `compound`, `ROOT`. |
 | `head_token_id` | The [`token_id`](structural_ids.md) of this word's syntactic head within the same sentence. For the sentence's root token, `head_token_id` points to itself. |
-| `deps` | Enhanced-UD parallel dependencies. Currently always `"NA"` — spaCy's `en_core_web_sm` does not emit enhanced deps; reserved for future tagger upgrades. |
-| `misc` | UD MISC field. Currently used only for `SpaceAfter=No` (token is not followed by whitespace, e.g. before punctuation in `"cat."`). Otherwise `"NA"`. |
+
+> The UD-standard `deps` (Enhanced UDs) and `misc` columns are
+> intentionally **not** emitted. spaCy's `en_core_web_sm` does not
+> produce enhanced UDs, and the only English content for `misc` would
+> be `SpaceAfter=No` — too thin to justify a dedicated column. If a
+> concrete EEG use case for enhanced UDs surfaces later, a Stanza-based
+> extractor can be added under its own toggle.
 
 ## EEG rationale
 Dependency structure governs which words are **predictively related** at
@@ -30,8 +35,11 @@ generate distinct ERP signatures ([Friederici 2002] on the P600;
 analyses:
 
 - Dependency length (`|token_id - head_token_id|`) is a classic
-  syntactic-complexity proxy that correlates with both reading-time and
-  ERP measures ([Gibson 2000], [Demberg 2008]).
+  syntactic-complexity proxy ([Gibson 2000] — Dependency Locality
+  Theory). Empirical evaluation against eye-tracking corpora shows
+  dependency-length-based predictions account for reading times in
+  some contexts (e.g. for nouns), though not uniformly across all
+  word classes ([Demberg 2008]).
 - `dep_rel == "ROOT"` marks the syntactic centre of each sentence —
   useful for sentence-level anchoring.
 - Dependency-conditioned analyses (e.g. all words whose head is a verb)
@@ -42,10 +50,7 @@ Source: `extractors/text_parser.py:parse`. `dep_rel` is read directly
 from spaCy's parser (`token.dep_`). `head_token_id` is computed as
 `token.head.i - sent.start + 1` to convert spaCy's
 0-indexed-document position into the 1-indexed within-sentence
-convention shared with [`token_id`](structural_ids.md). The `deps`
-column is a hardcoded `"NA"` (enhanced-UD support requires a different
-parser). `misc` is set to `SpaceAfter=No` when `token.whitespace_` is
-empty, otherwise `"NA"`.
+convention shared with [`token_id`](structural_ids.md).
 
 Parser model is spaCy's `en_core_web_sm` default — a transition-based
 parser trained on OntoNotes 5.

@@ -25,8 +25,10 @@ digit `0/1/2` on each vowel encodes the lexical stress (`0` = none,
 `1` = primary, `2` = secondary).
 
 ## Usage
-- Group / filter by primary-stress syllables — the syllables most
-  relevant for prominence-related EEG analyses ([Park 2020]).
+- Group / filter by primary-stress syllables — pitch accents on
+  stressed syllables elicit a P200 ERP modulated by the F0-peak onset
+  latency, making stressed syllables the canonical units for
+  prominence-related ERP analyses ([Heim 2006](prosody_pitch.md#heim-2006)).
 - Build syllable-class regressors (e.g. open vs. closed syllables) by
   parsing the ARPABET string.
 - Match syllables across stimuli by their `ARPABET` string for
@@ -49,8 +51,9 @@ Source: `extractors/syllable.py` (downstream of MFA alignment).
   same dependency.
 
 ## Papers
-- [Park 2020] — see [`syllable_timing`](syllable_timing.md) — stress
-  syllables and cortical tracking.
+- [Heim 2006](prosody_pitch.md#heim-2006) — see
+  [`prosody_pitch`](prosody_pitch.md) — P200 ERP elicited by pitch
+  accents on stressed syllables.
 
 ## Datasets
 <!-- auto-populated from docs/datasets/*.md once the dataset registry exists -->

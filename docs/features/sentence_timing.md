@@ -23,9 +23,8 @@ where no word aligned (very rare) → `NaN` for `Onset` / `End`.
 
 ## EEG rationale
 Sentence-locked analyses look at responses anchored to **sentence
-boundaries** — the place where syntactic and discourse-level
-integration peaks ([Friederici 2002], [Kuperberg 2007]). Common use
-cases:
+boundaries** — useful for time-locking ERPs / time-frequency analyses
+to the start (or end) of a syntactic unit. Common use cases:
 
 - Sentence-onset-locked ERPs / time-frequency analyses, especially for
   Closure Positive Shift (CPS) and discourse-level effects.

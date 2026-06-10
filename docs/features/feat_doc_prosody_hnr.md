@@ -19,16 +19,21 @@ breathy or hoarse voices drop below 10 dB.
 A single value per stimulus.
 
 ## EEG rationale
-HNR is the standard **voice-quality matching covariate** — when
-comparing stimuli recorded under different conditions or by different
-speakers, gross differences in voice quality (breathy vs. modal vs.
-creaky phonation) drive systematically different early auditory
-responses ([Banse 1996], [Patel 2018]). Including `doc_hnr` lets you
-regress out that confound at the stimulus level.
+HNR is a standard acoustic measure of **voice quality** — the
+periodic/aperiodic energy ratio in the speech signal, indexing modal
+vs. breathy vs. creaky phonation. It is used in clinical voice
+assessment as an instrumental measure of vocal function
+([Patel 2018]) and in research on the acoustic correlates of vocal
+emotion expression ([Banse 1996]).
 
-In clinical / pathological-voice EEG work (e.g. studies of dysphonia,
-hearing impairment, ageing voice), HNR is itself the variable of
-interest ([Boersma 1993]).
+At the stimulus level, `doc_hnr` is useful as a **stimulus-matching
+covariate**: when comparing recordings made under different conditions
+or by different speakers, equalizing or regressing out HNR controls
+for gross voice-quality differences in the audio. ⚠️ Whether such
+voice-quality differences translate into measurable ERP confounds in
+a given paradigm depends on the design; the citations above establish
+HNR's role as an acoustic / clinical measure, not specifically as an
+EEG confound.
 
 ## Math / linguistics
 HNR is estimated by Praat as
@@ -44,8 +49,7 @@ are excluded from the mean.
 Computed in `main.py`'s document-batch finishing step from the same
 `Contours` object used by the other prosody columns. Per-frame HNR
 values come from Praat's `To Harmonicity (cc)` call; the mean
-excludes Praat's unvoiced sentinel (−200 dB) — this is the fix from
-commit `460801b` referenced in `master_plan.md`.
+excludes Praat's unvoiced sentinel (−200 dB).
 
 ⚠️ Without the sentinel exclusion, a stimulus with even a few
 unvoiced frames would have `doc_hnr` pulled down toward −200 — the

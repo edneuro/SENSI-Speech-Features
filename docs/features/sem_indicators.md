@@ -38,9 +38,12 @@ Specific uses:
 
 - **Emotional valence / arousal contrasts** — LIWC's
   Positive Emotion / Negative Emotion or Empath's
-  affection / sadness categories are common emotion regressors and
-  modulate amplitudes of late positive components (LPC) and frontal
-  ERPs ([Citron 2014], [Recio 2014]).
+  affection / sadness categories are common emotion regressors.
+  Emotional words modulate ERPs in valence- and arousal-dependent
+  ways ([Citron 2012] review); arousal effects appear early in the
+  **early posterior negativity** (EPN), with interactive arousal ×
+  valence effects for high-arousal positive and low-arousal negative
+  words ([Recio 2014]).
 - **Concrete vs abstract concepts** — affect concreteness ratings
   predict N400 amplitude ([Barber 2013]); LIWC and Empath both have
   categories that approximate concreteness clusters.
@@ -55,17 +58,23 @@ via word-embedding similarity to seed terms — useful when LIWC is not
 available, but its categories are less curated.
 
 ## Backends and category selection
-Two backends share the same interface:
 
-| Backend | License | Source | Setup |
+> ℹ️ **LIWC is disabled in SensiExtractor.** The LIWC-22 license
+> agreement ([EULA](https://www.liwc.app/help/eula)) forbids using LIWC
+> dictionary material outside LIWC's own software, so SensiExtractor can
+> neither ship a `.dic` nor auto-select LIWC. The LIWC radio on the
+> Word-level page is shown but greyed out, and **Empath is the default**.
+> To obtain a LIWC license, see
+> <https://liwcsoftware.onfastspring.com/>.
+
+| Backend | License | Source | Status in app |
 |---|---|---|---|
-| **LIWC** | Commercial; licensed `.dic` file required | LIWC-2022 (or earlier) | Drop a `.dic` file at `dictionaries/liwc-2022.dic` (or any `*.dic`) |
-| **Empath** | Free / open-source | `pip install empath` | No external file needed |
+| **Empath** | Free / open-source | `pip install empath` | **Default**, fully enabled |
+| **LIWC** | Commercial; licensed `.dic` required | LIWC-2022 (or earlier) | **Disabled** (EULA) |
 
-**Backend selection logic** (from `detect_backend()`):
-
-- If any `*.dic` exists under `dictionaries/`, use **LIWC**.
-- Otherwise, use **Empath**.
+**Backend selection logic** (from `detect_backend()`): always returns
+**Empath**. A stray `.dic` under `dictionaries/` no longer activates
+LIWC.
 
 Categories are selected per-backend on the **Word-level features →
 Semantic indicators** card (via the "Configure word-level categories…"
@@ -96,24 +105,6 @@ classes: `_LiwcScorer` and `_EmpathScorer` in the same file.
 5. Emits a `Sem_Categories` roll-up column with the sorted
    comma-separated match list.
 
-**Why** *(⚠️ flags my interpolation):*
-
-- *Content-POS filter* — keeping function words out matches the standard
-  practice in the LIWC literature, where the dictionary scoring is
-  always about content categories ([Pennebaker 2015]). It also keeps the
-  column NaN-rate proportional to the proportion of function words in
-  the stimulus, which is what most downstream regressions want.
-- *Lemma-keyed, lowercased lookup* — same convention as the
-  [frequency](freq_subtlex.md) extractors, so the same row in the CSV
-  reflects the same lexeme across all lexical-content columns.
-- *Auto-pick LIWC when a .dic exists* — ⚠️ the spec doesn't justify
-  this explicitly; the assumption is that if a user invested in a LIWC
-  license they want it used. Empath stays the no-license fallback.
-- *Both binary per-category columns AND the rolled-up `Sem_Categories`
-  string* — ⚠️ duplication is intentional. The binary columns are easy
-  to regress on; the rolled-up string is a fast eyeball view ("what
-  categories did this word match?") and is also what the doc-level
-  category-proportions feature aggregates.
 
 ## Library
 ```python
@@ -138,14 +129,14 @@ lex = Empath()
 - <a name="fast-2016"></a>**[Fast 2016]** Fast, Chen, Bernstein. *Empath: Understanding Topic Signals in Large-Scale Text.* CHI 2016. [arXiv:1602.06979](https://arxiv.org/abs/1602.06979)
 
 **Per-category ERP modulation:**
-- <a name="citron-2014"></a>**[Citron 2014]** Citron. *Neural correlates of written emotion word processing: A review of recent electrophysiological and hemodynamic neuroimaging studies.* Brain & Language. [doi:10.1016/j.bandl.2013.10.005](https://doi.org/10.1016/j.bandl.2013.10.005)
-- <a name="recio-2014"></a>**[Recio 2014]** Recio, Conrad, Hansen, Jacobs. *On pleasure and thrill: The interplay between arousal and valence during visual word recognition.* Brain & Language. [doi:10.1016/j.bandl.2013.11.001](https://doi.org/10.1016/j.bandl.2013.11.001)
-- <a name="barber-2013"></a>**[Barber 2013]** Barber, Otten, Kousta, Vigliocco. *Concreteness in word processing: ERP and behavioral effects in a lexical decision task.* Brain & Language. [doi:10.1016/j.bandl.2013.03.005](https://doi.org/10.1016/j.bandl.2013.03.005)
+- <a name="citron-2012"></a>**[Citron 2012]** Citron. *Neural correlates of written emotion word processing: A review of recent electrophysiological and hemodynamic neuroimaging studies.* Brain & Language 122(3), 211–226. [doi:10.1016/j.bandl.2011.12.007](https://doi.org/10.1016/j.bandl.2011.12.007)
+- <a name="recio-2014"></a>**[Recio 2014]** Recio, Conrad, Hansen, Jacobs. *On pleasure and thrill: The interplay between arousal and valence during visual word recognition.* Brain & Language 134, 34–43. [doi:10.1016/j.bandl.2014.03.009](https://doi.org/10.1016/j.bandl.2014.03.009)
+- <a name="barber-2013"></a>**[Barber 2013]** Barber, Otten, Kousta, Vigliocco. *Concreteness in word processing: ERP and behavioral effects in a lexical decision task.* Brain & Language 125(1), 47–53. [doi:10.1016/j.bandl.2013.01.005](https://doi.org/10.1016/j.bandl.2013.01.005)
 
 [Pennebaker 2015]: #pennebaker-2015
 [Tausczik 2010]: #tausczik-2010
 [Fast 2016]: #fast-2016
-[Citron 2014]: #citron-2014
+[Citron 2012]: #citron-2012
 [Recio 2014]: #recio-2014
 [Barber 2013]: #barber-2013
 

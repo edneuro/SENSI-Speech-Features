@@ -1,11 +1,17 @@
 """Semantic-domain category indicators with pluggable dictionary backends.
 
 Two backends share the same interface:
-    - LIWC: requires a licensed .dic file at dictionaries/liwc-2022.dic
-            (or any .dic at the configured path). Parsed via the `liwc` package.
-    - Empath: open-source, pip-installed. No license required. Default fallback.
+    - Empath: open-source, pip-installed. No license required. The default
+              (and only auto-selected) backend.
+    - LIWC: DISABLED as a shipped/auto-selected backend. The LIWC-22 EULA
+            (https://www.liwc.app/help/eula) forbids using LIWC dictionary
+            material outside LIWC's own software. `_LiwcScorer` is retained
+            so a license holder can still opt in explicitly by pointing
+            `--sem-dict` at their own .dic file, but `detect_backend` never
+            selects it automatically.
 
-Backend auto-detection: if dictionaries/liwc-2022.dic exists, use LIWC; else Empath.
+Backend selection: `detect_backend` always returns Empath. A stray .dic in
+dictionaries/ no longer activates LIWC.
 
 Output columns added to the token DataFrame:
     Sem_<Dict>_<category> ∈ {0, 1, NaN}     (one binary column per category)
@@ -32,11 +38,16 @@ class BackendNotAvailable(Exception):
 
 
 def detect_backend(dictionaries_dir: Path | None = None) -> tuple[str, Path | None]:
-    """Return (backend_name, dict_path) — picks LIWC if a .dic exists, else Empath."""
-    d = Path(dictionaries_dir) if dictionaries_dir else _DICTIONARIES_DIR
-    if d.exists():
-        for cand in sorted(d.glob('*.dic')):
-            return 'liwc', cand
+    """Return (backend_name, dict_path). Always Empath.
+
+    LIWC is no longer auto-selected: the LIWC-22 EULA
+    (https://www.liwc.app/help/eula) forbids using LIWC dictionary material
+    outside LIWC's own software, so SensiExtractor does not ship or default
+    to it. The `_LiwcScorer` path is retained only for a license holder who
+    explicitly points `--sem-dict` at their own `.dic` file (handled by
+    `main._resolve_sem_backend`, not here). `dictionaries_dir` is accepted
+    for backward compatibility but a stray `.dic` no longer activates LIWC.
+    """
     return 'empath', None
 
 

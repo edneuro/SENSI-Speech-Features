@@ -40,7 +40,15 @@ psutil>=5.9
 
 # Semantic-domain backends
 empath>=0.89
+# `liwc` is retained only so a license holder can opt in via an explicit
+# --sem-dict path/to/their.dic. LIWC is disabled as a shipped/auto-selected
+# backend because the LIWC-22 EULA (https://www.liwc.app/help/eula) forbids
+# using its dictionary outside LIWC's own software.
 liwc>=0.5
+
+# Valence lexicon for the license-clean composite psychological scores
+# (Tone). MIT-licensed; bundles its own lexicon (no download).
+vaderSentiment>=3.3
 
 # LLM-cloze
 accelerate>=0.27

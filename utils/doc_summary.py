@@ -8,9 +8,12 @@ the output.
 When 'category_proportions' is on, scans Sem_* columns and emits
 `count_<cat>` / `prop_<cat>` over content tokens.
 
-When `psych_*` toggles are requested and `dictionary_used == 'LIWC'`,
-adds the corresponding composite psychological scores using
-`extractors.liwc_summary` (Pennebaker et al. 2014 formula approximations).
+When any `psych_*` toggle is requested, adds the corresponding composite
+psychological scores via `extractors.psych_composite` — a license-clean
+reimplementation of the Pennebaker et al. (2014) summary indices that
+reads grammatical categories from the spaCy-parsed token DataFrame and
+valence from VADER (no LIWC dictionary). The old LIWC `.dic`-based path
+(`extractors.liwc_summary`) is retired due to the LIWC-22 EULA.
 """
 
 from pathlib import Path
@@ -126,9 +129,13 @@ def build_doc_summary(
 
     psych_wanted = any(toggles.get(k) for k in
                        ('psych_authentic', 'psych_analytic', 'psych_tone', 'psych_clout'))
-    if psych_wanted and dictionary_used == 'LIWC' and liwc_dictionary_path:
-        from extractors.liwc_summary import compute_liwc_summary
-        scores = compute_liwc_summary(text, liwc_dictionary_path)
+    if psych_wanted:
+        # License-clean: scores come from the spaCy-parsed token DataFrame +
+        # VADER valence, independent of the semantic-domain backend. The
+        # `liwc_dictionary_path` / `dictionary_used` args are no longer
+        # consulted here (kept in the signature for call-site compatibility).
+        from extractors.psych_composite import compute_psych_composite
+        scores = compute_psych_composite(df)
         for short_key in ('authentic', 'analytic', 'tone', 'clout'):
             full_key = f'psych_{short_key}'
             if toggles.get(full_key):

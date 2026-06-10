@@ -35,8 +35,10 @@ probability over the actual continuation. Where the relationship to
 the N400 is concerned:
 
 - For *amplitude* prediction, **surprisal** (the log) is theoretically
-  preferred ([Smith 2013], [Wlotko 2012]) because cognitive cost is
-  linear in surprisal, not in probability.
+  preferred ([Smith 2013]) because cognitive cost is linear in
+  surprisal, not in probability — and language-model surprisal has
+  been shown to predict N400 amplitude better than cloze probability
+  itself ([Michaelov 2024]).
 - For comparison with classic human-cloze experiments, the raw
   probability is what aligns with the published metric.
 - For analyses that need an interpretable [0–1] regressor (logistic
@@ -74,15 +76,15 @@ PUNCT rows are masked to `NaN`. The probability is stored rounded to
 - <a name="smith-2013"></a>**[Smith 2013]** Smith & Levy. *The effect of word predictability on reading time is logarithmic.* Cognition. [doi:10.1016/j.cognition.2013.02.013](https://doi.org/10.1016/j.cognition.2013.02.013) — cost is in log P, not P; favours `LLM_Surprisal` over `LLM_Cloze` for amplitude modelling.
 
 **LM-derived cloze:**
-- <a name="hofmann-2022"></a>**[Hofmann 2022]** Hofmann, Remus, Biemann, Radach, Kuchinke. *Language models explain word reading times better than empirical predictability.* Frontiers in Artificial Intelligence. [doi:10.3389/frai.2021.730570](https://doi.org/10.3389/frai.2021.730570) — LM-cloze tracks reading time better than human cloze in some regimes.
-- <a name="wlotko-2012"></a>**[Wlotko 2012]** Wlotko & Federmeier. *So that's what you meant! Event-related potentials reveal multiple aspects of context use during construction of message-level meaning.* NeuroImage. [doi:10.1016/j.neuroimage.2012.05.054](https://doi.org/10.1016/j.neuroimage.2012.05.054)
+- <a name="hofmann-2022"></a>**[Hofmann 2022]** Hofmann, Remus, Biemann, Radach, Kuchinke. *Language models explain word reading times better than empirical predictability.* Frontiers in Artificial Intelligence. [doi:10.3389/frai.2021.730570](https://doi.org/10.3389/frai.2021.730570) — LM probabilities outperform human cloze-completion probabilities at predicting fixation durations and gaze durations in English and German eye-tracking corpora.
+- <a name="michaelov-2024"></a>**[Michaelov 2024]** Michaelov, Bardolph, Van Petten, Bergen, Coulson. *Strong Prediction: Language Model Surprisal Explains Multiple N400 Effects.* Neurobiology of Language 5(1), 107–135. [doi:10.1162/nol_a_00105](https://doi.org/10.1162/nol_a_00105) — direct comparison: LM surprisal explains N400 amplitude better than cloze probability or distributional semantic similarity.
 
 [Taylor 1953]: #taylor-1953
 [Kutas 1984]: #kutas-1984
 [DeLong 2005]: #delong-2005
 [Smith 2013]: #smith-2013
 [Hofmann 2022]: #hofmann-2022
-[Wlotko 2012]: #wlotko-2012
+[Michaelov 2024]: #michaelov-2024
 
 ## Datasets
 <!-- auto-populated from docs/datasets/*.md once the dataset registry exists -->

@@ -248,7 +248,7 @@ the spec's Appendix A for acquisition steps. Override path: `--edu-freq-lookup P
 One binary column per category for content words (NOUN, VERB, ADJ, ADV, PROPN);
 function words and punctuation get NaN.
 
-- Default backend: **LIWC** if `dictionaries/liwc-2022.dic` is present (license required), else **Empath** (open-source, pip-installed).
+- Backend: **Empath** (open-source, pip-installed) — the default and only auto-selected backend. **LIWC is disabled**: the LIWC-22 EULA (<https://www.liwc.app/help/eula>) forbids using its dictionary outside LIWC's own software, so SensiExtractor neither ships a `.dic` nor auto-selects LIWC. A license holder can still opt in from the CLI with `--sem-dict path/to/their.dic` (the GUI radio is greyed out). To license LIWC: <https://liwcsoftware.onfastspring.com/>.
 - Default category set (15 categories): `social, cognition, emotion_positive, emotion_negative, body, motion, perception, time, space, math, science, work, family, communication, money`.
 - Each category's intended meaning and example words: see Appendix C of the spec doc.
 - Roll-up column `Sem_Categories`: comma-separated list of categories the word matched.
@@ -362,11 +362,11 @@ LIWC summary scores), and migrates `preferences.json` to a nested schema.
 | Lexical diversity | `ttr`, `mtld` | TTR / MTLD toggles |
 | Readability | `flesch_reading_ease`, `flesch_kincaid_grade` | Flesch-Ease / FK-Grade toggles |
 | Category proportions | `count_<cat>`, `prop_<cat>` per active category | Category-proportions toggle |
-| Composite psychological scores (Pennebaker-formula approximations) | `psych_authentic, psych_analytic, psych_tone, psych_clout` | psych-* toggles AND active backend is LIWC |
+| Composite psychological scores (Pennebaker-formula approximations) | `psych_authentic, psych_analytic, psych_tone, psych_clout` | any psych-* toggle on (no backend requirement) |
 
 ### Notes on composite psychological scores (Pennebaker-formula approximations)
 
-These are approximations computed from publicly documented Pennebaker et al. (2014) formulas applied to the loaded LIWC-style dictionary. For LIWC-22's official Authentic/Analytic/Tone/Clout numbers, use the LIWC desktop software (liwc.app). The dictionary used in this run is recorded in the run manifest. The `psych_` prefix is intentional: these scores are derived from a LIWC-style dictionary via published formulas, not produced by LIWC's proprietary software, and naming them `liwc_*` would overstate the authority of the output.
+These are approximations computed from publicly documented Pennebaker et al. (2014) formulas. As of 2026-06-10 they are produced **license-clean** (`extractors/psych_composite.py`): the grammatical inputs (articles, prepositions, pronouns by person, auxiliaries, …) come from spaCy's POS/morphology, and Tone comes from the VADER valence lexicon — **no LIWC dictionary is used**. They therefore no longer require (or depend on) the LIWC backend. For LIWC-22's official Authentic/Analytic/Tone/Clout numbers, use the LIWC desktop software (liwc.app). The `psych_` prefix is intentional: naming them `liwc_*` would overstate the authority of the output.
 
 ### Categories dialog change
 
@@ -379,7 +379,7 @@ The `config/preferences.json` schema has changed from a flat layout (batch 1) to
 ### New CLI flags (batch mode)
 
 - `--level word|document` — selects which level to run. Default `word` (backward compatible).
-- `--no-doc-counts`, `--no-doc-mean-zipf`, `--no-doc-mean-edu-zipf`, `--no-doc-mean-surprisal`, `--no-doc-mean-llm-cloze`, `--no-doc-ttr`, `--no-doc-mtld`, `--no-doc-flesch-ease`, `--no-doc-fk-grade`, `--no-doc-category-proportions`, `--no-doc-liwc-authentic`, `--no-doc-liwc-analytic`, `--no-doc-liwc-tone`, `--no-doc-liwc-clout` — skip the corresponding doc-level feature. (CLI flag names retain `liwc-` for backward compatibility; output CSV column names use `psych_` prefix.)
+- `--no-doc-counts`, `--no-doc-mean-zipf`, `--no-doc-mean-edu-zipf`, `--no-doc-mean-surprisal`, `--no-doc-mean-llm-cloze`, `--no-doc-ttr`, `--no-doc-mtld`, `--no-doc-flesch-ease`, `--no-doc-fk-grade`, `--no-doc-category-proportions`, `--no-doc-psych-authentic`, `--no-doc-psych-analytic`, `--no-doc-psych-tone`, `--no-doc-psych-clout` — skip the corresponding doc-level feature. (The psych flags were renamed from `--no-doc-liwc-*` on 2026-06-10 when the scores became license-clean; output CSV column names already used the `psych_` prefix.)
 
 ### CLI example — document-level batch
 
@@ -422,7 +422,7 @@ The legacy tkinter files (`gui.py`, `gui_word_tab.py`, `gui_document_tab.py`, et
 
 ### Column rename: `liwc_*` → `psych_*`
 
-Document-level summary CSV now uses `psych_authentic`, `psych_analytic`, `psych_tone`, `psych_clout` instead of `liwc_*` prefixes. These are Pennebaker-formula approximations computed against the loaded LIWC-style dictionary — **not** official LIWC-22 proprietary scores. Users requiring official Pennebaker scores should run the LIWC desktop software (liwc.app).
+Document-level summary CSV now uses `psych_authentic`, `psych_analytic`, `psych_tone`, `psych_clout` instead of `liwc_*` prefixes. These are Pennebaker-formula approximations computed license-clean from spaCy POS/morphology + VADER valence (since 2026-06-10; previously from a LIWC-style dictionary) — **not** official LIWC-22 proprietary scores. Users requiring official Pennebaker scores should run the LIWC desktop software (liwc.app).
 
 ### Per-band EWFG output filtering
 

@@ -42,4 +42,5 @@ volume extractor.
 
 ## Papers
 See [`prosody_volume`](prosody_volume.md) — sentence-level summaries
-inherit the same foundational references.
+inherit the same foundational references (Boersma 2018, Zelger 2024,
+Cole 2019).

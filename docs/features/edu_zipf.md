@@ -36,12 +36,17 @@ the wrong yardstick.
   encountered it in print. Words with high K2 frequency but low
   9to12 frequency (function words, common nouns) behave differently
   from words with low K2 but high 9to12 frequency (acquired-late
-  vocabulary). The K2-vs-9to12 contrast is a proxy for age of
-  acquisition ([Kuperman 2012], [Brysbaert 2018]).
-- Age of acquisition independently predicts N400 amplitude and reaction
-  time even after controlling for adult frequency ([Juhasz 2003],
-  [Dirix 2017]) — so the per-band columns let you regress out a
-  developmental-exposure covariate that pure SUBTLEX cannot capture.
+  vocabulary). ⚠️ The K2-vs-9to12 contrast is used here as an
+  empirical proxy for age of acquisition (AoA); the AoA construct
+  itself is established by [Kuperman 2012]'s 30,000-word ratings, but
+  the specific mapping from EWFG grade bands to AoA is a
+  project-internal inference, not a result from a cited paper.
+- Age of acquisition independently predicts **eye fixation durations**
+  in naturalistic reading ([Juhasz 2003], [Dirix 2017]) and **N400
+  amplitude** in single-word ERP studies ([Yum 2019]), with effects
+  that persist after controlling for word frequency. The per-band
+  columns therefore let you regress out a developmental-exposure
+  covariate that pure SUBTLEX cannot capture.
 - `Edu_Zipf_Overall` is the closest EWFG analogue to general
   `Zipf_Freq` and is most useful as a sanity-check baseline against
   the SUBTLEX value.
@@ -68,7 +73,7 @@ Source: `extractors/educator_freq.py:add_edu_freq`.
    the GUI's per-band toggles flow through to this argument so disabled
    bands are simply not added to the output DataFrame.
 
-**Why** *(⚠️ flags my interpolation):*
+**Why:**
 
 - *Lookup keyed on lowercased `lemma`* — matches the
   [SUBTLEX extractor](freq_subtlex.md)'s convention so the two
@@ -104,16 +109,16 @@ lookup.loc["house"]
 
 ## Papers
 - <a name="zeno-1995"></a>**[Zeno 1995]** Zeno, Ivens, Millard, Duvvuri. *The Educator's Word Frequency Guide.* Touchstone Applied Science Associates. — the source norms for the per-band frequencies.
-- <a name="kuperman-2012"></a>**[Kuperman 2012]** Kuperman, Stadthagen-Gonzalez, Brysbaert. *Age-of-acquisition ratings for 30,000 English words.* Behavior Research Methods. [doi:10.3758/s13428-012-0210-4](https://doi.org/10.3758/s13428-012-0210-4) — large AoA norms; EWFG grade-banded frequency is a natural empirical proxy.
-- <a name="brysbaert-2018"></a>**[Brysbaert 2018]** Brysbaert, Mandera, Keuleers. *The Word Frequency Effect in Word Processing: An Updated Review.* [doi:10.1177/0963721417727521](https://doi.org/10.1177/0963721417727521) — frequency effects and the importance of register-matched reference corpora.
-- <a name="juhasz-2003"></a>**[Juhasz 2003]** Juhasz & Rayner. *Investigating the effects of a set of intercorrelated variables on eye fixation durations in reading.* J. Experimental Psychology: Learning, Memory, and Cognition. [doi:10.1037/0278-7393.29.6.1312](https://doi.org/10.1037/0278-7393.29.6.1312) — AoA effects on reading after controlling for frequency.
-- <a name="dirix-2017"></a>**[Dirix 2017]** Dirix & Duyck. *The first- and second-language age of acquisition effect in first- and second-language book reading.* J. Memory and Language. [doi:10.1016/j.jml.2016.10.003](https://doi.org/10.1016/j.jml.2016.10.003) — AoA effects in naturalistic reading.
+- <a name="kuperman-2012"></a>**[Kuperman 2012]** Kuperman, Stadthagen-Gonzalez, Brysbaert. *Age-of-acquisition ratings for 30,000 English words.* Behavior Research Methods 44, 978–990. [doi:10.3758/s13428-012-0210-4](https://doi.org/10.3758/s13428-012-0210-4) — large AoA norms; the construct's empirical basis.
+- <a name="juhasz-2003"></a>**[Juhasz 2003]** Juhasz & Rayner. *Investigating the effects of a set of intercorrelated variables on eye fixation durations in reading.* J. Experimental Psychology: Learning, Memory, and Cognition 29(6), 1312–1318. [doi:10.1037/0278-7393.29.6.1312](https://doi.org/10.1037/0278-7393.29.6.1312) — AoA effects on eye fixation durations after controlling for frequency, familiarity, length, and concreteness.
+- <a name="dirix-2017"></a>**[Dirix 2017]** Dirix & Duyck. *The first- and second-language age of acquisition effect in first- and second-language book reading.* J. Memory and Language 97, 103–120. [doi:10.1016/j.jml.2017.07.012](https://doi.org/10.1016/j.jml.2017.07.012) — AoA effects on eye movements during naturalistic book reading (GECO corpus).
+- <a name="yum-2019"></a>**[Yum 2019]** Yum & Law. *Interactions of age of acquisition and lexical frequency effects with phonological regularity: An ERP study.* Psychophysiology 56(10), e13433. [doi:10.1111/psyp.13433](https://doi.org/10.1111/psyp.13433) — single-trial ERP analysis shows AoA modulates N400 amplitude independently of word frequency.
 
 [Zeno 1995]: #zeno-1995
 [Kuperman 2012]: #kuperman-2012
-[Brysbaert 2018]: #brysbaert-2018
 [Juhasz 2003]: #juhasz-2003
 [Dirix 2017]: #dirix-2017
+[Yum 2019]: #yum-2019
 
 ## Datasets
 <!-- auto-populated from docs/datasets/*.md once the dataset registry exists -->

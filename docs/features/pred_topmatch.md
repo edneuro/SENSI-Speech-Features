@@ -66,14 +66,13 @@ See `extractors/llm_cloze.py:add_llm_cloze`. Both backends emit
 
 ## Papers
 The exact "top-1 prediction match" framing is more common in NLP
-benchmarking than in EEG papers, but the underlying notion — comparing
-model argmax to human production / actual continuation — appears in:
+benchmarking than in EEG papers. The closest neuroscience precedent
+is work that links transformer next-word predictions to brain
+responses during natural listening:
 
-- <a name="goldstein-2022"></a>**[Goldstein 2022]** Goldstein et al. *Shared computational principles for language processing in humans and deep language models.* Nature Neuroscience. [doi:10.1038/s41593-022-01026-4](https://doi.org/10.1038/s41593-022-01026-4) — uses next-word prediction agreement between humans and GPT-2 as a covariate against ECoG.
-- <a name="schrimpf-2021"></a>**[Schrimpf 2021]** Schrimpf et al. *The neural architecture of language.* PNAS. [doi:10.1073/pnas.2105646118](https://doi.org/10.1073/pnas.2105646118) — top-N agreement as a complementary measure to per-token probability.
+- <a name="goldstein-2022"></a>**[Goldstein 2022]** Goldstein et al. *Shared computational principles for language processing in humans and deep language models.* Nature Neuroscience 25(3), 369–380. [doi:10.1038/s41593-022-01026-4](https://doi.org/10.1038/s41593-022-01026-4) — ECoG study showing that humans and autoregressive transformer models share next-word prediction as a computational principle during natural language processing.
 
 [Goldstein 2022]: #goldstein-2022
-[Schrimpf 2021]: #schrimpf-2021
 
 ## Datasets
 <!-- auto-populated from docs/datasets/*.md once the dataset registry exists -->

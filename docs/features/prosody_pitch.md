@@ -35,9 +35,9 @@ Pitch is the primary acoustic carrier of **prosodic prominence**,
 **intonation**, and **lexical tone** (in tonal languages). For
 naturalistic-EEG analyses:
 
-- Pitch peaks at word level mark *prominent words* / focused
-  constituents and elicit larger P200 and late positive components
-  ([Bohn 2013], [Heinzel 2024]).
+- Pitch accents on prominent words elicit a P200 whose amplitude is
+  modulated by the onset latency of the F0 peak ([Heim 2006]); this
+  is the canonical "accent positivity" in the ERP-prosody literature.
 - Pitch resets at boundaries cue prosodic phrasing and modulate the
   closure-positive-shift (CPS, [Steinhauer 1999]).
 - `Pitch_Delta` captures *pitch movement across words* — a continuous
@@ -50,8 +50,10 @@ naturalistic-EEG analyses:
 Pitch features are also standard nuisance regressors in
 [surprisal](pred_surprisal_gpt2.md)-locked EEG analyses, because
 prominent words tend to be both higher-pitched **and** more
-informative — confounded if pitch isn't controlled
-([Brennan 2018], [Wagner 2010]).
+informative — confounded if pitch isn't controlled ([Wagner 2010];
+see also [Heilbron 2022], who model EEG/MEG responses to GPT-2
+surprisal alongside acoustic regressors during naturalistic
+listening).
 
 ## Math / implementation details
 - F0 is estimated by Praat ([Boersma 2018]) — autocorrelation-based,
@@ -88,15 +90,16 @@ Source: `extractors/prosody.py:add_word_prosody`. Underlying contours:
 5. PUNCT rows / unaligned rows receive NaN for all five columns
    uniformly.
 
-**Why** *(⚠️ flags my interpolation):*
+**Why:**
 
 - *Robust percentiles instead of true min/max* — Praat's
   autocorrelation pitch tracker occasionally jumps an octave;
   percentile-based extrema absorb those outliers without losing the
   legitimate within-word range.
-- *Semitone default* — speaker-normalized, perceptually linear, and
-  what most EEG prosody literature reports
-  ([Bohn 2013]).
+- *Semitone default* — speaker-normalized and perceptually linear
+  (a 1-semitone change is the same perceived pitch interval whether
+  the speaker's median is 100 Hz or 200 Hz), so cross-speaker
+  comparisons stay meaningful.
 - *Single forward pass over Contours* — pitch and intensity share a
   single Praat call upstream, then both word-level and document-level
   prosody reuse the same numpy arrays; computationally cheap.
@@ -109,7 +112,7 @@ row):
   `75 / 500 Hz` work for most adult voices; raise the floor (~120 Hz)
   for child speakers, lower the ceiling (~300 Hz) for bass voices.
 
-Validation ranges (from master_plan.md):
+Validation ranges:
 - `Pitch_Mean` in **60–300 Hz** (or **−12 to +12 semitones** relative
   to speaker median). Outside this → suspect pitch range misconfig.
 
@@ -129,22 +132,16 @@ times = pitch.xs()
 - <a name="boersma-2018"></a>**[Boersma 2018]** Boersma & Weenink. *Praat: doing phonetics by computer.* [praat.org](https://www.praat.org/) — Praat reference; autocorrelation pitch detection (`To Pitch (ac)`).
 
 **Pitch and EEG:**
-- <a name="steinhauer-1999"></a>**[Steinhauer 1999]** Steinhauer, Alter, Friederici. *Brain potentials indicate immediate use of prosodic cues in natural speech processing.* Nature Neuroscience. [doi:10.1038/4641](https://doi.org/10.1038/4641) — closure-positive-shift driven by pitch resets.
-- <a name="bohn-2013"></a>**[Bohn 2013]** Bohn, Knaus, Wiese, Domahs. *The influence of rhythmic (ir)regularities on speech processing: Evidence from an ERP study on German phrases.* Neuropsychologia. [doi:10.1016/j.neuropsychologia.2013.01.013](https://doi.org/10.1016/j.neuropsychologia.2013.01.013)
-- <a name="wagner-2010"></a>**[Wagner 2010]** Wagner & Watson. *Experimental and theoretical advances in prosody: A review.* Language and Cognitive Processes. [doi:10.1080/01690961003589492](https://doi.org/10.1080/01690961003589492)
-- <a name="brennan-2018"></a>**[Brennan 2018]** Brennan. *Naturalistic Sentence Comprehension in the Brain.* [doi:10.1111/lnc3.12299](https://doi.org/10.1111/lnc3.12299) — recommends pitch as a standard acoustic covariate.
-- <a name="heinzel-2024"></a>**[Heinzel 2024]** Heinzel, Wartenburger, et al. *Word-level prosody in naturalistic speech: ERPs and prediction.* Brain & Language. — modern naturalistic-EEG prosody work (placeholder citation for the user to verify with the latest 2024 reference).
+- <a name="steinhauer-1999"></a>**[Steinhauer 1999]** Steinhauer, Alter, Friederici. *Brain potentials indicate immediate use of prosodic cues in natural speech processing.* Nature Neuroscience 2(2), 191–196. [doi:10.1038/5757](https://doi.org/10.1038/5757) — closure-positive-shift driven by pitch resets at intonational phrase boundaries.
+- <a name="heim-2006"></a>**[Heim 2006]** Heim & Alter. *Prosodic pitch accents in language comprehension and production: ERP data and acoustic analyses.* Acta Neurobiologiae Experimentalis 66(1), 55–68. [doi:10.55782/ane-2006-1587](https://doi.org/10.55782/ane-2006-1587) — sentence-initial pitch accents elicit a P200 modulated by the onset latency of the F0 peak.
+- <a name="wagner-2010"></a>**[Wagner 2010]** Wagner & Watson. *Experimental and theoretical advances in prosody: A review.* Language and Cognitive Processes 25(7), 905–945. [doi:10.1080/01690961003589492](https://doi.org/10.1080/01690961003589492) — review covering how prosodic prominence is shaped by predictability and information structure.
+- <a name="heilbron-2022"></a>**[Heilbron 2022]** Heilbron, Armeni, Schoffelen, Hagoort, De Lange. *A hierarchy of linguistic predictions during natural language comprehension.* PNAS 119(32), e2201968119. [doi:10.1073/pnas.2201968119](https://doi.org/10.1073/pnas.2201968119) — naturalistic-listening EEG/MEG analysis combining GPT-2 surprisal with acoustic regressors.
 
 [Boersma 2018]: #boersma-2018
 [Steinhauer 1999]: #steinhauer-1999
-[Bohn 2013]: #bohn-2013
+[Heim 2006]: #heim-2006
 [Wagner 2010]: #wagner-2010
-[Brennan 2018]: #brennan-2018
-[Heinzel 2024]: #heinzel-2024
-
-> ⚠️ The Heinzel 2024 citation above is a placeholder for the
-> most-recent naturalistic-EEG prosody reference you'd want here —
-> swap in the actual paper if you have a specific one in mind.
+[Heilbron 2022]: #heilbron-2022
 
 ## Datasets
 <!-- auto-populated from docs/datasets/*.md once the dataset registry exists -->

@@ -530,11 +530,34 @@ DEFAULT_PREFS_V10: dict[str, Any] = {
 }
 
 # ---------------------------------------------------------------------------
+# v11 constants
+#
+# LIWC removal (2026-06-10): the LIWC-22 EULA forbids using LIWC dictionary
+# material outside LIWC's software, so LIWC is disabled as a shipped
+# backend. No new keys — only the default semantic backend changes from
+# "auto" to "empath", and the migration coerces any stored "liwc" backend
+# to "empath" so no run silently reaches the disabled LIWC path. (The
+# composite-psych scores are reimplemented license-clean and no longer
+# depend on the backend at all.)
+# ---------------------------------------------------------------------------
+
+SCHEMA_VERSION_V11 = 11
+
+DEFAULT_PREFS_V11: dict[str, Any] = {
+    **DEFAULT_PREFS_V10,
+    "schema_version": SCHEMA_VERSION_V11,
+    "semantic": {
+        **DEFAULT_PREFS_V10["semantic"],
+        "backend": "empath",
+    },
+}
+
+# ---------------------------------------------------------------------------
 # Active schema aliases
 # ---------------------------------------------------------------------------
 
-SCHEMA_VERSION = SCHEMA_VERSION_V10  # active version
-DEFAULT_PREFS: dict[str, Any] = DEFAULT_PREFS_V10  # active defaults
+SCHEMA_VERSION = SCHEMA_VERSION_V11  # active version
+DEFAULT_PREFS: dict[str, Any] = DEFAULT_PREFS_V11  # active defaults
 
 
 # ---------------------------------------------------------------------------
@@ -580,7 +603,10 @@ def load_preferences() -> dict[str, Any]:
             right_key = f'doc_categories_{backend}'
             if wrong_key in user_sem:
                 user_sem[right_key] = user_sem.pop(wrong_key)
-    if version == SCHEMA_VERSION_V10:
+    if version in (SCHEMA_VERSION_V10, SCHEMA_VERSION_V11):
+        # v10 and v11 share the same shape; the only v11 change is the
+        # semantic.backend default + the liwc→empath coercion applied in the
+        # finalize step below. A v10 source is upgraded there (and rewritten).
         _deep_merge_current(merged, user)
     elif version == SCHEMA_VERSION_V9:
         _migrate_v9_into_v10(merged, user)
@@ -681,6 +707,17 @@ def load_preferences() -> dict[str, Any]:
         v9_intermediate = deepcopy(DEFAULT_PREFS_V9)
         _migrate_v8_into_v9(v9_intermediate, v8_intermediate)
         _migrate_v9_into_v10(merged, v9_intermediate)
+        _write(path, merged)
+
+    # v10 → v11 finalize (applies to every source version): LIWC is disabled
+    # under its EULA, so coerce any stored "liwc" backend to "empath" and
+    # stamp the current schema version. Rewrite only when something changed
+    # (i.e. the source was not already v11).
+    sem = merged.get("semantic")
+    if isinstance(sem, dict) and sem.get("backend") == "liwc":
+        sem["backend"] = "empath"
+    if merged.get("schema_version") != SCHEMA_VERSION:
+        merged["schema_version"] = SCHEMA_VERSION
         _write(path, merged)
 
     return merged

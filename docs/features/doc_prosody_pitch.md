@@ -35,8 +35,8 @@ that confound any higher-order linguistic contrast. Including
 differences without ascribing them to lexical or syntactic effects.
 
 `doc_pitch_std` is a single-number prosody-variability summary —
-useful for matching stimuli on expressiveness when comparing across
-recording sessions or speakers ([Wagner 2010]).
+useful as a covariate when matching stimuli on expressiveness across
+recording sessions or speakers.
 
 `doc_pitch_delta_mean` differs from the other four: it's the **average
 word-to-word movement** rather than a contour-frame statistic. Useful
@@ -63,12 +63,9 @@ calls, just aggregated over the whole audio rather than per-word
 windows.
 
 ## Papers
-- See [`prosody_pitch`](prosody_pitch.md) for the foundational
-  references; the document-level summaries inherit the same theoretical
-  rationale.
-- <a name="wagner-2010"></a>**[Wagner 2010]** Wagner & Watson. *Experimental and theoretical advances in prosody: A review.* Language and Cognitive Processes. [doi:10.1080/01690961003589492](https://doi.org/10.1080/01690961003589492) — pitch variability and naturalness.
-
-[Wagner 2010]: #wagner-2010
+See [`prosody_pitch`](prosody_pitch.md) for the foundational
+references; the document-level summaries inherit the same theoretical
+rationale.
 
 ## Datasets
 <!-- auto-populated from docs/datasets/*.md once the dataset registry exists -->

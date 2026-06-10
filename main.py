@@ -23,7 +23,7 @@ Column order in output CSV:
     doc_id, paragraph_id, sentence_id, sentence, start, end,
     term_id, token_id
     --- token-level linguistic (spaCy) ---
-    token, lemma, upos, xpos, feats, dep_rel, head_token_id, deps, misc
+    token, lemma, upos, xpos, feats, dep_rel, head_token_id
     --- computed features ---
     Zipf_Freq, Surprisal
     --- MFA alignment ---
@@ -63,6 +63,10 @@ def build_parser() -> argparse.ArgumentParser:
                    help='Path to plain-text transcript file.')
     p.add_argument('--output', default='features.csv',
                    help='Output CSV path (default: features.csv).')
+    p.add_argument('--doc-id', type=int, default=1,
+                   help='1-indexed document identifier written to the doc_id '
+                        'column (default: 1). Batch mode overrides this with '
+                        'the document\'s position in the run.')
 
     p.add_argument('--no-align',     action='store_true', help='Skip MFA alignment.')
     p.add_argument('--no-parse',     action='store_true', help='Skip spaCy annotation.')
@@ -122,10 +126,10 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument('--no-doc-flesch-ease',           action='store_true')
     p.add_argument('--no-doc-fk-grade',              action='store_true')
     p.add_argument('--no-doc-category-proportions',  action='store_true')
-    p.add_argument('--no-doc-liwc-authentic',        action='store_true')
-    p.add_argument('--no-doc-liwc-analytic',         action='store_true')
-    p.add_argument('--no-doc-liwc-tone',             action='store_true')
-    p.add_argument('--no-doc-liwc-clout',            action='store_true')
+    p.add_argument('--no-doc-psych-authentic',       action='store_true')
+    p.add_argument('--no-doc-psych-analytic',        action='store_true')
+    p.add_argument('--no-doc-psych-tone',            action='store_true')
+    p.add_argument('--no-doc-psych-clout',           action='store_true')
 
     # Sub-word sidecar master toggles
     p.add_argument('--no-syllables', action='store_true',
@@ -249,7 +253,6 @@ _COLUMN_ORDER = [
     'doc_id', 'paragraph_id', 'sentence_id', 'sentence', 'start', 'end',
     'term_id', 'token_id',
     'token', 'lemma', 'upos', 'xpos', 'feats', 'dep_rel', 'head_token_id',
-    'deps', 'misc',
     'Zipf_Freq',
     'Edu_Zipf_K2', 'Edu_Zipf_3to5', 'Edu_Zipf_6to8', 'Edu_Zipf_9to12', 'Edu_Zipf_Overall',
     # Sem_<Dict>_<cat> columns get appended dynamically by _reorder
@@ -307,7 +310,7 @@ def run(args) -> pd.DataFrame:
     if not args.no_parse:
         from extractors.text_parser import parse as spacy_parse
         print('[spacy] Running spaCy annotation…')
-        df = spacy_parse(text)
+        df = spacy_parse(text, doc_id=int(getattr(args, 'doc_id', 1) or 1))
 
     if not args.no_freq and df is not None:
         from extractors.word_freq import add_word_freq
@@ -615,6 +618,7 @@ def run_word_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None
         try:
             args.transcript = str(pair.transcript_path)
             args.audio = str(pair.audio_path)
+            args.doc_id = i + 1
             df = run(args)
 
             # Sub-word sidecars (Task 7) — emit BEFORE the per-column drop.
@@ -800,10 +804,10 @@ def run_doc_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None:
         'flesch_reading_ease':   not args.no_doc_flesch_ease,
         'flesch_kincaid_grade':  not args.no_doc_fk_grade,
         'category_proportions':  not args.no_doc_category_proportions,
-        'psych_authentic':       not args.no_doc_liwc_authentic,
-        'psych_analytic':        not args.no_doc_liwc_analytic,
-        'psych_tone':            not args.no_doc_liwc_tone,
-        'psych_clout':           not args.no_doc_liwc_clout,
+        'psych_authentic':       not args.no_doc_psych_authentic,
+        'psych_analytic':        not args.no_doc_psych_analytic,
+        'psych_tone':            not args.no_doc_psych_tone,
+        'psych_clout':           not args.no_doc_psych_clout,
         # Prosody — single master gate. compute_doc_prosody returns all 16
         # cols when this is on; per-column dropping is handled at CSV write
         # time via _doc_columns_to_drop / args.feature_toggles.
@@ -874,6 +878,7 @@ def run_doc_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None:
         try:
             extract_args.transcript = str(pair.transcript_path)
             extract_args.audio = str(pair.audio_path)
+            extract_args.doc_id = i + 1
 
             df = run(extract_args)
             dict_label = 'LIWC' if any(c.startswith('Sem_LIWC_') for c in df.columns) else 'Empath'

@@ -60,7 +60,7 @@ print(lex.mtld()) # ~30 for a short text
 
 ## Papers
 - <a name="mccarthy-2010"></a>**[McCarthy 2010]** McCarthy & Jarvis. *MTLD, vocd-D, and HD-D: A validation study of sophisticated approaches to lexical diversity assessment.* Behavior Research Methods. [doi:10.3758/BRM.42.2.381](https://doi.org/10.3758/BRM.42.2.381) — defines MTLD and shows it's stable across text lengths.
-- <a name="koizumi-2012"></a>**[Koizumi 2012]** Koizumi & In'nami. *Effects of text length on lexical diversity measures: Using short texts with less than 200 tokens.* System. [doi:10.1016/j.system.2012.10.013](https://doi.org/10.1016/j.system.2012.10.013) — TTR's length sensitivity in detail.
+- <a name="koizumi-2012"></a>**[Koizumi 2012]** Koizumi & In'nami. *Effects of text length on lexical diversity measures: Using short texts with less than 200 tokens.* System 40(4), 522–532. [doi:10.1016/j.system.2012.10.012](https://doi.org/10.1016/j.system.2012.10.012) — TTR's length sensitivity in detail.
 
 [McCarthy 2010]: #mccarthy-2010
 [Koizumi 2012]: #koizumi-2012

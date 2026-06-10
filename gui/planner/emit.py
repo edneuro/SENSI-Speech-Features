@@ -171,10 +171,10 @@ def to_namespace(plan: Plan, prefs: dict, level: str) -> argparse.Namespace:
         ns.no_doc_mtld            = "doc_lex_diversity" not in in_plan
         ns.no_doc_flesch_ease     = "doc_readability"   not in in_plan
         ns.no_doc_fk_grade        = "doc_readability"   not in in_plan
-        ns.no_doc_liwc_authentic  = "doc_liwc"          not in in_plan
-        ns.no_doc_liwc_analytic   = "doc_liwc"          not in in_plan
-        ns.no_doc_liwc_tone       = "doc_liwc"          not in in_plan
-        ns.no_doc_liwc_clout      = "doc_liwc"          not in in_plan
+        ns.no_doc_psych_authentic = "doc_psych"         not in in_plan
+        ns.no_doc_psych_analytic  = "doc_psych"         not in in_plan
+        ns.no_doc_psych_tone      = "doc_psych"         not in in_plan
+        ns.no_doc_psych_clout     = "doc_psych"         not in in_plan
         ns.no_doc_category_proportions = "doc_category_proportions" not in in_plan
         ns.no_doc_prosody         = "doc_prosody"       not in in_plan
 

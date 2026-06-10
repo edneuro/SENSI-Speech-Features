@@ -29,7 +29,7 @@ constant `doc_hnr`. Useful for:
   be excluded from analyses.
 - Sentence-level voice-quality covariates for emotion / affect
   studies, where prosody and voice quality co-vary with content
-  ([Banse 1996], [Patel 2018]).
+  ([Banse 1996]).
 
 ## Implementation in SensiExtractor
 Source: `extractors/sentence_prosody.py`. Same Praat harmonicity

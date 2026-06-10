@@ -32,8 +32,10 @@ Document-level pause statistics let you:
   contrast — a stimulus full of long pauses has very different
   envelope structure from one without.
 - **Predict listener engagement** — speech with more / longer pauses
-  is easier to process and elicits different attention-related
-  components ([Den Ouden 2009]).
+  is easier to process at low speech rates, an effect documented in the
+  pausing-and-comprehension literature
+  ([Goldman-Eisler 1968]); ERP signatures of pause-related boundaries
+  appear as the closure-positive shift ([Steinhauer 1999], [Pauker 2011]).
 - **Distinguish pause types** (combined with [`articulation_rate`](feat_doc_prosody_articulation_rate.md)): a stimulus
   with low articulation rate AND many pauses is genuinely slow; one
   with high articulation rate AND many pauses is fast-but-bursty.
@@ -77,15 +79,13 @@ When `Word_Gap` is not present (alignment off), all four columns are
 case.
 
 ## Papers
-- <a name="goldman-eisler-1968"></a>**[Goldman-Eisler 1968]** Goldman-Eisler. *Psycholinguistics: Experiments in Spontaneous Speech.* Academic Press. — foundational study of pause distribution in conversation.
-- <a name="steinhauer-1999"></a>**[Steinhauer 1999]** Steinhauer, Alter, Friederici. *Brain potentials indicate immediate use of prosodic cues in natural speech processing.* Nature Neuroscience. [doi:10.1038/4641](https://doi.org/10.1038/4641) — CPS at prosodic boundaries.
-- <a name="pauker-2011"></a>**[Pauker 2011]** Pauker, Itzhak, Baum, Steinhauer. *Effects of cooperating and conflicting prosody in spoken English garden path sentences: ERP evidence for the boundary deletion hypothesis.* J. Cognitive Neuroscience. [doi:10.1162/jocn.2010.21587](https://doi.org/10.1162/jocn.2010.21587)
-- <a name="den-ouden-2009"></a>**[Den Ouden 2009]** Den Ouden, Noordzij, Schmitz, Hagoort, Petersson. *Naming of subordinate-level objects modulates BOLD activity in the inferior frontal gyrus, anterior cingulate, and visual cortices: an fMRI investigation.* — discourse-pause behavioural effects.
+- <a name="goldman-eisler-1968"></a>**[Goldman-Eisler 1968]** Goldman-Eisler. *Psycholinguistics: Experiments in Spontaneous Speech.* Academic Press. — foundational study of pause distribution in spontaneous conversation, including the canonical hesitation-pause / juncture-pause distinction.
+- <a name="steinhauer-1999"></a>**[Steinhauer 1999]** Steinhauer, Alter, Friederici. *Brain potentials indicate immediate use of prosodic cues in natural speech processing.* Nature Neuroscience 2(2), 191–196. [doi:10.1038/5757](https://doi.org/10.1038/5757) — CPS at prosodic boundaries.
+- <a name="pauker-2011"></a>**[Pauker 2011]** Pauker, Itzhak, Baum, Steinhauer. *Effects of cooperating and conflicting prosody in spoken English garden path sentences: ERP evidence for the boundary deletion hypothesis.* J. Cognitive Neuroscience 23(10), 2731–2751. [doi:10.1162/jocn.2011.21610](https://doi.org/10.1162/jocn.2011.21610)
 
 [Goldman-Eisler 1968]: #goldman-eisler-1968
 [Steinhauer 1999]: #steinhauer-1999
 [Pauker 2011]: #pauker-2011
-[Den Ouden 2009]: #den-ouden-2009
 
 ## Datasets
 <!-- auto-populated from docs/datasets/*.md once the dataset registry exists -->

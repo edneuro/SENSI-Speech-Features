@@ -147,15 +147,48 @@ def has_feature_doc(toggle_key: str) -> bool:
     return _doc_path(toggle_key).is_file()
 
 
+def _parse(text: str, key: str) -> FeatureDoc:
+    m = _FRONTMATTER_RE.match(text)
+    if m is None:
+        return FeatureDoc(key=key, frontmatter={}, body=text.strip())
+    frontmatter = yaml.safe_load(m.group(1)) or {}
+    return FeatureDoc(key=key, frontmatter=frontmatter, body=m.group(2).strip())
+
+
 def load_feature_doc(toggle_key: str) -> FeatureDoc | None:
     """Return the parsed FeatureDoc for `toggle_key`, or None if no .md exists."""
     path = _doc_path(toggle_key)
     if not path.is_file():
         return None
-    text = path.read_text(encoding="utf-8")
-    m = _FRONTMATTER_RE.match(text)
-    if m is None:
-        return FeatureDoc(key=toggle_key, frontmatter={}, body=text.strip())
-    frontmatter = yaml.safe_load(m.group(1)) or {}
-    body = m.group(2).strip()
-    return FeatureDoc(key=toggle_key, frontmatter=frontmatter, body=body)
+    return _parse(path.read_text(encoding="utf-8"), toggle_key)
+
+
+def load_doc_file(filename: str) -> FeatureDoc | None:
+    """Load a doc by its bare `.md` filename — used for cross-doc links.
+
+    `filename` may be given with or without the `.md` suffix. Returns None if
+    the file does not exist under docs/features/.
+    """
+    name = filename.strip()
+    if not name.endswith(".md"):
+        name += ".md"
+    path = DOCS_ROOT / name
+    if not path.is_file():
+        return None
+    return _parse(path.read_text(encoding="utf-8"), name[:-3])
+
+
+def resolve_doc_link(href: str) -> str | None:
+    """If `href` points to an existing feature-doc `.md` file, return its bare
+    filename (e.g. ``'prosody_pitch.md'``); otherwise None.
+
+    Strips any directory components, URL fragment and query so links like
+    ``prosody_pitch.md#meaning`` or ``../features/phoneme.md`` resolve.
+    """
+    if not href:
+        return None
+    core = href.split("#", 1)[0].split("?", 1)[0]
+    if not core.endswith(".md"):
+        return None
+    filename = core.replace("\\", "/").rsplit("/", 1)[-1]
+    return filename if (DOCS_ROOT / filename).is_file() else None

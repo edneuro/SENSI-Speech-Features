@@ -25,7 +25,7 @@ These don't emit user-facing columns directly. They produce raw artifacts that o
 - **Inputs:** transcript text (str)
 - **Outputs:** `word_df` (one row per token) with columns:
   - Identifiers: `doc_id, paragraph_id, sentence_id, sentence, start, end, term_id, token_id`
-  - Linguistic: `token, lemma, upos, xpos, feats, dep_rel, head_token_id, deps, misc`
+  - Linguistic: `token, lemma, upos, xpos, feats, dep_rel, head_token_id`
 - **Consumers:** every word-level cluster except pure-acoustic; every sub-word cluster (needs `doc_id/sentence_id/token_id` for FK joins); every doc-level cluster that aggregates word features.
 - **Notes:** Tokenization is the canonical "what is a word" definition for the pipeline. `start/end` are **character offsets** in the sentence string, not seconds — easy to confuse with `Onset/End` from MFA.
 
@@ -70,7 +70,7 @@ Emits `<stim>_features.csv` (one row per token).
 
 ### 1.2 Lexical-linguistic annotation
 
-- **Features:** `token, lemma, upos, xpos, feats, dep_rel, head_token_id, deps, misc`
+- **Features:** `token, lemma, upos, xpos, feats, dep_rel, head_token_id`
 - **Library:** (none — passthrough from §0.1)
 - **Inputs:** §0.1 spaCy parse
 - **Per-column toggles:** `lexling_tokens, lexling_pos, lexling_morph, lexling_dep`

@@ -35,6 +35,48 @@ LLM_OPTIONS = [
     ('meta-llama/Llama-3.2-3B',     'Llama-3.2-3B  (free, r≈0.76, needs ≥8GB VRAM)'),
 ]
 
+# Maximum input subwords each OpenAI model accepts. HuggingFace models are
+# checked against `model.config.max_position_embeddings` directly.
+_OPENAI_CONTEXT_LIMITS = {
+    'gpt-4o-mini': 128_000,
+    'gpt-4o':      128_000,
+}
+
+
+def _check_context_limit(n_subwords: int, limit: int | None, model_id: str) -> None:
+    """Raise ValueError if the tokenised stimulus exceeds the model's context window.
+
+    Used by the OpenAI backend, which can't chunk arbitrary text via the API.
+    Local HuggingFace backends fall back to chunked inference instead.
+    """
+    if limit is None or n_subwords <= limit:
+        return
+    raise ValueError(
+        f"Stimulus has {n_subwords} subwords but model {model_id!r} accepts at "
+        f"most {limit}. Split the transcript into shorter segments, or switch "
+        f"to a local Llama backend (which chunks long text automatically)."
+    )
+
+
+def _chunk_slices(n: int, window: int) -> list[tuple[int, int, int]]:
+    """Iteration pattern for sliding-window inference over ``n`` subwords.
+
+    Yields ``(segment_start, segment_end, keep_offset)`` per forward pass.
+    Stride is ``window // 2`` — each chunk past the initial window sees at
+    least ``window // 2`` preceding subwords inside the same pass. The union
+    of ``segment[keep_offset:]`` covers indices ``0..n-1`` exactly once.
+    """
+    chunk = window // 2
+    if chunk <= 0:
+        raise ValueError(f"window must be >= 2 to chunk (got {window})")
+    out = []
+    for start in range(0, n, chunk):
+        context_start = max(0, start - chunk)
+        segment_end = min(start + chunk, n)
+        keep_offset = start - context_start
+        out.append((context_start, segment_end, keep_offset))
+    return out
+
 
 class _Backend(Protocol):
     def score(self, text: str, tokens: list[str]) -> list[dict]:
@@ -111,6 +153,7 @@ class _HuggingFaceBackend:
         from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
 
         self._torch = torch
+        self._model_id = model_id
         self._tokenizer = AutoTokenizer.from_pretrained(model_id)
         try:
             quant = BitsAndBytesConfig(load_in_4bit=True, bnb_4bit_compute_dtype=torch.float16)
@@ -121,6 +164,7 @@ class _HuggingFaceBackend:
             # Fall back to fp16/cpu if bitsandbytes isn't supported
             self._model = AutoModelForCausalLM.from_pretrained(model_id)
         self._model.eval()
+        self._context_limit = getattr(self._model.config, 'max_position_embeddings', None)
 
     def score(self, text: str, tokens: list[str]) -> list[dict]:
         torch = self._torch
@@ -128,9 +172,26 @@ class _HuggingFaceBackend:
         ids = enc['input_ids']
         offsets = enc['offset_mapping']
         device = next(self._model.parameters()).device
-        ids_t = torch.tensor([ids], device=device)
-        with torch.no_grad():
-            logits = self._model(ids_t).logits[0]
+
+        limit = self._context_limit
+        if limit is None or len(ids) <= limit:
+            ids_t = torch.tensor([ids], device=device)
+            with torch.no_grad():
+                logits = self._model(ids_t).logits[0]
+        else:
+            # Stimulus exceeds the model's context window — slide a chunked
+            # window through it (same strategy as extractors/surprisal.py for
+            # GPT-2). Stride = window // 2 so each post-window position sees
+            # at least window // 2 preceding subwords inside its forward pass.
+            chunks = []
+            for seg_start, seg_end, keep_off in _chunk_slices(len(ids), limit):
+                seg_ids = ids[seg_start:seg_end]
+                ids_t = torch.tensor([seg_ids], device=device)
+                with torch.no_grad():
+                    seg_logits = self._model(ids_t).logits[0]
+                chunks.append(seg_logits[keep_off:])
+            logits = torch.cat(chunks, dim=0)
+
         log_probs = torch.log_softmax(logits, dim=-1)
         # Per-subword log-prob and top-1 prediction
         sub_log_p = [0.0]
@@ -178,8 +239,16 @@ class _OpenAIBackend:
         from openai import OpenAI
         self._client = OpenAI()
         self._model_id = model_id
+        self._context_limit = _OPENAI_CONTEXT_LIMITS.get(model_id)
 
     def score(self, text: str, tokens: list[str]) -> list[dict]:
+        if self._context_limit is not None:
+            import tiktoken
+            try:
+                enc = tiktoken.encoding_for_model(self._model_id)
+            except KeyError:
+                enc = tiktoken.get_encoding('o200k_base')
+            _check_context_limit(len(enc.encode(text)), self._context_limit, self._model_id)
         # NOTE: For per-token logprobs over a fixed continuation, OpenAI's
         # Completions endpoint with `logprobs` is the right primitive.
         # Newer Chat Completions support `logprobs` and `top_logprobs` for
