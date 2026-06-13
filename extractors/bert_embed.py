@@ -57,11 +57,13 @@ def embed_bert_words_and_sentences(
     model_name: str = _DEFAULT_MODEL_NAME,
     tokenizer=None,   # injectable for tests
     model=None,       # injectable for tests
-) -> tuple[np.ndarray, np.ndarray]:
-    """Return (word_embeddings, sentence_embeddings).
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """Return (word_embeddings, word_valid, sentence_embeddings, sentence_valid).
 
     word_embeddings:     (n_words, n_layers, hidden_size) float32
+    word_valid:          (n_words,) bool — True iff a non-PUNCT word was embedded
     sentence_embeddings: (n_sentences, n_layers, hidden_size) float32
+    sentence_valid:      (n_sentences,) bool — True iff the sentence had >=1 embedded content word
 
     n_layers = 12 for bert-base-uncased (2 for the test fixture).
     """
@@ -77,6 +79,8 @@ def embed_bert_words_and_sentences(
 
     word_emb = np.zeros((n_words, n_layers, hidden), dtype=np.float32)
     sent_emb = np.zeros((n_sentences, n_layers, hidden), dtype=np.float32)
+    word_valid = np.zeros(n_words, dtype=bool)
+    sent_valid = np.zeros(n_sentences, dtype=bool)
 
     idx_to_pos = {idx: i for i, idx in enumerate(word_df.index.tolist())}
 
@@ -142,9 +146,11 @@ def embed_bert_words_and_sentences(
                 continue
             word_vec = stacked[positions].mean(axis=0)
             word_emb[idx_to_pos[orig_idx]] = word_vec
+            word_valid[idx_to_pos[orig_idx]] = True
             content_positions.extend(positions)
 
         if content_positions:
             sent_emb[s_pos] = stacked[content_positions].mean(axis=0)
+            sent_valid[s_pos] = True
 
-    return word_emb, sent_emb
+    return word_emb, word_valid, sent_emb, sent_valid
