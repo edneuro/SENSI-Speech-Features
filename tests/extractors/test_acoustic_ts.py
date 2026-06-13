@@ -82,3 +82,26 @@ def test_onset_envelope_keeps_rises_drops_falls():
     onset = acoustic_ts.onset_envelope(env)
     # diff = [_, +1, 0, -0.5, +1.5]; HWR keeps positives, first elem 0.
     np.testing.assert_allclose(onset, [0.0, 1.0, 0.0, 0.0, 1.5])
+
+
+def test_mel_range_for_preset_returns_speech_and_general():
+    assert acoustic_ts.mel_range("speech", sr=16000) == (50.0, 8000.0)
+    fmin, fmax = acoustic_ts.mel_range("music", sr=16000)
+    assert fmin == 0.0 and fmax == 8000.0  # Nyquist for sr=16000
+
+
+def test_log_mel_shape_and_center_freqs():
+    y, sr = _tone(dur=1.0)
+    rate, n_mels = 128, 16
+    logmel, freqs = acoustic_ts.log_mel_spectrogram(
+        y, sr, rate, n_mels=n_mels, fmin=50.0, fmax=8000.0)
+    assert logmel.shape == (round(1.0 * rate), n_mels)
+    assert freqs.shape == (n_mels,)
+
+
+def test_log_mel_tone_energy_in_expected_band():
+    y, sr = _tone(dur=1.0, f=200.0)
+    logmel, freqs = acoustic_ts.log_mel_spectrogram(
+        y, sr, 128, n_mels=16, fmin=50.0, fmax=8000.0)
+    peak_band = int(np.argmax(logmel.mean(axis=0)))
+    assert peak_band < 8  # lower half of the 16 bands

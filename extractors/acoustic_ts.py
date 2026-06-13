@@ -78,3 +78,37 @@ def onset_envelope(env: np.ndarray) -> np.ndarray:
     env = np.asarray(env, dtype=np.float64).ravel()
     diff = np.diff(env, prepend=env[:1])
     return np.clip(diff, 0.0, None)
+
+
+def mel_range(preset: str, sr: float) -> tuple[float, float]:
+    """Resolve a preset name to (fmin, fmax) in Hz for a given sample rate."""
+    nyq = sr / 2.0
+    if preset == "speech":
+        return (50.0, min(8000.0, nyq))
+    if preset in ("music", "general"):
+        return (0.0, nyq)
+    raise ValueError(f"unknown mel preset: {preset!r}")
+
+
+def log_mel_spectrogram(y: np.ndarray, sr: float, rate: float, *,
+                        n_mels: int = 16, fmin: float = 50.0,
+                        fmax: float | None = None) -> tuple[np.ndarray, np.ndarray]:
+    """Log-mel (dB) spectrogram on the canonical grid, plus mel center freqs.
+
+    hop_length is set so the frame rate equals `rate`; a ~25 ms analysis
+    window (next power of two >= 0.025*sr) is used.
+    """
+    import librosa
+    y = np.asarray(y, dtype=np.float64).ravel()
+    if fmax is None:
+        fmax = sr / 2.0
+    hop = max(1, int(round(sr / rate)))
+    win = max(hop, int(round(0.025 * sr)))
+    n_fft = 1 << (win - 1).bit_length()   # next power of two >= win
+    mel = librosa.feature.melspectrogram(
+        y=y, sr=sr, n_fft=n_fft, hop_length=hop, win_length=win,
+        n_mels=n_mels, fmin=fmin, fmax=fmax, power=2.0)
+    logmel = librosa.power_to_db(mel, ref=np.max).T   # (frames, n_mels)
+    freqs = librosa.mel_frequencies(n_mels=n_mels, fmin=fmin, fmax=fmax)
+    n = _grid_len(y.size, sr, rate)
+    return _fit_to_grid(logmel, n), np.asarray(freqs, dtype=np.float64)
