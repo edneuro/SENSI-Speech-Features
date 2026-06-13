@@ -112,3 +112,28 @@ def log_mel_spectrogram(y: np.ndarray, sr: float, rate: float, *,
     freqs = librosa.mel_frequencies(n_mels=n_mels, fmin=fmin, fmax=fmax)
     n = _grid_len(y.size, sr, rate)
     return _fit_to_grid(logmel, n), np.asarray(freqs, dtype=np.float64)
+
+
+def mfcc(y: np.ndarray, sr: float, rate: float, *, n_mfcc: int = 13,
+         n_mels: int = 16, fmin: float = 50.0,
+         fmax: float | None = None) -> np.ndarray:
+    """MFCCs on the canonical grid.
+
+    NOTE: for TRF / cortical-tracking work the log-mel spectrogram is usually
+    preferred over MFCCs — the DCT that produces MFCCs removes the tonotopic
+    (frequency-band) interpretability that makes mel features map onto
+    auditory-cortex organization. MFCCs are provided for completeness, not as
+    the primary feature.
+    """
+    import librosa
+    y = np.asarray(y, dtype=np.float64).ravel()
+    if fmax is None:
+        fmax = sr / 2.0
+    hop = max(1, int(round(sr / rate)))
+    win = max(hop, int(round(0.025 * sr)))
+    n_fft = 1 << (win - 1).bit_length()
+    m = librosa.feature.mfcc(
+        y=y, sr=sr, n_mfcc=n_mfcc, n_fft=n_fft, hop_length=hop,
+        win_length=win, n_mels=n_mels, fmin=fmin, fmax=fmax)
+    n = _grid_len(y.size, sr, rate)
+    return _fit_to_grid(m.T, n)

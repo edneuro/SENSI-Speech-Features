@@ -105,3 +105,11 @@ def test_log_mel_tone_energy_in_expected_band():
         y, sr, 128, n_mels=16, fmin=50.0, fmax=8000.0)
     peak_band = int(np.argmax(logmel.mean(axis=0)))
     assert peak_band < 8  # lower half of the 16 bands
+
+
+def test_mfcc_shape_on_grid():
+    y, sr = _tone(dur=1.0)
+    rate, n_mfcc = 128, 13
+    m = acoustic_ts.mfcc(y, sr, rate, n_mfcc=n_mfcc, n_mels=16,
+                         fmin=50.0, fmax=8000.0)
+    assert m.shape == (round(1.0 * rate), n_mfcc)
