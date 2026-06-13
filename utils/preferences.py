@@ -1,8 +1,8 @@
 """Load and save user preferences.
 
-Schema (v10 — active):
+Schema (v13 — active):
     {
-      "schema_version": 10,
+      "schema_version": 13,
       "shared":  {analyzer_name, last_*_folder, theme},
       "features": {feat_struct_*, lexling_*, freq_*, pred_*, sem_*,
                    feat_acoustic_*, feat_psych_*,
@@ -12,21 +12,25 @@ Schema (v10 — active):
                    feat_sentence_* (14 sentence-level),
                    master_* (6 cluster master toggles), master_syllable_pcenter,
                    master_sentence_timing, master_sentence_prosody,
-                   master_word2vec, master_bert_word, master_bert_sentence},
+                   master_word2vec, master_bert_word, master_bert_sentence,
+                   master_acoustic_ts, feat_acoustic_ts_* (4 acoustic-TS toggles)},
       "predictability": {llm_model},
       "semantic": {backend, categories_liwc, categories_empath},
       "output":   {word_level_csv, document_summary, out_count_*, doc_*,
                    syllables_csv, phonemes_csv, sentences_csv,
                    word2vec_mat, bert_word_mat, bert_sentence_mat,
-                   master_doc_prosody, master_doc_articulation_rate},
-      "prosody":  {pitch_units, pitch_floor_hz, pitch_ceiling_hz, pause_threshold_s, pcenter_k}
+                   master_doc_prosody, master_doc_articulation_rate,
+                   acoustic_ts_mat},
+      "prosody":  {pitch_units, pitch_floor_hz, pitch_ceiling_hz, pause_threshold_s, pcenter_k},
+      "acoustic_ts": {analysis_rate, env_method, env_comp, n_mels, n_mfcc, mel_preset}
     }
 
-Migration chain (all paths terminate at v10):
+Migration chain (all paths terminate at v13):
   v1 → v2 → v3 → v4 → v5 → v6 → v7 → v8 → v9 → v10
   v2 → … → v10
   v9 → v10
-  v10 files are deep-merged against v10 defaults
+  v10 files are deep-merged against v13 defaults (additive: v11 coerces liwc→empath,
+    v12 adds lexical-norms keys, v13 adds acoustic_ts section)
 
 Default location: <project_root>/config/preferences.json
 Override via SENSI_PREFS_PATH environment variable.
@@ -603,11 +607,46 @@ DEFAULT_PREFS_V12: dict[str, Any] = {
 }
 
 # ---------------------------------------------------------------------------
+# v13 constants
+#
+# Acoustic level (2026-06-13): audio-only continuous TRF features emitted as a
+# combined .mat per stimulus. Opt-in: master defaults OFF. Additive only.
+# ---------------------------------------------------------------------------
+
+SCHEMA_VERSION_V13 = 13
+
+_ACOUSTIC_TS_FEATURE_KEYS = {
+    "master_acoustic_ts":         False,   # opt-in
+    "feat_acoustic_ts_envelope":  True,
+    "feat_acoustic_ts_onset_env": True,
+    "feat_acoustic_ts_logmel":    True,
+    "feat_acoustic_ts_mfcc":      False,   # off by default
+}
+
+_FEATURES_DEFAULT_V13 = {**_FEATURES_DEFAULT_V12, **_ACOUSTIC_TS_FEATURE_KEYS}
+_OUTPUT_DEFAULT_V13 = {**_OUTPUT_DEFAULT_V12, "acoustic_ts_mat": True}
+
+DEFAULT_PREFS_V13: dict[str, Any] = {
+    **DEFAULT_PREFS_V12,
+    "schema_version": SCHEMA_VERSION_V13,
+    "features": dict(_FEATURES_DEFAULT_V13),
+    "output":   dict(_OUTPUT_DEFAULT_V13),
+    "acoustic_ts": {
+        "analysis_rate": 128,
+        "env_method": "rms",
+        "env_comp": 0.3,
+        "n_mels": 16,
+        "n_mfcc": 13,
+        "mel_preset": "speech",
+    },
+}
+
+# ---------------------------------------------------------------------------
 # Active schema aliases
 # ---------------------------------------------------------------------------
 
-SCHEMA_VERSION = SCHEMA_VERSION_V12  # active version
-DEFAULT_PREFS: dict[str, Any] = DEFAULT_PREFS_V12  # active defaults
+SCHEMA_VERSION = SCHEMA_VERSION_V13  # active version
+DEFAULT_PREFS: dict[str, Any] = DEFAULT_PREFS_V13  # active defaults
 
 
 # ---------------------------------------------------------------------------
@@ -653,8 +692,9 @@ def load_preferences() -> dict[str, Any]:
             right_key = f'doc_categories_{backend}'
             if wrong_key in user_sem:
                 user_sem[right_key] = user_sem.pop(wrong_key)
-    if version in (SCHEMA_VERSION_V10, SCHEMA_VERSION_V11, SCHEMA_VERSION_V12):
-        # v10–v12 are additive: missing keys are filled from the current
+    if version in (SCHEMA_VERSION_V10, SCHEMA_VERSION_V11,
+                   SCHEMA_VERSION_V12, SCHEMA_VERSION_V13):
+        # v10–v13 are additive: missing keys are filled from the current
         # defaults (merged starts as DEFAULT_PREFS). v11's backend coercion and
         # the version stamp are applied in the finalize step below, which
         # rewrites the file for any source older than the current version.
@@ -815,7 +855,7 @@ def _deep_merge_v3(into: dict, src: dict) -> None:
 
 
 _CURRENT_SECTIONS = ('shared', 'features', 'predictability',
-                     'semantic', 'output', 'prosody', 'lexical_norms')
+                     'semantic', 'output', 'prosody', 'lexical_norms', 'acoustic_ts')
 
 
 def _deep_merge_current(into: dict, src: dict) -> None:

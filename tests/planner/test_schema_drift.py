@@ -38,6 +38,13 @@ _INTENTIONALLY_UNROUTED_FEATURES: set[str] = {
     "master_word2vec",          # routes via master_toggle field
     "master_bert_word",         # routes via master_toggle field
     "master_bert_sentence",     # routes via master_toggle field
+    # v13 acoustic-ts level — cluster not yet registered (Task 7 is prefs-only;
+    # cluster wiring is a subsequent task). Remove these when the cluster lands.
+    "master_acoustic_ts",       # routes via master_toggle field
+    "feat_acoustic_ts_envelope",
+    "feat_acoustic_ts_onset_env",
+    "feat_acoustic_ts_logmel",
+    "feat_acoustic_ts_mfcc",
 }
 
 # Output keys NOT routed via clusters (the master output toggles that
@@ -54,6 +61,8 @@ _OUTPUT_KEYS_VIA_CSV_MAP: set[str] = {
     "master_doc_prosody",
     "master_doc_articulation_rate",
     "master_doc_counts",
+    # v13 acoustic-ts level — routed via _OUTPUT_CSV_MAP once cluster lands
+    "acoustic_ts_mat",
 }
 
 

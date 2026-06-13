@@ -805,3 +805,26 @@ def test_v10_to_v11_coerces_liwc_backend_and_bumps_version(tmp_path, monkeypatch
 def test_v11_default_backend_is_empath():
     from utils.preferences import DEFAULT_PREFS
     assert DEFAULT_PREFS['semantic']['backend'] == 'empath'
+
+
+# ---------------------------------------------------------------------------
+# v12 → v13 migration
+# ---------------------------------------------------------------------------
+
+def test_v12_prefs_migrate_to_v13_additively(tmp_path, monkeypatch):
+    import json
+    from utils import preferences
+    p = tmp_path / "preferences.json"
+    v12 = {"schema_version": 12, "features": {}, "output": {}}
+    p.write_text(json.dumps(v12), encoding="utf-8")
+    monkeypatch.setenv("SENSI_PREFS_PATH", str(p))
+    prefs = preferences.load_preferences()
+    assert prefs["schema_version"] == 13
+    f = prefs["features"]
+    assert f["master_acoustic_ts"] is False
+    assert f["feat_acoustic_ts_envelope"] is True
+    assert f["feat_acoustic_ts_mfcc"] is False
+    assert prefs["output"]["acoustic_ts_mat"] is True
+    a = prefs["acoustic_ts"]
+    assert a["analysis_rate"] == 128 and a["env_method"] == "rms"
+    assert a["mel_preset"] == "speech"
