@@ -187,3 +187,11 @@ def test_info_icon_opens_dialog_on_click(qtbot, monkeypatch):
     monkeypatch.setattr(FeatureInfoDialog, "exec", fake_exec)
     icon.click()
     assert opened == ["master_bert_word"]
+
+
+def test_acoustic_ts_toggles_route_to_docs():
+    from gui.feature_docs import _doc_path
+    assert _doc_path("feat_acoustic_ts_envelope").name == "acoustic_envelope.md"
+    assert _doc_path("feat_acoustic_ts_onset_env").name == "acoustic_onset_envelope.md"
+    assert _doc_path("feat_acoustic_ts_logmel").name == "acoustic_logmel.md"
+    assert _doc_path("feat_acoustic_ts_mfcc").name == "acoustic_mfcc.md"

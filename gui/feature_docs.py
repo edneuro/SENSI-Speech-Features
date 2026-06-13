@@ -130,6 +130,11 @@ _SHARED_DOC_MAP: dict[str, str] = {
     "feat_sentence_volume_max":   "sentence_prosody_volume.md",
     "feat_sentence_volume_std":   "sentence_prosody_volume.md",
     "feat_sentence_volume_delta": "sentence_prosody_volume.md",
+    # Acoustic level (audio-only continuous TRF features)
+    "feat_acoustic_ts_envelope":  "acoustic_envelope.md",
+    "feat_acoustic_ts_onset_env": "acoustic_onset_envelope.md",
+    "feat_acoustic_ts_logmel":    "acoustic_logmel.md",
+    "feat_acoustic_ts_mfcc":      "acoustic_mfcc.md",
 }
 
 
