@@ -55,7 +55,15 @@ def amplitude_envelope(y: np.ndarray, sr: float, rate: float, *,
             power[i] = np.mean(seg ** 2) if seg.size else 0.0
         env = np.sqrt(power) ** comp
     elif method == "hilbert":
-        raise NotImplementedError  # Task 2
+        from scipy.signal import hilbert, resample_poly
+        from math import gcd
+        analytic = np.abs(hilbert(y))
+        # Resample the magnitude envelope from sr to rate with the built-in
+        # FIR anti-alias filter. Use integer up/down derived from the ratio.
+        target = int(round(rate))
+        source = int(round(sr))
+        g = gcd(target, source)
+        env = resample_poly(analytic, up=target // g, down=source // g) ** comp
     else:
         raise ValueError(f"unknown envelope method: {method!r}")
     return _fit_to_grid(env, n)

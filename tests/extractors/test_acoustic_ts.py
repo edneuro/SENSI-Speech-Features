@@ -50,3 +50,21 @@ def test_fit_to_grid_trims_pads_and_handles_empty():
     np.testing.assert_array_equal(acoustic_ts._fit_to_grid(a, 7), [0, 1, 2, 3, 4, 4, 4])
     out = acoustic_ts._fit_to_grid(np.zeros((0, 4)), 3)
     assert out.shape == (3, 4)
+
+
+def test_hilbert_envelope_length_and_shape_matches_rms():
+    y, sr = _tone(dur=1.0)
+    rate = 128
+    env_h = acoustic_ts.amplitude_envelope(y, sr, rate, method="hilbert", comp=0.3)
+    env_r = acoustic_ts.amplitude_envelope(y, sr, rate, method="rms", comp=0.3)
+    assert env_h.shape == env_r.shape == (round(1.0 * rate),)
+
+
+def test_hilbert_and_rms_agree_on_steady_tone():
+    # For a pure sine, hilbert gives peak amplitude and rms gives peak/sqrt(2).
+    # Both should be within sqrt(2) (≈1.41) of each other; we allow up to 50%
+    # tolerance so the test passes with correct implementations of both methods.
+    y, sr = _tone(dur=1.0, amp=0.5)
+    h = acoustic_ts.amplitude_envelope(y, sr, 128, method="hilbert", comp=1.0)[5:-5]
+    r = acoustic_ts.amplitude_envelope(y, sr, 128, method="rms", comp=1.0)[5:-5]
+    assert abs(h.mean() - r.mean()) < 0.50 * r.mean()
