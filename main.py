@@ -40,6 +40,7 @@ import argparse
 import os
 import sys
 from pathlib import Path
+import numpy as np
 import pandas as pd
 
 # Redirect all model/cache downloads into the project folder
@@ -616,6 +617,40 @@ def _level_dir(output_dir: Path, level: str) -> Path:
     return d
 
 
+def _word_embedding_vars(emb: np.ndarray, df: pd.DataFrame,
+                         is_valid: np.ndarray) -> dict:
+    """Flat top-level .mat variables for a word-level embedding sidecar.
+
+    `embeddings` stays a top-level key so existing consumers keep working.
+    Labels are taken from df (row-aligned to emb).
+    """
+    return {
+        "embeddings":  emb,
+        "tokens":      np.array(df["token"].tolist()),
+        "word_id":     np.asarray(df["term_id"].to_numpy(), dtype=np.int64),
+        "sentence_id": np.asarray(df["sentence_id"].to_numpy(), dtype=np.int64),
+        "is_valid":    np.asarray(is_valid, dtype=bool),
+    }
+
+
+def _sentence_embedding_vars(emb: np.ndarray, df: pd.DataFrame,
+                              is_valid: np.ndarray) -> dict:
+    """Flat top-level .mat variables for the sentence-level embedding sidecar.
+
+    Sentence rows follow the same first-seen (doc_id, sentence_id) grouping the
+    BERT extractor uses, so they stay aligned to `emb`.
+    """
+    groups = list(df.groupby(["doc_id", "sentence_id"], sort=False))
+    sent_ids = [key[1] for key, _ in groups]
+    sent_texts = [g["sentence"].iloc[0] for _, g in groups]
+    return {
+        "embeddings":  emb,
+        "sentence_id": np.asarray(sent_ids, dtype=np.int64),
+        "sentence":    np.array(sent_texts),
+        "is_valid":    np.asarray(is_valid, dtype=bool),
+    }
+
+
 def run_word_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None:
     """Process all matched (transcript, audio) pairs in the configured folders."""
     transcripts_dir = Path(args.transcripts_folder)
@@ -743,9 +778,9 @@ def run_word_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None
                 try:
                     import scipy.io
                     from extractors.word2vec_embed import embed_word2vec, Word2VecUnavailable
-                    w2v_mat = embed_word2vec(df)
+                    w2v_mat, w2v_valid = embed_word2vec(df)
                     mat_path = _level_dir(output_dir, 'word') / f'{pair.stimulus_id}_word2vec.mat'
-                    scipy.io.savemat(str(mat_path), {'embeddings': w2v_mat})
+                    scipy.io.savemat(str(mat_path), _word_embedding_vars(w2v_mat, df, w2v_valid))
                 except Word2VecUnavailable as exc:
                     print(f'[word2vec] skipped for {pair.stimulus_id}: {exc}',
                           file=sys.stderr)
@@ -761,15 +796,18 @@ def run_word_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None
                 try:
                     import scipy.io
                     from extractors.bert_embed import embed_bert_words_and_sentences
-                    word_emb, sent_emb = embed_bert_words_and_sentences(df)
+                    word_emb, word_valid, sent_emb, sent_valid = \
+                        embed_bert_words_and_sentences(df)
                     if run_bert_word:
                         mat_path = (_level_dir(output_dir, 'word')
                                     / f'{pair.stimulus_id}_bert_word.mat')
-                        scipy.io.savemat(str(mat_path), {'embeddings': word_emb})
+                        scipy.io.savemat(str(mat_path),
+                                         _word_embedding_vars(word_emb, df, word_valid))
                     if run_bert_sent:
                         mat_path = (_level_dir(output_dir, 'sentence')
                                     / f'{pair.stimulus_id}_bert_sentence.mat')
-                        scipy.io.savemat(str(mat_path), {'embeddings': sent_emb})
+                        scipy.io.savemat(str(mat_path),
+                                         _sentence_embedding_vars(sent_emb, df, sent_valid))
                 except Exception as exc:
                     print(f'[bert] failed for {pair.stimulus_id}: {exc}',
                           file=sys.stderr)
