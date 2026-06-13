@@ -149,6 +149,23 @@ def test_sentence_valid_mask():
     assert sent_valid.tolist() == [True, True]
 
 
+def test_sentence_valid_mixed():
+    from extractors.bert_embed import embed_bert_words_and_sentences
+
+    tokenizer, model = _make_tiny_bert()
+    # Sentence 0 has a content word (valid); sentence 1 is all PUNCT (invalid).
+    df = pd.DataFrame([
+        {"doc_id": "d", "sentence_id": 0, "sentence": "Hello",
+         "token": "Hello", "upos": "NOUN"},
+        {"doc_id": "d", "sentence_id": 1, "sentence": "...",
+         "token": ".", "upos": "PUNCT"},
+    ])
+    _, _, _, sent_valid = embed_bert_words_and_sentences(
+        df, tokenizer=tokenizer, model=model
+    )
+    assert sent_valid.tolist() == [True, False]
+
+
 def test_all_punct_sentence_is_invalid():
     from extractors.bert_embed import embed_bert_words_and_sentences
 

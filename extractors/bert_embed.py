@@ -66,6 +66,10 @@ def embed_bert_words_and_sentences(
     sentence_valid:      (n_sentences,) bool — True iff the sentence had >=1 embedded content word
 
     n_layers = 12 for bert-base-uncased (2 for the test fixture).
+
+    Mask names are level-qualified (word_valid, sent_valid) because this
+    extractor returns two levels; the single-level Word2Vec extractor uses
+    `is_valid`.
     """
     if tokenizer is None or model is None:
         tokenizer, model = _load_bert(model_name)
