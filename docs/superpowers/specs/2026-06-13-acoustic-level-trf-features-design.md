@@ -104,7 +104,8 @@ DataFrame pipeline — the planner DAG buys nothing here since the only
 dependency (envelope→onset) is internal to the extractor.
 
 ## GUI / planner / prefs wiring
-- **Prefs v11 → v12** (additive; migration chain extended):
+- **Prefs v12 → v13** (additive; migration chain extended — note the active
+  schema is already v12 from the lexical-norms batch):
   - `features`: `feat_acoustic_ts_envelope`=True, `feat_acoustic_ts_onset_env`=True,
     `feat_acoustic_ts_logmel`=True, `feat_acoustic_ts_mfcc`=False,
     `master_acoustic_ts`=False.
@@ -159,7 +160,7 @@ signals only:
 - `mel_preset` changes fmin/fmax (and `mel_center_freqs`).
 
 Integration test: audio-only run (no transcript present) writes
-`acoustic/<stim>_acoustic.mat` with the expected variables. Prefs v12
+`acoustic/<stim>_acoustic.mat` with the expected variables. Prefs v13
 migration test. GUI/CLI test-after (per TDD-scope preference).
 
 ## Out of scope (YAGNI)
