@@ -36,7 +36,8 @@ def test_word_vars_roundtrip(tmp_path):
     assert loaded["word_id"].ravel().tolist() == [1, 2, 3, 4]
     assert loaded["sentence_id"].ravel().tolist() == [1, 1, 1, 2]
     assert loaded["is_valid"].ravel().astype(bool).tolist() == [True, True, False, True]
-    toks = [str(t).strip() for t in loaded["tokens"].ravel()]
+    # object array -> MATLAB cellstr; each cell loads as a 1-element str array.
+    toks = [str(t.item()) for t in loaded["tokens"].ravel()]
     assert toks == ["The", "cat", ".", "It"]
 
 
@@ -54,6 +55,6 @@ def test_sentence_vars_roundtrip(tmp_path):
 
     # one row per unique (doc_id, sentence_id), in first-seen order
     assert loaded["sentence_id"].ravel().tolist() == [1, 2]
-    sents = [str(s).strip() for s in loaded["sentence"].ravel()]
+    sents = [str(s.item()) for s in loaded["sentence"].ravel()]
     assert sents == ["The cat sat.", "It rained."]
     np.testing.assert_array_equal(loaded["embeddings"], emb)

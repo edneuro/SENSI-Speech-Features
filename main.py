@@ -622,11 +622,13 @@ def _word_embedding_vars(emb: np.ndarray, df: pd.DataFrame,
     """Flat top-level .mat variables for a word-level embedding sidecar.
 
     `embeddings` stays a top-level key so existing consumers keep working.
-    Labels are taken from df (row-aligned to emb).
+    Labels are taken from df (row-aligned to emb). `tokens` uses an object
+    array so savemat renders it as a MATLAB cellstr (unpadded, variable
+    length) rather than a space-padded char matrix.
     """
     return {
         "embeddings":  emb,
-        "tokens":      np.array(df["token"].tolist()),
+        "tokens":      np.array(df["token"].tolist(), dtype=object),
         "word_id":     np.asarray(df["term_id"].to_numpy(), dtype=np.int64),
         "sentence_id": np.asarray(df["sentence_id"].to_numpy(), dtype=np.int64),
         "is_valid":    np.asarray(is_valid, dtype=bool),
@@ -638,7 +640,8 @@ def _sentence_embedding_vars(emb: np.ndarray, df: pd.DataFrame,
     """Flat top-level .mat variables for the sentence-level embedding sidecar.
 
     Sentence rows follow the same first-seen (doc_id, sentence_id) grouping the
-    BERT extractor uses, so they stay aligned to `emb`.
+    BERT extractor uses, so they stay aligned to `emb`. `sentence` uses an
+    object array so savemat renders it as a MATLAB cellstr.
     """
     groups = list(df.groupby(["doc_id", "sentence_id"], sort=False))
     sent_ids = [key[1] for key, _ in groups]
@@ -646,7 +649,7 @@ def _sentence_embedding_vars(emb: np.ndarray, df: pd.DataFrame,
     return {
         "embeddings":  emb,
         "sentence_id": np.asarray(sent_ids, dtype=np.int64),
-        "sentence":    np.array(sent_texts),
+        "sentence":    np.array(sent_texts, dtype=object),
         "is_valid":    np.asarray(is_valid, dtype=bool),
     }
 
