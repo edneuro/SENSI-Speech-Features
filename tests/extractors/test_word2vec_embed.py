@@ -34,6 +34,7 @@ def test_known_word_returns_its_vector(mock_load):
     mat, is_valid = embed_word2vec(df, model_path="dummy.bin")
     assert mat.shape == (1, 300)
     np.testing.assert_array_equal(mat[0], vec)
+    assert is_valid.tolist() == [True]
 
 
 @patch("extractors.word2vec_embed._load_model")
@@ -45,6 +46,7 @@ def test_oov_word_returns_zero_vector(mock_load):
     mat, is_valid = embed_word2vec(df, model_path="dummy.bin")
     assert mat.shape == (1, 300)
     np.testing.assert_array_equal(mat[0], np.zeros(300))
+    assert is_valid.tolist() == [False]
 
 
 @patch("extractors.word2vec_embed._load_model")
@@ -57,6 +59,7 @@ def test_lowercase_fallback(mock_load):
     df = make_word_df(["Dog"])  # capitalized
     mat, is_valid = embed_word2vec(df, model_path="dummy.bin")
     np.testing.assert_array_equal(mat[0], vec)
+    assert is_valid.tolist() == [True]
 
 
 @patch("extractors.word2vec_embed._load_model")
@@ -68,6 +71,7 @@ def test_output_shape_multi_word(mock_load):
     df = make_word_df(["the", "cat", "sat"])  # "sat" is OOV
     mat, is_valid = embed_word2vec(df, model_path="dummy.bin")
     assert mat.shape == (3, 300)
+    assert is_valid.tolist() == [True, True, False]
 
 
 def test_raises_word2vec_unavailable_when_gensim_missing(tmp_path):

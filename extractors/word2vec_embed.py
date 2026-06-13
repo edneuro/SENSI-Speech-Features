@@ -73,14 +73,15 @@ def embed_word2vec(
     if "upos" in word_df.columns:
         upos = word_df["upos"].tolist()
     else:
-        upos = [None] * len(tokens)
+        upos = [None] * len(tokens)  # None != "PUNCT", so treated as content words
 
     n = len(tokens)
     mat = np.zeros((n, 300), dtype=np.float32)
     is_valid = np.zeros(n, dtype=bool)
     for i, (tok, pos) in enumerate(zip(tokens, upos)):
         if pos == "PUNCT":
-            continue  # forced zero, is_valid stays False (matches BERT)
+            # PUNCT: forced zero, is_valid stays False (consistent with BERT's PUNCT exclusion)
+            continue
         if tok in model:
             mat[i] = model[tok]
             is_valid[i] = True
