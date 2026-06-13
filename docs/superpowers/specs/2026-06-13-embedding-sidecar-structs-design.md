@@ -27,9 +27,20 @@ the CSV). Two issues follow:
 
 ## 2. Outputs (changed)
 
-Each `.mat` goes from a bare matrix to a MATLAB **struct** (savemat renders a
-multi-key dict as a struct — the acoustic sidecar at `main.py:1050` already
-does this). **Row order and matrix shapes are unchanged.**
+Each `.mat` goes from a single bare matrix to **multiple top-level variables**
+in the same file — the matrix plus its labels. **Row order and matrix shapes
+are unchanged, and `embeddings` stays a top-level variable, so existing
+consumers that read `embeddings` keep working (additive, non-breaking).**
+
+> **Mechanism note.** `scipy.io.savemat` writes each *top-level* dict key as a
+> separate `.mat` variable; only a *nested* dict value becomes a MATLAB struct
+> (cf. `out["config"]` in `acoustic_ts.py:176`). We deliberately use the flat
+> top-level form, **not** a nested struct: a nested struct (`S.word2vec.embeddings`)
+> would relocate `embeddings` and break any code doing `load(f,'embeddings')` /
+> `loadmat(f)['embeddings']`. The flat form delivers the same self-describing
+> bundle (one file: matrix + tokens + ids + mask) with zero compatibility cost.
+> In MATLAB, `load('<stim>_word2vec.mat')` injects `embeddings`, `tokens`,
+> `word_id`, `sentence_id`, `is_valid` into the workspace.
 
 ### Word-level (`word2vec`, `bert_word`)
 
@@ -80,12 +91,23 @@ convention for extractor math).
 
 ## 4. main.py wiring
 
-At `main.py:746–772`, build the struct dicts from the extractor outputs plus
-the `df` columns (`token`, `term_id`, `sentence_id`, `sentence`) and `savemat`
-them. `tokens` / `sentence` pass through `np.array(..., dtype=object)` so they
-render as MATLAB cellstr rather than padded char matrices. No new files, paths,
-prefs keys, planner stages, or GUI toggles — this is a serialization change to
-existing sidecars only.
+At `main.py:746–772`, build the savemat dict from the extractor outputs plus
+the `df` columns (`token`, `term_id`, `sentence_id`, `sentence`), e.g.:
+
+```python
+scipy.io.savemat(str(mat_path), {
+    'embeddings':  w2v_mat,                       # unchanged key/shape
+    'tokens':      np.array(tokens, dtype=object),  # -> MATLAB cellstr
+    'word_id':     np.asarray(word_ids,  dtype=np.int64),
+    'sentence_id': np.asarray(sent_ids,  dtype=np.int64),
+    'is_valid':    np.asarray(is_valid,  dtype=bool),  # -> MATLAB logical
+})
+```
+
+`tokens` / `sentence` pass through `np.array(..., dtype=object)` so they render
+as MATLAB cellstr rather than padded char matrices. No new files, paths, prefs
+keys, planner stages, or GUI toggles — this is a serialization change to
+existing sidecars only, keeping the `embeddings` variable backward-compatible.
 
 ## 5. Tests
 
