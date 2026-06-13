@@ -7,7 +7,7 @@ cached by gensim in ~/gensim-data/ for subsequent runs).
 Optional local override: place GoogleNews-vectors-negative300.bin at
 hf_cache/word2vec/GoogleNews-vectors-negative300.bin to skip the download.
 
-OOV words receive a zero vector (300 float32 zeros).
+PUNCT and OOV rows receive a zero vector and is_valid=False.
 """
 from __future__ import annotations
 
@@ -58,20 +58,34 @@ def embed_word2vec(
     word_df: pd.DataFrame,
     *,
     model_path: str | Path | None = None,
-) -> np.ndarray:
-    """Return (n_words, 300) float32 matrix.
+) -> tuple[np.ndarray, np.ndarray]:
+    """Return (matrix, is_valid).
 
-    Row i corresponds to word_df.iloc[i]. OOV rows are zero vectors.
+    matrix:   (n_words, 300) float32, row-aligned with word_df.
+    is_valid: (n_words,) bool. True iff the row is a non-PUNCT token that was
+              found in vocab (exact or lowercase). PUNCT and OOV rows are zero
+              vectors with is_valid False.
     """
     mp = Path(model_path) if model_path is not None else _DEFAULT_MODEL_PATH
     model = _load_model(mp)
 
     tokens = word_df["token"].tolist()
+    if "upos" in word_df.columns:
+        upos = word_df["upos"].tolist()
+    else:
+        upos = [None] * len(tokens)
+
     n = len(tokens)
     mat = np.zeros((n, 300), dtype=np.float32)
-    for i, tok in enumerate(tokens):
+    is_valid = np.zeros(n, dtype=bool)
+    for i, (tok, pos) in enumerate(zip(tokens, upos)):
+        if pos == "PUNCT":
+            continue  # forced zero, is_valid stays False (matches BERT)
         if tok in model:
             mat[i] = model[tok]
+            is_valid[i] = True
         elif tok.lower() in model:
             mat[i] = model[tok.lower()]
-    return mat
+            is_valid[i] = True
+        # else OOV: row stays zero, is_valid stays False
+    return mat, is_valid
