@@ -71,7 +71,7 @@ def test_every_cluster_required_stage_exists():
 def test_every_cluster_output_csv_is_valid():
     VALID = {
         "features", "syllables", "phonemes", "sentences", "documents_summary",
-        "word2vec", "bert_word", "bert_sentence",
+        "word2vec", "bert_word", "bert_sentence", "acoustic",
     }
     for c in CLUSTERS:
         assert c.output_csv in VALID, \

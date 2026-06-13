@@ -49,6 +49,7 @@ _OUTPUT_CSV_MAP = {
     "bert_word_mat":     "bert_word",
     "bert_sentence_mat": "bert_sentence",
     "document_summary":  "documents_summary",
+    "acoustic_ts_mat":   "acoustic",
 }
 
 
@@ -223,12 +224,16 @@ def plan_from_prefs(prefs: dict) -> Plan:
     """Build the Plan from a user-prefs dict. Pure function; deterministic."""
     active_csvs = _active_output_csvs(prefs)
     active = _active_clusters(prefs, active_csvs)
+    # Restrict output_csvs to only those CSVs that have at least one active
+    # cluster — avoids writing empty files when the master toggle is off but
+    # the output key is on (e.g. acoustic_ts_mat=True with master_acoustic_ts=False).
+    live_csvs = frozenset(c.output_csv for c in active)
     required: set[str] = set()
     for c in active:
         required.update(c.requires_stages)
     closed = _close_under_consumes(required)
     ordered = _topo_sort(closed)
-    drops = _column_drops(active, active_csvs)
+    drops = _column_drops(active, live_csvs)
     configs = _stage_configs(prefs, ordered)
-    return Plan(stages_to_run=ordered, output_csvs=active_csvs,
+    return Plan(stages_to_run=ordered, output_csvs=live_csvs,
                 column_drops=drops, stage_configs=configs)

@@ -38,6 +38,7 @@ from extractors.pcenter        import add_pcenter     as _add_pcenter
 from extractors.sentence_prosody import add_sentence_prosody as _add_sentence_prosody
 from extractors.word2vec_embed  import embed_word2vec        as _embed_word2vec
 from extractors.bert_embed      import embed_bert_words_and_sentences as _embed_bert
+from extractors.acoustic_ts     import extract_acoustic               as _extract_acoustic
 
 STAGES: list[Stage] = [
     # --- §0 Shared stages ---
@@ -129,6 +130,12 @@ STAGES: list[Stage] = [
           consumes=("word_df",),
           produces=("bert_word_mat", "bert_sentence_mat"),
           run=_embed_bert),
+
+    # --- §6 Acoustic level (audio-only continuous TRF features) ---
+    Stage(name="acoustic_ts",
+          consumes=("audio",),
+          produces=("acoustic_mat",),
+          run=_extract_acoustic),
 
     # --- §4 Document level ---
     # Document stages are intentionally NOT extracted into separate functions
@@ -427,6 +434,17 @@ CLUSTERS: list[FeatureCluster] = [
         requires_stages=("spacy_parse", "bert_embed"),
         emits_columns=(),
         master_toggle="master_bert_sentence",
+    ),
+
+    # --- Acoustic level (§6) ---
+    FeatureCluster(
+        name="acoustic time-series",
+        toggle_keys=("feat_acoustic_ts_envelope", "feat_acoustic_ts_onset_env",
+                     "feat_acoustic_ts_logmel", "feat_acoustic_ts_mfcc"),
+        output_csv="acoustic",
+        requires_stages=("acoustic_ts",),
+        emits_columns=(),
+        master_toggle="master_acoustic_ts",
     ),
 
     # --- Document level (§4 of feature_dependencies.md) ---
