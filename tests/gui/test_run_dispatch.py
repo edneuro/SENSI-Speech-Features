@@ -506,3 +506,21 @@ def test_word_args_no_subword_no_align_force(prefs_tmp):
     args = build_args_word_level()
     # No sub-word, no acoustic, no prosody → alignment correctly off
     assert args.no_align is True
+
+
+def test_acoustic_namespace_carries_config():
+    from gui.planner.emit import to_acoustic_namespace
+    prefs = {
+        "shared": {"last_audio_folder": "/aud", "last_output_folder": "/out",
+                   "analyzer_name": "me"},
+        "features": {"feat_acoustic_ts_envelope": True, "feat_acoustic_ts_onset_env": False,
+                     "feat_acoustic_ts_logmel": True, "feat_acoustic_ts_mfcc": False},
+        "acoustic_ts": {"analysis_rate": 64, "env_method": "hilbert", "env_comp": 0.5,
+                        "n_mels": 20, "n_mfcc": 13, "mel_preset": "music"},
+    }
+    ns = to_acoustic_namespace(prefs)
+    assert ns.audio_folder == "/aud" and ns.output_folder == "/out"
+    assert ns.acoustic_ts["envelope"] is True and ns.acoustic_ts["onset_env"] is False
+    assert ns.acoustic_ts["analysis_rate"] == 64
+    assert ns.acoustic_ts["env_method"] == "hilbert"
+    assert ns.acoustic_ts["mel_preset"] == "music"

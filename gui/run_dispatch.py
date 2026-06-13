@@ -82,6 +82,11 @@ def run(progress_cb: Callable[[int, int, str], None],
                 ns.run_ts = run_ts
                 ns.skip_no_match = bool(word_outputs)
                 run_doc_level_batch(ns, on_pair_done=progress_cb)
+            if "acoustic" in plan.output_csvs:
+                from main import run_acoustic_level_batch
+                ns = planner.to_acoustic_namespace(prefs)
+                ns.run_ts = run_ts
+                run_acoustic_level_batch(ns, on_pair_done=progress_cb)
             done_cb("done")
         except Exception as exc:
             done_cb(f"error: {exc}")

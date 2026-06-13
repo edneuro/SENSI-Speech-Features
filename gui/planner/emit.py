@@ -90,6 +90,32 @@ def _categories_for_level(prefs: dict, level: str) -> str | None:
     return ",".join(cats) if cats else None
 
 
+def to_acoustic_namespace(prefs: dict) -> argparse.Namespace:
+    """Namespace for main.run_acoustic_level_batch. Audio-only; no transcript
+    or word/doc stage flags."""
+    shared = prefs.get("shared", {})
+    feats = prefs.get("features", {})
+    acfg = prefs.get("acoustic_ts", {})
+    ns = argparse.Namespace()
+    ns.audio_folder     = shared.get("last_audio_folder", "")
+    ns.output_folder    = shared.get("last_output_folder", "")
+    ns.analyzer         = shared.get("analyzer_name", "")
+    ns.audio_extensions = "wav,flac,mp3"
+    ns.acoustic_ts = {
+        "envelope":  bool(feats.get("feat_acoustic_ts_envelope", True)),
+        "onset_env": bool(feats.get("feat_acoustic_ts_onset_env", True)),
+        "logmel":    bool(feats.get("feat_acoustic_ts_logmel", True)),
+        "mfcc":      bool(feats.get("feat_acoustic_ts_mfcc", False)),
+        "env_method":   acfg.get("env_method", "rms"),
+        "env_comp":     float(acfg.get("env_comp", 0.3)),
+        "n_mels":       int(acfg.get("n_mels", 16)),
+        "n_mfcc":       int(acfg.get("n_mfcc", 13)),
+        "mel_preset":   acfg.get("mel_preset", "speech"),
+        "analysis_rate": float(acfg.get("analysis_rate", 128)),
+    }
+    return ns
+
+
 def to_namespace(plan: Plan, prefs: dict, level: str) -> argparse.Namespace:
     """Build the argparse.Namespace for main.run_word_level_batch (level='word')
     or main.run_doc_level_batch (level='doc')."""
