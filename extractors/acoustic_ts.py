@@ -67,3 +67,14 @@ def amplitude_envelope(y: np.ndarray, sr: float, rate: float, *,
     else:
         raise ValueError(f"unknown envelope method: {method!r}")
     return _fit_to_grid(env, n)
+
+
+def onset_envelope(env: np.ndarray) -> np.ndarray:
+    """Half-wave-rectified first difference of the amplitude envelope.
+
+    Keeps only positive-going changes (acoustic onsets); length is preserved
+    by prepending 0 so it stays on the same grid as `env`.
+    """
+    env = np.asarray(env, dtype=np.float64).ravel()
+    diff = np.diff(env, prepend=env[:1])
+    return np.clip(diff, 0.0, None)

@@ -68,3 +68,17 @@ def test_hilbert_and_rms_agree_on_steady_tone():
     h = acoustic_ts.amplitude_envelope(y, sr, 128, method="hilbert", comp=1.0)[5:-5]
     r = acoustic_ts.amplitude_envelope(y, sr, 128, method="rms", comp=1.0)[5:-5]
     assert abs(h.mean() - r.mean()) < 0.50 * r.mean()
+
+
+def test_onset_envelope_nonnegative_and_length_preserved():
+    env = np.array([0.0, 1.0, 1.0, 0.5, 2.0, 2.0], dtype=np.float64)
+    onset = acoustic_ts.onset_envelope(env)
+    assert onset.shape == env.shape
+    assert np.all(onset >= 0)
+
+
+def test_onset_envelope_keeps_rises_drops_falls():
+    env = np.array([0.0, 1.0, 1.0, 0.5, 2.0], dtype=np.float64)
+    onset = acoustic_ts.onset_envelope(env)
+    # diff = [_, +1, 0, -0.5, +1.5]; HWR keeps positives, first elem 0.
+    np.testing.assert_allclose(onset, [0.0, 1.0, 0.0, 0.0, 1.5])
