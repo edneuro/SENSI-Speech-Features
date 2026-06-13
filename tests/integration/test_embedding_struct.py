@@ -44,7 +44,7 @@ def test_word_vars_roundtrip(tmp_path):
 def test_sentence_vars_roundtrip(tmp_path):
     df = _word_df()
     emb = np.arange(2 * 3, dtype=np.float32).reshape(2, 3)
-    is_valid = np.array([True, True])
+    is_valid = np.array([True, False])  # second sentence invalid (e.g. all-PUNCT)
 
     out = _sentence_embedding_vars(emb, df, is_valid)
     assert set(out) == {"embeddings", "sentence_id", "sentence", "is_valid"}
@@ -55,6 +55,7 @@ def test_sentence_vars_roundtrip(tmp_path):
 
     # one row per unique (doc_id, sentence_id), in first-seen order
     assert loaded["sentence_id"].ravel().tolist() == [1, 2]
+    assert loaded["is_valid"].ravel().astype(bool).tolist() == [True, False]
     sents = [str(s.item()) for s in loaded["sentence"].ravel()]
     assert sents == ["The cat sat.", "It rained."]
     np.testing.assert_array_equal(loaded["embeddings"], emb)

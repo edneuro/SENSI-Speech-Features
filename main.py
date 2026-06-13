@@ -626,11 +626,15 @@ def _word_embedding_vars(emb: np.ndarray, df: pd.DataFrame,
     array so savemat renders it as a MATLAB cellstr (unpadded, variable
     length) rather than a space-padded char matrix.
     """
+    if len(df) != emb.shape[0]:
+        raise ValueError(
+            f"df ({len(df)} rows) and emb ({emb.shape[0]} rows) must be row-aligned"
+        )
     return {
         "embeddings":  emb,
-        "tokens":      np.array(df["token"].tolist(), dtype=object),
-        "word_id":     np.asarray(df["term_id"].to_numpy(), dtype=np.int64),
-        "sentence_id": np.asarray(df["sentence_id"].to_numpy(), dtype=np.int64),
+        "tokens":      np.array(df["token"], dtype=object),
+        "word_id":     df["term_id"].to_numpy(dtype=np.int64),
+        "sentence_id": df["sentence_id"].to_numpy(dtype=np.int64),
         "is_valid":    np.asarray(is_valid, dtype=bool),
     }
 
@@ -644,6 +648,11 @@ def _sentence_embedding_vars(emb: np.ndarray, df: pd.DataFrame,
     object array so savemat renders it as a MATLAB cellstr.
     """
     groups = list(df.groupby(["doc_id", "sentence_id"], sort=False))
+    if len(groups) != emb.shape[0]:
+        raise ValueError(
+            f"sentence groups ({len(groups)}) and emb ({emb.shape[0]} rows) "
+            "must be aligned"
+        )
     sent_ids = [key[1] for key, _ in groups]
     sent_texts = [g["sentence"].iloc[0] for _, g in groups]
     return {
