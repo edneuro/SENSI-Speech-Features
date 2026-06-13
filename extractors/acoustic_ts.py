@@ -25,6 +25,8 @@ def _fit_to_grid(arr: np.ndarray, n: int) -> np.ndarray:
         return arr
     if arr.shape[0] > n:
         return arr[:n]
+    if arr.shape[0] == 0:
+        return np.zeros((n,) + arr.shape[1:], dtype=arr.dtype)
     pad_width = [(0, n - arr.shape[0])] + [(0, 0)] * (arr.ndim - 1)
     return np.pad(arr, pad_width, mode="edge")
 
@@ -38,11 +40,19 @@ def amplitude_envelope(y: np.ndarray, sr: float, rate: float, *,
     """
     y = np.asarray(y, dtype=np.float64).ravel()
     n = _grid_len(y.size, sr, rate)
+    if n <= 0:
+        return np.zeros(0, dtype=np.float64)
     if method == "rms":
-        L = max(1, int(round(sr / rate)))
-        n_frames = y.size // L
-        framed = y[:n_frames * L].reshape(n_frames, L)
-        power = (framed ** 2).mean(axis=1)        # boxcar avg = anti-alias
+        # Average the squared signal over exactly N variable-width bins that
+        # span the whole signal. This is the boxcar anti-alias + decimation of
+        # mTRFenvelope.m (average the ~sr/rate nearest samples per output
+        # sample), placed directly on the canonical grid so there is no
+        # cumulative drift for non-integer sr/rate.
+        edges = np.linspace(0, y.size, n + 1).round().astype(int)
+        power = np.empty(n, dtype=np.float64)
+        for i in range(n):
+            seg = y[edges[i]:edges[i + 1]]
+            power[i] = np.mean(seg ** 2) if seg.size else 0.0
         env = np.sqrt(power) ** comp
     elif method == "hilbert":
         raise NotImplementedError  # Task 2
