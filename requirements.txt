@@ -78,3 +78,6 @@ gensim>=4.3
 
 # Syllable counting for articulation rate
 pyphen>=0.14
+
+# Acoustic time-series features (TRF predictors: envelope, onset, log-mel, MFCC)
+librosa>=0.10
