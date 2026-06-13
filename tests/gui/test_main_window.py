@@ -5,7 +5,7 @@ def test_main_window_has_expected_sidebar_items(qtbot):
     labels = [w.sidebar.item(i).text() for i in range(w.sidebar.count())]
     assert labels == ["Inputs", "Word-level features",
                        "Document-level features", "Sub-word features",
-                       "Sentence features", "Run", "Logs"]
+                       "Sentence features", "Acoustic", "Run", "Logs"]
 
 
 def test_main_window_default_section_is_inputs(qtbot):
