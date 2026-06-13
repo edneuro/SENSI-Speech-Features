@@ -134,8 +134,22 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument('--text-extensions',    default='txt,tsv,md', help='Comma-separated text extensions.')
     p.add_argument('--audio-extensions',   default='wav,flac,mp3', help='Comma-separated audio extensions.')
 
-    p.add_argument('--level', choices=['word', 'document'], default='word',
+    p.add_argument('--level', choices=['word', 'document', 'acoustic'], default='word',
                    help='Batch mode: which level to run. Default: word.')
+
+    # Acoustic-level (time-series) flags — audio-only, no transcript needed.
+    p.add_argument('--analysis-rate', type=float, default=128.0,
+                   help='Acoustic level: output sample rate in Hz (match your EEG).')
+    p.add_argument('--env-method', choices=['rms', 'hilbert'], default='rms')
+    p.add_argument('--env-comp', type=float, default=0.3,
+                   help='Envelope power-law compression exponent.')
+    p.add_argument('--n-mels', type=int, default=16)
+    p.add_argument('--n-mfcc', type=int, default=13)
+    p.add_argument('--mel-preset', choices=['speech', 'music', 'general'], default='speech')
+    p.add_argument('--no-envelope',  action='store_true')
+    p.add_argument('--no-onset-env', action='store_true')
+    p.add_argument('--no-logmel',    action='store_true')
+    p.add_argument('--mfcc', action='store_true', help='Acoustic level: also emit MFCCs (off by default).')
 
     # Doc-level feature toggles (default = on)
     p.add_argument('--no-doc-counts',                action='store_true')
@@ -994,6 +1008,64 @@ def run_doc_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None:
         pass  # non-fatal; don't break existing batch output
 
 
+def run_acoustic_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None:
+    """Process every audio file in args.audio_folder independently of any
+    transcript, writing acoustic/<stim>_acoustic.mat per file."""
+    import scipy.io
+    from extractors.acoustic_ts import extract_acoustic
+
+    audio_dir = Path(args.audio_folder)
+    output_dir = Path(args.output_folder)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    audio_exts = [e.strip().lower() for e in args.audio_extensions.split(',') if e.strip()]
+    audio_files = sorted(
+        p for p in audio_dir.rglob('*')
+        if p.is_file() and p.suffix.lower().lstrip('.') in audio_exts
+    )
+
+    logger = RunLogger(
+        output_folder=output_dir,
+        analyzer=getattr(args, 'analyzer', '') or 'unknown',
+        config={'level': 'acoustic', 'acoustic_ts': args.acoustic_ts},
+        input_transcripts_folder=audio_dir,   # no transcripts; record audio dir
+        input_audio_folder=audio_dir,
+        text_extensions=[],
+        audio_extensions=audio_exts,
+        filename_prefix='acoustic_run',
+        run_ts=getattr(args, 'run_ts', None),
+        skip_no_match=True,
+    )
+
+    rate = float(args.acoustic_ts.get('analysis_rate', 128))
+    for i, audio_path in enumerate(audio_files):
+        if should_cancel and should_cancel():
+            logger.add_warning('Run cancelled by user before processing complete')
+            break
+        start = time.time()
+        try:
+            out = extract_acoustic(str(audio_path), rate, args.acoustic_ts)
+            mat_dir = _level_dir(output_dir, 'acoustic')
+            mat_path = mat_dir / f'{audio_path.stem}_acoustic.mat'
+            scipy.io.savemat(str(mat_path), out)   # savemat renders dict 'config' as a struct
+            # Audio-only: no transcript. Pass the audio path for both the
+            # transcript and audio slots; the .mat is the output artifact.
+            logger.record_pair_success(
+                stimulus_id=audio_path.stem,
+                transcript_path=audio_path,
+                audio_path=audio_path,
+                runtime_seconds=time.time() - start,
+                output_csv_path=mat_path,
+                output_summary_path=None,
+            )
+        except Exception as exc:   # noqa: BLE001 — record and continue batch
+            logger.add_warning(f'{audio_path.name}: {exc}')
+        if on_pair_done:
+            on_pair_done(i + 1, len(audio_files), audio_path.stem)
+
+    logger.finalize()
+
+
 def _resolve_sem_backend(sem_dict_arg: str) -> tuple[str, 'Path | None']:
     from extractors.semantic_domain import detect_backend
     if sem_dict_arg == 'auto':
@@ -1014,6 +1086,19 @@ def _resolve_sem_backend(sem_dict_arg: str) -> tuple[str, 'Path | None']:
 def main():
     parser = build_parser()
     args = parser.parse_args()
+
+    if args.level == 'acoustic':
+        if not (args.audio_folder and args.output_folder):
+            raise SystemExit('Acoustic level requires --audio-folder and --output-folder')
+        args.acoustic_ts = {
+            'envelope': not args.no_envelope, 'onset_env': not args.no_onset_env,
+            'logmel': not args.no_logmel, 'mfcc': args.mfcc,
+            'env_method': args.env_method, 'env_comp': args.env_comp,
+            'n_mels': args.n_mels, 'n_mfcc': args.n_mfcc,
+            'mel_preset': args.mel_preset, 'analysis_rate': args.analysis_rate,
+        }
+        run_acoustic_level_batch(args)
+        return
 
     is_batch = bool(args.transcripts_folder or args.audio_folder or args.output_folder)
     if is_batch:
