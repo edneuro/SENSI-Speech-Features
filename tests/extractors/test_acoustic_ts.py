@@ -113,3 +113,40 @@ def test_mfcc_shape_on_grid():
     m = acoustic_ts.mfcc(y, sr, rate, n_mfcc=n_mfcc, n_mels=16,
                          fmin=50.0, fmax=8000.0)
     assert m.shape == (round(1.0 * rate), n_mfcc)
+
+
+def test_extract_acoustic_all_features_share_grid(tmp_path):
+    import soundfile as sf
+    y, sr = _tone(dur=1.0)
+    wav = tmp_path / "stim.wav"
+    sf.write(str(wav), y, sr)
+    rate = 128
+    out = acoustic_ts.extract_acoustic(str(wav), rate, {
+        "envelope": True, "onset_env": True, "logmel": True, "mfcc": True,
+        "env_method": "rms", "env_comp": 0.3, "n_mels": 16, "n_mfcc": 13,
+        "mel_preset": "speech",
+    })
+    n = out["t"].shape[0]
+    assert out["fs"] == rate
+    assert out["envelope"].shape == (n,)
+    assert out["onset_envelope"].shape == (n,)
+    assert out["logmel"].shape[0] == n and out["logmel"].shape[1] == 16
+    assert out["mfcc"].shape[0] == n and out["mfcc"].shape[1] == 13
+    assert out["mel_center_freqs"].shape == (16,)
+    assert "config" in out
+
+
+def test_extract_acoustic_respects_disabled_features(tmp_path):
+    import soundfile as sf
+    y, sr = _tone(dur=0.5)
+    wav = tmp_path / "stim.wav"
+    sf.write(str(wav), y, sr)
+    out = acoustic_ts.extract_acoustic(str(wav), 100, {
+        "envelope": True, "onset_env": False, "logmel": False, "mfcc": False,
+        "env_method": "rms", "env_comp": 0.3, "n_mels": 16, "n_mfcc": 13,
+        "mel_preset": "speech",
+    })
+    assert "envelope" in out
+    assert "onset_envelope" not in out
+    assert "logmel" not in out
+    assert "mfcc" not in out

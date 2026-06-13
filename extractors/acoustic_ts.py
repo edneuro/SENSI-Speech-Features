@@ -137,3 +137,55 @@ def mfcc(y: np.ndarray, sr: float, rate: float, *, n_mfcc: int = 13,
         win_length=win, n_mels=n_mels, fmin=fmin, fmax=fmax)
     n = _grid_len(y.size, sr, rate)
     return _fit_to_grid(m.T, n)
+
+
+def extract_acoustic(audio_path: str, rate: float, cfg: dict) -> dict:
+    """Compute all enabled acoustic time-series features for one audio file.
+
+    Returns a dict of named arrays (only the enabled ones) plus `fs`, `t`,
+    `mel_center_freqs` (when logmel/mfcc enabled), and a `config` provenance
+    dict. All feature arrays share exactly N = round(duration*rate) rows.
+    """
+    import librosa
+    y, sr = librosa.load(audio_path, sr=None, mono=True)
+    y = np.asarray(y, dtype=np.float64)
+    n = _grid_len(y.size, sr, rate)
+    fmin, fmax = mel_range(cfg.get("mel_preset", "speech"), sr)
+
+    out: dict = {"fs": float(rate), "t": (np.arange(n) / rate).astype(np.float64)}
+
+    env = None
+    if cfg.get("envelope", True) or cfg.get("onset_env", True):
+        env = amplitude_envelope(y, sr, rate, method=cfg.get("env_method", "rms"),
+                                 comp=float(cfg.get("env_comp", 0.3)))
+    if cfg.get("envelope", True):
+        out["envelope"] = env
+    if cfg.get("onset_env", True):
+        out["onset_envelope"] = onset_envelope(env)
+    if cfg.get("logmel", True):
+        logmel, freqs = log_mel_spectrogram(
+            y, sr, rate, n_mels=int(cfg.get("n_mels", 16)), fmin=fmin, fmax=fmax)
+        out["logmel"] = logmel
+        out["mel_center_freqs"] = freqs
+    if cfg.get("mfcc", False):
+        out["mfcc"] = mfcc(y, sr, rate, n_mfcc=int(cfg.get("n_mfcc", 13)),
+                           n_mels=int(cfg.get("n_mels", 16)), fmin=fmin, fmax=fmax)
+        if "mel_center_freqs" not in out:
+            out["mel_center_freqs"] = librosa_mel_freqs(int(cfg.get("n_mels", 16)), fmin, fmax)
+
+    out["config"] = {
+        "analysis_rate": float(rate), "env_method": cfg.get("env_method", "rms"),
+        "env_comp": float(cfg.get("env_comp", 0.3)),
+        "n_mels": int(cfg.get("n_mels", 16)), "n_mfcc": int(cfg.get("n_mfcc", 13)),
+        "fmin": float(fmin), "fmax": float(fmax),
+        "mel_preset": cfg.get("mel_preset", "speech"),
+        "source_sr": float(sr), "duration_s": float(y.size / sr),
+    }
+    return out
+
+
+def librosa_mel_freqs(n_mels: int, fmin: float, fmax: float) -> np.ndarray:
+    """Return the mel filterbank center frequencies as a float64 array."""
+    import librosa
+    return np.asarray(librosa.mel_frequencies(n_mels=n_mels, fmin=fmin, fmax=fmax),
+                      dtype=np.float64)
