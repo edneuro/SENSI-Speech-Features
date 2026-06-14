@@ -100,6 +100,13 @@ Ordered roughly by priority, not committed. Each item gets its own brainstorm �
 | **Correctness scoring** | Either MFA alignment confidence (cheap) or ASR-vs-transcript agreement (medium). | Parked | Needs collaborator clarification on which they want. |
 | **Brain Treebank parity** | `Index_in_Sentence`, `Word_Head`. | Already covered | `token_id` and `head_token_id` provide these. |
 
+### Infrastructure / portability
+
+| Item | Scope | Status | Notes |
+|---|---|---|---|
+| **Cross-platform CI matrix** | Run the suite on Windows + macOS + Linux (GitHub Actions) so portability is verified, not assumed. | Not started (next infra task) | Triggered by the 2026-06-14 MKL-on-AMD crash (commit `ec620e9`): the acoustic mel matmul crashed every real run while tests passed, because the crash workaround lived only in `tests/conftest.py`. CI is the only real guard for OS/CPU-specific breakage. See [`project-mkl-threading-entrypoints`](../memory/project-mkl-threading-entrypoints.md). |
+| **Acoustic-level portability audit** | One-off review of the acoustic code for OS/CPU assumptions. | **Done (2026-06-14)** | Clean: extractor + runner are pure numpy/librosa/scipy/`soundfile` (no MFA/Kaldi, no ffmpeg — libsndfile ≥1.1 reads WAV/FLAC/MP3 natively), all `pathlib`. MKL guard (`MKL_THREADING_LAYER=sequential` via `setdefault` in `main.py`/`gui.py`) is a no-op where numpy isn't an MKL build (OpenBLAS / macOS Accelerate), so it's safe on every platform. Alternative if MKL ever bites again: ship the env on conda-forge/OpenBLAS (`nomkl`). |
+
 ## 5. Naming conventions (read this to avoid confusion)
 
 We have two parallel "batch" numbering systems that have collided:
