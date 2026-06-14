@@ -16,6 +16,32 @@ def test_run_button_disabled_when_no_analyzer(qtbot, tmp_path, monkeypatch):
     assert not w.run_button.isEnabled()
 
 
+def test_run_tab_refreshes_on_show_after_inputs_filled(qtbot, tmp_path, monkeypatch):
+    """Regression: filling the Inputs on another page and then viewing the Run
+    tab must update readiness. The Inputs page does not push a refresh to the Run
+    section, so the Run section re-reads prefs on showEvent. (Previously the stale
+    state was masked because Path('').is_dir() let empty folders pass.)"""
+    monkeypatch.setenv("SENSI_PREFS_PATH", str(tmp_path / "prefs.json"))
+    from PySide6.QtGui import QShowEvent
+    from utils.preferences import save_preferences
+    from gui.section_run import RunSection
+    w = RunSection(get_session_api_key=lambda: "", status_strip=None)
+    qtbot.addWidget(w)
+    assert not w.run_button.isEnabled()   # nothing set at construction
+
+    # Fill the Inputs (as the Inputs page would) for an audio-only acoustic run,
+    # WITHOUT calling w.refresh() directly.
+    audio = tmp_path / "audio"; audio.mkdir()
+    out = tmp_path / "out"; out.mkdir()
+    save_preferences({"shared": {
+        "analyzer_name": "me", "last_audio_folder": str(audio),
+        "last_output_folder": str(out), "last_transcripts_folder": ""}})
+    _enable_only_acoustic(save_preferences)   # audio-only: every other output off
+    # Viewing the page must pick up the new prefs.
+    w.showEvent(QShowEvent())
+    assert w.run_button.isEnabled()
+
+
 def test_run_tab_has_acoustic_and_sentence_output_toggles(qtbot, tmp_path, monkeypatch):
     """The Run tab is the run/save selector for every level — acoustic and
     sentence must be selectable there alongside word/doc/syllables/phonemes."""

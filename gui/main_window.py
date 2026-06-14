@@ -97,6 +97,8 @@ class MainWindow(QMainWindow):
         self.subword_section.settings_changed.connect(self.run_section.refresh)
         self.sentence_section.settings_changed.connect(self.run_section.refresh)
         self.acoustic_section.settings_changed.connect(self.run_section.refresh)
+        # Inputs (analyzer name, folder pickers) drive Run-tab readiness too.
+        self.inputs_section.settings_changed.connect(self.run_section.refresh)
         # Word-level changes (backend switch, category edits) must also refresh
         # the doc-level page so its category count and psych-card availability
         # stay in sync without a restart.

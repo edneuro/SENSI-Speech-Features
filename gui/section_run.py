@@ -106,6 +106,15 @@ class RunSection(QWidget):
 
         self.refresh()
 
+    def showEvent(self, event) -> None:
+        # Readiness/cost depend on prefs edited on OTHER pages (Inputs folders,
+        # analyzer name, feature toggles). Those pages don't all push a refresh
+        # here, and switching tabs doesn't either, so re-read current prefs every
+        # time this page becomes visible. (Without this the readiness can show a
+        # stale "Not ready" after the Inputs are filled.)
+        super().showEvent(event)
+        self.refresh()
+
     def refresh(self) -> None:
         prefs = load_preferences()
         plan = plan_from_prefs(prefs)
@@ -142,8 +151,8 @@ class RunSection(QWidget):
         if has_output and not audio_ok:
             missing.append("pick an audio folder (Inputs)")
         if needs_transcripts and not transcripts_ok:
-            missing.append("pick a transcripts folder (needed for "
-                           "word / document / sub-word / sentence outputs)")
+            missing.append("pick a transcripts folder (needed for word / document "
+                           "/ sub-word / sentence / embedding outputs)")
 
         ok = not missing
         self.run_button.setEnabled(ok)
