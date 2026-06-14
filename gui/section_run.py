@@ -16,6 +16,24 @@ from utils.preferences import load_preferences, save_preferences
 from extractors.llm_cloze import LLM_OPTIONS
 
 
+# Maps a plan output-CSV id -> the artifact it actually writes (path template +
+# format), in display order. Drives the read-only "Will produce" summary so the
+# Run tab shows the true output set (CSV *and* .mat) for the current settings,
+# including the embedding .mat files that are toggled on the feature pages rather
+# than the Run tab. Kept next to plan._OUTPUT_CSV_MAP conceptually.
+_ARTIFACT_DESC: list[tuple[str, str]] = [
+    ("features",          "word/<stim>_features.csv"),
+    ("word2vec",          "word/<stim>_word2vec.mat   (Word page)"),
+    ("bert_word",         "word/<stim>_bert_word.mat   (Word page)"),
+    ("sentences",         "sentence/<stim>_sentences.csv"),
+    ("bert_sentence",     "sentence/<stim>_bert_sentence.mat   (Sentence page)"),
+    ("syllables",         "syllable/<stim>_syllables.csv"),
+    ("phonemes",          "phoneme/<stim>_phonemes.csv"),
+    ("acoustic",          "acoustic/<stim>_acoustic.mat   (audio-only)"),
+    ("documents_summary", "document/documents_summary_<ts>.csv   (single file, all stimuli)"),
+]
+
+
 class RunSection(QWidget):
     run_started = Signal()
     run_finished = Signal(str)
@@ -79,6 +97,14 @@ class RunSection(QWidget):
             lambda v: [save_preferences({"output": {"acoustic_ts_mat": v}}), self.refresh(), self.settings_changed.emit()])
         layout.addWidget(self.acoustic_mat_toggle)
 
+        # Read-only "what will actually be written" summary (CSV + .mat), derived
+        # from the plan so it stays accurate and includes outputs whose toggles
+        # live on the feature pages (embeddings).
+        self.will_produce_label = QLabel("")
+        self.will_produce_label.setWordWrap(True)
+        self.will_produce_label.setObjectName("Subtitle")
+        layout.addWidget(self.will_produce_label)
+
         # Readiness
         layout.addWidget(SectionHeader("Readiness"))
         self.readiness_label = QLabel("…")
@@ -118,6 +144,18 @@ class RunSection(QWidget):
     def refresh(self) -> None:
         prefs = load_preferences()
         plan = plan_from_prefs(prefs)
+
+        # "Will produce" summary — exactly the files this run will write.
+        produced = [desc for csv_id, desc in _ARTIFACT_DESC
+                    if csv_id in plan.output_csvs]
+        if produced:
+            self.will_produce_label.setText(
+                "Will produce (one per stimulus unless noted):\n"
+                + "\n".join(f"   • {d}" for d in produced))
+        else:
+            self.will_produce_label.setText(
+                "Will produce: nothing yet — enable an output above "
+                "(or a feature on its page).")
 
         # Required inputs depend on which outputs are actually selected. The
         # acoustic level is audio-only: its runner globs the audio folder and

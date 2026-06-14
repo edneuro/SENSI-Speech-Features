@@ -78,6 +78,21 @@ def _enable_only_acoustic(save_preferences):
     })
 
 
+def test_will_produce_summary_reflects_plan(qtbot, tmp_path, monkeypatch):
+    """The read-only 'Will produce' summary lists the actual artifacts (CSV/.mat)
+    for the current settings, derived from the plan."""
+    monkeypatch.setenv("SENSI_PREFS_PATH", str(tmp_path / "prefs.json"))
+    from utils.preferences import save_preferences
+    from gui.section_run import RunSection
+    _enable_only_acoustic(save_preferences)   # audio-only run
+    w = RunSection(get_session_api_key=lambda: "", status_strip=None)
+    qtbot.addWidget(w)
+    w.refresh()
+    text = w.will_produce_label.text()
+    assert "acoustic/<stim>_acoustic.mat" in text
+    assert "features.csv" not in text   # word CSV is off in an audio-only run
+
+
 def test_run_button_enabled_for_audio_only_acoustic_without_transcripts(
         qtbot, tmp_path, monkeypatch):
     """The acoustic level is audio-only — Run must enable with audio + output +
