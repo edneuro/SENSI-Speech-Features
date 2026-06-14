@@ -62,7 +62,17 @@ hidden states and `content_positions` are the subword positions
 belonging to non-PUNCT words in the current sentence.
 
 3. Sentences whose every content word failed alignment / tokenization
-   produce a zero vector.
+   (e.g. all-PUNCT sentences) produce a zero vector with `is_valid=False`.
+
+**Output `.mat` fields** — flat top-level variables (not a nested struct),
+so `embeddings` stays backward-compatible:
+
+| Field | Shape | Meaning |
+|---|---|---|
+| `embeddings`  | `(n_sentences, 12, 768)` float32 | per-layer sentence vectors |
+| `sentence_id` | `(n_sentences,)` int | spaCy sentence id |
+| `sentence`    | `{n_sentences}` cellstr | the sentence text |
+| `is_valid`    | `(n_sentences,)` logical | False for empty / all-PUNCT sentences |
 
 **Why:**
 

@@ -57,8 +57,31 @@ Source: `extractors/word2vec_embed.py`.
    a. Returns the vector if the exact token is in vocabulary.
    b. Otherwise tries the lowercase form (`token.lower()`).
    c. Otherwise leaves the row as a **zero vector**.
-5. Output is `float32`, shape `(n_words, 300)`, row-aligned with the
-   word-level CSV.
+5. PUNCT tokens are forced to a **zero vector** (regardless of vocab
+   membership) so punctuation is handled identically to
+   [BERT](master_bert_word.md).
+6. The extractor returns `(matrix, is_valid)`, where `is_valid[i]` is True
+   iff row `i` is a non-PUNCT token found in vocab (exact or lowercase
+   fallback). PUNCT and OOV rows are zero with `is_valid=False`. Output is
+   `float32`, shape `(n_words, 300)`, row-aligned with the word-level CSV.
+
+**Output `.mat` fields** — flat top-level variables (not a nested struct),
+so `embeddings` stays backward-compatible:
+
+| Field | Shape | Meaning |
+|---|---|---|
+| `embeddings`  | `(n_words, 300)` float32 | the vectors, row-aligned to the word CSV |
+| `tokens`      | `{n_words}` cellstr | surface token per row |
+| `word_id`     | `(n_words,)` int | the word CSV `term_id` (global token index) |
+| `sentence_id` | `(n_words,)` int | spaCy sentence id |
+| `is_valid`    | `(n_words,)` logical | False for PUNCT / OOV (zero rows) |
+
+`is_valid=False` here mixes two cases — PUNCT *and* out-of-vocabulary
+content words (e.g. proper nouns absent from Google News). This is **not**
+identical to [BERT's](master_bert_word.md) `is_valid`, where content words
+are essentially always embedded, so the two masks can disagree on the same
+OOV word; an analyst comparing valid-word counts across the two models
+should account for that.
 
 **Why:**
 
