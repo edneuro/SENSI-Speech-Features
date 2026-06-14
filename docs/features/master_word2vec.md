@@ -76,6 +76,13 @@ so `embeddings` stays backward-compatible:
 | `sentence_id` | `(n_words,)` int | spaCy sentence id |
 | `is_valid`    | `(n_words,)` logical | False for PUNCT / OOV (zero rows) |
 
+`is_valid=False` here mixes two cases — PUNCT *and* out-of-vocabulary
+content words (e.g. proper nouns absent from Google News). This is **not**
+identical to [BERT's](master_bert_word.md) `is_valid`, where content words
+are essentially always embedded, so the two masks can disagree on the same
+OOV word; an analyst comparing valid-word counts across the two models
+should account for that.
+
 **Why:**
 
 - *Google News 300d* is a well widely cited static-embedding baseline

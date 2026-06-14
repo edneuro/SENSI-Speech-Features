@@ -75,10 +75,11 @@ Source: `extractors/bert_embed.py`.
 7. The sentence-level sidecar (`<stim>_bert_sentence.mat`) is the
    mean-pool of the non-PUNCT word embeddings within each sentence, at
    each layer.
-8. The extractor returns word- and sentence-level `is_valid` masks
-   alongside the matrices. For the word level, `is_valid[i]` is True iff
-   row `i` is a non-PUNCT word that was embedded (PUNCT rows, and any word
-   in a skipped window, stay zero + False).
+8. The extractor returns word- and sentence-level validity masks
+   (`word_valid`, `sent_valid`) alongside the matrices; both are written
+   to the `.mat` as `is_valid`. For the word level, a row is valid iff it
+   is a non-PUNCT word that was embedded (PUNCT rows, and any word in a
+   skipped window, stay zero + invalid).
 
 **Output `.mat` fields** — flat top-level variables (not a nested struct),
 so `embeddings` stays backward-compatible:
