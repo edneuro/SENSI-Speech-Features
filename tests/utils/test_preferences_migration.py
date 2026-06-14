@@ -824,7 +824,7 @@ def test_v12_prefs_migrate_to_v13_additively(tmp_path, monkeypatch):
     assert f["master_acoustic_ts"] is False
     assert f["feat_acoustic_ts_envelope"] is True
     assert f["feat_acoustic_ts_mfcc"] is False
-    assert prefs["output"]["acoustic_ts_mat"] is True
+    assert prefs["output"]["acoustic_ts_mat"] is False   # opt-in; gated from Run tab
     a = prefs["acoustic_ts"]
     assert a["analysis_rate"] == 128 and a["env_method"] == "rms"
     assert a["mel_preset"] == "speech"

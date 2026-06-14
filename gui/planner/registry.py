@@ -437,6 +437,9 @@ CLUSTERS: list[FeatureCluster] = [
     ),
 
     # --- Acoustic level (§6) ---
+    # Gated solely by the acoustic_ts_mat output key (Run-tab toggle) + at least
+    # one feature toggle. No master_toggle: the acoustic level is one cluster, so
+    # a separate master would just duplicate the output-key switch.
     FeatureCluster(
         name="acoustic time-series",
         toggle_keys=("feat_acoustic_ts_envelope", "feat_acoustic_ts_onset_env",
@@ -444,7 +447,6 @@ CLUSTERS: list[FeatureCluster] = [
         output_csv="acoustic",
         requires_stages=("acoustic_ts",),
         emits_columns=(),
-        master_toggle="master_acoustic_ts",
     ),
 
     # --- Document level (§4 of feature_dependencies.md) ---

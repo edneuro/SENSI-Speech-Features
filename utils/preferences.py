@@ -610,13 +610,18 @@ DEFAULT_PREFS_V12: dict[str, Any] = {
 # v13 constants
 #
 # Acoustic level (2026-06-13): audio-only continuous TRF features emitted as a
-# combined .mat per stimulus. Opt-in: master defaults OFF. Additive only.
+# combined .mat per stimulus. Opt-in: the run/save gate is the `acoustic_ts_mat`
+# OUTPUT key (toggled in the Run tab, like every other level), default OFF.
+# Additive only.
 # ---------------------------------------------------------------------------
 
 SCHEMA_VERSION_V13 = 13
 
 _ACOUSTIC_TS_FEATURE_KEYS = {
-    "master_acoustic_ts":         False,   # opt-in
+    # master_acoustic_ts is vestigial: the acoustic level is gated solely by the
+    # acoustic_ts_mat output key (Run tab). Kept in the schema for v13 migration
+    # compatibility and exempted in the schema-drift guard (cf. master_syllable_pcenter).
+    "master_acoustic_ts":         False,
     "feat_acoustic_ts_envelope":  True,
     "feat_acoustic_ts_onset_env": True,
     "feat_acoustic_ts_logmel":    True,
@@ -624,7 +629,9 @@ _ACOUSTIC_TS_FEATURE_KEYS = {
 }
 
 _FEATURES_DEFAULT_V13 = {**_FEATURES_DEFAULT_V12, **_ACOUSTIC_TS_FEATURE_KEYS}
-_OUTPUT_DEFAULT_V13 = {**_OUTPUT_DEFAULT_V12, "acoustic_ts_mat": True}
+# acoustic_ts_mat defaults OFF — acoustic is an opt-in audio-only level selected
+# from the Run tab. (Other levels' output keys default ON.)
+_OUTPUT_DEFAULT_V13 = {**_OUTPUT_DEFAULT_V12, "acoustic_ts_mat": False}
 
 DEFAULT_PREFS_V13: dict[str, Any] = {
     **DEFAULT_PREFS_V12,

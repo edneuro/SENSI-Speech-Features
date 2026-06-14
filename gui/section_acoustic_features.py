@@ -6,7 +6,7 @@ from PySide6.QtWidgets import (
     QComboBox, QDoubleSpinBox, QSpinBox,
 )
 
-from gui.widgets import Card, ClusterCard, ToggleRow
+from gui.widgets import Card, ToggleRow
 from utils.preferences import load_preferences, save_preferences
 
 
@@ -24,13 +24,15 @@ class AcousticFeaturesSection(QWidget):
         layout.setContentsMargins(24, 16, 24, 16)
         layout.setSpacing(12)
 
-        # --- Acoustic time-series toggles ---
-        ts_card = ClusterCard(
-            "Acoustic (audio-only)",
-            "Continuous acoustic time series on a shared analysis grid, "
-            "saved as a .mat sidecar in acoustic/.",
-            master_key="master_acoustic_ts",
-            master_label="Emit acoustic .mat sidecar",
+        # --- Acoustic time-series features ---
+        # The acoustic level is run/saved from the Run tab ("Acoustic .mat"
+        # output toggle). This page only chooses WHICH features it computes — so
+        # it is a plain Card (no master), matching how other levels configure
+        # their features on their own page while the Run tab gates output.
+        ts_card = Card(
+            "Acoustic features (audio-only)",
+            "Continuous acoustic time series on a shared analysis grid. Enable "
+            "the output in the Run tab ('Acoustic .mat'); choose the features here.",
         )
         ts_grid = QGridLayout()
         acoustic_keys = [
@@ -44,8 +46,7 @@ class AcousticFeaturesSection(QWidget):
                 self._make_toggle(key, label, f[key]),
                 i // 2, i % 2,
             )
-        ts_card.add_child_layout(ts_grid)
-        ts_card.settings_changed.connect(self.settings_changed)
+        ts_card.add_layout(ts_grid)
         layout.addWidget(ts_card)
 
         # --- Parameters ---

@@ -16,6 +16,28 @@ def test_run_button_disabled_when_no_analyzer(qtbot, tmp_path, monkeypatch):
     assert not w.run_button.isEnabled()
 
 
+def test_run_tab_has_acoustic_and_sentence_output_toggles(qtbot, tmp_path, monkeypatch):
+    """The Run tab is the run/save selector for every level — acoustic and
+    sentence must be selectable there alongside word/doc/syllables/phonemes."""
+    monkeypatch.setenv("SENSI_PREFS_PATH", str(tmp_path / "prefs.json"))
+    from gui.section_run import RunSection
+    w = RunSection(get_session_api_key=lambda: "", status_strip=None)
+    qtbot.addWidget(w)
+    assert w.acoustic_mat_toggle is not None
+    assert w.sentences_csv_toggle is not None
+
+
+def test_acoustic_toggle_persists_output_key(qtbot, tmp_path, monkeypatch):
+    monkeypatch.setenv("SENSI_PREFS_PATH", str(tmp_path / "prefs.json"))
+    from utils.preferences import load_preferences
+    from gui.section_run import RunSection
+    w = RunSection(get_session_api_key=lambda: "", status_strip=None)
+    qtbot.addWidget(w)
+    assert load_preferences()["output"]["acoustic_ts_mat"] is False  # opt-in default
+    w.acoustic_mat_toggle.set_checked(True)
+    assert load_preferences()["output"]["acoustic_ts_mat"] is True
+
+
 def _enable_only_acoustic(save_preferences):
     """Select the acoustic .mat as the ONLY output (audio-only run)."""
     save_preferences({

@@ -68,6 +68,16 @@ class RunSection(QWidget):
         self.phonemes_csv_toggle.toggled.connect(
             lambda v: [save_preferences({"output": {"phonemes_csv": v}}), self.refresh(), self.settings_changed.emit()])
         layout.addWidget(self.phonemes_csv_toggle)
+        self.sentences_csv_toggle = ToggleRow("Sentence-level CSV (one per stimulus)")
+        self.sentences_csv_toggle.set_checked(prefs["output"]["sentences_csv"])
+        self.sentences_csv_toggle.toggled.connect(
+            lambda v: [save_preferences({"output": {"sentences_csv": v}}), self.refresh(), self.settings_changed.emit()])
+        layout.addWidget(self.sentences_csv_toggle)
+        self.acoustic_mat_toggle = ToggleRow("Acoustic .mat (audio-only, one per stimulus)")
+        self.acoustic_mat_toggle.set_checked(prefs["output"]["acoustic_ts_mat"])
+        self.acoustic_mat_toggle.toggled.connect(
+            lambda v: [save_preferences({"output": {"acoustic_ts_mat": v}}), self.refresh(), self.settings_changed.emit()])
+        layout.addWidget(self.acoustic_mat_toggle)
 
         # Readiness
         layout.addWidget(SectionHeader("Readiness"))

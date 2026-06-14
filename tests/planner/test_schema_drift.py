@@ -38,8 +38,10 @@ _INTENTIONALLY_UNROUTED_FEATURES: set[str] = {
     "master_word2vec",          # routes via master_toggle field
     "master_bert_word",         # routes via master_toggle field
     "master_bert_sentence",     # routes via master_toggle field
-    # v13 acoustic-ts level master gate — routes via master_toggle field
-    "master_acoustic_ts",       # routes via master_toggle field
+    # v13 acoustic level: master_acoustic_ts is vestigial — the acoustic level is
+    # gated solely by the acoustic_ts_mat output key (Run tab), not a cluster
+    # master. Kept in the schema for migration compat (cf. master_syllable_pcenter).
+    "master_acoustic_ts",
 }
 
 # Output keys NOT routed via clusters (the master output toggles that
@@ -109,11 +111,12 @@ def test_every_master_toggle_key_exists_in_v10_prefs_schema():
 
 
 def test_acoustic_level_routed_when_output_on():
+    # The acoustic level is gated solely by the acoustic_ts_mat output key
+    # (Run-tab toggle) plus a feature toggle (envelope is on by default).
     from gui.planner.plan import plan_from_prefs
     from utils.preferences import DEFAULT_PREFS
     import copy
     prefs = copy.deepcopy(DEFAULT_PREFS)
-    prefs["features"]["master_acoustic_ts"] = True
     prefs["output"]["acoustic_ts_mat"] = True
     plan = plan_from_prefs(prefs)
     assert "acoustic" in plan.output_csvs
@@ -124,4 +127,18 @@ def test_acoustic_level_off_by_default():
     from gui.planner.plan import plan_from_prefs
     from utils.preferences import DEFAULT_PREFS
     plan = plan_from_prefs(DEFAULT_PREFS)
-    assert "acoustic" not in plan.output_csvs   # master defaults OFF
+    assert "acoustic" not in plan.output_csvs   # acoustic_ts_mat defaults OFF
+
+
+def test_acoustic_level_off_when_all_features_off():
+    # Output key on but every acoustic feature off -> cluster inactive -> no file.
+    from gui.planner.plan import plan_from_prefs
+    from utils.preferences import DEFAULT_PREFS
+    import copy
+    prefs = copy.deepcopy(DEFAULT_PREFS)
+    prefs["output"]["acoustic_ts_mat"] = True
+    for k in ("feat_acoustic_ts_envelope", "feat_acoustic_ts_onset_env",
+              "feat_acoustic_ts_logmel", "feat_acoustic_ts_mfcc"):
+        prefs["features"][k] = False
+    plan = plan_from_prefs(prefs)
+    assert "acoustic" not in plan.output_csvs
