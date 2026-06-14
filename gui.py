@@ -11,6 +11,11 @@ _HERE = Path(__file__).parent.resolve()
 os.environ.setdefault("HF_HOME",      str(_HERE / "hf_cache"))
 os.environ.setdefault("MFA_ROOT_DIR", str(_HERE / "mfa_data"))
 os.environ.setdefault("HF_HUB_DISABLE_IMPLICIT_TOKEN", "1")
+# MKL on AMD CPUs (Windows/Ryzen) raises a fatal exception (0xc06d007f) during
+# BLAS matmul (e.g. librosa's mel-filterbank einsum in the acoustic level) under
+# the default Intel threading layer. Force sequential threading before any
+# numpy/MKL initialisation. Mirrors tests/conftest.py + main.py.
+os.environ.setdefault("MKL_THREADING_LAYER", "sequential")
 
 from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QPalette, QColor, QIcon

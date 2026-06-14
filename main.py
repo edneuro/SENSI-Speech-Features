@@ -40,6 +40,14 @@ import argparse
 import os
 import sys
 from pathlib import Path
+
+# MKL on AMD CPUs (Windows/Ryzen) raises a fatal exception (0xc06d007f) during
+# BLAS matmul — notably librosa's mel-filterbank einsum in the acoustic level —
+# under the default Intel threading layer. Force sequential threading BEFORE
+# numpy imports and initialises MKL. Mirrors tests/conftest.py so real CLI/GUI
+# runs behave like the (passing) test environment instead of hard-crashing.
+os.environ.setdefault("MKL_THREADING_LAYER", "sequential")
+
 import numpy as np
 import pandas as pd
 
