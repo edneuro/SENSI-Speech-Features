@@ -200,7 +200,11 @@ def test_sentence_csv_suppressed_by_no_sentences_flag(tmp_path):
 
 def _fake_w2v(word_df, **kwargs):
     import numpy as np
-    return np.zeros((len(word_df), 300), dtype='float32')
+    n = len(word_df)
+    return (
+        np.zeros((n, 300), dtype='float32'),
+        np.zeros(n, dtype=bool),
+    )
 
 
 def _fake_bert(word_df, **kwargs):
@@ -209,7 +213,9 @@ def _fake_bert(word_df, **kwargs):
     n_sent = word_df['sentence_id'].nunique() if 'sentence_id' in word_df.columns else 1
     return (
         np.zeros((n, 12, 768), dtype='float32'),
+        np.zeros(n, dtype=bool),
         np.zeros((n_sent, 12, 768), dtype='float32'),
+        np.zeros(n_sent, dtype=bool),
     )
 
 
