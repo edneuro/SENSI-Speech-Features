@@ -99,21 +99,59 @@ class RunSection(QWidget):
     def refresh(self) -> None:
         prefs = load_preferences()
         plan = plan_from_prefs(prefs)
-        # Hard errors disable Run
-        ok = bool(prefs["shared"].get("analyzer_name", "").strip()) \
-             and Path(prefs["shared"].get("last_transcripts_folder", "")).is_dir() \
-             and Path(prefs["shared"].get("last_audio_folder", "")).is_dir() \
-             and Path(prefs["shared"].get("last_output_folder", "")).is_dir()
+
+        # Required inputs depend on which outputs are actually selected. The
+        # acoustic level is audio-only: its runner globs the audio folder and
+        # ignores transcripts, so an acoustic-only run must NOT require a
+        # transcripts folder. Every other output is derived from the transcript,
+        # so those still require it. Audio is required whenever any output is
+        # selected (acoustic needs it; the word/doc batches are paired with audio).
+        shared = prefs["shared"]
+
+        def _dir_ok(p: str) -> bool:
+            # NB: Path("").is_dir() is True (empty string -> "." -> cwd), so an
+            # unset folder would wrongly pass. Require a non-empty path.
+            return bool(p) and Path(p).is_dir()
+
+        analyzer_ok    = bool(shared.get("analyzer_name", "").strip())
+        transcripts_ok = _dir_ok(shared.get("last_transcripts_folder", ""))
+        audio_ok       = _dir_ok(shared.get("last_audio_folder", ""))
+        output_ok      = _dir_ok(shared.get("last_output_folder", ""))
+
+        has_output        = bool(plan.output_csvs)
+        needs_transcripts = bool(plan.output_csvs - {"acoustic"})
+        acoustic_only     = has_output and not needs_transcripts
+
+        missing = []
+        if not has_output:
+            missing.append("select at least one output")
+        if not analyzer_ok:
+            missing.append("enter an analyzer name (Inputs)")
+        if not output_ok:
+            missing.append("pick an output folder (Inputs)")
+        if has_output and not audio_ok:
+            missing.append("pick an audio folder (Inputs)")
+        if needs_transcripts and not transcripts_ok:
+            missing.append("pick a transcripts folder (needed for "
+                           "word / document / sub-word / sentence outputs)")
+
+        ok = not missing
         self.run_button.setEnabled(ok)
 
         warnings = compute_warnings(session_api_key=self._get_api_key())
-        if not warnings:
-            self.readiness_label.setText("✓  Ready to run.")
-            self.warnings_label.setText("")
-        else:
+        lines = []
+        if acoustic_only:
+            lines.append("ℹ Acoustic level is audio-only — every audio file is "
+                         "processed; transcripts are not used.")
+        lines += [f"• {w.message}" for w in warnings]
+
+        if not ok:
+            self.readiness_label.setText("✗  Not ready — " + "; ".join(missing) + ".")
+        elif warnings:
             self.readiness_label.setText(f"⚠  {len(warnings)} warnings — review Features.")
-            self.warnings_label.setText(
-                "\n".join(f"• {w.message}" for w in warnings))
+        else:
+            self.readiness_label.setText("✓  Ready to run.")
+        self.warnings_label.setText("\n".join(lines))
 
         # Cost panel — only when planner schedules llm_predict AND the model is an OpenAI one.
         # llm_model defaults to "" (never persisted when user keeps the combo's default);

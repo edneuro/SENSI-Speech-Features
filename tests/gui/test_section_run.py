@@ -16,6 +16,61 @@ def test_run_button_disabled_when_no_analyzer(qtbot, tmp_path, monkeypatch):
     assert not w.run_button.isEnabled()
 
 
+def _enable_only_acoustic(save_preferences):
+    """Select the acoustic .mat as the ONLY output (audio-only run)."""
+    save_preferences({
+        "output": {
+            "word_level_csv": False, "document_summary": False,
+            "syllables_csv": False, "phonemes_csv": False,
+            "sentences_csv": False, "word2vec_mat": False,
+            "bert_word_mat": False, "bert_sentence_mat": False,
+            "acoustic_ts_mat": True,
+        },
+        "features": {"master_acoustic_ts": True, "feat_acoustic_ts_envelope": True},
+    })
+
+
+def test_run_button_enabled_for_audio_only_acoustic_without_transcripts(
+        qtbot, tmp_path, monkeypatch):
+    """The acoustic level is audio-only — Run must enable with audio + output +
+    analyzer even when NO transcripts folder is set."""
+    monkeypatch.setenv("SENSI_PREFS_PATH", str(tmp_path / "prefs.json"))
+    from utils.preferences import save_preferences
+    audio = tmp_path / "audio"; audio.mkdir()
+    out = tmp_path / "out"; out.mkdir()
+    save_preferences({"shared": {
+        "analyzer_name": "me", "last_audio_folder": str(audio),
+        "last_output_folder": str(out), "last_transcripts_folder": "",  # none!
+    }})
+    _enable_only_acoustic(save_preferences)
+    from gui.section_run import RunSection
+    w = RunSection(get_session_api_key=lambda: "", status_strip=None)
+    qtbot.addWidget(w)
+    w.refresh()
+    assert w.run_button.isEnabled()
+
+
+def test_run_button_disabled_when_text_output_lacks_transcripts(
+        qtbot, tmp_path, monkeypatch):
+    """A transcript-derived output (word CSV) with no transcripts folder must
+    keep Run disabled — the acoustic relaxation must not leak to text outputs."""
+    monkeypatch.setenv("SENSI_PREFS_PATH", str(tmp_path / "prefs.json"))
+    from utils.preferences import save_preferences
+    audio = tmp_path / "audio"; audio.mkdir()
+    out = tmp_path / "out"; out.mkdir()
+    save_preferences({
+        "shared": {"analyzer_name": "me", "last_audio_folder": str(audio),
+                   "last_output_folder": str(out), "last_transcripts_folder": ""},
+        "output": {"word_level_csv": True},
+        "features": {"master_structural": True, "feat_struct_token_id": True},
+    })
+    from gui.section_run import RunSection
+    w = RunSection(get_session_api_key=lambda: "", status_strip=None)
+    qtbot.addWidget(w)
+    w.refresh()
+    assert not w.run_button.isEnabled()
+
+
 def test_cost_panel_hidden_when_local_model(qtbot, tmp_path, monkeypatch):
     monkeypatch.setenv("SENSI_PREFS_PATH", str(tmp_path / "prefs.json"))
     from utils.preferences import save_preferences
