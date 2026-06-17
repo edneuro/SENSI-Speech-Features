@@ -217,8 +217,11 @@ class RunSection(QWidget):
         model = prefs["predictability"].get("llm_model", "") or LLM_OPTIONS[0][0]
         if "llm_predict" in plan.stages_to_run and model.startswith("gpt-"):
             self.cost_panel.setVisible(True)
-            t = Path(prefs["shared"].get("last_transcripts_folder", ""))
-            if t.is_dir():
+            tdir = prefs["shared"].get("last_transcripts_folder", "")
+            # _dir_ok guards the empty-path case: Path("").is_dir() is True (-> "."
+            # -> cwd), which would otherwise tokenize the whole project as transcripts.
+            if _dir_ok(tdir):
+                t = Path(tdir)
                 cache_key = (model, str(t))
                 if cache_key == self._cost_cache_key and self._cost_cache_value is not None:
                     n_in, n_out = self._cost_cache_value
