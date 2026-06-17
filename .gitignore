@@ -30,6 +30,8 @@ dictionaries/*.csv
 !dictionaries/concreteness_brysbaert.csv
 !dictionaries/warriner_vad.parquet
 !dictionaries/warriner_vad.csv
+!dictionaries/mrc.parquet
+!dictionaries/mrc.csv
 
 # Run outputs
 output/

@@ -4,19 +4,13 @@ name: Lexical norms (AoA, concreteness, imageability, familiarity, VAD)
 levels: [word, document]
 gui_toggles: [feat_norm_aoa_mean, feat_norm_aoa_sd, feat_norm_concreteness, feat_norm_imageability, feat_norm_familiarity, feat_norm_valence, feat_norm_arousal, feat_norm_dominance, doc_agg_lexical_norms]
 output_columns: [AoA_Mean, AoA_SD, Concreteness, Imageability, Familiarity, Valence, Arousal, Dominance]
-libraries: [pyarrow]
 status: implemented
 depth: deep
 ---
 
-> ℹ️ **Setup.** These columns are populated from published norm tables placed
-> under `dictionaries/` as parquet files. The quickest way is to run
-> `python download_lexical_norms.py` from the project root, which fetches AoA,
-> concreteness, and VAD and writes the parquets automatically (MRC is built
-> manually — see [`dictionaries/README.md`](../../dictionaries/README.md) for
-> all sources, columns, and build steps). If a file is absent, its columns are
-> emitted as `NaN` with a warning. The feature is **off by default**; enable
-> the *Lexical norms* card once the files are in place.
+> ℹ️ Requires the norm tables in `dictionaries/` — see
+> [`dictionaries/README.md`](../../dictionaries/README.md). The feature is
+> **off by default**; columns are `NaN` until the tables are present.
 
 ## Meaning
 Per-word psycholinguistic ratings looked up from published norm databases,
@@ -36,22 +30,99 @@ keyed by lemma (with a surface-token fallback):
 Out-of-vocabulary words and punctuation are `NaN` (**never imputed** — a blank
 means "no norm available", and downstream code decides how to handle it).
 
+**Coverage** — distinct words in each table built by `download_lexical_norms.py`:
+
+| Norm | Words |
+|---|---|
+| AoA (Kuperman) | 30,121 |
+| Concreteness (Brysbaert) | 39,954 |
+| Valence / Arousal / Dominance (Warriner) | 13,905 |
+| Imageability / Familiarity (MRC) | 4,890 |
+
+MRC's rated subset is small (~4,900 words), so imageability/familiarity will be
+`NaN` for many tokens — the document-level `*_coverage` stats report the match
+rate per stimulus. Concreteness (~40k words) correlates ≈0.8 with imageability
+and covers far more vocabulary, so it is usually the better choice when
+coverage matters.
+
+## What each rating is, and how it was made
+Each value is a **human rating averaged over many people** — a behavioural
+norm, not a corpus statistic. Knowing exactly how each was collected is what
+lets you justify using it.
+
+- **AoA (`AoA_Mean`/`AoA_SD`, [Kuperman 2012]).** *Subjective, retrospective
+  age of acquisition.* ~30k words; each rated by ~20 adults on Amazon
+  Mechanical Turk who **estimated, in years, the age at which they learned the
+  word**. `AoA_Mean` is the mean of those estimates, `AoA_SD` their
+  disagreement. It is an adult's recollection of when a word was learned, not
+  an objective developmental record — but it predicts processing speed and N400
+  amplitude well, which is why it is used. Lower = learned earlier.
+
+- **Concreteness (`Concreteness`, [Brysbaert 2014]).** *How far a word's
+  referent can be experienced through the senses and actions.* ~40k words,
+  4,000+ Mechanical Turk raters (~25 per word), on a **1 (abstract) – 5
+  (concrete)** scale. Concrete = something you can see, hear, feel, taste,
+  smell, or act on (*dog*, *run*); abstract = something whose meaning is carried
+  by language and cannot be sensed directly (*truth*, *justice*). Raters leaned
+  mostly on visual/haptic experience.
+
+- **Imageability (`Imageability`, MRC — [Coltheart 1981]).** *How readily the
+  word evokes a mental image.* Originally rated on a **1–7** scale (1 = arouses
+  an image slowly or not at all; 7 = arouses an image immediately), pooled in
+  the MRC database from classic norm sets (Paivio, Yuille & Madigan 1968;
+  Toglia & Battig 1978; Gilhooly & Logie 1980) and **rescaled to 100–700**
+  (the 1–7 mean × 100; so `636` ≈ 6.36/7). Related to concreteness but not
+  identical: some abstract words (*ghost*, *heaven*) are highly imageable.
+
+- **Familiarity (`Familiarity`, MRC — [Coltheart 1981]).** *Subjective
+  familiarity* — how familiar / often-encountered a word feels — rated **1–7**
+  and rescaled to **100–700**. This is a *perceptual* judgement of frequency,
+  distinct from corpus frequency (`Zipf_Freq`); the two can diverge, which is
+  exactly why familiarity is a useful complementary control.
+
+- **Valence / Arousal / Dominance (`Valence`/`Arousal`/`Dominance`,
+  [Warriner 2013]).** The three dimensions of affective meaning, extending
+  Bradley & Lang's ANEW. ~14k words rated on the **9-point Self-Assessment
+  Manikin (SAM)** scale by Mechanical Turk participants (~20 per word):
+  - *Valence* = pleasantness, 1 (unhappy/unpleasant) – 9 (happy/pleasant).
+  - *Arousal* = emotional intensity, 1 (calm/relaxed) – 9 (excited/aroused).
+  - *Dominance* = how much control the word's referent makes you feel,
+    1 (controlled/submissive) – 9 (in control/dominant).
+
 ## EEG rationale
-These are among the most-used per-word regressors in naturalistic and
-single-word language ERP work:
+In word-level EEG analyses — whether averaged ERPs or regression/TRF models of
+continuous speech and reading — each word is described by a row of predictors
+and the neural response is modeled as a function of them. Lexical norms are the
+**standard psycholinguistic predictors** in that row. Their value is twofold:
+they let you **test** a lexical property directly, and they let you **control**
+the many correlated properties that also drive word processing. Without them an
+N400 effect you credit to predictability may actually reflect concreteness,
+frequency, or age of acquisition — so these columns are what make a word-level
+effect *interpretable*.
 
-- **AoA** independently predicts **eye-fixation durations** in reading
-  ([Juhasz 2003], [Dirix 2017]) and **N400** amplitude ([Yum 2019]), over and
-  above word frequency — useful as a developmental-exposure covariate.
-- **Concreteness / imageability** modulate the **N400**: concrete/imageable
-  words elicit different amplitudes from abstract ones ([Barber 2013]).
-- **Valence / arousal** drive emotion effects: arousal appears early in the
-  **early posterior negativity** (EPN), with interactive arousal × valence
-  effects ([Citron 2012] review; [Recio 2014]).
+Concretely:
 
-At the **document level** the same norms become passage covariates (mean
-concreteness of a stimulus, mean/range of AoA, proportion of late-acquired
-vocabulary) for matching or controlling stimuli.
+- **AoA** — earlier-acquired words are recognized faster. AoA independently
+  predicts **eye-fixation durations** in natural reading ([Juhasz 2003],
+  [Dirix 2017]) and **N400** amplitude ([Yum 2019]) *over and above frequency*,
+  so it serves both as a developmental-exposure variable of interest and as a
+  covariate to partial out of frequency / predictability effects.
+- **Concreteness / imageability** — concrete, imageable words recruit richer
+  perceptual representations and modulate the **N400** differently from
+  abstract ones ([Barber 2013]); the standard semantic covariate.
+- **Valence / arousal / dominance** — the core affective dimensions. Arousal
+  appears early in the **early posterior negativity** (EPN), with interactive
+  arousal × valence effects ([Citron 2012] review; [Recio 2014]) — essential
+  whenever a stimulus contains emotional language, whether as an effect or a
+  nuisance regressor.
+- **Familiarity** — subjective experience with a word; a classic control
+  entered alongside frequency.
+
+At the **document level** the same norms become **passage descriptors** — mean
+concreteness, mean/spread of AoA, proportion of late-acquired vocabulary — used
+to **match or control stimuli** (e.g. checking that two conditions don't differ
+in average word difficulty) and to relate passage-level neural measures to
+passage-level language properties.
 
 > ⚠️ **Modeling caution.** Frequency, AoA, word length and concreteness are
 > strongly intercorrelated, and **concreteness ↔ imageability correlate ≈0.8**.
@@ -83,6 +154,22 @@ metadata. Suggested uses: an AoA × age interaction term, an above/below-age
 word contrast, or a document-level proportion-above-age covariate. Caveat:
 AoA is an adult-rated population norm, not a measure of the individual
 listener's vocabulary.
+
+**Using `AoA_SD`.** `AoA_SD` measures how much raters *disagreed* about a
+word's age of acquisition — i.e. the reliability of `AoA_Mean`. A word raters
+place at the same age (small SD) is a trustworthy estimate; a word they
+scatter on (large SD) is noisy. Use it to **weight or filter** words, not to
+rescale `relative_aoa`:
+
+    relative_aoa = AoA_Mean − participant_age      # the predictor, in years
+    weight       = 1 / AoA_SD²                      # precise words count more
+
+Fit a weighted regression in which each word contributes in proportion to its
+`weight` (or simply drop words whose `AoA_SD` exceeds a cutoff). Do **not**
+use `relative_aoa / AoA_SD`: that divides by rater disagreement — not the
+spread of AoA across words — and would make the words people most disagreed on
+appear closest to the listener's age. (This is why `AoA_SD` ships as its own
+column.)
 
 ## Implementation in SensiExtractor
 Source: `extractors/lexical_norms.py:add_lexical_norms`. For each source it

@@ -11,12 +11,12 @@ From the project root:
 python download_lexical_norms.py
 ```
 
-This downloads the published norms and writes
-`aoa_kuperman.parquet`, `concreteness_brysbaert.parquet`, and
-`warriner_vad.parquet` here with the right schema. A matching `.csv` mirror is
-written next to each parquet for easy reading (the extractor uses the parquet;
-the CSV is just for eyeballing — parquet is a compressed binary format).
-**MRC is not auto-built** (see below).
+This downloads all four published norm sets and writes
+`aoa_kuperman.parquet`, `concreteness_brysbaert.parquet`,
+`warriner_vad.parquet`, and `mrc.parquet` here with the right schema. A
+matching `.csv` mirror is written next to each parquet for easy reading (the
+extractor uses the parquet; the CSV is just for eyeballing — parquet is a
+compressed binary format).
 
 ## Sources, files, and schemas
 Every table has a lowercased `word` column (citation form / lemma) plus the
@@ -41,14 +41,16 @@ Warriner, Kuperman & Brysbaert (2013), ~14k words, scale 1–9.
   `A.Mean.Sum → arousal`, `D.Mean.Sum → dominance`.
 
 ### Imageability / Familiarity → `mrc.parquet` (`word`, `imageability`, `familiarity`)
-MRC Psycholinguistic Database. Not auto-built (the raw MRC file is a
-fixed-width record format).
-- Source: UWA MRC database <https://websites.psychology.uwa.edu.au/school/MRCDatabase/uwa_mrc.htm>,
-  or the `samzhang111/mrc-psycholinguistics` parser on GitHub.
-- Build a parquet with columns `word`, `imageability`, `familiarity`. **MRC
-  `0` means "missing"** — you can leave the zeros; the extractor converts a
-  stored `0` in these fields to `NaN` on load. (MRC's native integer scale is
-  100–700; the extractor does not rescale.)
+MRC Psycholinguistic Database.
+- Download (parsed CSV mirror): <https://huggingface.co/datasets/StephanAkkerman/MRC-psycholinguistic-database>
+  (`mrc_psycholinguistic_database.csv`). Authoritative source: UWA MRC database
+  <https://websites.psychology.uwa.edu.au/school/MRCDatabase/uwa_mrc.htm> (raw
+  `mrc2.dct` is a fixed-width record format; the build script uses the parsed
+  mirror instead).
+- Build mapping: `Word → word`, `Imageability → imageability`,
+  `Familiarity → familiarity`. **MRC `0` means "missing"** — the zeros are left
+  as-is; the extractor converts a stored `0` in these fields to `NaN` on load.
+  (MRC's native integer scale is 100–700; the extractor does not rescale.)
 
 See [`docs/features/lexical_norms.md`](../docs/features/lexical_norms.md) for
 meaning, EEG rationale, and the full reference list.
