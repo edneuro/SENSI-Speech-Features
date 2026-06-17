@@ -85,7 +85,10 @@ rate)`, so:
 
 - `envelope`, `onset_envelope`, `logmel`, `mfcc` all have exactly `N` rows
   and share the `t` time vector and scalar `fs` — no per-feature resampling
-  or alignment is needed on your side.
+  or alignment is needed on your side. The 1-D series (`t`, `envelope`,
+  `onset_envelope`) are saved as `(N, 1)` column vectors so they stack
+  directly with `logmel` `(N, n_mels)` / `mfcc` `(N, n_mfcc)` into a
+  time-by-feature TRF predictor matrix in MATLAB (`[envelope onset logmel]`).
 - To align with the EEG, resample your EEG to `analysis_rate` (or pick
   `analysis_rate` to equal it). Length will be `round(duration × rate)`;
   trim the EEG and predictor to the common length.

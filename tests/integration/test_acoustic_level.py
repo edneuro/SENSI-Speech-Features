@@ -42,6 +42,12 @@ def test_acoustic_batch_writes_mat_without_transcript(tmp_path):
     assert "envelope" in data and "onset_envelope" in data and "logmel" in data
     assert "mfcc" not in data           # disabled
     assert float(data["fs"].squeeze()) == 128
+    # 1-D time series are saved as (N, 1) column vectors so they stack with
+    # logmel (N, n_mels) as a time-by-feature TRF predictor matrix in MATLAB.
+    n = data["t"].shape[0]
+    assert data["envelope"].shape == (n, 1)
+    assert data["onset_envelope"].shape == (n, 1)
+    assert data["logmel"].shape[0] == n
 
 
 def test_acoustic_cli_runs_in_fresh_process_without_mkl_env(tmp_path):

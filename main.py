@@ -1103,6 +1103,13 @@ def run_acoustic_level_batch(args, *, on_pair_done=None, should_cancel=None) -> 
         start = time.time()
         try:
             out = extract_acoustic(str(audio_path), rate, args.acoustic_ts)
+            # Emit the 1-D time series as (N, 1) column vectors so every feature
+            # is time-down-rows and stacks directly with logmel (N, n_mels) /
+            # mfcc (N, n_mfcc) as a TRF predictor matrix in MATLAB. (The in-memory
+            # extractor API stays 1-D; this only shapes the saved .mat.)
+            for _k in ('t', 'envelope', 'onset_envelope'):
+                if _k in out and getattr(out[_k], 'ndim', 0) == 1:
+                    out[_k] = out[_k].reshape(-1, 1)
             mat_dir = _level_dir(output_dir, 'acoustic')
             mat_path = mat_dir / f'{audio_path.stem}_acoustic.mat'
             scipy.io.savemat(str(mat_path), out)   # savemat renders dict 'config' as a struct
