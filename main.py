@@ -152,6 +152,8 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument('--env-method', choices=['rms', 'hilbert'], default='rms')
     p.add_argument('--env-comp', type=float, default=0.3,
                    help='Envelope power-law compression exponent.')
+    p.add_argument('--env-window', type=float, default=1.0,
+                   help='Envelope averaging window (mTRF window; >1 overlaps frames for smoothing).')
     p.add_argument('--n-mels', type=int, default=16)
     p.add_argument('--n-mfcc', type=int, default=13)
     p.add_argument('--mel-preset', choices=['speech', 'music', 'general'], default='speech')
@@ -1159,6 +1161,7 @@ def main():
             'envelope': not args.no_envelope, 'onset_env': not args.no_onset_env,
             'logmel': not args.no_logmel, 'mfcc': args.mfcc,
             'env_method': args.env_method, 'env_comp': args.env_comp,
+            'env_window': args.env_window,
             'n_mels': args.n_mels, 'n_mfcc': args.n_mfcc,
             'mel_preset': args.mel_preset, 'analysis_rate': args.analysis_rate,
         }

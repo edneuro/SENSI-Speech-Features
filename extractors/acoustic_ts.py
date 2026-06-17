@@ -31,29 +31,44 @@ def _fit_to_grid(arr: np.ndarray, n: int) -> np.ndarray:
     return np.pad(arr, pad_width, mode="edge")
 
 
+def _mround(v: float) -> int:
+    """MATLAB-style round: half away from zero (numpy/Python round to even)."""
+    return int(np.floor(np.abs(v) + 0.5) * np.sign(v))
+
+
 def amplitude_envelope(y: np.ndarray, sr: float, rate: float, *,
-                       method: str = "rms", comp: float = 0.3) -> np.ndarray:
+                       method: str = "rms", comp: float = 0.3,
+                       window: float = 1.0) -> np.ndarray:
     """Broadband amplitude envelope, power-law compressed, at `rate` Hz.
 
-    method="rms" replicates mTRFenvelope.m: square -> frame-average every
-    round(sr/rate) samples -> sqrt -> raise to `comp`.
+    method="rms" is a faithful port of mTRFenvelope.m -> mTRFresample.m from the
+    mTRF-Toolbox (no buffer, dim=1): square -> centered moving-average resample
+    to `rate` Hz -> sqrt -> raise to `comp`. Output frame i is centered at
+    t = i/rate over a (window/rate)-wide averaging window; the first frame sits
+    at t=0 as a clamped half-window, matching mTRF bit-for-bit. `window` > 1
+    overlaps adjacent frames (extra smoothing) without changing the frame rate.
+    mTRF's default compression is log10(2) ~= 0.301 (Stevens 1955); we expose it
+    as `comp` (default 0.3).
     """
     y = np.asarray(y, dtype=np.float64).ravel()
     n = _grid_len(y.size, sr, rate)
     if n <= 0:
         return np.zeros(0, dtype=np.float64)
     if method == "rms":
-        # Average the squared signal over exactly N variable-width bins that
-        # span the whole signal. This is the boxcar anti-alias + decimation of
-        # mTRFenvelope.m (average the ~sr/rate nearest samples per output
-        # sample), placed directly on the canonical grid so there is no
-        # cumulative drift for non-integer sr/rate.
-        edges = np.linspace(0, y.size, n + 1).round().astype(int)
-        power = np.empty(n, dtype=np.float64)
+        # mTRFenvelope: x = x.^2; y = mTRFresample(...); y = sqrt(y).^comp.
+        # mTRFresample centers frame i at t=i/rate and averages the squared
+        # samples in [round(sr*(t-h)), round(sr*(t+h))] (h = half window in s),
+        # clamped to the signal bounds. Reproduced exactly here.
+        x2 = y ** 2
+        nin = y.size
+        half = 0.5 * window / rate
+        env = np.empty(n, dtype=np.float64)
         for i in range(n):
-            seg = y[edges[i]:edges[i + 1]]
-            power[i] = np.mean(seg ** 2) if seg.size else 0.0
-        env = np.sqrt(power) ** comp
+            ti = i / rate
+            start = max(0, _mround(sr * (ti - half)))
+            end = min(nin, _mround(sr * (ti + half)) + 1)
+            env[i] = x2[start:end].mean() if end > start else 0.0
+        env = np.sqrt(env) ** comp
     elif method == "hilbert":
         from scipy.signal import hilbert, resample_poly
         from math import gcd
@@ -157,7 +172,8 @@ def extract_acoustic(audio_path: str, rate: float, cfg: dict) -> dict:
     env = None
     if cfg.get("envelope", True) or cfg.get("onset_env", True):
         env = amplitude_envelope(y, sr, rate, method=cfg.get("env_method", "rms"),
-                                 comp=float(cfg.get("env_comp", 0.3)))
+                                 comp=float(cfg.get("env_comp", 0.3)),
+                                 window=float(cfg.get("env_window", 1.0)))
     if cfg.get("envelope", True):
         out["envelope"] = env
     if cfg.get("onset_env", True):
@@ -176,6 +192,7 @@ def extract_acoustic(audio_path: str, rate: float, cfg: dict) -> dict:
     out["config"] = {
         "analysis_rate": float(rate), "env_method": cfg.get("env_method", "rms"),
         "env_comp": float(cfg.get("env_comp", 0.3)),
+        "env_window": float(cfg.get("env_window", 1.0)),
         "n_mels": int(cfg.get("n_mels", 16)), "n_mfcc": int(cfg.get("n_mfcc", 13)),
         "fmin": float(fmin), "fmax": float(fmax),
         "mel_preset": cfg.get("mel_preset", "speech"),

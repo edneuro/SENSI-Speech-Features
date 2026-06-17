@@ -150,3 +150,56 @@ def test_extract_acoustic_respects_disabled_features(tmp_path):
     assert "onset_envelope" not in out
     assert "logmel" not in out
     assert "mfcc" not in out
+
+
+# ---------------------------------------------------------------------------
+# Fidelity to mTRFenvelope.m / mTRFresample.m (mTRF-Toolbox).
+# The reference below is a direct transcription of those two .m files
+# (no buffer, dim=1): square -> centered moving-average resample -> sqrt ->
+# power-law compress. amplitude_envelope(method="rms") must match it exactly.
+# ---------------------------------------------------------------------------
+
+def _matlab_round(v: float) -> int:
+    # MATLAB round(): half away from zero (numpy/Python round to even).
+    return int(np.floor(np.abs(v) + 0.5) * np.sign(v))
+
+
+def _mtrf_reference(x, fsin, fsout, window=1.0, comp=np.log10(2)):
+    x = np.asarray(x, dtype=np.float64).ravel()
+    x2 = x ** 2                                   # mTRFenvelope: square first
+    nin = x2.size
+    nout = _matlab_round(nin / fsin * fsout)
+    t = np.arange(nout) / fsout                   # mTRFresample: (0:nout-1)/fsout
+    n = 0.5 * window / fsout                       # half-window in seconds
+    y = np.empty(nout)
+    for i in range(nout):
+        idx1 = max(0, _matlab_round(fsin * (t[i] - n)))           # 0-based start
+        idx2 = min(nin, _matlab_round(fsin * (t[i] + n)) + 1)     # 0-based end (excl.)
+        y[i] = x2[idx1:idx2].mean()
+    return np.sqrt(y) ** comp                       # mTRFenvelope: sqrt then ^comp
+
+
+def test_rms_matches_mtrfenvelope_reference():
+    rng = np.random.default_rng(0)
+    fsin, fsout = 22050, 128
+    tt = np.arange(int(fsin * 0.8)) / fsin
+    x = (0.4 * np.sin(2 * np.pi * 180 * tt) * (1 + 0.5 * np.sin(2 * np.pi * 4 * tt))
+         + 0.02 * rng.standard_normal(tt.size))
+    ours = acoustic_ts.amplitude_envelope(x, fsin, fsout, method="rms", comp=np.log10(2))
+    ref = _mtrf_reference(x, fsin, fsout)
+    assert ours.shape == ref.shape
+    np.testing.assert_allclose(ours, ref, atol=1e-9, rtol=0)
+
+
+def test_rms_window_param_matches_reference_and_smooths():
+    rng = np.random.default_rng(1)
+    fsin, fsout = 16000, 100
+    x = rng.standard_normal(int(fsin * 0.5))
+    e1 = acoustic_ts.amplitude_envelope(x, fsin, fsout, method="rms", comp=1.0, window=1.0)
+    e4 = acoustic_ts.amplitude_envelope(x, fsin, fsout, method="rms", comp=1.0, window=4.0)
+    assert e1.shape == e4.shape == (round(0.5 * fsout),)
+    # A wider averaging window (overlap) reduces frame-to-frame variability.
+    assert np.std(np.diff(e4)) < np.std(np.diff(e1))
+    # window>1 must also match the mTRF reference exactly.
+    np.testing.assert_allclose(
+        e4, _mtrf_reference(x, fsin, fsout, window=4.0, comp=1.0), atol=1e-9, rtol=0)

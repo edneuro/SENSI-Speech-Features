@@ -642,6 +642,7 @@ DEFAULT_PREFS_V13: dict[str, Any] = {
         "analysis_rate": 128,
         "env_method": "rms",
         "env_comp": 0.3,
+        "env_window": 1.0,
         "n_mels": 16,
         "n_mfcc": 13,
         "mel_preset": "speech",

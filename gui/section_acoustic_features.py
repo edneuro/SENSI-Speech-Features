@@ -85,6 +85,15 @@ class AcousticFeaturesSection(QWidget):
         self._env_comp_spin.valueChanged.connect(
             lambda v: self._save_param("env_comp", v))
         env_row.addWidget(self._env_comp_spin)
+        env_row.addWidget(QLabel("Window (smoothing):"))
+        self._env_window_spin = QDoubleSpinBox()
+        self._env_window_spin.setRange(1.0, 16.0)
+        self._env_window_spin.setSingleStep(1.0)
+        self._env_window_spin.setDecimals(1)
+        self._env_window_spin.setValue(float(a.get("env_window", 1.0)))
+        self._env_window_spin.valueChanged.connect(
+            lambda v: self._save_param("env_window", v))
+        env_row.addWidget(self._env_window_spin)
         env_row.addStretch(1)
         _env_w = QWidget(); _env_w.setLayout(env_row)
         params_card.add_widget(_env_w)

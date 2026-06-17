@@ -108,6 +108,7 @@ def to_acoustic_namespace(prefs: dict) -> argparse.Namespace:
         "mfcc":      bool(feats.get("feat_acoustic_ts_mfcc", False)),
         "env_method":   acfg.get("env_method", "rms"),
         "env_comp":     float(acfg.get("env_comp", 0.3)),
+        "env_window":   float(acfg.get("env_window", 1.0)),
         "n_mels":       int(acfg.get("n_mels", 16)),
         "n_mfcc":       int(acfg.get("n_mfcc", 13)),
         "mel_preset":   acfg.get("mel_preset", "speech"),

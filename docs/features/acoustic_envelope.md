@@ -27,17 +27,26 @@ SensiExtractor offers two envelope methods (toggle: `env_method`). Both
 return a value at every point of the canonical grid `N = round(duration ×
 rate)` and then apply a power-law compression `comp` (default `0.3`).
 
-**`rms` (default) — faithful replica of `mTRFenvelope.m`.** This mirrors the
-envelope routine of the mTRF-Toolbox [Crosse 2016], the de-facto reference
-implementation for speech-TRF work:
+**`rms` (default) — faithful replica of `mTRFenvelope.m` → `mTRFresample.m`.**
+This is a direct port of the mTRF-Toolbox envelope routine [Crosse 2016], the
+de-facto reference for speech-TRF work, and matches it sample-for-sample (no
+buffer, working along the time axis):
 
 1. **Square** the waveform — `y²` is instantaneous signal power.
-2. **Boxcar-average / decimate** onto the grid: the signal is split into `N`
-   contiguous bins that together span the whole file, and the mean of `y²`
-   is taken within each bin. Averaging the ≈`sr/rate` samples per output
-   sample is simultaneously the anti-alias filter and the downsampling step.
-3. **Square root** — `√(mean power)` is the RMS amplitude of each bin.
+2. **Centered moving-average resample** onto the grid: output frame `i` is
+   placed at time `t = i / rate` and set to the mean of `y²` over the samples
+   in `[round(sr·(t − h)), round(sr·(t + h))]`, where the half-window
+   `h = 0.5 · window / rate`. The first frame sits at `t = 0` as a clamped
+   half-window (this centering is what makes it bit-identical to mTRF, and is
+   the one thing a naive contiguous-bin average gets wrong — it introduces a
+   half-frame phase shift). The square-window average is simultaneously the
+   anti-alias filter and the downsampling step; no separate filter is applied.
+3. **Square root** — `√(mean power)` is the RMS amplitude of each frame.
 4. **Power-law compress** — raise the RMS envelope to the exponent `comp`.
+
+   The **`window`** parameter (default `1`) sets the averaging width in output
+   samples; values `> 1` overlap adjacent frames for extra smoothing **without**
+   changing the output rate — the same `window` argument as `mTRFresample`.
 
    The mTRF default, which SensiExtractor matches, is `comp = log₁₀(2) ≈
    0.301` (we expose it as `0.3`). This is not arbitrary: Stevens' loudness
@@ -96,19 +105,22 @@ rate)`, so:
 The envelope is returned **raw (not z-scored / not normalized)** so you keep
 full control: most TRF pipelines z-score each predictor and each EEG channel
 before fitting. The `config` struct in the `.mat` records `analysis_rate`,
-`env_method`, `env_comp`, and `source_sr` for provenance.
+`env_method`, `env_comp`, `env_window`, and `source_sr` for provenance.
 
 ## Implementation in SensiExtractor
 Source: `extractors/acoustic_ts.py` → `amplitude_envelope(y, sr, rate, *,
-method, comp)`. The `rms` branch places the boxcar average directly on the
-canonical grid via `np.linspace(0, y.size, n+1)` bin edges, which avoids the
-cumulative drift you would get from a fixed `round(sr/rate)` decimation when
-`sr/rate` is non-integer. The `hilbert` branch uses `scipy.signal.hilbert`
-+ `resample_poly` with `up/down` reduced by their GCD. Both return
-`_fit_to_grid(env, n)` so the output is exactly `N` samples. The audio is
-loaded mono at its native sample rate (`librosa.load(..., sr=None)`); the
-envelope's frequency content above `rate/2` is removed by the averaging /
-FIR step before decimation.
+method, comp, window)`. The `rms` branch is a line-for-line port of
+`mTRFenvelope.m` + `mTRFresample.m`: for each output frame it averages `y²`
+over the centered window `[round(sr·(t−h)), round(sr·(t+h))]` (with `t = i/rate`
+and `h = 0.5·window/rate`), clamped to the signal bounds, then takes the square
+root and raises to `comp`. MATLAB's round-half-away-from-zero is reproduced
+(`_mround`) so frame boundaries match exactly; a regression test
+(`tests/extractors/test_acoustic_ts.py::test_rms_matches_mtrfenvelope_reference`)
+asserts bit-for-bit agreement with an independent transcription of the two `.m`
+files. The `hilbert` branch uses `scipy.signal.hilbert` + `resample_poly` with
+`up/down` reduced by their GCD. The audio is loaded mono at its native sample
+rate (`librosa.load(..., sr=None)`); content above `rate/2` is removed by the
+averaging / FIR step.
 
 ## Library
 ```python
@@ -116,7 +128,7 @@ import librosa
 from extractors.acoustic_ts import amplitude_envelope
 
 y, sr = librosa.load("stim.wav", sr=None, mono=True)
-env = amplitude_envelope(y, sr, rate=128, method="rms", comp=0.3)
+env = amplitude_envelope(y, sr, rate=128, method="rms", comp=0.3, window=1.0)
 # env.shape == (round(len(y)/sr * 128),)
 ```
 
