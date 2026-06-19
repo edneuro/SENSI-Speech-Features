@@ -28,7 +28,10 @@ from importlib import import_module
 
 def _lazy(module_path: str, attr: str):
     """Return a callable that imports `module_path`.`attr` on first call and
-    caches it, then delegates. Keeps GUI startup free of torch/spaCy/etc."""
+    caches it, then delegates. Keeps GUI startup free of torch/spaCy/etc.
+
+    A bad module path/attr fails only at call time (when the stage runs), not
+    at import — the deliberate trade-off that buys the fast startup."""
     cache: dict = {}
 
     def call(*args, **kwargs):
@@ -38,6 +41,10 @@ def _lazy(module_path: str, attr: str):
             cache["fn"] = fn
         return fn(*args, **kwargs)
 
+    # Carry the target's identity so diagnostics that log stage.run.__name__
+    # show the extractor, not "call".
+    call.__name__ = attr
+    call.__qualname__ = f"{module_path}.{attr}"
     return call
 
 
