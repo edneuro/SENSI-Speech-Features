@@ -8,12 +8,14 @@ import importlib
 import sys
 
 
-def test_importing_planner_does_not_load_heavy_ml():
-    # Start from a clean slate for the modules we care about.
-    for mod in ("torch", "transformers", "spacy"):
-        sys.modules.pop(mod, None)
+def test_importing_planner_does_not_load_heavy_ml(monkeypatch):
+    # Evict the modules we care about so the assertion reflects THIS import.
+    # monkeypatch.delitem restores sys.modules afterwards, so we don't leave
+    # later tests (which may legitimately rely on torch/spaCy) with a hole.
+    for name in ("torch", "transformers", "spacy"):
+        monkeypatch.delitem(sys.modules, name, raising=False)
     for name in [m for m in sys.modules if m.startswith("gui.planner")]:
-        del sys.modules[name]
+        monkeypatch.delitem(sys.modules, name, raising=False)
 
     importlib.import_module("gui.planner")
 
