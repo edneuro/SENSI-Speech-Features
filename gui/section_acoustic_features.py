@@ -1,13 +1,29 @@
-"""Acoustic-level features page — audio-only time-series sidecar toggles + params."""
+"""Acoustic-level features page — audio-only time-series sidecar toggles + params.
+
+Single-card layout: a shared analysis-rate grid on top, then each feature's
+toggle with its own parameters indented directly beneath it. Parameter groups
+grey out when no enabled feature consumes them (see _sync_param_enabled, which
+mirrors extract_acoustic() in extractors/acoustic_ts.py)."""
 
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QGridLayout, QHBoxLayout, QLabel,
+    QWidget, QHBoxLayout, QVBoxLayout, QLabel, QFrame,
     QComboBox, QDoubleSpinBox, QSpinBox,
 )
 
 from gui.widgets import Card, ToggleRow
 from utils.preferences import load_preferences, save_preferences
+
+
+def _indent(inner: QWidget, left: int = 28) -> QWidget:
+    """Wrap a widget in a left-indented container so a feature's params sit
+    visually beneath (and subordinate to) its toggle."""
+    w = QWidget()
+    lay = QHBoxLayout(w)
+    lay.setContentsMargins(left, 0, 0, 0)
+    lay.addWidget(inner)
+    lay.addStretch(1)
+    return w
 
 
 class AcousticFeaturesSection(QWidget):
@@ -24,37 +40,14 @@ class AcousticFeaturesSection(QWidget):
         layout.setContentsMargins(24, 16, 24, 16)
         layout.setSpacing(12)
 
-        # --- Acoustic time-series features ---
-        # The acoustic level is run/saved from the Run tab ("Acoustic .mat"
-        # output toggle). This page only chooses WHICH features it computes — so
-        # it is a plain Card (no master), matching how other levels configure
-        # their features on their own page while the Run tab gates output.
-        ts_card = Card(
+        card = Card(
             "Acoustic features (audio-only)",
             "Continuous acoustic time series on a shared analysis grid. Enable "
-            "the output in the Run tab ('Acoustic .mat'); choose the features here.",
-        )
-        ts_grid = QGridLayout()
-        acoustic_keys = [
-            ("feat_acoustic_ts_envelope",  "Amplitude envelope (broadband)"),
-            ("feat_acoustic_ts_onset_env", "Onset envelope (HWR derivative)"),
-            ("feat_acoustic_ts_logmel",    "Log-mel spectrogram"),
-            ("feat_acoustic_ts_mfcc",      "MFCC (off by default)"),
-        ]
-        for i, (key, label) in enumerate(acoustic_keys):
-            ts_grid.addWidget(
-                self._make_toggle(key, label, f[key]),
-                i // 2, i % 2,
-            )
-        ts_card.add_layout(ts_grid)
-        layout.addWidget(ts_card)
-
-        # --- Parameters ---
-        params_card = Card(
-            "Acoustic parameters",
-            "Analysis grid and feature settings shared across all acoustic time series.",
+            "the output in the Run tab ('Acoustic .mat'); choose features and "
+            "their settings here.",
         )
 
+        # --- Shared analysis grid (applies to every series) ---
         rate_row = QHBoxLayout()
         rate_row.addWidget(QLabel("Analysis rate (Hz):"))
         self._rate_spin = QDoubleSpinBox()
@@ -64,19 +57,31 @@ class AcousticFeaturesSection(QWidget):
         self._rate_spin.valueChanged.connect(
             lambda v: self._save_param("analysis_rate", v))
         rate_row.addWidget(self._rate_spin)
+        rate_caption = QLabel("applies to every series below")
+        rate_caption.setObjectName("Subtitle")
+        rate_row.addWidget(rate_caption)
         rate_row.addStretch(1)
         _rate_w = QWidget(); _rate_w.setLayout(rate_row)
-        params_card.add_widget(_rate_w)
+        card.add_widget(_rate_w)
 
-        env_row = QHBoxLayout()
-        env_row.addWidget(QLabel("Envelope method:"))
+        divider = QFrame()
+        divider.setObjectName("SectionDivider")
+        divider.setFixedHeight(1)
+        card.add_widget(divider)
+
+        # --- Amplitude envelope + its params ---
+        card.add_widget(self._make_toggle(
+            "feat_acoustic_ts_envelope", "Amplitude envelope (broadband)",
+            f["feat_acoustic_ts_envelope"]))
+        env_row = QHBoxLayout(); env_row.setContentsMargins(0, 0, 0, 0)
+        env_row.addWidget(QLabel("Method:"))
         self._env_method_combo = QComboBox()
         self._env_method_combo.addItems(["rms", "hilbert"])
         self._env_method_combo.setCurrentText(a.get("env_method", "rms"))
         self._env_method_combo.currentTextChanged.connect(
             lambda v: self._save_param("env_method", v))
         env_row.addWidget(self._env_method_combo)
-        env_row.addWidget(QLabel("Compression exponent:"))
+        env_row.addWidget(QLabel("Compression:"))
         self._env_comp_spin = QDoubleSpinBox()
         self._env_comp_spin.setRange(0.0, 2.0)
         self._env_comp_spin.setSingleStep(0.05)
@@ -85,7 +90,7 @@ class AcousticFeaturesSection(QWidget):
         self._env_comp_spin.valueChanged.connect(
             lambda v: self._save_param("env_comp", v))
         env_row.addWidget(self._env_comp_spin)
-        env_row.addWidget(QLabel("Window (smoothing):"))
+        env_row.addWidget(QLabel("Window:"))
         self._env_window_spin = QDoubleSpinBox()
         self._env_window_spin.setRange(1.0, 16.0)
         self._env_window_spin.setSingleStep(1.0)
@@ -94,11 +99,24 @@ class AcousticFeaturesSection(QWidget):
         self._env_window_spin.valueChanged.connect(
             lambda v: self._save_param("env_window", v))
         env_row.addWidget(self._env_window_spin)
-        env_row.addStretch(1)
-        _env_w = QWidget(); _env_w.setLayout(env_row)
-        params_card.add_widget(_env_w)
+        _env_inner = QWidget(); _env_inner.setLayout(env_row)
+        self._env_params_w = _indent(_env_inner)
+        card.add_widget(self._env_params_w)
 
-        mel_row = QHBoxLayout()
+        # --- Onset envelope (no own params) ---
+        card.add_widget(self._make_toggle(
+            "feat_acoustic_ts_onset_env", "Onset envelope (HWR derivative)",
+            f["feat_acoustic_ts_onset_env"]))
+        onset_caption = QLabel(
+            "Derived from the amplitude envelope — uses its settings above.")
+        onset_caption.setObjectName("Subtitle")
+        card.add_widget(_indent(onset_caption))
+
+        # --- Log-mel spectrogram + its params ---
+        card.add_widget(self._make_toggle(
+            "feat_acoustic_ts_logmel", "Log-mel spectrogram",
+            f["feat_acoustic_ts_logmel"]))
+        mel_row = QHBoxLayout(); mel_row.setContentsMargins(0, 0, 0, 0)
         mel_row.addWidget(QLabel("Mel bands (n_mels):"))
         self._n_mels_spin = QSpinBox()
         self._n_mels_spin.setRange(1, 128)
@@ -106,26 +124,40 @@ class AcousticFeaturesSection(QWidget):
         self._n_mels_spin.valueChanged.connect(
             lambda v: self._save_param("n_mels", v))
         mel_row.addWidget(self._n_mels_spin)
-        mel_row.addWidget(QLabel("MFCC (n_mfcc):"))
-        self._n_mfcc_spin = QSpinBox()
-        self._n_mfcc_spin.setRange(1, 60)
-        self._n_mfcc_spin.setValue(int(a.get("n_mfcc", 13)))
-        self._n_mfcc_spin.valueChanged.connect(
-            lambda v: self._save_param("n_mfcc", v))
-        mel_row.addWidget(self._n_mfcc_spin)
-        mel_row.addWidget(QLabel("Mel preset:"))
+        mel_row.addWidget(QLabel("Preset:"))
         self._mel_preset_combo = QComboBox()
         self._mel_preset_combo.addItems(["speech", "music", "general"])
         self._mel_preset_combo.setCurrentText(a.get("mel_preset", "speech"))
         self._mel_preset_combo.currentTextChanged.connect(
             lambda v: self._save_param("mel_preset", v))
         mel_row.addWidget(self._mel_preset_combo)
-        mel_row.addStretch(1)
-        _mel_w = QWidget(); _mel_w.setLayout(mel_row)
-        params_card.add_widget(_mel_w)
+        _mel_inner = QWidget(); _mel_inner.setLayout(mel_row)
+        self._mel_params_w = _indent(_mel_inner)
+        card.add_widget(self._mel_params_w)
 
-        layout.addWidget(params_card)
+        # --- MFCC + its params ---
+        card.add_widget(self._make_toggle(
+            "feat_acoustic_ts_mfcc", "MFCC (off by default)",
+            f["feat_acoustic_ts_mfcc"]))
+        mfcc_row = QHBoxLayout(); mfcc_row.setContentsMargins(0, 0, 0, 0)
+        mfcc_row.addWidget(QLabel("MFCC count (n_mfcc):"))
+        self._n_mfcc_spin = QSpinBox()
+        self._n_mfcc_spin.setRange(1, 60)
+        self._n_mfcc_spin.setValue(int(a.get("n_mfcc", 13)))
+        self._n_mfcc_spin.valueChanged.connect(
+            lambda v: self._save_param("n_mfcc", v))
+        mfcc_row.addWidget(self._n_mfcc_spin)
+        mfcc_caption = QLabel("also uses mel bands / preset above")
+        mfcc_caption.setObjectName("Subtitle")
+        mfcc_row.addWidget(mfcc_caption)
+        _mfcc_inner = QWidget(); _mfcc_inner.setLayout(mfcc_row)
+        self._mfcc_params_w = _indent(_mfcc_inner)
+        card.add_widget(self._mfcc_params_w)
+
+        layout.addWidget(card)
         layout.addStretch(1)
+
+        self._sync_param_enabled()
 
     def toggle(self, key: str): return self._toggles.get(key)
 
@@ -138,7 +170,21 @@ class AcousticFeaturesSection(QWidget):
 
     def _on_toggle(self, key: str, value: bool) -> None:
         save_preferences({"features": {key: value}})
+        self._sync_param_enabled()
         self.settings_changed.emit()
+
+    def _sync_param_enabled(self) -> None:
+        """Grey each param group out unless an enabled feature consumes it.
+        Mirrors extract_acoustic() in extractors/acoustic_ts.py:
+        env params -> envelope OR onset; mel params -> logmel OR mfcc;
+        n_mfcc -> mfcc."""
+        env_on = self._toggles["feat_acoustic_ts_envelope"].is_checked()
+        onset_on = self._toggles["feat_acoustic_ts_onset_env"].is_checked()
+        logmel_on = self._toggles["feat_acoustic_ts_logmel"].is_checked()
+        mfcc_on = self._toggles["feat_acoustic_ts_mfcc"].is_checked()
+        self._env_params_w.setEnabled(env_on or onset_on)
+        self._mel_params_w.setEnabled(logmel_on or mfcc_on)
+        self._mfcc_params_w.setEnabled(mfcc_on)
 
     def _save_param(self, key: str, value) -> None:
         save_preferences({"acoustic_ts": {key: value}})
@@ -151,3 +197,4 @@ class AcousticFeaturesSection(QWidget):
             toggle.blockSignals(True)
             toggle.set_checked(f.get(key, True))
             toggle.blockSignals(False)
+        self._sync_param_enabled()
