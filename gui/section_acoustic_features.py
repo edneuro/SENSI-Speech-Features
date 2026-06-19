@@ -17,7 +17,8 @@ from utils.preferences import load_preferences, save_preferences
 
 def _indent(inner: QWidget, left: int = 28) -> QWidget:
     """Wrap a widget in a left-indented container so a feature's params sit
-    visually beneath (and subordinate to) its toggle."""
+    visually beneath (and subordinate to) its toggle. `left` is in px, chosen
+    to clear the ToggleRow checkbox glyph above it."""
     w = QWidget()
     lay = QHBoxLayout(w)
     lay.setContentsMargins(left, 0, 0, 0)
@@ -107,6 +108,8 @@ class AcousticFeaturesSection(QWidget):
         card.add_widget(self._make_toggle(
             "feat_acoustic_ts_onset_env", "Onset envelope (HWR derivative)",
             f["feat_acoustic_ts_onset_env"]))
+        # Informational only (not stored / not greyed): onset-env has no params
+        # of its own; it reuses the envelope settings above.
         onset_caption = QLabel(
             "Derived from the amplitude envelope — uses its settings above.")
         onset_caption.setObjectName("Subtitle")
