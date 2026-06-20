@@ -19,26 +19,53 @@ from __future__ import annotations
 
 from gui.planner.stages import Stage, FeatureCluster
 
-# Extractor function imports — kept local at module top so the registry
-# entries below can reference them by identity.
-from extractors.text_parser    import parse           as _spacy_parse
-from extractors.aligner        import align_with_phones as _mfa_align
-from extractors.audio_features import extract         as _praat_extract
-from extractors.word_freq      import add_word_freq
-from extractors.educator_freq  import add_edu_freq
-from extractors.surprisal      import add_surprisal
-from extractors.llm_cloze      import add_llm_cloze
-from extractors.semantic_domain import add_semantic_domain
-from extractors.lexical_norms import add_lexical_norms as _add_lexical_norms
-from extractors.prosody        import add_word_prosody
-from extractors.timing         import add_timing_columns
-from extractors.syllabify      import syllabify_pairs
-from extractors.syllable_prosody import add_syllable_prosody
-from extractors.pcenter        import add_pcenter     as _add_pcenter
-from extractors.sentence_prosody import add_sentence_prosody as _add_sentence_prosody
-from extractors.word2vec_embed  import embed_word2vec        as _embed_word2vec
-from extractors.bert_embed      import embed_bert_words_and_sentences as _embed_bert
-from extractors.acoustic_ts     import extract_acoustic               as _extract_acoustic
+# Extractor callables are bound lazily: planning reads only Stage metadata
+# (name/consumes/produces), so importing this module must NOT drag in the
+# heavy ML stack (torch/transformers/spaCy). Each name below imports its
+# extractor on first *call* (i.e. when a stage actually runs), caching it.
+from importlib import import_module
+
+
+def _lazy(module_path: str, attr: str):
+    """Return a callable that imports `module_path`.`attr` on first call and
+    caches it, then delegates. Keeps GUI startup free of torch/spaCy/etc.
+
+    A bad module path/attr fails only at call time (when the stage runs), not
+    at import — the deliberate trade-off that buys the fast startup."""
+    cache: dict = {}
+
+    def call(*args, **kwargs):
+        fn = cache.get("fn")
+        if fn is None:
+            fn = getattr(import_module(module_path), attr)
+            cache["fn"] = fn
+        return fn(*args, **kwargs)
+
+    # Carry the target's identity so diagnostics that log stage.run.__name__
+    # show the extractor, not "call".
+    call.__name__ = attr
+    call.__qualname__ = f"{module_path}.{attr}"
+    return call
+
+
+_spacy_parse           = _lazy("extractors.text_parser", "parse")
+_mfa_align             = _lazy("extractors.aligner", "align_with_phones")
+_praat_extract         = _lazy("extractors.audio_features", "extract")
+add_word_freq          = _lazy("extractors.word_freq", "add_word_freq")
+add_edu_freq           = _lazy("extractors.educator_freq", "add_edu_freq")
+add_surprisal          = _lazy("extractors.surprisal", "add_surprisal")
+add_llm_cloze          = _lazy("extractors.llm_cloze", "add_llm_cloze")
+add_semantic_domain    = _lazy("extractors.semantic_domain", "add_semantic_domain")
+_add_lexical_norms     = _lazy("extractors.lexical_norms", "add_lexical_norms")
+add_word_prosody       = _lazy("extractors.prosody", "add_word_prosody")
+add_timing_columns     = _lazy("extractors.timing", "add_timing_columns")
+syllabify_pairs        = _lazy("extractors.syllabify", "syllabify_pairs")
+add_syllable_prosody   = _lazy("extractors.syllable_prosody", "add_syllable_prosody")
+_add_pcenter           = _lazy("extractors.pcenter", "add_pcenter")
+_add_sentence_prosody  = _lazy("extractors.sentence_prosody", "add_sentence_prosody")
+_embed_word2vec        = _lazy("extractors.word2vec_embed", "embed_word2vec")
+_embed_bert            = _lazy("extractors.bert_embed", "embed_bert_words_and_sentences")
+_extract_acoustic      = _lazy("extractors.acoustic_ts", "extract_acoustic")
 
 STAGES: list[Stage] = [
     # --- §0 Shared stages ---
