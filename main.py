@@ -21,7 +21,7 @@ Output:
 Column order in output CSV:
     --- spaCy structural ---
     doc_id, paragraph_id, sentence_id, sentence, start, end,
-    term_id, token_id
+    token_id, token_in_sentence_id
     --- token-level linguistic (spaCy) ---
     token, lemma, upos, xpos, feats, dep_rel, head_token_id
     --- computed features ---
@@ -298,7 +298,7 @@ def _merge_alignment(token_df: pd.DataFrame, align_df: pd.DataFrame) -> pd.DataF
 
 _COLUMN_ORDER = [
     'doc_id', 'paragraph_id', 'sentence_id', 'sentence', 'start', 'end',
-    'term_id', 'token_id',
+    'token_id', 'token_in_sentence_id',
     'token', 'lemma', 'upos', 'xpos', 'feats', 'dep_rel', 'head_token_id',
     'Zipf_Freq',
     'Edu_Zipf_K2', 'Edu_Zipf_3to5', 'Edu_Zipf_6to8', 'Edu_Zipf_9to12', 'Edu_Zipf_Overall',
@@ -401,8 +401,15 @@ def run(args) -> pd.DataFrame:
     args._phones_df = None  # reset each run; populated below when alignment runs
     if not args.no_align and args.audio:
         from extractors.aligner import align_with_phones as mfa_align
-        print('[mfa] Running MFA alignment…')
-        align_df, phones_df = mfa_align(args.audio, text)
+        # Reuse a per-document alignment across passes (word + doc batches in
+        # one GUI run share `_align_cache`), so MFA runs at most once per doc.
+        _align_cache = getattr(args, '_align_cache', None)
+        if _align_cache is not None and (
+                os.path.abspath(args.audio), text) in _align_cache:
+            print('[mfa] Reusing cached alignment…')
+        else:
+            print('[mfa] Running MFA alignment…')
+        align_df, phones_df = mfa_align(args.audio, text, cache=_align_cache)
         args._phones_df = phones_df
         if df is not None:
             df = _merge_alignment(df, align_df)
@@ -462,7 +469,26 @@ def run(args) -> pd.DataFrame:
 
 import time
 
-from utils.file_pairing import find_pairs
+from utils.file_pairing import find_pairs, Pair
+
+
+def _batch_work_items(pairing) -> list:
+    """Ordered work list for the word/doc batches: every matched (text, audio)
+    pair, followed by each audio-less transcript as a text-only item.
+
+    Text-only items reuse the Pair shape with an empty audio_path so the loop
+    body and logging stay uniform; main.run() guards its audio stages with
+    `and args.audio`, so an empty path simply skips MFA/prosody and the file
+    is processed for whatever non-audio features are selected. This is what
+    keeps standalone transcripts (no matched .wav) from being dropped — see
+    the 2026-06-24 bug report.
+    """
+    items = list(pairing.pairs)
+    items.extend(
+        Pair(stimulus_id=p.stem, transcript_path=p, audio_path="")
+        for p in pairing.unmatched_text
+    )
+    return items
 from utils.run_logger import RunLogger
 from utils.doc_summary import build_doc_summary
 
@@ -481,8 +507,8 @@ _WORD_FEATURE_COLUMN_MAP = {
     "feat_struct_sentence_text": "sentence",
     "feat_struct_char_start": "start",
     "feat_struct_char_end": "end",
-    "feat_struct_term_id": "term_id",
     "feat_struct_token_id": "token_id",
+    "feat_struct_token_in_sentence_id": "token_in_sentence_id",
     # Acoustic
     "feat_acoustic_onset": "Onset",
     "feat_acoustic_end": "End",
@@ -599,10 +625,32 @@ def _sentence_columns_to_drop(features: dict) -> set:
             if not features.get(key, True)}
 
 
+# Lexical-linguistic per-column toggles → the columns each one owns. Unlike
+# the 1:1 _WORD_FEATURE_COLUMN_MAP, one toggle can own several columns. These
+# columns are produced by spaCy (§0.1) regardless, so the only way to honour a
+# lexling toggle being off is to drop its columns from the features CSV here.
+_LEXLING_COLUMN_MAP = {
+    "lexling_tokens": ("token", "lemma"),
+    "lexling_pos":    ("upos", "xpos"),
+    "lexling_morph":  ("feats",),
+    "lexling_dep":    ("dep_rel", "head_token_id"),
+}
+
+
 def _word_columns_to_drop(features: dict) -> set:
     """Return the set of word-level CSV columns to drop based on v4 toggles."""
-    return {col for key, col in _WORD_FEATURE_COLUMN_MAP.items()
+    drop = {col for key, col in _WORD_FEATURE_COLUMN_MAP.items()
             if not features.get(key, True)}
+    for key, cols in _LEXLING_COLUMN_MAP.items():
+        if not features.get(key, True):
+            drop.update(cols)
+    # head_token_id references the syntactic head by its global token_id, so
+    # token_id is its anchor. Keep token_id whenever the dependency parse is
+    # emitted, even if its own structural toggle is off — otherwise
+    # head_token_id would dangle with no id column to resolve against.
+    if features.get("lexling_dep", True):
+        drop.discard("token_id")
+    return drop
 
 
 def _doc_columns_to_drop(output: dict, features: dict) -> set:
@@ -643,7 +691,7 @@ def _word_embedding_vars(emb: np.ndarray, df: pd.DataFrame,
     return {
         "embeddings":  emb,
         "tokens":      np.array(df["token"], dtype=object),
-        "word_id":     df["term_id"].to_numpy(dtype=np.int64),
+        "word_id":     df["token_id"].to_numpy(dtype=np.int64),
         "sentence_id": df["sentence_id"].to_numpy(dtype=np.int64),
         "is_valid":    np.asarray(is_valid, dtype=bool),
     }
@@ -713,25 +761,27 @@ def run_word_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None
 
     for warning in pairing.warnings:
         logger.add_warning(warning)
-    for unmatched in pairing.unmatched_text:
-        logger.record_unmatched_text(unmatched)
+    # Audio-less transcripts are now processed as text-only items (see
+    # _batch_work_items), so they are no longer recorded as unmatched_text.
+    # Only audio with no transcript stays unprocessable here.
     for unmatched in pairing.unmatched_audio:
         logger.record_unmatched_audio(unmatched)
 
-    for i, pair in enumerate(pairing.pairs):
+    work_items = _batch_work_items(pairing)
+    for i, pair in enumerate(work_items):
         if should_cancel and should_cancel():
             logger.add_warning('Run cancelled by user before processing complete')
             break
         start = time.time()
         try:
             args.transcript = str(pair.transcript_path)
-            args.audio = str(pair.audio_path)
+            args.audio = str(pair.audio_path) if pair.audio_path else ""
             args.doc_id = i + 1
             df = run(args)
 
             # Sub-word sidecars (Task 7) — emit BEFORE the per-column drop.
             # The drop step below removes columns the user toggled off for the
-            # features CSV (e.g. doc_id, sentence_id, token_id, Onset, End when
+            # features CSV (e.g. doc_id, sentence_id, token_in_sentence_id, Onset, End when
             # the matching feat_struct_*/feat_acoustic_* keys are False). But
             # syllabify_pairs requires exactly those columns on word_df, so
             # dropping them first silently produces empty syll/phon DataFrames.
@@ -852,7 +902,7 @@ def run_word_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None
             logger.record_pair_success(
                 stimulus_id=pair.stimulus_id,
                 transcript_path=pair.transcript_path,
-                audio_path=pair.audio_path,
+                audio_path=pair.audio_path or "",
                 runtime_seconds=time.time() - start,
                 output_csv_path=features_path,
                 output_summary_path=None,
@@ -863,12 +913,12 @@ def run_word_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None
             logger.record_pair_error(
                 stimulus_id=pair.stimulus_id,
                 transcript_path=pair.transcript_path,
-                audio_path=pair.audio_path,
+                audio_path=pair.audio_path or "",
                 runtime_seconds=time.time() - start,
                 error_message=tb,
             )
         if on_pair_done:
-            on_pair_done(i + 1, len(pairing.pairs), pair.stimulus_id)
+            on_pair_done(i + 1, len(work_items), pair.stimulus_id)
     logger.finalize()
 
     # Write per-run column -> unit sidecar.
@@ -944,8 +994,8 @@ def run_doc_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None:
 
     for warning in pairing.warnings:
         logger.add_warning(warning)
-    for unmatched in pairing.unmatched_text:
-        logger.record_unmatched_text(unmatched)
+    # Audio-less transcripts are processed as text-only items (see
+    # _batch_work_items); only audio with no transcript stays unprocessable.
     for unmatched in pairing.unmatched_audio:
         logger.record_unmatched_audio(unmatched)
 
@@ -986,14 +1036,15 @@ def run_doc_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None:
     if doc_toggles.get('doc_prosody'):
         extract_args.no_prosody = False
 
-    for i, pair in enumerate(pairing.pairs):
+    work_items = _batch_work_items(pairing)
+    for i, pair in enumerate(work_items):
         if should_cancel and should_cancel():
             logger.add_warning('Run cancelled by user before processing complete')
             break
         start = time.time()
         try:
             extract_args.transcript = str(pair.transcript_path)
-            extract_args.audio = str(pair.audio_path)
+            extract_args.audio = str(pair.audio_path) if pair.audio_path else ""
             extract_args.doc_id = i + 1
 
             df = run(extract_args)
@@ -1003,8 +1054,11 @@ def run_doc_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None:
             liwc_path = None
             if dict_label == 'LIWC':
                 _, liwc_path = _resolve_sem_backend(args.sem_dict)
+            # The doc-summary name column shows the real transcript filename
+            # (with extension, original casing); pair.stimulus_id (the stem)
+            # still drives the per-level output filenames.
             summary = build_doc_summary(
-                df, stimulus_id=pair.stimulus_id, dictionary_used=dict_label,
+                df, stimulus_id=pair.transcript_path.name, dictionary_used=dict_label,
                 text=text, toggles=doc_toggles, liwc_dictionary_path=liwc_path,
                 contours=getattr(extract_args, '_contours', None),
                 pause_threshold_s=getattr(extract_args, 'pause_threshold', 0.25),
@@ -1012,13 +1066,13 @@ def run_doc_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None:
                 late_acquired_threshold=getattr(args, 'late_acquired_threshold', 10.0),
             )
             summary['transcript_path'] = str(pair.transcript_path)
-            summary['audio_path'] = str(pair.audio_path)
+            summary['audio_path'] = str(pair.audio_path) if pair.audio_path else ""
             summary_rows.append(summary)
 
             logger.record_pair_success(
                 stimulus_id=pair.stimulus_id,
                 transcript_path=pair.transcript_path,
-                audio_path=pair.audio_path,
+                audio_path=pair.audio_path or "",
                 runtime_seconds=time.time() - start,
                 output_csv_path=master_path,
                 output_summary_path=None,
@@ -1029,12 +1083,12 @@ def run_doc_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None:
             logger.record_pair_error(
                 stimulus_id=pair.stimulus_id,
                 transcript_path=pair.transcript_path,
-                audio_path=pair.audio_path,
+                audio_path=pair.audio_path or "",
                 runtime_seconds=time.time() - start,
                 error_message=tb,
             )
         if on_pair_done:
-            on_pair_done(i + 1, len(pairing.pairs), pair.stimulus_id)
+            on_pair_done(i + 1, len(work_items), pair.stimulus_id)
 
     if summary_rows:
         summary_df = pd.DataFrame(summary_rows)

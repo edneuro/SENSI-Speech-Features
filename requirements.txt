@@ -73,8 +73,11 @@ pytest-qt>=4.4
 # Acoustic prosody (Parselmouth wraps Praat for pitch, intensity, HNR)
 praat-parselmouth>=0.4
 
-# Word2Vec embeddings
-gensim>=4.3
+# Word2Vec embeddings.
+# Floor is 4.3.3: the first gensim release that builds against numpy 2.x
+# (the env ships numpy 2.2). With a looser >=4.3 a fresh install can resolve
+# to 4.3.0–4.3.2, which fail to import under numpy 2 ("numpy.core.multiarray").
+gensim>=4.3.3
 
 # Syllable counting for articulation rate
 pyphen>=0.14

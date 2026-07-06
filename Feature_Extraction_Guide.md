@@ -25,8 +25,8 @@ These track the position of each token within the document. They are bookkeeping
 | `sentence` | Full text of the sentence this token belongs to | "She left the room." |
 | `start` | Character offset of the token's first character within `sentence` | 5 |
 | `end` | Character offset of the token's last character within `sentence` | 8 |
-| `term_id` | Global token counter within the file | 47 |
-| `token_id` | Token index within the current sentence | 2 |
+| `token_id` | Global token counter within the file | 47 |
+| `token_in_sentence_id` | Token index within the current sentence | 2 |
 
 > ⚠️ `start`/`end` (lowercase) are character positions in the sentence string — not audio times. Do not confuse with `Onset`/`End` (uppercase), which are seconds in the audio file.
 
@@ -83,7 +83,7 @@ Returns `NA` for uninflected words (prepositions, determiners, etc.).
 | Column | Description | Example |
 |--------|-------------|---------|
 | `dep_rel` | Grammatical function of this token relative to its head | "nsubj", "obj", "amod" |
-| `head_token_id` | `token_id` of the syntactic head within the sentence | 3 |
+| `head_token_id` | `token_id` (global, whole-document index) of the syntactic head; a root points to its own `token_id` | 3 |
 | `deps` | Enhanced dependency representation (rarely populated for English) | "NA" |
 | `misc` | Miscellaneous flags | "SpaceAfter=No" |
 
@@ -477,7 +477,7 @@ Four feature blocks expanded from single toggles into per-column checklists:
 
 | Block | Columns | New per-column toggle keys |
 |---|---|---|
-| Structural (word-level) | doc_id, paragraph_id, sentence_id, sentence, start, end, term_id, token_id | `feat_struct_doc_id`, …, `feat_struct_token_id` |
+| Structural (word-level) | doc_id, paragraph_id, sentence_id, sentence, start, end, token_id, token_in_sentence_id | `feat_struct_doc_id`, …, `feat_struct_token_in_sentence_id` |
 | Acoustic (word-level) | Onset, End, Word_Duration, Word_Gap | `feat_acoustic_onset`, …, `feat_acoustic_word_gap` |
 | Composite psych (doc-level) | psych_authentic, psych_analytic, psych_tone, psych_clout | `feat_psych_authentic`, …, `feat_psych_clout` |
 | Counts (doc-level) | n_tokens, n_content_tokens, n_sentences, n_paragraphs | `out_count_tokens`, …, `out_count_paragraphs` |

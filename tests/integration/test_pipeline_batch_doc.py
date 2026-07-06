@@ -39,7 +39,10 @@ def test_doc_level_run_log_uses_doc_prefix(tmp_path):
     logs = tmp_path / 'out' / 'logs'
     assert list(logs.glob('doc_run_*.log'))
     assert list(logs.glob('doc_run_*_manifest.json'))
-    assert list(logs.glob('doc_run_*_no-match.csv'))
+    # no-match.csv is conditional — only written when files are unmatched.
+    # Audio-less transcripts are now processed (text-only), and these fixtures
+    # have no audio without a transcript, so none is expected.
+    assert not list(logs.glob('doc_run_*_no-match.csv'))
 
 
 def test_doc_level_master_csv_columns(tmp_path):

@@ -88,7 +88,7 @@ so `embeddings` stays backward-compatible:
 |---|---|---|
 | `embeddings`  | `(n_words, 12, 768)` float32 | per-layer vectors, row-aligned to the word CSV |
 | `tokens`      | `{n_words}` cellstr | surface token per row |
-| `word_id`     | `(n_words,)` int | the word CSV `term_id` |
+| `word_id`     | `(n_words,)` int | the word CSV `token_id` (global token index) |
 | `sentence_id` | `(n_words,)` int | spaCy sentence id |
 | `is_valid`    | `(n_words,)` logical | False for PUNCT (zero rows) |
 

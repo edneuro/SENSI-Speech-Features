@@ -24,9 +24,9 @@ These don't emit user-facing columns directly. They produce raw artifacts that o
 - **Library:** `spacy` + `en_core_web_sm` model
 - **Inputs:** transcript text (str)
 - **Outputs:** `word_df` (one row per token) with columns:
-  - Identifiers: `doc_id, paragraph_id, sentence_id, sentence, start, end, term_id, token_id`
+  - Identifiers: `doc_id, paragraph_id, sentence_id, sentence, start, end, token_id, token_in_sentence_id`
   - Linguistic: `token, lemma, upos, xpos, feats, dep_rel, head_token_id`
-- **Consumers:** every word-level cluster except pure-acoustic; every sub-word cluster (needs `doc_id/sentence_id/token_id` for FK joins); every doc-level cluster that aggregates word features.
+- **Consumers:** every word-level cluster except pure-acoustic; every sub-word cluster (needs `doc_id/sentence_id/token_in_sentence_id` for FK joins); every doc-level cluster that aggregates word features.
 - **Notes:** Tokenization is the canonical "what is a word" definition for the pipeline. `start/end` are **character offsets** in the sentence string, not seconds — easy to confuse with `Onset/End` from MFA.
 
 ### 0.2 MFA forced alignment — `extractors/aligner.py`
@@ -61,11 +61,11 @@ Emits `<stim>_features.csv` (one row per token).
 
 ### 1.1 Structural identifiers
 
-- **Features:** `doc_id, paragraph_id, sentence_id, sentence, start, end, term_id, token_id`
+- **Features:** `doc_id, paragraph_id, sentence_id, sentence, start, end, token_id, token_in_sentence_id`
 - **Library:** (none — passthrough from §0.1)
 - **Inputs:** §0.1 spaCy parse
 - **Outputs:** column passthrough on `word_df`
-- **Per-column toggles:** `feat_struct_doc_id, feat_struct_paragraph_id, feat_struct_sentence_id, feat_struct_sentence_text, feat_struct_char_start, feat_struct_char_end, feat_struct_term_id, feat_struct_token_id`
+- **Per-column toggles:** `feat_struct_doc_id, feat_struct_paragraph_id, feat_struct_sentence_id, feat_struct_sentence_text, feat_struct_char_start, feat_struct_char_end, feat_struct_token_id, feat_struct_token_in_sentence_id`
 - **Notes:** These don't trigger any extractor — they're just whether each column survives the CSV-write drop step.
 
 ### 1.2 Lexical-linguistic annotation
@@ -140,20 +140,20 @@ Emits `<stim>_features.csv` (one row per token).
 
 ## 2. Sub-word level
 
-Emits `<stim>_syllables.csv` and `<stim>_phonemes.csv`. **Always emitted as sidecars** — they live alongside the word CSV, joined back via `doc_id/sentence_id/token_id`.
+Emits `<stim>_syllables.csv` and `<stim>_phonemes.csv`. **Always emitted as sidecars** — they live alongside the word CSV, joined back via `doc_id/sentence_id/token_in_sentence_id`.
 
 ### 2.1 Phoneme intervals — `extractors/syllabify.py:syllabify_pairs` (phoneme half)
 
-- **Features (rows in `<stim>_phonemes.csv`):** `doc_id, sentence_id, token_id, token, syllable_id, phoneme_id, Label, Onset, End, Duration`
+- **Features (rows in `<stim>_phonemes.csv`):** `doc_id, sentence_id, token_in_sentence_id, token, syllable_id, phoneme_id, Label, Onset, End, Duration`
 - **Library:** pure pandas (consumes MFA phones tier directly)
-- **Inputs:** §0.1 spaCy parse (for `doc_id/sentence_id/token_id/token` FK columns) + §0.2 MFA phones_df + §0.2 MFA word tier merged into word df (for `Onset/End` interval bounds)
+- **Inputs:** §0.1 spaCy parse (for `doc_id/sentence_id/token_in_sentence_id/token` FK columns) + §0.2 MFA phones_df + §0.2 MFA word tier merged into word df (for `Onset/End` interval bounds)
 - **Per-column toggles:** `feat_phoneme_label, feat_phoneme_onset, feat_phoneme_end, feat_phoneme_duration`
 - **Master sidecar toggle:** `output.phonemes_csv`
 - **Notes:** Label is ARPABET with stress digit. Phonemes whose `[onset, offset]` falls fully within a word's `[Onset, End]` are assigned to that word; phones outside any word are silently dropped.
 
 ### 2.2 Syllabification + orthographic labels — `extractors/syllabify.py:syllabify_pairs` (syllable half)
 
-- **Features (rows in `<stim>_syllables.csv`):** `doc_id, sentence_id, token_id, token, syllable_id, Label, ARPABET, Onset, End, Duration`
+- **Features (rows in `<stim>_syllables.csv`):** `doc_id, sentence_id, token_in_sentence_id, token, syllable_id, Label, ARPABET, Onset, End, Duration`
 - **Library:** `pyphen` (optional, for orthographic syllable labels in `Label` column); falls back to ARPABET-without-stress if pyphen is missing
 - **Inputs:** §0.1 spaCy parse + §0.2 MFA word + phones tiers + per-word phone grouping (Maximum Onset Principle implemented in `syllabify_word`)
 - **Per-column toggles:** `feat_syllable_onset, feat_syllable_end, feat_syllable_duration, feat_syllable_label, feat_syllable_arpabet`

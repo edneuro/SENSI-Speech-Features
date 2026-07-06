@@ -60,7 +60,10 @@ def test_build_args_doc_propagates_feature_and_output_toggles(monkeypatch, tmp_p
 def test_dispatcher_runs_both_when_both_outputs_checked(monkeypatch, tmp_path):
     monkeypatch.setenv("SENSI_PREFS_PATH", str(tmp_path / "prefs.json"))
     from utils.preferences import save_preferences
-    save_preferences({"output": {"word_level_csv": True, "document_summary": True}})
+    # document_summary needs at least one active doc cluster to actually run
+    # (opt-in defaults leave doc features off), so enable doc token counts.
+    save_preferences({"output": {"word_level_csv": True, "document_summary": True,
+                                 "out_count_tokens": True}})
 
     called = []
     def fake_word(args, **kwargs): called.append("word")
@@ -73,6 +76,28 @@ def test_dispatcher_runs_both_when_both_outputs_checked(monkeypatch, tmp_path):
     run(progress_cb=lambda *a: None, done_cb=lambda *a: None,
         session_api_key="", in_thread=False)
     assert "word" in called and "doc" in called
+
+
+def test_dispatcher_shares_one_alignment_cache_across_passes(monkeypatch, tmp_path):
+    """Word and doc passes must receive the SAME _align_cache dict so MFA is
+    computed once per document and reused (not re-run) in the second pass."""
+    monkeypatch.setenv("SENSI_PREFS_PATH", str(tmp_path / "prefs.json"))
+    from utils.preferences import save_preferences
+    # Enable a doc feature so the doc batch actually runs (opt-in defaults).
+    save_preferences({"output": {"word_level_csv": True, "document_summary": True,
+                                 "out_count_tokens": True}})
+
+    seen = {}
+    def fake_word(args, **kwargs): seen["word"] = getattr(args, "_align_cache", None)
+    def fake_doc(args, **kwargs): seen["doc"] = getattr(args, "_align_cache", None)
+    monkeypatch.setattr("main.run_word_level_batch", fake_word, raising=False)
+    monkeypatch.setattr("main.run_doc_level_batch", fake_doc, raising=False)
+
+    from gui.run_dispatch import run
+    run(progress_cb=lambda *a: None, done_cb=lambda *a: None,
+        session_api_key="", in_thread=False)
+    assert isinstance(seen["word"], dict)
+    assert seen["word"] is seen["doc"], "both passes must share one alignment cache"
 
 
 def test_word_args_includes_prosody_config(prefs_tmp):
@@ -112,10 +137,12 @@ def test_word_args_no_prosody_when_all_word_toggles_off(prefs_tmp):
 def test_doc_args_forces_alignment_when_doc_prosody_on(prefs_tmp):
     from utils.preferences import save_preferences
     from gui.run_dispatch import build_args_doc_level
-    save_preferences({"features": {
-        "feat_doc_prosody_hnr": True,
-        "feat_acoustic_onset": False,
-    }})
+    save_preferences({
+        "output": {"document_summary": True},
+        "features": {
+            "feat_doc_prosody_hnr": True,
+            "feat_acoustic_onset": False,
+        }})
     args = build_args_doc_level()
     assert args.no_align is False
     assert args.no_doc_prosody is False
@@ -148,11 +175,13 @@ def test_doc_args_skip_llm_when_word_llm_toggles_off(prefs_tmp):
     """
     from utils.preferences import save_preferences
     from gui.run_dispatch import build_args_doc_level
-    save_preferences({"features": {
-        "pred_surprisal_llm": False,
-        "pred_cloze": False,
-        "pred_topmatch": False,
-    }})
+    save_preferences({
+        "output": {"document_summary": True, "doc_agg_llm": True},
+        "features": {
+            "pred_surprisal_llm": False,
+            "pred_cloze": False,
+            "pred_topmatch": False,
+        }})
     args = build_args_doc_level()
     # Extractor must be skipped — this is what prevents the crash.
     assert args.no_llm_cloze is True
@@ -168,24 +197,34 @@ def test_doc_args_skip_surprisal_when_word_gpt2_off(prefs_tmp):
     doc_agg_surprisal (default True); doc_summary.py skips absent columns."""
     from utils.preferences import save_preferences
     from gui.run_dispatch import build_args_doc_level
-    save_preferences({"features": {"pred_surprisal_gpt2": False}})
+    save_preferences({
+        "output": {"document_summary": True, "doc_agg_surprisal": True},
+        "features": {"pred_surprisal_gpt2": False}})
     args = build_args_doc_level()
     assert args.no_surprisal is True
-    assert args.no_doc_mean_surprisal is False  # doc_agg_surprisal defaults True
+    assert args.no_doc_mean_surprisal is False  # doc_agg_surprisal requested
 
 
-def test_doc_args_enable_llm_when_any_word_llm_toggle_on(prefs_tmp):
-    """Mirror of the off-case: if any LLM word-level toggle is on, the
-    extractor and its doc aggregate must be requested."""
+def test_doc_args_llm_driven_by_doc_aggregate_not_word_toggle(prefs_tmp):
+    """The doc namespace's word-extractor flags are scoped to doc-level needs,
+    not word-level toggles — a word LLM toggle must NOT by itself make the doc
+    batch run the (paid) LLM extractor. The doc LLM aggregate is independently
+    requested via doc_agg_llm, and main.run_doc_level_batch re-enables the
+    extractor from that doc output toggle. (Mirror of the surprisal case.)"""
     from utils.preferences import save_preferences
     from gui.run_dispatch import build_args_doc_level
-    save_preferences({"features": {
-        "pred_surprisal_llm": False,
-        "pred_cloze": True,
-        "pred_topmatch": False,
-    }})
+    save_preferences({
+        "output": {"document_summary": True, "doc_agg_llm": True},
+        "features": {
+            "pred_surprisal_llm": False,
+            "pred_cloze": True,
+            "pred_topmatch": False,
+        }})
     args = build_args_doc_level()
-    assert args.no_llm_cloze is False
+    # Word toggle no longer bleeds into the doc namespace's extractor flag.
+    assert args.no_llm_cloze is True
+    # The doc aggregate is still requested (doc_agg_llm defaults on); the doc
+    # batch enables the extractor for it in run_doc_level_batch.
     assert args.no_doc_mean_llm_cloze is False
 
 
@@ -238,7 +277,7 @@ def test_word_args_runs_parse_when_only_sem_indicators_on(prefs_tmp):
         "feat_struct_doc_id", "feat_struct_paragraph_id",
         "feat_struct_sentence_id", "feat_struct_sentence_text",
         "feat_struct_char_start", "feat_struct_char_end",
-        "feat_struct_term_id", "feat_struct_token_id",
+        "feat_struct_token_id", "feat_struct_token_in_sentence_id",
         "freq_subtlex",
         "freq_ewfg_k2", "freq_ewfg_3to5", "freq_ewfg_6to8",
         "freq_ewfg_9to12", "freq_ewfg_overall",
@@ -266,7 +305,7 @@ def test_word_args_runs_parse_when_only_freq_on(prefs_tmp):
         "feat_struct_doc_id": False, "feat_struct_paragraph_id": False,
         "feat_struct_sentence_id": False, "feat_struct_sentence_text": False,
         "feat_struct_char_start": False, "feat_struct_char_end": False,
-        "feat_struct_term_id": False, "feat_struct_token_id": False,
+        "feat_struct_token_id": False, "feat_struct_token_in_sentence_id": False,
         "freq_subtlex": True,  # just this
         "sem_indicators": False,
     }})
@@ -300,7 +339,8 @@ def test_doc_args_skip_freq_when_word_freq_off_and_no_aggregate(prefs_tmp):
 def test_word_args_propagates_subword_master_toggles(prefs_tmp):
     from utils.preferences import save_preferences
     from gui.run_dispatch import build_args_word_level
-    save_preferences({"output": {"syllables_csv": False, "phonemes_csv": True}})
+    save_preferences({"output": {"syllables_csv": False, "phonemes_csv": True},
+                      "features": {"feat_phoneme_label": True}})  # activate phoneme cluster
     args = build_args_word_level()
     assert args.no_syllables is True
     assert args.no_phonemes is False
@@ -326,7 +366,7 @@ def test_word_args_forces_parse_when_only_subword_on(prefs_tmp):
     """Regression for Bug A: when ONLY sub-word features are enabled (no
     structural, no lex-ling, no freq, no semantic, no word-prosody),
     no_parse was True. Parse skipped → word_df lacked doc_id/sentence_id/
-    token_id → syllabify_pairs crashed reading those columns."""
+    token_in_sentence_id → syllabify_pairs crashed reading those columns."""
     from utils.preferences import save_preferences
     from gui.run_dispatch import build_args_word_level
     save_preferences({
@@ -338,7 +378,7 @@ def test_word_args_forces_parse_when_only_subword_on(prefs_tmp):
             "feat_struct_doc_id": False, "feat_struct_paragraph_id": False,
             "feat_struct_sentence_id": False, "feat_struct_sentence_text": False,
             "feat_struct_char_start": False, "feat_struct_char_end": False,
-            "feat_struct_term_id": False, "feat_struct_token_id": False,
+            "feat_struct_token_id": False, "feat_struct_token_in_sentence_id": False,
             "freq_subtlex": False,
             "freq_ewfg_k2": False, "freq_ewfg_3to5": False,
             "freq_ewfg_6to8": False, "freq_ewfg_9to12": False,
@@ -361,7 +401,7 @@ def test_word_args_forces_parse_when_only_subword_on(prefs_tmp):
     args = build_args_word_level()
     assert args.no_parse is False, (
         "sub-word features alone must trigger parse — syllabify_pairs reads "
-        "doc_id/sentence_id/token_id from word_df"
+        "doc_id/sentence_id/token_in_sentence_id from word_df"
     )
     assert args.no_align is False, "sub-word features also require alignment"
 
@@ -416,12 +456,15 @@ def test_dispatcher_runs_word_batch_for_sidecars_only(prefs_tmp):
     fire — sidecars are emitted INSIDE run_word_level_batch. Pass
     no_word_csv=True so main.py knows to skip the features.csv write."""
     from utils.preferences import save_preferences
-    save_preferences({"output": {
-        "word_level_csv": False,
-        "syllables_csv": True,
-        "phonemes_csv": False,
-        "document_summary": False,
-    }})
+    save_preferences({
+        "output": {
+            "word_level_csv": False,
+            "syllables_csv": True,
+            "phonemes_csv": False,
+            "document_summary": False,
+        },
+        "features": {"feat_syllable_onset": True},  # activate syllable cluster
+    })
 
     captured = {}
     def fake_word(args, **kwargs):

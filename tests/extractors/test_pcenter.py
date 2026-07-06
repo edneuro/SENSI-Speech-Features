@@ -5,12 +5,12 @@ import pandas as pd
 from extractors.pcenter import add_pcenter
 
 
-def _phon_df(token_id, syl_id, phonemes):
+def _phon_df(token_in_sentence_id, syl_id, phonemes):
     """phonemes: list of (label, onset, end)"""
     rows = []
     for i, (label, onset, end) in enumerate(phonemes):
         rows.append({
-            'doc_id': 'd', 'sentence_id': 1, 'token_id': token_id,
+            'doc_id': 'd', 'sentence_id': 1, 'token_in_sentence_id': token_in_sentence_id,
             'token': 'w', 'syllable_id': syl_id, 'phoneme_id': i + 1,
             'Label': label, 'Onset': onset, 'End': end,
             'Duration': round(end - onset, 4),
@@ -18,9 +18,9 @@ def _phon_df(token_id, syl_id, phonemes):
     return pd.DataFrame(rows)
 
 
-def _syl_df(token_id, syl_id, onset, end):
+def _syl_df(token_in_sentence_id, syl_id, onset, end):
     return pd.DataFrame([{
-        'doc_id': 'd', 'sentence_id': 1, 'token_id': token_id,
+        'doc_id': 'd', 'sentence_id': 1, 'token_in_sentence_id': token_in_sentence_id,
         'token': 'w', 'syllable_id': syl_id,
         'Label': 'x', 'ARPABET': 'x',
         'Onset': onset, 'End': end,
@@ -93,7 +93,7 @@ def test_syllable_with_no_phoneme_rows_falls_back_to_acoustic_onset():
 
 
 def test_two_words_no_cross_contamination():
-    """Two tokens × two syllables each — verifies both token_id and syllable_id in FK grouping."""
+    """Two tokens × two syllables each — verifies both token_in_sentence_id and syllable_id in FK grouping."""
     # Token 1, Syllable 1: [B, AE1, T] (onset 0.0–0.20)
     phon_t1s1 = _phon_df(1, 1, [('B', 0.0, 0.05), ('AE1', 0.05, 0.15), ('T', 0.15, 0.20)])
     # Token 1, Syllable 2: [K, AH1, T] (onset 0.22–0.45)

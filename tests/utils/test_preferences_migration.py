@@ -47,14 +47,15 @@ def test_default_prefs_features_has_v4_keys(tmp_path, monkeypatch):
     for k in ('feat_struct_doc_id', 'feat_struct_paragraph_id',
               'feat_struct_sentence_id', 'feat_struct_sentence_text',
               'feat_struct_char_start', 'feat_struct_char_end',
-              'feat_struct_term_id', 'feat_struct_token_id',
+              'feat_struct_token_id', 'feat_struct_token_in_sentence_id',
               'feat_acoustic_onset', 'feat_acoustic_end',
               'feat_acoustic_word_duration', 'feat_acoustic_word_gap',
               'feat_psych_authentic', 'feat_psych_analytic',
               'feat_psych_tone', 'feat_psych_clout'):
         assert k in keys, k
-    # Collapsed parents are gone
-    for k in ('structural', 'acoustic_boundaries', 'sem_composite_psych'):
+    # Collapsed parents and the pre-v14 struct-id key names are gone
+    for k in ('structural', 'acoustic_boundaries', 'sem_composite_psych',
+              'feat_struct_term_id'):
         assert k not in keys, k
 
 
@@ -191,7 +192,7 @@ def test_v2_migration_splits_spacy_parse_through_to_v4(v2_prefs_file):
     for k in ("feat_struct_doc_id", "feat_struct_paragraph_id",
               "feat_struct_sentence_id", "feat_struct_sentence_text",
               "feat_struct_char_start", "feat_struct_char_end",
-              "feat_struct_term_id", "feat_struct_token_id"):
+              "feat_struct_token_id", "feat_struct_token_in_sentence_id"):
         assert f[k] is True, k
     assert f["lexling_tokens"] is True
     assert f["lexling_pos"] is True
@@ -360,7 +361,7 @@ def test_v3_migration_expands_structural_per_column(v3_prefs_file):
     for k in ("feat_struct_doc_id", "feat_struct_paragraph_id",
               "feat_struct_sentence_id", "feat_struct_sentence_text",
               "feat_struct_char_start", "feat_struct_char_end",
-              "feat_struct_term_id", "feat_struct_token_id"):
+              "feat_struct_token_id", "feat_struct_token_in_sentence_id"):
         assert f[k] is False, k
 
 
@@ -472,18 +473,18 @@ def test_v5_round_trip_preserves_user_edits(tmp_path, monkeypatch):
     monkeypatch.setenv("SENSI_PREFS_PATH", str(path))
     # First load creates a v6 file
     prefs_mod.load_preferences()
-    # User flips one toggle and changes pitch units
+    # User flips one toggle (to a non-default value) and changes pitch units
     prefs_mod.save_preferences({
-        "features": {"feat_prosody_pitch_mean": False},
+        "features": {"feat_prosody_pitch_mean": True},
         "prosody": {"pitch_units": "hz", "pitch_floor_hz": 60},
     })
     again = prefs_mod.load_preferences()
     assert again["schema_version"] == prefs_mod.SCHEMA_VERSION
-    assert again["features"]["feat_prosody_pitch_mean"] is False
+    assert again["features"]["feat_prosody_pitch_mean"] is True   # user edit preserved
     assert again["prosody"]["pitch_units"] == "hz"
     assert again["prosody"]["pitch_floor_hz"] == 60
-    # Untouched keys remain default
-    assert again["features"]["feat_prosody_pitch_min"] is True
+    # Untouched key keeps its (opt-in) default, which is off.
+    assert again["features"]["feat_prosody_pitch_min"] is False
 
 
 # ---------------------------------------------------------------------------
@@ -768,8 +769,10 @@ def test_load_v9_prefs_file_migrates_to_current(tmp_path, monkeypatch):
     monkeypatch.setenv('SENSI_PREFS_PATH', str(prefs_path))
     loaded = load_preferences()
     assert loaded['schema_version'] == SCHEMA_VERSION
-    assert loaded['output']['word2vec_mat'] is True
-    assert loaded['features']['master_word2vec'] is True
+    # Embedding keys are added by the migration; under opt-in defaults both the
+    # output and the embedding master (which is the feature on/off) default off.
+    assert loaded['output']['word2vec_mat'] is False
+    assert loaded['features']['master_word2vec'] is False
     on_disk = json.loads(prefs_path.read_text())
     assert on_disk['schema_version'] == SCHEMA_VERSION
 
@@ -819,12 +822,53 @@ def test_v12_prefs_migrate_to_v13_additively(tmp_path, monkeypatch):
     p.write_text(json.dumps(v12), encoding="utf-8")
     monkeypatch.setenv("SENSI_PREFS_PATH", str(p))
     prefs = preferences.load_preferences()
-    assert prefs["schema_version"] == 13
+    # v12 migrates additively up to the current schema; the v13 acoustic keys
+    # below must be present regardless of how many versions have since landed.
+    assert prefs["schema_version"] == preferences.SCHEMA_VERSION
     f = prefs["features"]
     assert f["master_acoustic_ts"] is False
-    assert f["feat_acoustic_ts_envelope"] is True
+    # Opt-in defaults: acoustic features + output default off (added by migration).
+    assert f["feat_acoustic_ts_envelope"] is False
     assert f["feat_acoustic_ts_mfcc"] is False
     assert prefs["output"]["acoustic_ts_mat"] is False   # opt-in; gated from Run tab
     a = prefs["acoustic_ts"]
     assert a["analysis_rate"] == 128 and a["env_method"] == "rms"
     assert a["mel_preset"] == "speech"
+
+
+# ---------------------------------------------------------------------------
+# v13 → v14 migration (structural token-id rename)
+# ---------------------------------------------------------------------------
+
+def test_v13_to_v14_renames_struct_token_keys_without_collision(tmp_path, monkeypatch):
+    """The two struct token-index toggles swap names. A pre-v14 file with the
+    global toggle OFF and the within-sentence toggle ON must migrate so the
+    OFF value lands on the new global key (feat_struct_token_id) and the ON
+    value on the within-sentence key (feat_struct_token_in_sentence_id) — not
+    collide onto the same key."""
+    from utils.preferences import load_preferences, SCHEMA_VERSION
+    path = tmp_path / "preferences.json"
+    path.write_text(json.dumps({
+        "schema_version": 13,
+        "features": {
+            "feat_struct_term_id": False,   # old GLOBAL toggle, user turned off
+            "feat_struct_token_id": True,   # old WITHIN-SENTENCE toggle, on
+        },
+    }), encoding="utf-8")
+    monkeypatch.setenv("SENSI_PREFS_PATH", str(path))
+
+    f = load_preferences()["features"]
+    # Old key names are gone.
+    assert "feat_struct_term_id" not in f
+    # Global value (was False) carried to the new global key.
+    assert f["feat_struct_token_id"] is False
+    # Within-sentence value (was True) carried to the new within-sentence key.
+    assert f["feat_struct_token_in_sentence_id"] is True
+
+
+def test_v14_defaults_have_renamed_struct_keys():
+    from utils.preferences import DEFAULT_PREFS
+    f = DEFAULT_PREFS["features"]
+    assert "feat_struct_term_id" not in f
+    assert f["feat_struct_token_id"] is True
+    assert f["feat_struct_token_in_sentence_id"] is True

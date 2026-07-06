@@ -9,13 +9,13 @@ from main import _word_embedding_vars, _sentence_embedding_vars
 def _word_df():
     return pd.DataFrame([
         {"doc_id": 1, "sentence_id": 1, "sentence": "The cat sat.",
-         "term_id": 1, "token": "The"},
+         "token_id": 1, "token": "The"},
         {"doc_id": 1, "sentence_id": 1, "sentence": "The cat sat.",
-         "term_id": 2, "token": "cat"},
+         "token_id": 2, "token": "cat"},
         {"doc_id": 1, "sentence_id": 1, "sentence": "The cat sat.",
-         "term_id": 3, "token": "."},
+         "token_id": 3, "token": "."},
         {"doc_id": 1, "sentence_id": 2, "sentence": "It rained.",
-         "term_id": 4, "token": "It"},
+         "token_id": 4, "token": "It"},
     ])
 
 

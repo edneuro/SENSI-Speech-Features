@@ -28,9 +28,9 @@ def _flat_contours(n_frames: int = 100, pitch_hz_value: float = 120.0,
 
 def _two_syllables() -> pd.DataFrame:
     return pd.DataFrame([
-        {'doc_id': 'd', 'sentence_id': 1, 'token_id': 1, 'token': 'below',
+        {'doc_id': 'd', 'sentence_id': 1, 'token_in_sentence_id': 1, 'token': 'below',
          'syllable_id': 1, 'Onset': 0.10, 'End': 0.30, 'Duration': 0.20},
-        {'doc_id': 'd', 'sentence_id': 1, 'token_id': 1, 'token': 'below',
+        {'doc_id': 'd', 'sentence_id': 1, 'token_in_sentence_id': 1, 'token': 'below',
          'syllable_id': 2, 'Onset': 0.30, 'End': 0.50, 'Duration': 0.20},
     ])
 
@@ -92,7 +92,7 @@ def test_contours_none_emits_nan_columns_without_raising():
 
 
 def test_empty_syllables_df_returns_empty_df_with_prosody_cols():
-    empty = pd.DataFrame(columns=['doc_id', 'sentence_id', 'token_id', 'token',
+    empty = pd.DataFrame(columns=['doc_id', 'sentence_id', 'token_in_sentence_id', 'token',
                                   'syllable_id', 'Onset', 'End', 'Duration'])
     df = add_syllable_prosody(empty, _flat_contours())
     assert len(df) == 0

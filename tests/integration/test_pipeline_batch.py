@@ -30,8 +30,11 @@ def test_batch_processes_all_pairs(tmp_path):
     out = tmp_path / 'out'
     assert (out / 'word' / 'story1_features.csv').exists()
     assert (out / 'word' / 'story2_features.csv').exists()
-    # story3 has no audio match — should NOT have features.csv emitted
-    assert not (out / 'word' / 'story3_features.csv').exists()
+    # Audio-less transcripts (story3, test_short) are now processed for their
+    # text features — they are no longer skipped (2026-06-24 policy change:
+    # "always process text features"). Their audio columns are simply absent.
+    assert (out / 'word' / 'story3_features.csv').exists()
+    assert (out / 'word' / 'test_short_features.csv').exists()
     # No per-stim summary sidecar in word-level runs anymore
     assert not (out / 'story1_summary.csv').exists()
     assert not (out / 'story2_summary.csv').exists()
@@ -45,14 +48,23 @@ def test_batch_emits_run_artifacts(tmp_path):
     logs = tmp_path / 'out' / 'logs'
     assert any(logs.glob('word_run_*.log'))
     assert any(logs.glob('word_run_*_manifest.json'))
-    assert any(logs.glob('word_run_*_no-match.csv'))
+    # no-match.csv is conditional — only written when something is unmatched.
+    # These fixtures now fully process (audio-less transcripts included), and
+    # there is no audio without a transcript, so no no-match.csv is expected.
+    assert not any(logs.glob('word_run_*_no-match.csv'))
 
 
-def test_batch_manifest_records_unmatched(tmp_path):
+def test_batch_processes_audio_less_transcripts(tmp_path):
+    """Audio-less transcripts are processed as text-only items, not recorded
+    as unmatched-text (2026-06-24 policy change). All four fixture transcripts
+    (2 paired + story3 + test_short) become successful pairs; nothing is left
+    in n_unmatched_text. unmatched_audio still tracks audio with no transcript
+    (none in these fixtures)."""
     args = _args_for_batch(tmp_path)
     run_word_level_batch(args)
     manifest = json.loads(next((tmp_path / 'out' / 'logs').glob('word_run_*_manifest.json')).read_text())
-    assert manifest['n_unmatched_text'] >= 1  # story3 has no audio
+    assert manifest['n_unmatched_text'] == 0
+    assert manifest['n_pairs_processed'] == 4  # story1, story2, story3, test_short
     assert manifest['analyzer'] == 'TestRunner'
 
 
@@ -119,9 +131,9 @@ def test_batch_emits_syllables_and_phonemes_sidecars(tmp_path):
 
     syll_df = pd.read_csv(syll[0])
     phon_df = pd.read_csv(phon[0])
-    for col in ('doc_id', 'sentence_id', 'token_id', 'token', 'syllable_id', 'Onset', 'End'):
+    for col in ('doc_id', 'sentence_id', 'token_in_sentence_id', 'token', 'syllable_id', 'Onset', 'End'):
         assert col in syll_df.columns, f'syllable CSV missing {col}'
-    for col in ('doc_id', 'sentence_id', 'token_id', 'token', 'syllable_id', 'phoneme_id',
+    for col in ('doc_id', 'sentence_id', 'token_in_sentence_id', 'token', 'syllable_id', 'phoneme_id',
                 'Label', 'Onset', 'End'):
         assert col in phon_df.columns, f'phoneme CSV missing {col}'
     assert len(syll_df) > 0
@@ -186,7 +198,7 @@ def test_sidecars_emit_when_struct_and_acoustic_per_column_toggles_off(
     columns get dropped from the features CSV) but with feat_syllable_* /
     feat_phoneme_* ON and the sidecar outputs enabled should still get
     syllables/phonemes CSVs. Previously the column-drop step ran BEFORE
-    sidecar emission and stripped doc_id/sentence_id/token_id/Onset/End from
+    sidecar emission and stripped doc_id/sentence_id/token_in_sentence_id/Onset/End from
     df, so syllabify_pairs silently produced empty DataFrames.
 
     Monkeypatches main.run so this test doesn't need MFA — we synthesize the
@@ -205,7 +217,7 @@ def test_sidecars_emit_when_struct_and_acoustic_per_column_toggles_off(
     (txt_dir / "tone.txt").write_text("hello world")
 
     fake_word_df = pd.DataFrame({
-        "doc_id": [0, 0], "sentence_id": [0, 0], "token_id": [0, 1],
+        "doc_id": [0, 0], "sentence_id": [0, 0], "token_in_sentence_id": [0, 1],
         "token": ["hello", "world"],
         "Onset": [0.0, 0.5], "End": [0.4, 0.9],
     })
@@ -230,7 +242,7 @@ def test_sidecars_emit_when_struct_and_acoustic_per_column_toggles_off(
         "feat_struct_doc_id": False, "feat_struct_paragraph_id": False,
         "feat_struct_sentence_id": False, "feat_struct_sentence_text": False,
         "feat_struct_char_start": False, "feat_struct_char_end": False,
-        "feat_struct_term_id": False, "feat_struct_token_id": False,
+        "feat_struct_token_id": False, "feat_struct_token_in_sentence_id": False,
         # acoustic off
         "feat_acoustic_onset": False, "feat_acoustic_end": False,
         "feat_acoustic_word_duration": False, "feat_acoustic_word_gap": False,

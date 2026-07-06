@@ -56,6 +56,9 @@ _OUTPUT_KEYS_VIA_CSV_MAP: set[str] = {
     # Cluster master switches in the output section — routed via
     # FeatureCluster.master_toggle, not toggle_keys.
     "master_doc_prosody",
+    # Vestigial: articulation rate is now gated by master_doc_prosody (it is a
+    # child of the Document-prosody card). Kept in the schema for migration
+    # compat only (cf. master_acoustic_ts).
     "master_doc_articulation_rate",
     "master_doc_counts",
     "acoustic_ts_mat",       # routed via _OUTPUT_CSV_MAP
@@ -111,13 +114,15 @@ def test_every_master_toggle_key_exists_in_v10_prefs_schema():
 
 
 def test_acoustic_level_routed_when_output_on():
-    # The acoustic level is gated solely by the acoustic_ts_mat output key
-    # (Run-tab toggle) plus a feature toggle (envelope is on by default).
+    # The acoustic level is gated by the acoustic_ts_mat output key (Run-tab
+    # toggle) plus a feature toggle. Under opt-in defaults the features are off,
+    # so enable envelope explicitly.
     from gui.planner.plan import plan_from_prefs
     from utils.preferences import DEFAULT_PREFS
     import copy
     prefs = copy.deepcopy(DEFAULT_PREFS)
     prefs["output"]["acoustic_ts_mat"] = True
+    prefs["features"]["feat_acoustic_ts_envelope"] = True
     plan = plan_from_prefs(prefs)
     assert "acoustic" in plan.output_csvs
     assert "acoustic_ts" in plan.stages_to_run

@@ -40,13 +40,19 @@ MFA_DICTIONARY = 'english_us_arpa'
 
 
 def align_with_phones(
-    audio_path: str, transcript: str
+    audio_path: str, transcript: str, cache: dict | None = None
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Run MFA forced alignment and return both word and phone tiers.
 
     Args:
         audio_path:  Path to a mono or stereo .wav file.
         transcript:  Raw transcript text (digits OK; spelling-out happens here).
+        cache:       Optional dict for memoizing alignment across calls. MFA
+                     output depends only on (audio, transcript), so when the
+                     same document is processed by more than one pass (e.g. the
+                     word batch and the doc batch in a single GUI run), passing
+                     a shared dict makes MFA run at most once per document.
+                     When None (CLI single runs, tests), no caching is done.
 
     Returns:
         Tuple of (words_df, phones_df).
@@ -54,9 +60,25 @@ def align_with_phones(
         phones_df: columns phone, onset, offset — one row per phoneme.
         Both exclude silence intervals.
 
+        When served via `cache`, both DataFrames are returned as fresh copies so
+        a caller mutating them can't corrupt the cached entry for later passes.
+
     Raises:
         RuntimeError: if MFA is not installed or alignment fails.
     """
+    if cache is None:
+        return _align_uncached(audio_path, transcript)
+    key = (os.path.abspath(audio_path), transcript)
+    if key not in cache:
+        cache[key] = _align_uncached(audio_path, transcript)
+    word_df, phone_df = cache[key]
+    return word_df.copy(), phone_df.copy()
+
+
+def _align_uncached(
+    audio_path: str, transcript: str
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Run MFA once for (audio_path, transcript). See align_with_phones."""
     prepared = prepare_for_aligner(transcript)
 
     with tempfile.TemporaryDirectory() as tmpdir:

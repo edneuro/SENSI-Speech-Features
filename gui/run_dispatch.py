@@ -68,6 +68,11 @@ def run(progress_cb: Callable[[int, int, str], None],
         prefs = load_preferences()
         plan = planner.plan_from_prefs(prefs)
         run_ts = _dt.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+        # Shared per-document alignment cache: the word and doc passes both
+        # process the same documents, so MFA output (keyed by audio + text)
+        # is computed once and reused across passes — MFA runs at most once
+        # per document regardless of which tabs/features are on.
+        align_cache: dict = {}
         try:
             word_outputs = {"features", "syllables", "phonemes"} & plan.output_csvs
             if word_outputs:
@@ -75,12 +80,14 @@ def run(progress_cb: Callable[[int, int, str], None],
                 ns = _prepare_runtime_args(planner.to_namespace(plan, prefs, level="word"))
                 ns.run_ts = run_ts
                 ns.skip_no_match = False
+                ns._align_cache = align_cache
                 run_word_level_batch(ns, on_pair_done=progress_cb)
             if "documents_summary" in plan.output_csvs:
                 from main import run_doc_level_batch
                 ns = _prepare_runtime_args(planner.to_namespace(plan, prefs, level="doc"))
                 ns.run_ts = run_ts
                 ns.skip_no_match = bool(word_outputs)
+                ns._align_cache = align_cache
                 run_doc_level_batch(ns, on_pair_done=progress_cb)
             if "acoustic" in plan.output_csvs:
                 from main import run_acoustic_level_batch

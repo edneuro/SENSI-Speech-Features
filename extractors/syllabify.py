@@ -153,11 +153,11 @@ def assign_labels(word: str, syllables: list[Syllable]) -> LabelResult:
 # (add_syllable_prosody, the CSV writer in run_word_level_batch) don't
 # trip on missing-column errors. Single source of truth for column order.
 _SYLL_COLUMNS = [
-    'doc_id', 'sentence_id', 'token_id', 'token', 'syllable_id',
+    'doc_id', 'sentence_id', 'token_in_sentence_id', 'token', 'syllable_id',
     'Label', 'ARPABET', 'Onset', 'End', 'Duration',
 ]
 _PHON_COLUMNS = [
-    'doc_id', 'sentence_id', 'token_id', 'token', 'syllable_id',
+    'doc_id', 'sentence_id', 'token_in_sentence_id', 'token', 'syllable_id',
     'phoneme_id', 'Label', 'Onset', 'End', 'Duration',
 ]
 
@@ -182,7 +182,7 @@ def syllabify_pairs(word_df: pd.DataFrame, phone_df: pd.DataFrame
                     ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Build the syllables and phonemes DataFrames for one stimulus.
 
-    word_df must have columns: doc_id, sentence_id, token_id, token, Onset, End.
+    word_df must have columns: doc_id, sentence_id, token_in_sentence_id, token, Onset, End.
     phone_df must have columns: phone, onset, offset (output of parse_phones).
 
     Returns (syllables_df, phonemes_df) following the column inventory in
@@ -206,7 +206,7 @@ def syllabify_pairs(word_df: pd.DataFrame, phone_df: pd.DataFrame
                 zip(syllables, labels.labels, labels.arpabet), start=1):
             syll_rows.append({
                 'doc_id': w.doc_id, 'sentence_id': w.sentence_id,
-                'token_id': w.token_id, 'token': w.token,
+                'token_in_sentence_id': w.token_in_sentence_id, 'token': w.token,
                 'syllable_id': syll_idx,
                 'Label': label_str, 'ARPABET': arpabet_str,
                 'Onset': syl.onset, 'End': syl.end,
@@ -215,7 +215,7 @@ def syllabify_pairs(word_df: pd.DataFrame, phone_df: pd.DataFrame
             for phon_idx, phon in enumerate(syl.phonemes, start=1):
                 phon_rows.append({
                     'doc_id': w.doc_id, 'sentence_id': w.sentence_id,
-                    'token_id': w.token_id, 'token': w.token,
+                    'token_in_sentence_id': w.token_in_sentence_id, 'token': w.token,
                     'syllable_id': syll_idx, 'phoneme_id': phon_idx,
                     'Label': phon.label,
                     'Onset': phon.onset, 'End': phon.end,

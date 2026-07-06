@@ -218,6 +218,38 @@ def test_sem_categories_unified_key_used_for_both_levels():
     assert ns_doc.sem_categories == ns_word.sem_categories
 
 
+def test_master_toggle_off_suppresses_word_stage_flags():
+    """Regression (bug report 2026-06-24): disabling a cluster via its master
+    toggle while its per-column child toggles stay on must NOT leave the
+    corresponding word-level no_* flag False. plan_from_prefs correctly omits
+    the stage (it honours master_toggle); the word namespace must agree, or
+    main.py runs an extractor the user switched off."""
+    prefs = _prefs(
+        output={"word_level_csv": True, "syllables_csv": False,
+                "phonemes_csv": False, "document_summary": False},
+        features={
+            "freq_subtlex": True,
+            # Masters OFF (user disabled these), children still ON.
+            "master_acoustic": False,
+            "feat_acoustic_onset": True, "feat_acoustic_end": True,
+            "master_word_prosody": False,
+            "feat_prosody_pitch_mean": True, "feat_prosody_volume_mean": True,
+            "master_lexical_norms": False,
+            "feat_norm_aoa_mean": True, "feat_norm_concreteness": True,
+        },
+    )
+    plan = plan_from_prefs(prefs)
+    # Sanity: the plan itself already excludes the disabled stages.
+    assert "mfa_align" not in plan.stages_to_run
+    assert "word_prosody" not in plan.stages_to_run
+    assert "lexical_norms" not in plan.stages_to_run
+
+    ns = to_namespace(plan, prefs, level="word")
+    assert ns.no_align is True, "master_acoustic off — MFA must not run"
+    assert ns.no_prosody is True, "master_word_prosody off — prosody must not run"
+    assert ns.no_lexical_norms is True, "master_lexical_norms off — norms must not run"
+
+
 def test_doc_level_stages_dont_bleed_into_word_namespace():
     """Doc-prosody pulls mfa_align/praat_contours into plan.stages_to_run.
     The word namespace must NOT then set no_align=False unless a word-level
@@ -237,3 +269,48 @@ def test_doc_level_stages_dont_bleed_into_word_namespace():
     assert ns_word.no_prosody is True
     assert ns_doc.no_align is False
     assert ns_doc.no_prosody is False  # doc_prosody forces word_prosody to run too
+
+
+def test_word_level_stages_dont_bleed_into_doc_namespace():
+    """Symmetric to the word-side guard: a word-level feature (e.g. word
+    prosody) pulls mfa_align into plan.stages_to_run. The DOC namespace must
+    NOT then set no_align=False unless a doc-level cluster (doc prosody /
+    articulation rate) actually needs alignment. Otherwise the doc batch runs
+    MFA even though the user selected no audio-dependent doc feature."""
+    prefs = _prefs(
+        output={"word_level_csv": True, "syllables_csv": False,
+                "phonemes_csv": False, "document_summary": True,
+                # Doc audio features OFF (output-keyed masters).
+                "master_doc_prosody": False,
+                "master_doc_articulation_rate": False,
+                # Doc still has non-audio content.
+                "master_doc_counts": True, "out_count_tokens": True},
+        features={"feat_prosody_pitch_mean": True},  # word-level prosody -> MFA
+    )
+    plan = plan_from_prefs(prefs)
+    assert "mfa_align" in plan.stages_to_run, "word prosody must pull MFA into the shared plan"
+    ns_doc = to_namespace(plan, prefs, level="doc")
+    assert ns_doc.no_doc_prosody is True, "doc prosody is off"
+    assert ns_doc.no_align is True, \
+        "doc namespace must not run MFA — no doc-level feature needs alignment"
+
+
+def test_doc_articulation_rate_follows_doc_prosody_master():
+    """Articulation rate is a child of the Document-prosody card
+    (master_doc_prosody) in the GUI. Turning that card off must deactivate
+    articulation too — otherwise it stays active (via the vestigial, always-on
+    master_doc_articulation_rate) and pulls MFA into the doc batch even though
+    the user disabled the whole doc-prosody group."""
+    prefs = _prefs(
+        output={"word_level_csv": False, "syllables_csv": False,
+                "phonemes_csv": False, "document_summary": True,
+                "master_doc_prosody": False,           # doc-prosody card OFF
+                "master_doc_articulation_rate": True,  # vestigial, stays on
+                "master_doc_counts": True, "out_count_tokens": True},
+        features={"feat_doc_prosody_articulation_rate": True},  # child still on
+    )
+    plan = plan_from_prefs(prefs)
+    assert "doc_articulation_rate" not in plan.stages_to_run
+    assert "mfa_align" not in plan.stages_to_run
+    ns = to_namespace(plan, prefs, level="doc")
+    assert ns.no_align is True, "doc-prosody card off must stop MFA for articulation"

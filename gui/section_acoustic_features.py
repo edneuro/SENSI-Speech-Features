@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (
 
 from gui.widgets import Card, ToggleRow
 from utils.preferences import load_preferences, save_preferences
+from extractors.acoustic_ts import MTRF_COMP
 
 
 def _indent(inner: QWidget, left: int = 28) -> QWidget:
@@ -86,8 +87,10 @@ class AcousticFeaturesSection(QWidget):
         self._env_comp_spin = QDoubleSpinBox()
         self._env_comp_spin.setRange(0.0, 2.0)
         self._env_comp_spin.setSingleStep(0.05)
-        self._env_comp_spin.setDecimals(2)
-        self._env_comp_spin.setValue(float(a.get("env_comp", 0.3)))
+        # 3 decimals so mTRF's default exponent log10(2) ~= 0.301 is expressible
+        # (2 decimals rounded it to 0.30, which is why GUI runs missed MATLAB).
+        self._env_comp_spin.setDecimals(3)
+        self._env_comp_spin.setValue(float(a.get("env_comp", MTRF_COMP)))
         self._env_comp_spin.valueChanged.connect(
             lambda v: self._save_param("env_comp", v))
         env_row.addWidget(self._env_comp_spin)

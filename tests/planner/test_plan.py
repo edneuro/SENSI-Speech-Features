@@ -92,11 +92,11 @@ def test_subword_features_force_parse_and_align():
                   "feat_phoneme_label": True,
                   # All struct + acoustic OFF (matches the user's reported config)
                   "feat_struct_doc_id": False, "feat_struct_sentence_id": False,
-                  "feat_struct_token_id": False,
+                  "feat_struct_token_id": False, "feat_struct_token_in_sentence_id": False,
                   "feat_acoustic_onset": False, "feat_acoustic_end": False},
     ))
     assert "spacy_parse" in p.stages_to_run, \
-        "spaCy parse must fire for syllabify_pairs to have doc_id/sentence_id/token_id"
+        "spaCy parse must fire for syllabify_pairs to have doc_id/sentence_id/token_in_sentence_id"
     assert "mfa_align" in p.stages_to_run, \
         "MFA must fire to produce phones_df"
     assert "syllabify_pairs" in p.stages_to_run

@@ -17,7 +17,7 @@ which every word points to its syntactic governor.
 | Column | Meaning |
 |---|---|
 | `dep_rel` | Dependency relation label from spaCy's tagset (a superset of Universal Dependencies, [De Marneffe 2021]). Common values: `nsubj`, `obj`, `det`, `amod`, `advmod`, `aux`, `prep`, `pobj`, `compound`, `ROOT`. |
-| `head_token_id` | The [`token_id`](structural_ids.md) of this word's syntactic head within the same sentence. For the sentence's root token, `head_token_id` points to itself. |
+| `head_token_id` | The [`token_id`](structural_ids.md) (global, whole-document token index) of this word's syntactic head. Using the global id makes the reference self-contained against `token_id` and unambiguous across sentence boundaries. For the sentence's root token, `head_token_id` equals the word's own `token_id` (it points to itself). |
 
 > The UD-standard `deps` (Enhanced UDs) and `misc` columns are
 > intentionally **not** emitted. spaCy's `en_core_web_sm` does not
@@ -36,7 +36,9 @@ analyses:
 
 - Dependency length (`|token_id - head_token_id|`) is a classic
   syntactic-complexity proxy ([Gibson 2000] — Dependency Locality
-  Theory). Empirical evaluation against eye-tracking corpora shows
+  Theory). Both endpoints are global `token_id` values, so the
+  difference is a true linear-distance-in-words measure. Empirical
+  evaluation against eye-tracking corpora shows
   dependency-length-based predictions account for reading times in
   some contexts (e.g. for nouns), though not uniformly across all
   word classes ([Demberg 2008]).
@@ -48,9 +50,10 @@ analyses:
 ## Implementation in SensiExtractor
 Source: `extractors/text_parser.py:parse`. `dep_rel` is read directly
 from spaCy's parser (`token.dep_`). `head_token_id` is computed as
-`token.head.i - sent.start + 1` to convert spaCy's
-0-indexed-document position into the 1-indexed within-sentence
-convention shared with [`token_id`](structural_ids.md).
+`token.head.i + 1` to convert spaCy's 0-indexed-document position into
+the 1-indexed global [`token_id`](structural_ids.md) convention (the
+extractor's `token_id` counter increments in document order starting at
+1, so a token's `token_id` is exactly `token.i + 1`).
 
 Parser model is spaCy's `en_core_web_sm` default — a transition-based
 parser trained on OntoNotes 5.

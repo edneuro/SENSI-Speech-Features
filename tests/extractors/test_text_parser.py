@@ -100,3 +100,46 @@ def test_two_paragraphs_get_distinct_ids(spacy_available):
     p2 = df[df['sentence_id'] == 2]['paragraph_id'].unique()
     assert list(p1) == [1]
     assert list(p2) == [2]
+
+
+# ---------------------------------------------------------------------------
+# head_token_id — global token_id reference (self-contained against token_id)
+# ---------------------------------------------------------------------------
+
+def test_head_token_id_references_head_global_token_id(spacy_available):
+    # Two sentences. Every token's head_token_id must equal the GLOBAL
+    # token_id of its syntactic head, not a within-sentence index.
+    df = parse("The dog barked. The cat slept.")
+    slept = df[df['token'] == 'slept'].iloc[0]
+    cat = df[df['token'] == 'cat'].iloc[0]
+    # 'cat' depends on 'slept' -> head_token_id is slept's global token_id.
+    assert cat['head_token_id'] == slept['token_id']
+
+
+def test_root_head_points_to_its_own_global_token_id(spacy_available):
+    # A ROOT points to itself. With global token_id encoding, the second
+    # sentence's root must reference its own (large) token_id, NOT a small
+    # within-sentence index like 3 — that difference is the whole bug.
+    df = parse("The dog barked. The cat slept.")
+    roots = df[df['dep_rel'] == 'ROOT']
+    assert len(roots) >= 2
+    assert (roots['head_token_id'] == roots['token_id']).all()
+    second_root = roots.iloc[1]
+    # First sentence is 4 tokens; a within-sentence root id would be <= 3.
+    assert second_root['head_token_id'] >= 5
+
+
+def test_token_in_sentence_id_resets_each_sentence(spacy_available):
+    # The within-sentence index must restart at 1 for every sentence, while
+    # token_id keeps counting globally.
+    df = parse("The dog barked. The cat slept.")
+    assert df[df['sentence_id'] == 1]['token_in_sentence_id'].iloc[0] == 1
+    assert df[df['sentence_id'] == 2]['token_in_sentence_id'].iloc[0] == 1
+    assert list(df['token_id']) == list(range(1, len(df) + 1))
+
+
+def test_every_head_token_id_is_a_valid_token_id(spacy_available):
+    # Invariant: head references are self-contained against token_id, so every
+    # head_token_id must correspond to an actual row's token_id in the doc.
+    df = parse("The dog barked loudly. Then the cat slept for many hours.")
+    assert set(df['head_token_id']).issubset(set(df['token_id']))

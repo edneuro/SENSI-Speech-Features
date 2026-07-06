@@ -72,7 +72,7 @@ def test_word_csv_disabled_no_word_folder_not_created(tmp_path):
 def test_sidecars_land_in_subfolders(tmp_path, monkeypatch):
     """syllables → syllable/, phonemes → phoneme/."""
     fake_word_df = pd.DataFrame({
-        'doc_id': [0, 0], 'sentence_id': [0, 0], 'token_id': [0, 1],
+        'doc_id': [0, 0], 'sentence_id': [0, 0], 'token_in_sentence_id': [0, 1],
         'token': ['hello', 'world'],
         'Onset': [0.0, 0.5], 'End': [0.4, 0.9],
     })

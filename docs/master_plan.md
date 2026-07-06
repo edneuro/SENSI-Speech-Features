@@ -99,7 +99,7 @@ Ordered roughly by priority, not committed. Each item gets its own brainstorm �
 | **Human-rated cloze norms** | Not an extractor — data acquisition / collaboration with cloze-norming corpora. | Parked | |
 | **Document-level enrichment expansion** | Anything beyond what Batch 1.5 / Batch 3 already cover. | Mostly already done | Revisit only if a specific gap is identified. |
 | **Correctness scoring** | Either MFA alignment confidence (cheap) or ASR-vs-transcript agreement (medium). | Parked | Needs collaborator clarification on which they want. |
-| **Brain Treebank parity** | `Index_in_Sentence`, `Word_Head`. | Already covered | `token_id` and `head_token_id` provide these. |
+| **Brain Treebank parity** | `Index_in_Sentence`, `Word_Head`. | Already covered | `token_in_sentence_id` gives `Index_in_Sentence`; `head_token_id` gives `Word_Head`. As of 2026-07-06 `head_token_id` names the head by **global `token_id`** (self-contained, unambiguous across sentences); the same batch renamed the id columns (`term_id`→`token_id`, `token_id`→`token_in_sentence_id`). If a consumer needs a sentence-local head index, derive it as `head_token_id - (token_id - token_in_sentence_id)` within the head's sentence. |
 
 ### Infrastructure / portability
 

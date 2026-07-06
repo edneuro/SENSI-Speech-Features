@@ -99,12 +99,76 @@ def test_log_mel_shape_and_center_freqs():
     assert freqs.shape == (n_mels,)
 
 
-def test_log_mel_tone_energy_in_expected_band():
-    y, sr = _tone(dur=1.0, f=200.0)
-    logmel, freqs = acoustic_ts.log_mel_spectrogram(
-        y, sr, 128, n_mels=16, fmin=50.0, fmax=8000.0)
-    peak_band = int(np.argmax(logmel.mean(axis=0)))
-    assert peak_band < 8  # lower half of the 16 bands
+def test_log_mel_tone_lands_in_nearest_center_band():
+    # A pure tone must peak in the band whose center frequency is nearest the
+    # tone (within one band of it), proving the mel mapping places energy at the
+    # right frequency — not merely "somewhere low".
+    sr, n_mels = 16000, 32
+    for f in (200.0, 800.0, 3000.0):
+        y, _ = _tone(sr=sr, dur=1.0, f=f)
+        logmel, freqs = acoustic_ts.log_mel_spectrogram(
+            y, sr, 128, n_mels=n_mels, fmin=50.0, fmax=8000.0)
+        peak = int(np.argmax(logmel.mean(axis=0)))
+        nearest = int(np.argmin(np.abs(freqs - f)))
+        assert abs(peak - nearest) <= 1, f"f={f}: peak {peak} vs nearest {nearest}"
+
+
+def test_log_mel_center_freqs_are_monotonic_and_span_range():
+    _, freqs = acoustic_ts.log_mel_spectrogram(
+        _tone()[0], 16000, 128, n_mels=16, fmin=50.0, fmax=8000.0)
+    assert np.all(np.diff(freqs) > 0)            # strictly increasing
+    assert abs(freqs[0] - 50.0) < 1.0            # first band at fmin
+    assert abs(freqs[-1] - 8000.0) < 1.0         # last band at fmax
+
+
+def test_log_mel_equals_hand_composed_stft_filterbank_db():
+    # Validate the full pipeline our wrapper claims to run: |STFT|^2 -> mel
+    # filterbank -> absolute dB. Rebuilt from librosa primitives with the same
+    # parameters our wrapper derives, so it must match bit-for-bit.
+    import librosa
+    y, sr = _tone(dur=1.0, f=440.0)
+    rate, n_mels, fmin, fmax = 128, 16, 50.0, 8000.0
+    hop = max(1, int(round(sr / rate)))
+    win = max(hop, int(round(0.025 * sr)))
+    n_fft = 1 << (win - 1).bit_length()
+    power = np.abs(librosa.stft(y, n_fft=n_fft, hop_length=hop,
+                               win_length=win)) ** 2
+    fb = librosa.filters.mel(sr=sr, n_fft=n_fft, n_mels=n_mels,
+                             fmin=fmin, fmax=fmax)
+    expected = librosa.power_to_db(fb @ power, ref=1.0, top_db=None).T
+    n = acoustic_ts._grid_len(y.size, sr, rate)
+    expected = acoustic_ts._fit_to_grid(expected, n)
+    ours, _ = acoustic_ts.log_mel_spectrogram(
+        y, sr, rate, n_mels=n_mels, fmin=fmin, fmax=fmax)
+    np.testing.assert_allclose(ours, expected, atol=1e-9, rtol=0)
+
+
+def test_log_mel_silence_hits_fixed_floor_not_neg_inf():
+    # Absolute dB with amin=1e-10 floors silence at ~ -100 dB (finite), not
+    # -inf, and not the per-file-relative 0 the old ref=np.max produced.
+    y = np.zeros(16000, dtype=np.float64)
+    logmel, _ = acoustic_ts.log_mel_spectrogram(
+        y, 16000, 128, n_mels=16, fmin=50.0, fmax=8000.0)
+    assert np.all(np.isfinite(logmel))
+    np.testing.assert_allclose(logmel, -100.0, atol=1e-6)
+
+
+def test_log_mel_is_absolute_db_not_per_file_max():
+    # Scaling the whole signal by a constant gain must shift the log-mel by a
+    # uniform 20*log10(g) dB everywhere (absolute dB). Under the old ref=np.max
+    # the shift would be zero, because the per-file max scales with the signal.
+    # Broadband noise keeps every band well above the fixed amin floor, so the
+    # shift is uniform (a pure tone leaves silent bands pinned at the floor).
+    rng = np.random.default_rng(0)
+    sr = 16000
+    y = 0.1 * rng.standard_normal(sr)   # 1 s of broadband noise
+    g = 2.0
+    base, _ = acoustic_ts.log_mel_spectrogram(y, sr, 128, n_mels=16,
+                                              fmin=50.0, fmax=8000.0)
+    louder, _ = acoustic_ts.log_mel_spectrogram(g * y, sr, 128, n_mels=16,
+                                                fmin=50.0, fmax=8000.0)
+    diff = louder - base
+    np.testing.assert_allclose(diff, 20.0 * np.log10(g), atol=1e-6)
 
 
 def test_mfcc_shape_on_grid():
@@ -113,6 +177,46 @@ def test_mfcc_shape_on_grid():
     m = acoustic_ts.mfcc(y, sr, rate, n_mfcc=n_mfcc, n_mels=16,
                          fmin=50.0, fmax=8000.0)
     assert m.shape == (round(1.0 * rate), n_mfcc)
+
+
+def test_mfcc_is_dct_of_log_mel():
+    # An MFCC *is* the type-II orthonormal DCT of the log-mel spectrogram,
+    # truncated to n_mfcc coefficients. Rebuild that directly and assert our
+    # mfcc() matches — validates the transform end to end.
+    import librosa
+    from scipy.fftpack import dct
+    y, sr = _tone(dur=1.0, f=300.0)
+    rate, n_mfcc, n_mels, fmin, fmax = 128, 13, 16, 50.0, 8000.0
+    hop = max(1, int(round(sr / rate)))
+    win = max(hop, int(round(0.025 * sr)))
+    n_fft = 1 << (win - 1).bit_length()
+    # librosa.feature.mfcc's internal log-mel uses power_to_db defaults (top_db=80).
+    logmel = librosa.power_to_db(librosa.feature.melspectrogram(
+        y=y, sr=sr, n_fft=n_fft, hop_length=hop, win_length=win,
+        n_mels=n_mels, fmin=fmin, fmax=fmax, power=2.0))
+    expected = dct(logmel, axis=0, type=2, norm="ortho")[:n_mfcc]
+    n = acoustic_ts._grid_len(y.size, sr, rate)
+    expected = acoustic_ts._fit_to_grid(expected.T, n)
+    ours = acoustic_ts.mfcc(y, sr, rate, n_mfcc=n_mfcc, n_mels=n_mels,
+                            fmin=fmin, fmax=fmax)
+    np.testing.assert_allclose(ours, expected, atol=1e-9, rtol=0)
+
+
+def test_mfcc_gain_changes_only_c0():
+    # A gain g adds a constant 20*log10(g) to every log-mel band; the DCT puts a
+    # constant entirely into the 0th coefficient. So C0 shifts by exactly
+    # 20*log10(g)*sqrt(n_mels) and all higher coefficients are unchanged.
+    rng = np.random.default_rng(2)
+    sr, n_mels, n_mfcc = 16000, 16, 13
+    y = 0.1 * rng.standard_normal(sr)        # broadband, well above the floor
+    g = 2.0
+    base = acoustic_ts.mfcc(y, sr, 128, n_mfcc=n_mfcc, n_mels=n_mels,
+                            fmin=50.0, fmax=8000.0)
+    louder = acoustic_ts.mfcc(g * y, sr, 128, n_mfcc=n_mfcc, n_mels=n_mels,
+                              fmin=50.0, fmax=8000.0)
+    np.testing.assert_allclose(louder[:, 1:], base[:, 1:], atol=1e-6)
+    expected_dc = 20.0 * np.log10(g) * np.sqrt(n_mels)
+    np.testing.assert_allclose(louder[:, 0] - base[:, 0], expected_dc, atol=1e-6)
 
 
 def test_extract_acoustic_all_features_share_grid(tmp_path):

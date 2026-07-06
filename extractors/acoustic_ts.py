@@ -13,6 +13,12 @@ from __future__ import annotations
 
 import numpy as np
 
+# mTRFenvelope.m's default power-law compression exponent (Stevens 1955).
+# Using exactly log10(2) keeps the `rms` envelope bit-for-bit with mTRF defaults;
+# any other value (e.g. a rounded 0.3) introduces a systematic, value-dependent
+# offset in the final `sqrt(meanSquare) ** comp` step.
+MTRF_COMP = float(np.log10(2))
+
 
 def _grid_len(n_samples: int, sr: float, rate: float) -> int:
     """Canonical number of output frames for a signal of n_samples at sr."""
@@ -37,7 +43,7 @@ def _mround(v: float) -> int:
 
 
 def amplitude_envelope(y: np.ndarray, sr: float, rate: float, *,
-                       method: str = "rms", comp: float = 0.3,
+                       method: str = "rms", comp: float = MTRF_COMP,
                        window: float = 1.0) -> np.ndarray:
     """Broadband amplitude envelope, power-law compressed, at `rate` Hz.
 
@@ -47,8 +53,10 @@ def amplitude_envelope(y: np.ndarray, sr: float, rate: float, *,
     t = i/rate over a (window/rate)-wide averaging window; the first frame sits
     at t=0 as a clamped half-window, matching mTRF bit-for-bit. `window` > 1
     overlaps adjacent frames (extra smoothing) without changing the frame rate.
-    mTRF's default compression is log10(2) ~= 0.301 (Stevens 1955); we expose it
-    as `comp` (default 0.3).
+    mTRF's default compression is log10(2) ~= 0.301 (Stevens 1955); we use that
+    exact value as the `comp` default (`MTRF_COMP`) so the output matches
+    mTRFenvelope.m bit-for-bit. A rounded 0.3 would, on normalized audio (values
+    < 1), make every frame slightly larger than MATLAB's.
     """
     y = np.asarray(y, dtype=np.float64).ravel()
     n = _grid_len(y.size, sr, rate)
@@ -123,7 +131,11 @@ def log_mel_spectrogram(y: np.ndarray, sr: float, rate: float, *,
     mel = librosa.feature.melspectrogram(
         y=y, sr=sr, n_fft=n_fft, hop_length=hop, win_length=win,
         n_mels=n_mels, fmin=fmin, fmax=fmax, power=2.0)
-    logmel = librosa.power_to_db(mel, ref=np.max).T   # (frames, n_mels)
+    # Absolute dB (ref=1.0): 10*log10(power) on a fixed reference, so values are
+    # comparable across files. top_db=None disables the per-file-max dynamic-range
+    # clip (which would otherwise reintroduce per-file coupling at the noise
+    # floor); the floor is then the fixed amin-based level (~ -100 dB).
+    logmel = librosa.power_to_db(mel, ref=1.0, top_db=None).T   # (frames, n_mels)
     freqs = librosa.mel_frequencies(n_mels=n_mels, fmin=fmin, fmax=fmax)
     n = _grid_len(y.size, sr, rate)
     return _fit_to_grid(logmel, n), np.asarray(freqs, dtype=np.float64)
@@ -172,7 +184,7 @@ def extract_acoustic(audio_path: str, rate: float, cfg: dict) -> dict:
     env = None
     if cfg.get("envelope", True) or cfg.get("onset_env", True):
         env = amplitude_envelope(y, sr, rate, method=cfg.get("env_method", "rms"),
-                                 comp=float(cfg.get("env_comp", 0.3)),
+                                 comp=float(cfg.get("env_comp", MTRF_COMP)),
                                  window=float(cfg.get("env_window", 1.0)))
     if cfg.get("envelope", True):
         out["envelope"] = env
@@ -191,7 +203,7 @@ def extract_acoustic(audio_path: str, rate: float, cfg: dict) -> dict:
 
     out["config"] = {
         "analysis_rate": float(rate), "env_method": cfg.get("env_method", "rms"),
-        "env_comp": float(cfg.get("env_comp", 0.3)),
+        "env_comp": float(cfg.get("env_comp", MTRF_COMP)),
         "env_window": float(cfg.get("env_window", 1.0)),
         "n_mels": int(cfg.get("n_mels", 16)), "n_mfcc": int(cfg.get("n_mfcc", 13)),
         "fmin": float(fmin), "fmax": float(fmax),

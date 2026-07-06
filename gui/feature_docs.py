@@ -26,8 +26,8 @@ _SHARED_DOC_MAP: dict[str, str] = {
     "feat_struct_doc_id":       "structural_ids.md",
     "feat_struct_paragraph_id": "structural_ids.md",
     "feat_struct_sentence_id":  "structural_ids.md",
-    "feat_struct_term_id":      "structural_ids.md",
-    "feat_struct_token_id":     "structural_ids.md",
+    "feat_struct_token_id":              "structural_ids.md",
+    "feat_struct_token_in_sentence_id":  "structural_ids.md",
     # Structural character offsets — one shared explainer
     "feat_struct_char_start":   "structural_offsets.md",
     "feat_struct_char_end":     "structural_offsets.md",

@@ -6,8 +6,36 @@ from utils.preferences import (
     DEFAULT_PREFS,
     load_preferences,
     save_preferences,
+    reset_to_defaults,
     get_preferences_path,
 )
+
+
+def test_reset_to_defaults_restores_feature_toggles(tmp_path, monkeypatch):
+    monkeypatch.setenv('SENSI_PREFS_PATH', str(tmp_path / 'p.json'))
+    # User flips a feature and sets an I/O folder.
+    save_preferences({
+        "features": {"lexling_dep": False},
+        "shared": {"last_transcripts_folder": "/x/y", "analyzer_name": "Alice"},
+    })
+    assert load_preferences()["features"]["lexling_dep"] is False
+
+    fresh = reset_to_defaults()  # keep_shared=True by default
+    # Feature toggles are back to shipped defaults...
+    assert fresh["features"]["lexling_dep"] == DEFAULT_PREFS["features"]["lexling_dep"]
+    assert load_preferences()["features"]["lexling_dep"] == \
+        DEFAULT_PREFS["features"]["lexling_dep"]
+    # ...but the I/O folder + analyzer are preserved.
+    assert fresh["shared"]["last_transcripts_folder"] == "/x/y"
+    assert fresh["shared"]["analyzer_name"] == "Alice"
+
+
+def test_reset_to_defaults_full_wipe_clears_shared(tmp_path, monkeypatch):
+    monkeypatch.setenv('SENSI_PREFS_PATH', str(tmp_path / 'p.json'))
+    save_preferences({"shared": {"last_transcripts_folder": "/x/y"}})
+    fresh = reset_to_defaults(keep_shared=False)
+    assert fresh["shared"]["last_transcripts_folder"] == \
+        DEFAULT_PREFS["shared"]["last_transcripts_folder"]
 
 
 def test_load_preferences_returns_default_when_file_missing(tmp_path, monkeypatch):

@@ -46,6 +46,18 @@ def test_case_insensitive_matching(tmp_path):
     assert len(result.pairs) == 1
 
 
+def test_stimulus_id_preserves_transcript_casing(tmp_path):
+    """Matching is case-insensitive, but the stimulus_id / document name must
+    keep the transcript file's real casing (e.g. '1_FB_P', not '1_fb_p')."""
+    txt = tmp_path / 'txt'
+    aud = tmp_path / 'aud'
+    _touch(txt / '1_FB_P.txt')
+    _touch(aud / '1_fb_p.wav')
+    result = find_pairs(txt, aud)
+    assert len(result.pairs) == 1
+    assert result.pairs[0].stimulus_id == '1_FB_P'
+
+
 def test_extension_priority_for_audio(tmp_path):
     txt = tmp_path / 'txt'
     aud = tmp_path / 'aud'

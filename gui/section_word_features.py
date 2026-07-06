@@ -47,8 +47,8 @@ class WordFeaturesSection(QWidget):
             ("feat_struct_sentence_text", "sentence"),
             ("feat_struct_char_start", "start"),
             ("feat_struct_char_end", "end"),
-            ("feat_struct_term_id", "term_id"),
             ("feat_struct_token_id", "token_id"),
+            ("feat_struct_token_in_sentence_id", "token_in_sentence_id"),
         ]
         for i, (key, label) in enumerate(struct_keys):
             struct_grid.addWidget(

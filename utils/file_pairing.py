@@ -17,7 +17,7 @@ DEFAULT_AUDIO_EXTS = ['wav', 'flac', 'mp3']
 
 @dataclass
 class Pair:
-    stimulus_id: str  # base name (lower-cased for canonical id)
+    stimulus_id: str  # transcript file's base name, original casing preserved
     transcript_path: Path
     audio_path: Path
 
@@ -59,7 +59,10 @@ def find_pairs(
             if aud_warning:
                 result.warnings.append(aud_warning)
             result.pairs.append(Pair(
-                stimulus_id=base,
+                # `base` is lowercased only as the case-insensitive matching key;
+                # the stimulus_id / document name preserves the transcript file's
+                # real casing (e.g. "1_FB_P", not "1_fb_p").
+                stimulus_id=chosen_text.stem,
                 transcript_path=chosen_text,
                 audio_path=chosen_audio,
             ))
@@ -71,7 +74,7 @@ def find_pairs(
             chosen_audio, _ = _resolve_priority(aud_candidates, audio_exts, base, 'audio')
             result.unmatched_audio.append(chosen_audio)
 
-    result.pairs.sort(key=lambda p: p.stimulus_id)
+    result.pairs.sort(key=lambda p: p.stimulus_id.lower())
     result.unmatched_text.sort(key=lambda p: p.stem.lower())
     result.unmatched_audio.sort(key=lambda p: p.stem.lower())
     return result

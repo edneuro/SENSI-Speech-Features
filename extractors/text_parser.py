@@ -7,8 +7,15 @@ Output: pandas DataFrame, one row per token
 Columns produced:
     doc_id, paragraph_id, sentence_id, sentence,
     start (char offset in sentence), end (char offset in sentence),
-    term_id, token_id, token, lemma,
+    token_id, token_in_sentence_id, token, lemma,
     upos, xpos, feats, dep_rel, head_token_id
+
+token_id is the global whole-document token index (1-based); token_in_sentence_id
+is the position within the current sentence (resets to 1 each sentence).
+
+head_token_id references the syntactic head by its global token_id, so it is
+self-contained against the token_id column and never ambiguous across sentence
+boundaries. A root token's head_token_id equals its own token_id.
 
 This extractor is purely text-based and has no dependency on audio.
 It can be run independently of alignment.
@@ -90,7 +97,7 @@ def parse(text: str, doc_id: int = 1) -> pd.DataFrame:
     paragraphs = _paragraph_spans(text)
 
     rows = []
-    term_id = 1
+    token_id = 1
 
     for sent_idx, sent in enumerate(doc.sents, start=1):
         sent_start_char = sent.start_char
@@ -103,9 +110,12 @@ def parse(text: str, doc_id: int = 1) -> pd.DataFrame:
 
             feats = str(token.morph) if token.morph else 'NA'
 
-            # head_token_id is the token_id (within-sentence index) of the
-            # syntactic head. For the root token its own head is itself.
-            head_token_id = token.head.i - sent.start + 1
+            # head_token_id is the token_id (global, whole-document index) of
+            # the syntactic head, so it is self-contained against the token_id
+            # column and unambiguous across sentence boundaries. For the root
+            # token its own head is itself. token_id counts tokens in document
+            # order starting at 1, so the head's token_id is token.head.i + 1.
+            head_token_id = token.head.i + 1
 
             rows.append({
                 'doc_id': doc_id,
@@ -114,8 +124,8 @@ def parse(text: str, doc_id: int = 1) -> pd.DataFrame:
                 'sentence': sent.text,
                 'start': char_start,
                 'end': char_end,
-                'term_id': term_id,
-                'token_id': tok_idx,
+                'token_id': token_id,
+                'token_in_sentence_id': tok_idx,
                 'token': token.text,
                 'lemma': token.lemma_,
                 'upos': token.pos_,
@@ -124,6 +134,6 @@ def parse(text: str, doc_id: int = 1) -> pd.DataFrame:
                 'dep_rel': token.dep_,
                 'head_token_id': head_token_id,
             })
-            term_id += 1
+            token_id += 1
 
     return pd.DataFrame(rows)

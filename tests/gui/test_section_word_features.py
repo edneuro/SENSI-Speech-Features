@@ -14,7 +14,7 @@ def test_word_section_structural_has_eight_per_column_toggles(qtbot):
     for k in ("feat_struct_doc_id", "feat_struct_paragraph_id",
               "feat_struct_sentence_id", "feat_struct_sentence_text",
               "feat_struct_char_start", "feat_struct_char_end",
-              "feat_struct_term_id", "feat_struct_token_id"):
+              "feat_struct_token_id", "feat_struct_token_in_sentence_id"):
         assert w.toggle(k) is not None, k
 
 

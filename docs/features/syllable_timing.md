@@ -19,7 +19,7 @@ Per-syllable acoustic timing in the `<stim>_syllables.csv` sidecar:
 | `Duration` | `End − Onset`, in seconds. |
 
 Each row joins back to its word via the foreign-key columns
-`(doc_id, sentence_id, token_id, syllable_id)`. Syllables that did not
+`(doc_id, sentence_id, token_in_sentence_id, syllable_id)`. Syllables that did not
 align (rare — usually an unrecognized phone sequence) are present in
 the CSV with `NaN` for all three columns.
 

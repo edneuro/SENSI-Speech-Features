@@ -58,7 +58,7 @@ Source: `extractors/pcenter.py:add_pcenter`
 **What the code does:**
 
 1. Sorts the phoneme DataFrame by
-   `(doc_id, sentence_id, token_id, syllable_id, phoneme_id)`.
+   `(doc_id, sentence_id, token_in_sentence_id, syllable_id, phoneme_id)`.
 2. For each syllable, identifies the first phone whose
    [ARPABET](syllable_labels.md) label ends in `0`, `1`, or `2` (the
    vowel nucleus).

@@ -58,7 +58,7 @@ See `Feature_Extraction_Guide.md` for full documentation, and
 | `doc_id`, `paragraph_id`, `sentence_id` | spaCy | Document/sentence location |
 | `sentence` | spaCy | Full sentence text |
 | `start`, `end` | spaCy | Character offsets within `sentence` |
-| `term_id`, `token_id` | spaCy | Global and per-sentence token index |
+| `token_id`, `token_in_sentence_id` | spaCy | Global and per-sentence token index |
 | `token` | spaCy | Original word form |
 | `lemma` | spaCy | Dictionary base form |
 | `upos`, `xpos` | spaCy | Universal and Penn Treebank POS tags |

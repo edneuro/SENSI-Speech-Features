@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 
 from gui.planner.stages import Plan
+from extractors.acoustic_ts import MTRF_COMP
 
 # Word-level output CSVs — used to filter which stages are relevant for the
 # word-level namespace (so doc-level stage requirements don't bleed into
@@ -18,6 +19,12 @@ _WORD_LEVEL_CSVS = frozenset({
     "features", "syllables", "phonemes", "sentences",
     "word2vec", "bert_word", "bert_sentence",
 })
+
+# Doc-level output CSVs — used to scope the doc namespace's word-stage flags
+# to only what *doc-level* clusters require, so word-level stage requirements
+# (e.g. mfa_align pulled in by word prosody / sub-word) don't bleed into the
+# doc batch's no_* flags.
+_DOC_LEVEL_CSVS = frozenset({"documents_summary"})
 
 _WORD_STAGE_FLAGS = {
     # stage name -> attr name on the namespace (no_X is True iff stage NOT in plan)
@@ -35,33 +42,62 @@ _WORD_STAGE_FLAGS = {
 
 
 def _word_only_stages(plan: Plan, prefs: dict) -> frozenset[str]:
-    """Return the stages required only by word-level output CSVs.
+    """Return the stages required only by *active* word-level output CSVs.
 
     This prevents doc-level stage requirements (e.g. mfa_align pulled in by
     doc_prosody) from affecting word-level no_* flags like no_align.
 
-    A word-level cluster is "active" iff its output_csv is in the plan's
-    active output CSVs AND at least one of its toggle_keys is True in prefs.
-    Only active clusters' required stages contribute to the word-level view.
+    Cluster activation is delegated to plan._active_clusters — the single
+    source of truth — so the same gates apply here as when the plan was
+    built: available_when (env), master_toggle (user master switch),
+    output_csv wanted, and any child toggle on. Re-deriving the predicate
+    locally is what caused the 2026-06-24 bug: a cluster disabled via its
+    master toggle (children left on) still flipped its no_* flag, so main.py
+    ran an extractor the user had switched off. `plan` is accepted for call
+    compatibility; activation reads straight from prefs.
     """
-    from gui.planner.registry import CLUSTERS
-    from gui.planner.plan import OUTPUT_KEYED_TOGGLES
+    from gui.planner.plan import _active_clusters, _active_output_csvs
 
-    def _toggle_value(key: str) -> bool:
-        if key in OUTPUT_KEYED_TOGGLES:
-            return bool(prefs.get("output", {}).get(key, False))
-        return bool(prefs.get("features", {}).get(key, False))
-
+    active_csvs = _active_output_csvs(prefs)
     required: set[str] = set()
-    for c in CLUSTERS:
+    for c in _active_clusters(prefs, active_csvs):
         if c.output_csv not in _WORD_LEVEL_CSVS:
-            continue
-        if c.output_csv not in plan.output_csvs:
-            continue
-        if c.toggle_keys and not any(_toggle_value(k) for k in c.toggle_keys):
             continue
         required.update(c.requires_stages)
     return frozenset(required)
+
+
+def _doc_only_stages(prefs: dict) -> frozenset[str]:
+    """Return the stages required only by *active* doc-level clusters.
+
+    Symmetric to _word_only_stages. Without this, the doc namespace derived
+    its no_* flags from the whole plan, so mfa_align pulled in by a *word*
+    cluster (word prosody, sub-word, sentence prosody, acoustic) made the doc
+    batch run MFA even when no doc-level feature needed alignment.
+
+    The set is closed under stage.consumes (like plan_from_prefs) so that a
+    doc stage which consumes the base word_df pulls in spacy_parse (keeping
+    no_parse correct), and doc_prosody — which consumes word_alignment /
+    contours — pulls in mfa_align / praat_contours *only when it is active*.
+    That closure is exactly what makes no_align False for the doc batch iff a
+    doc-level feature (doc prosody / articulation rate) actually needs it.
+    Because doc aggregate stages consume the base word_df (not its dotted
+    columns like word_df.Surprisal), the underlying word extractors
+    (freq / surprisal / sem / norms) are NOT pulled in here; they are
+    (re)enabled independently by main.run_doc_level_batch from the doc output
+    toggles.
+    """
+    from gui.planner.plan import (
+        _active_clusters, _active_output_csvs, _close_under_consumes,
+    )
+
+    active_csvs = _active_output_csvs(prefs)
+    required: set[str] = set()
+    for c in _active_clusters(prefs, active_csvs):
+        if c.output_csv not in _DOC_LEVEL_CSVS:
+            continue
+        required.update(c.requires_stages)
+    return frozenset(_close_under_consumes(required))
 
 
 def _enabled_ewfg_bands(features: dict) -> str | None:
@@ -107,7 +143,7 @@ def to_acoustic_namespace(prefs: dict) -> argparse.Namespace:
         "logmel":    bool(feats.get("feat_acoustic_ts_logmel", True)),
         "mfcc":      bool(feats.get("feat_acoustic_ts_mfcc", False)),
         "env_method":   acfg.get("env_method", "rms"),
-        "env_comp":     float(acfg.get("env_comp", 0.3)),
+        "env_comp":     float(acfg.get("env_comp", MTRF_COMP)),
         "env_window":   float(acfg.get("env_window", 1.0)),
         "n_mels":       int(acfg.get("n_mels", 16)),
         "n_mfcc":       int(acfg.get("n_mfcc", 13)),
@@ -135,13 +171,24 @@ def to_namespace(plan: Plan, prefs: dict, level: str) -> argparse.Namespace:
     ns.audio_extensions   = "wav,flac,mp3"
     ns.save_prefs         = False
 
-    # Word-stage no_* flags
-    # Use the full plan set for doc-level (doc stages can pull in mfa_align etc);
-    # use a word-only subset for word-level so doc-level requirements don't bleed
-    # into word-level no_* flags (e.g. doc_prosody → mfa_align → no_align=False
-    # should not affect the word batch when user has no acoustic/prosody features on).
+    # Word-stage no_* flags.
+    # Each level's flags are scoped to the stages required by *that level's*
+    # active clusters, so requirements don't bleed across levels:
+    #   - word level: doc_prosody → mfa_align must not flip the word batch's
+    #     no_align (that was the 2026-06-24 bug fixed by _word_only_stages);
+    #   - doc level: a word-level prosody/sub-word feature → mfa_align must not
+    #     flip the doc batch's no_align, or the doc batch runs MFA with no
+    #     doc-level feature that needs it.
+    # The underlying word extractors that feed doc aggregates are re-enabled
+    # by main.run_doc_level_batch from the doc output toggles, so scoping the
+    # doc flags here is safe.
     in_plan = set(plan.stages_to_run)
-    word_stages = _word_only_stages(plan, prefs) if level == "word" else in_plan
+    if level == "word":
+        word_stages = _word_only_stages(plan, prefs)
+    elif level == "doc":
+        word_stages = _doc_only_stages(prefs)
+    else:
+        word_stages = in_plan
     for stage_name, attr in _WORD_STAGE_FLAGS.items():
         if attr is None:
             continue

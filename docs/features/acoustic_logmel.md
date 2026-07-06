@@ -35,9 +35,11 @@ Source `extractors/acoustic_ts.py` → `log_mel_spectrogram(...)`, built on
 2. **Mel filterbank**: the power spectrum (`power=2.0`) is mapped through
    `n_mels` triangular filters (default `16`) spaced evenly on the mel scale
    [Stevens 1937] between `fmin` and `fmax`.
-3. **Log / dB**: `librosa.power_to_db(..., ref=np.max)` converts to decibels
-   **relative to the per-file maximum** (so 0 dB is the loudest mel cell in
-   that stimulus and values are ≤ 0).
+3. **Log / dB**: `librosa.power_to_db(..., ref=1.0, top_db=None)` converts to
+   **absolute decibels** (`10·log10(power)`) on a fixed reference, with a fixed
+   lower floor near −100 dB. The scale is the same for every stimulus, so mel
+   values are **directly comparable across files** — a stimulus that is 6 dB
+   louder reads ~6 dB higher in every band.
 4. Transpose to `(frames, n_mels)` and `_fit_to_grid` to exactly `N` rows.
 
 **Mel preset** (`mel_preset`) sets the band range:
@@ -76,9 +78,13 @@ multivariate predictor set at the EEG rate.
 Two practical notes:
 - **`n_mels` is your predictor count.** A 16-band log-mel is 16 regressors;
   with limited data, fewer bands estimate more stably.
-- **dB is referenced to each file's own max**, so absolute levels are *not*
-  comparable across stimuli. For cross-stimulus modeling, z-score each band
-  (per your TRF pipeline) before fitting. Values are returned raw (un-z-scored).
+- **dB is absolute** (fixed reference), so levels *are* comparable across
+  stimuli — no per-file normalization is applied. Values are returned raw
+  (un-z-scored). For TRF fitting you should still **z-score each band**, because
+  ridge regularization penalizes bands with larger variance more heavily and the
+  low mel bands carry far more energy. Compute the z-score statistics on your
+  **training data only** and apply them to held-out stimuli, so test-set levels
+  do not leak into the predictors.
 
 `mel_center_freqs` lets you label/inspect bands and is the same length as the
 band axis of `logmel`.

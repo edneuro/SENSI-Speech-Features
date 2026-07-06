@@ -223,11 +223,11 @@ CLUSTERS: list[FeatureCluster] = [
         toggle_keys=("feat_struct_doc_id", "feat_struct_paragraph_id",
                      "feat_struct_sentence_id", "feat_struct_sentence_text",
                      "feat_struct_char_start", "feat_struct_char_end",
-                     "feat_struct_term_id", "feat_struct_token_id"),
+                     "feat_struct_token_id", "feat_struct_token_in_sentence_id"),
         output_csv="features",
         requires_stages=("spacy_parse",),
         emits_columns=("doc_id", "paragraph_id", "sentence_id", "sentence",
-                       "start", "end", "term_id", "token_id"),
+                       "start", "end", "token_id", "token_in_sentence_id"),
         master_toggle="master_structural",
     ),
 
@@ -597,13 +597,18 @@ CLUSTERS: list[FeatureCluster] = [
         master_toggle="master_doc_prosody",
     ),
 
-    # §4.8 Articulation rate (split from doc prosody because of pyphen dep)
+    # §4.8 Articulation rate (split from doc prosody because of pyphen dep).
+    # Gated by master_doc_prosody: in the GUI it is a child row of the
+    # Document-prosody card, so turning that card off must deactivate it too
+    # (otherwise it stays active and pulls MFA). master_doc_articulation_rate
+    # is vestigial — kept in the prefs schema for migration compat but never
+    # wired to a UI master (cf. master_acoustic_ts).
     FeatureCluster(
         name="doc articulation rate",
         toggle_keys=("feat_doc_prosody_articulation_rate",),
         output_csv="documents_summary",
         requires_stages=("spacy_parse", "mfa_align", "doc_articulation_rate"),
         emits_columns=("doc_articulation_rate",),
-        master_toggle="master_doc_articulation_rate",
+        master_toggle="master_doc_prosody",
     ),
 ]

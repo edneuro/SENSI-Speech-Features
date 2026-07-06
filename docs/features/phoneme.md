@@ -12,7 +12,7 @@ depth: deep
 ## Meaning
 One row per phone (phoneme) in `<stim>_phonemes.csv`. Each row joins
 back to its word and syllable via
-`(doc_id, sentence_id, token_id, syllable_id, phoneme_id)`.
+`(doc_id, sentence_id, token_in_sentence_id, syllable_id, phoneme_id)`.
 
 | Column | Meaning |
 |---|---|

@@ -11,7 +11,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-_FK = ['doc_id', 'sentence_id', 'token_id', 'syllable_id']
+_FK = ['doc_id', 'sentence_id', 'token_in_sentence_id', 'syllable_id']
 
 
 def _pcenter_raw(group: pd.DataFrame, k: float) -> float:
@@ -57,7 +57,7 @@ def add_pcenter(
         if onset is None or pd.isna(onset):
             values.append(float('nan'))
             continue
-        key = (row.doc_id, row.sentence_id, row.token_id, row.syllable_id)
+        key = (row.doc_id, row.sentence_id, row.token_in_sentence_id, row.syllable_id)
         raw = pcenter_map.get(key, float('nan'))
         if np.isnan(raw):
             values.append(round(float(onset), 4))

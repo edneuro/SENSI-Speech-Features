@@ -167,9 +167,9 @@ def test_syllabify_pairs_emits_both_dataframes_with_fk_columns():
     """Given a small synthetic word_df + phone_df, syllabify_pairs returns
     (syllables_df, phonemes_df) with matching FK columns."""
     word_df = pd.DataFrame([
-        {'doc_id': 'stim1', 'sentence_id': 1, 'token_id': 1, 'token': 'below',
+        {'doc_id': 'stim1', 'sentence_id': 1, 'token_in_sentence_id': 1, 'token': 'below',
          'Onset': 0.00, 'End': 0.20},
-        {'doc_id': 'stim1', 'sentence_id': 1, 'token_id': 2, 'token': 'network',
+        {'doc_id': 'stim1', 'sentence_id': 1, 'token_in_sentence_id': 2, 'token': 'network',
          'Onset': 0.20, 'End': 0.50},
     ])
     phone_df = pd.DataFrame([
@@ -195,9 +195,9 @@ def test_syllabify_pairs_emits_both_dataframes_with_fk_columns():
     assert len(phon_df) == 10
 
     # FK columns present and correctly populated
-    for col in ('doc_id', 'sentence_id', 'token_id', 'token', 'syllable_id'):
+    for col in ('doc_id', 'sentence_id', 'token_in_sentence_id', 'token', 'syllable_id'):
         assert col in syll_df.columns
-    for col in ('doc_id', 'sentence_id', 'token_id', 'token', 'syllable_id', 'phoneme_id'):
+    for col in ('doc_id', 'sentence_id', 'token_in_sentence_id', 'token', 'syllable_id', 'phoneme_id'):
         assert col in phon_df.columns
 
     # syllable_id resets per word (1-indexed)
@@ -212,7 +212,7 @@ def test_syllabify_pairs_emits_both_dataframes_with_fk_columns():
 
 def test_syllabify_pairs_timing_columns_present():
     word_df = pd.DataFrame([
-        {'doc_id': 'd', 'sentence_id': 1, 'token_id': 1, 'token': 'below',
+        {'doc_id': 'd', 'sentence_id': 1, 'token_in_sentence_id': 1, 'token': 'below',
          'Onset': 0.0, 'End': 0.2},
     ])
     phone_df = pd.DataFrame([
@@ -233,7 +233,7 @@ def test_syllabify_pairs_timing_columns_present():
 
 def test_syllabify_pairs_label_and_arpabet_columns_present():
     word_df = pd.DataFrame([
-        {'doc_id': 'd', 'sentence_id': 1, 'token_id': 1, 'token': 'below',
+        {'doc_id': 'd', 'sentence_id': 1, 'token_in_sentence_id': 1, 'token': 'below',
          'Onset': 0.0, 'End': 0.2},
     ])
     phone_df = pd.DataFrame([
@@ -251,9 +251,9 @@ def test_syllabify_pairs_label_and_arpabet_columns_present():
 def test_syllabify_pairs_word_with_no_aligned_phones_skipped():
     """A word in word_df with no matching phones in phone_df produces no rows."""
     word_df = pd.DataFrame([
-        {'doc_id': 'd', 'sentence_id': 1, 'token_id': 1, 'token': 'gap',
+        {'doc_id': 'd', 'sentence_id': 1, 'token_in_sentence_id': 1, 'token': 'gap',
          'Onset': 0.0, 'End': 0.1},
-        {'doc_id': 'd', 'sentence_id': 1, 'token_id': 2, 'token': 'a',
+        {'doc_id': 'd', 'sentence_id': 1, 'token_in_sentence_id': 2, 'token': 'a',
          'Onset': 0.2, 'End': 0.25},
     ])
     phone_df = pd.DataFrame([

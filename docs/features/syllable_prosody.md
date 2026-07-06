@@ -51,7 +51,7 @@ call per audio file, three different slicing windows.
    `[syllable.Onset, syllable.End)`.
 2. Compute the mean of each contour over valid frames.
 3. Within each word group (rows sharing `doc_id, sentence_id,
-   token_id`), compute `diff()` on the per-syllable means to populate
+   token_in_sentence_id`), compute `diff()` on the per-syllable means to populate
    `Pitch_Delta` / `Volume_Delta` (NaN for the first syllable of each
    word).
 4. PUNCT / unaligned rows → NaN for all four columns.

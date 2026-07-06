@@ -650,11 +650,92 @@ DEFAULT_PREFS_V13: dict[str, Any] = {
 }
 
 # ---------------------------------------------------------------------------
+# v14 constants
+#
+# Structural-id rename (2026-07-06) for clarity — "term" and "token" were
+# near-synonyms and easy to confuse:
+#   feat_struct_term_id  (global whole-document index)  -> feat_struct_token_id
+#   feat_struct_token_id (position within the sentence)  -> feat_struct_token_in_sentence_id
+# The emitted CSV columns rename in lockstep (term_id -> token_id,
+# token_id -> token_in_sentence_id); head_token_id now references the global
+# token_id. Not additive — the migration below renames the keys in saved prefs.
+# ---------------------------------------------------------------------------
+
+SCHEMA_VERSION_V14 = 14
+
+_FEATURES_DEFAULT_V14 = dict(_FEATURES_DEFAULT_V13)
+# Pop both old keys before re-adding so the swap can't collide.
+_v14_global_default = _FEATURES_DEFAULT_V14.pop("feat_struct_term_id", True)
+_v14_insent_default = _FEATURES_DEFAULT_V14.pop("feat_struct_token_id", True)
+_FEATURES_DEFAULT_V14["feat_struct_token_id"] = _v14_global_default
+_FEATURES_DEFAULT_V14["feat_struct_token_in_sentence_id"] = _v14_insent_default
+
+DEFAULT_PREFS_V14: dict[str, Any] = {
+    **DEFAULT_PREFS_V13,
+    "schema_version": SCHEMA_VERSION_V14,
+    "features": dict(_FEATURES_DEFAULT_V14),
+}
+
+# ---------------------------------------------------------------------------
+# v15 constants
+#
+# Opt-in defaults (2026-07-06): a fresh install / "Reset settings" produces the
+# minimum — only the word-level features.csv. Every cluster *master* toggle
+# stays ON (so the level cards are enabled and children can be switched on),
+# every non-structural feature is OFF, and only the word_level_csv output is on.
+# Users opt into the expensive levels (MFA-based acoustic/prosody, sub-word,
+# doc, sentence, embeddings, GPT-2/LLM predictability) explicitly.
+#
+# Existing prefs are NOT force-flipped: the migration is additive, so a user's
+# saved toggles are preserved; the new lean baseline reaches them only on a
+# fresh install or via the Run-tab "Reset settings" button.
+#
+# Exception: master_acoustic_ts stays OFF — it is vestigial (no UI master; the
+# acoustic level is gated solely by the acoustic_ts_mat output toggle), so
+# flipping it on would be a no-op that contradicts its documented default.
+# ---------------------------------------------------------------------------
+
+SCHEMA_VERSION_V15 = 15
+
+# `master_` keys that are NOT card-masters-with-children — the master IS the
+# feature's on/off (its cluster has no child toggles), so treat it like any
+# other feature and default it OFF. Leaving them on would show a checked GUI
+# toggle whose output is off (nothing runs), which is exactly the confusing
+# "BERT looks on but doesn't run" state.
+_V15_FEATURE_MASTERS_OFF = frozenset({
+    "master_acoustic_ts",   # vestigial: acoustic gated by the acoustic_ts_mat output
+    "master_word2vec",      # embedding on/off (no child toggles)
+    "master_bert_word",     # embedding on/off
+    "master_bert_sentence", # embedding on/off
+})
+
+
+def _v15_feature_default(key: str) -> bool:
+    if key in _V15_FEATURE_MASTERS_OFF:
+        return False
+    return key.startswith("master_") or key.startswith("feat_struct_")
+
+
+def _v15_output_default(key: str) -> bool:
+    return key.startswith("master_") or key == "word_level_csv"
+
+
+_FEATURES_DEFAULT_V15 = {k: _v15_feature_default(k) for k in _FEATURES_DEFAULT_V14}
+_OUTPUT_DEFAULT_V15 = {k: _v15_output_default(k) for k in DEFAULT_PREFS_V14["output"]}
+
+DEFAULT_PREFS_V15: dict[str, Any] = {
+    **DEFAULT_PREFS_V14,
+    "schema_version": SCHEMA_VERSION_V15,
+    "features": dict(_FEATURES_DEFAULT_V15),
+    "output":   dict(_OUTPUT_DEFAULT_V15),
+}
+
+# ---------------------------------------------------------------------------
 # Active schema aliases
 # ---------------------------------------------------------------------------
 
-SCHEMA_VERSION = SCHEMA_VERSION_V13  # active version
-DEFAULT_PREFS: dict[str, Any] = DEFAULT_PREFS_V13  # active defaults
+SCHEMA_VERSION = SCHEMA_VERSION_V15  # active version
+DEFAULT_PREFS: dict[str, Any] = DEFAULT_PREFS_V15  # active defaults
 
 
 # ---------------------------------------------------------------------------
@@ -701,8 +782,9 @@ def load_preferences() -> dict[str, Any]:
             if wrong_key in user_sem:
                 user_sem[right_key] = user_sem.pop(wrong_key)
     if version in (SCHEMA_VERSION_V10, SCHEMA_VERSION_V11,
-                   SCHEMA_VERSION_V12, SCHEMA_VERSION_V13):
-        # v10–v13 are additive: missing keys are filled from the current
+                   SCHEMA_VERSION_V12, SCHEMA_VERSION_V13, SCHEMA_VERSION_V14,
+                   SCHEMA_VERSION_V15):
+        # v10–v15 are additive: missing keys are filled from the current
         # defaults (merged starts as DEFAULT_PREFS). v11's backend coercion and
         # the version stamp are applied in the finalize step below, which
         # rewrites the file for any source older than the current version.
@@ -815,6 +897,14 @@ def load_preferences() -> dict[str, Any]:
     sem = merged.get("semantic")
     if isinstance(sem, dict) and sem.get("backend") == "liwc":
         sem["backend"] = "empath"
+    # v14 struct-id rename finalize (applies to every pre-v14 source). Any
+    # merge above copies a pre-v14 file's keys wholesale, so at this point the
+    # old within-sentence value sits in `feat_struct_token_id` and the old
+    # global value in `feat_struct_term_id`. Recover the swap into the new keys.
+    f = merged.get("features")
+    if isinstance(f, dict) and "feat_struct_term_id" in f:
+        f["feat_struct_token_in_sentence_id"] = f.get("feat_struct_token_id", True)
+        f["feat_struct_token_id"] = f.pop("feat_struct_term_id")
     if merged.get("schema_version") != SCHEMA_VERSION:
         merged["schema_version"] = SCHEMA_VERSION
         _write(path, merged)
@@ -830,6 +920,27 @@ def save_preferences(updates: dict[str, Any]) -> None:
     _deep_merge_current(current, updates)
     current['schema_version'] = SCHEMA_VERSION
     _write(path, current)
+
+
+def reset_to_defaults(*, keep_shared: bool = True) -> dict[str, Any]:
+    """Overwrite the preferences file with the shipped defaults.
+
+    Every feature/output/config selection returns to DEFAULT_PREFS. By default
+    the `shared` section (I/O folder paths, analyzer name, theme) is preserved
+    so the user doesn't have to re-pick folders after a reset; pass
+    keep_shared=False for a full wipe.
+
+    The preferences file is local (gitignored), so this only affects this
+    machine. Returns the fresh prefs dict.
+    """
+    path = get_preferences_path()
+    fresh = deepcopy(DEFAULT_PREFS)
+    if keep_shared:
+        current = load_preferences()
+        if isinstance(current.get("shared"), dict):
+            fresh["shared"] = deepcopy(current["shared"])
+    _write(path, fresh)
+    return fresh
 
 
 # ---------------------------------------------------------------------------
