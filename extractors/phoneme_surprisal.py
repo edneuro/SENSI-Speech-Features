@@ -94,10 +94,10 @@ def phoneme_scores(trie: CohortTrie, phones: list[str], *,
     the wrong model. Keeping surprisal context-independent is what keeps this
     feature decorrelated from the GPT-2 word-level Surprisal feature.
     """
-    if not context_independent:
+    if context_independent is not True:
         raise NotImplementedError(
             "Only context-independent (unigram-prior) cohort surprisal is implemented.")
-    if not first_phoneme_empty_context:
+    if first_phoneme_empty_context is not True:
         raise NotImplementedError(
             "Only empty-context (word-initial prior) first-phoneme scoring is implemented.")
     return trie.walk(list(phones))
@@ -185,12 +185,16 @@ def add_phoneme_surprisal(phon_df, *, dict_path: str = DEFAULT_DICT_PATH,
     trie = get_cohort_trie(dict_path, strip_stress=strip_stress, primary_only=primary_only)
     surp_col = [None] * len(df)
     ent_col = [None] * len(df)
-    positions = df.reset_index().rename(columns={"index": "_pos"})
+    # Drop the caller's index so group row labels are the positional 0..n-1
+    # locations of surp_col/ent_col, regardless of how phon_df was indexed
+    # (robust even if a caller passes a filtered/reindexed frame). The final
+    # list-assignment onto `df` then aligns by position too.
+    positions = df.reset_index(drop=True)
     for _, grp in positions.groupby(_GROUP_KEYS, sort=False):
         phones = [_strip_stress(str(lbl)) if strip_stress else str(lbl)
                   for lbl in grp["Label"]]
         surp, ent = phoneme_scores(trie, phones)
-        for pos, s, e in zip(grp["_pos"], surp, ent):
+        for pos, s, e in zip(grp.index, surp, ent):
             surp_col[pos] = round(s, 4)
             ent_col[pos] = round(e, 4)
     df["phoneme_surprisal"] = surp_col

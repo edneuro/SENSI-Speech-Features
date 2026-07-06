@@ -832,15 +832,16 @@ def run_word_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None
                             # scipy.io.savemat cannot serialize a bare None
                             # inside a nested struct field.
                             _cap = float('nan')
+                        _duration_s = _audio_duration(pair.audio_path)
                         mat_vars = phoneme_surprisal_mat_vars(
-                            phon_df, _audio_duration(pair.audio_path), sr,
+                            phon_df, _duration_s, sr,
                             {'analysis_sr': sr,
                              'strip_stress': _strip_stress,
                              'primary_only': _primary_only,
                              'context_independent': True,
                              'first_phoneme_empty_context': True,
                              'cap': _cap, 'n_phonemes': int(len(phon_df)),
-                             'duration_s': _audio_duration(pair.audio_path),
+                             'duration_s': _duration_s,
                              'lexicon': 'english_us_arpa'})
                         mat_path = (_level_dir(output_dir, 'phoneme')
                                     / f'{pair.stimulus_id}_phoneme_surprisal.mat')
