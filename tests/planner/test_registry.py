@@ -79,15 +79,19 @@ def test_every_cluster_output_csv_is_valid():
             f"Cluster {c.name!r} has invalid output_csv {c.output_csv!r}"
 
 
+# Clusters that legitimately have NO child toggle and NO master: they are
+# monolithic .mat sidecars activated purely by their Run-tab output key (via
+# _OUTPUT_CSV_MAP). This is an explicit allowlist — NOT the full set of valid
+# output_csv values — so the invariant below still catches a future cluster
+# that is accidentally left permanently inactive.
+_OUTPUT_KEY_ONLY_GATED_CSVS = {"phoneme_surprisal_mat"}
+
+
 def test_every_cluster_has_at_least_one_toggle_key_or_master():
-    # A cluster is activatable if it has a child toggle, a master toggle, or its
-    # output_csv is gated by an output key in _OUTPUT_CSV_MAP (the last case is
-    # how the acoustic and phoneme-surprisal .mat clusters activate — purely
-    # from a Run-tab output toggle, with no per-feature children or master).
-    from gui.planner.plan import _OUTPUT_CSV_MAP
-    output_gated = set(_OUTPUT_CSV_MAP.values())
     for c in CLUSTERS:
-        assert c.toggle_keys or c.master_toggle or c.output_csv in output_gated, (
-            f"Cluster {c.name!r} has no toggle_keys, no master_toggle, and no "
-            f"output-key gate (would be permanently inactive)"
+        assert (c.toggle_keys or c.master_toggle
+                or c.output_csv in _OUTPUT_KEY_ONLY_GATED_CSVS), (
+            f"Cluster {c.name!r} has no toggle_keys, no master_toggle, and is "
+            f"not an allowlisted output-key-only-gated cluster "
+            f"(would be permanently inactive)"
         )
