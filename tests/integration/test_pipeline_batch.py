@@ -281,3 +281,115 @@ def test_sidecars_emit_when_struct_and_acoustic_per_column_toggles_off(
     assert len(phon_df) > 0, "phonemes sidecar is empty — drop ran before emission"
     # And the features CSV must NOT be written when no_word_csv=True
     assert not (out_dir / 'word').exists()
+
+
+def test_phoneme_surprisal_mat_write_survives_savemat(tmp_path, monkeypatch):
+    """Regression for a review finding on Task 7 (phoneme-surprisal batch):
+
+    scipy.io.savemat raises `TypeError: Could not convert None to array` if
+    the nested 'config' dict passed to phoneme_surprisal_mat_vars contains a
+    bare Python None. main.run_word_level_batch's config dict was fixed to
+    use 'cap': float('nan') instead of 'cap': None, but no committed test
+    drove that exact code path — tests only called phoneme_surprisal_mat_vars
+    directly with a config dict that never had a 'cap' key at all. This test
+    drives run_word_level_batch itself (the real construction site of that
+    config dict) with phoneme-surprisal .mat output enabled, so a future edit
+    that reintroduces a None field fails here instead of only at runtime.
+
+    Follows the fake_run/fake_word_df/fake_phone_df pattern from
+    test_sidecars_emit_when_struct_and_acoustic_per_column_toggles_off above,
+    to avoid needing a real MFA alignment pass.
+    """
+    import numpy as np
+    import pandas as pd
+    import scipy.io
+    import soundfile as sf
+    import main
+    from extractors import phoneme_surprisal as ps
+
+    audio_dir = tmp_path / "audio"
+    audio_dir.mkdir()
+    txt_dir = tmp_path / "txt"
+    txt_dir.mkdir()
+    out_dir = tmp_path / "out"
+    out_dir.mkdir()
+
+    # A real (tiny, silent) wav so _audio_duration()'s soundfile.info() call
+    # — part of the real config-dict construction in main.py — succeeds.
+    sr = 16000
+    sf.write(str(audio_dir / "story.wav"), np.zeros(sr, dtype=np.float32), sr)
+    (txt_dir / "story.txt").write_text("hello world")
+
+    fake_word_df = pd.DataFrame({
+        "doc_id": [0, 0], "sentence_id": [0, 0], "token_in_sentence_id": [0, 1],
+        "token": ["hello", "world"],
+        "Onset": [0.0, 0.5], "End": [0.4, 0.9],
+    })
+    fake_phone_df = pd.DataFrame({
+        "phone": ["HH", "EH1", "L", "OW1", "W", "ER1", "L", "D"],
+        "onset":  [0.00, 0.10, 0.20, 0.30, 0.50, 0.60, 0.75, 0.85],
+        "offset": [0.10, 0.20, 0.30, 0.40, 0.60, 0.75, 0.85, 0.90],
+    })
+
+    def fake_run(args):
+        args._phones_df = fake_phone_df
+        args._contours = None
+        return fake_word_df.copy()
+
+    monkeypatch.setattr(main, "run", fake_run)
+
+    # Synthetic cohort trie so add_phoneme_surprisal doesn't need the real
+    # ~200k-entry MFA lexicon.
+    trie = ps.build_cohort_trie([
+        (("HH", "EH", "L", "OW"), 3.0), (("W", "ER", "L", "D"), 2.0),
+    ])
+    monkeypatch.setattr(ps, "get_cohort_trie", lambda *a, **k: trie)
+
+    parser = build_parser()
+    args = parser.parse_args([
+        '--transcripts-folder', str(txt_dir),
+        '--audio-folder', str(audio_dir),
+        '--output-folder', str(out_dir),
+        '--analyzer', 'tester',
+        '--no-align', '--no-llm-cloze', '--no-edu-freq',
+    ])
+    # Scope the run to just the phoneme-surprisal .mat sidecar.
+    args.no_syllables = True
+    args.no_phonemes = True
+    args.no_sentences = True
+    args.no_word_csv = True
+    args.no_phoneme_surprisal = False
+    args.no_phoneme_surprisal_mat = False
+    args.phoneme_surprisal = {
+        'analysis_sr': 100, 'strip_stress': True, 'primary_only': True,
+    }
+
+    # run_word_level_batch wraps each pair's processing in a per-pair
+    # try/except (it logs failures via logger.record_pair_error rather than
+    # raising), so a savemat TypeError here would NOT propagate as a pytest
+    # exception — it would silently show up as a recorded pair error instead.
+    # Assert on the manifest so a reintroduced None fails loudly and legibly
+    # (surfacing the actual savemat TypeError) rather than as a vaguer
+    # missing/corrupt .mat file downstream.
+    run_word_level_batch(args)
+
+    manifest_path = next((out_dir / 'logs').glob('word_run_*_manifest.json'))
+    manifest = json.loads(manifest_path.read_text())
+    assert not manifest['errors'], (
+        f"pair processing recorded error(s) (expected none): {manifest['errors']}"
+    )
+    assert manifest['n_pairs_processed'] == 1
+
+    mat_path = out_dir / 'phoneme' / 'story_phoneme_surprisal.mat'
+    assert mat_path.exists(), "phoneme-surprisal .mat sidecar was not written"
+
+    # Reload to confirm savemat produced a valid, readable file (not just
+    # that no exception propagated) and that the config struct round-tripped
+    # with no None-shaped fields.
+    loaded = scipy.io.loadmat(str(mat_path), simplify_cells=True)
+    cfg = loaded["config"]
+    assert cfg, "config struct missing/empty after round-trip"
+    for key, val in cfg.items():
+        assert val is not None, f"config.{key} round-tripped as None"
+    # 'cap' specifically must be NaN (the documented None -> NaN fix).
+    assert np.isnan(float(cfg["cap"]))
