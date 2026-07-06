@@ -42,6 +42,8 @@ _INTENTIONALLY_UNROUTED_FEATURES: set[str] = {
     # gated solely by the acoustic_ts_mat output key (Run tab), not a cluster
     # master. Kept in the schema for migration compat (cf. master_syllable_pcenter).
     "master_acoustic_ts",
+    # v16 phoneme surprisal — routes via FeatureCluster.master_toggle
+    "master_phoneme_surprisal",
 }
 
 # Output keys NOT routed via clusters (the master output toggles that
@@ -62,6 +64,7 @@ _OUTPUT_KEYS_VIA_CSV_MAP: set[str] = {
     "master_doc_articulation_rate",
     "master_doc_counts",
     "acoustic_ts_mat",       # routed via _OUTPUT_CSV_MAP
+    "phoneme_surprisal_mat",  # routed via _OUTPUT_CSV_MAP
 }
 
 

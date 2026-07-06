@@ -731,11 +731,42 @@ DEFAULT_PREFS_V15: dict[str, Any] = {
 }
 
 # ---------------------------------------------------------------------------
+# v16 constants
+#
+# Phoneme surprisal + cohort entropy (2026-07-06). Additive. Card master
+# defaults ON (v15 policy: card enabled, children off); feature toggles + the
+# .mat output key default OFF (opt-in, like acoustic_ts_mat). New
+# phoneme_surprisal config section holds analysis_sr + the functional flags.
+# ---------------------------------------------------------------------------
+
+SCHEMA_VERSION_V16 = 16
+
+_FEATURES_DEFAULT_V16 = {
+    **_FEATURES_DEFAULT_V15,
+    "master_phoneme_surprisal": True,
+    "feat_phoneme_surprisal": False,
+    "feat_phoneme_cohort_entropy": False,
+}
+_OUTPUT_DEFAULT_V16 = {**DEFAULT_PREFS_V15["output"], "phoneme_surprisal_mat": False}
+
+DEFAULT_PREFS_V16: dict[str, Any] = {
+    **DEFAULT_PREFS_V15,
+    "schema_version": SCHEMA_VERSION_V16,
+    "features": dict(_FEATURES_DEFAULT_V16),
+    "output":   dict(_OUTPUT_DEFAULT_V16),
+    "phoneme_surprisal": {
+        "analysis_sr": 128,
+        "strip_stress": True,
+        "primary_only": True,
+    },
+}
+
+# ---------------------------------------------------------------------------
 # Active schema aliases
 # ---------------------------------------------------------------------------
 
-SCHEMA_VERSION = SCHEMA_VERSION_V15  # active version
-DEFAULT_PREFS: dict[str, Any] = DEFAULT_PREFS_V15  # active defaults
+SCHEMA_VERSION = SCHEMA_VERSION_V16  # active version
+DEFAULT_PREFS: dict[str, Any] = DEFAULT_PREFS_V16  # active defaults
 
 
 # ---------------------------------------------------------------------------
@@ -783,7 +814,7 @@ def load_preferences() -> dict[str, Any]:
                 user_sem[right_key] = user_sem.pop(wrong_key)
     if version in (SCHEMA_VERSION_V10, SCHEMA_VERSION_V11,
                    SCHEMA_VERSION_V12, SCHEMA_VERSION_V13, SCHEMA_VERSION_V14,
-                   SCHEMA_VERSION_V15):
+                   SCHEMA_VERSION_V15, SCHEMA_VERSION_V16):
         # v10–v15 are additive: missing keys are filled from the current
         # defaults (merged starts as DEFAULT_PREFS). v11's backend coercion and
         # the version stamp are applied in the finalize step below, which
@@ -974,7 +1005,8 @@ def _deep_merge_v3(into: dict, src: dict) -> None:
 
 
 _CURRENT_SECTIONS = ('shared', 'features', 'predictability',
-                     'semantic', 'output', 'prosody', 'lexical_norms', 'acoustic_ts')
+                     'semantic', 'output', 'prosody', 'lexical_norms',
+                     'acoustic_ts', 'phoneme_surprisal')
 
 
 def _deep_merge_current(into: dict, src: dict) -> None:

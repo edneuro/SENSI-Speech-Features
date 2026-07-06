@@ -872,3 +872,26 @@ def test_v14_defaults_have_renamed_struct_keys():
     assert "feat_struct_term_id" not in f
     assert f["feat_struct_token_id"] is True
     assert f["feat_struct_token_in_sentence_id"] is True
+
+
+# ---------------------------------------------------------------------------
+# v15 → v16 migration (phoneme surprisal + cohort entropy)
+# ---------------------------------------------------------------------------
+
+def test_v15_prefs_migrate_to_v16_additively(tmp_path, monkeypatch):
+    import json
+    from utils import preferences as P
+    p = tmp_path / "prefs.json"
+    # A minimal v15 file: additive migration must fill the new v16 keys.
+    p.write_text(json.dumps({"schema_version": 15, "features": {}, "output": {}}),
+                 encoding="utf-8")
+    monkeypatch.setenv("SENSI_PREFS_PATH", str(p))
+    prefs = P.load_preferences()
+    assert prefs["schema_version"] == 16
+    assert prefs["features"]["master_phoneme_surprisal"] is True
+    assert prefs["features"]["feat_phoneme_surprisal"] is False
+    assert prefs["features"]["feat_phoneme_cohort_entropy"] is False
+    assert prefs["output"]["phoneme_surprisal_mat"] is False
+    assert prefs["phoneme_surprisal"]["analysis_sr"] == 128
+    assert prefs["phoneme_surprisal"]["strip_stress"] is True
+    assert prefs["phoneme_surprisal"]["primary_only"] is True
