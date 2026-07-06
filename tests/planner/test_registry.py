@@ -72,6 +72,7 @@ def test_every_cluster_output_csv_is_valid():
     VALID = {
         "features", "syllables", "phonemes", "sentences", "documents_summary",
         "word2vec", "bert_word", "bert_sentence", "acoustic",
+        "phoneme_surprisal_mat",
     }
     for c in CLUSTERS:
         assert c.output_csv in VALID, \
@@ -79,8 +80,14 @@ def test_every_cluster_output_csv_is_valid():
 
 
 def test_every_cluster_has_at_least_one_toggle_key_or_master():
+    # A cluster is activatable if it has a child toggle, a master toggle, or its
+    # output_csv is gated by an output key in _OUTPUT_CSV_MAP (the last case is
+    # how the acoustic and phoneme-surprisal .mat clusters activate — purely
+    # from a Run-tab output toggle, with no per-feature children or master).
+    from gui.planner.plan import _OUTPUT_CSV_MAP
+    output_gated = set(_OUTPUT_CSV_MAP.values())
     for c in CLUSTERS:
-        assert c.toggle_keys or c.master_toggle, (
-            f"Cluster {c.name!r} has no toggle_keys and no master_toggle "
-            f"(would be permanently inactive)"
+        assert c.toggle_keys or c.master_toggle or c.output_csv in output_gated, (
+            f"Cluster {c.name!r} has no toggle_keys, no master_toggle, and no "
+            f"output-key gate (would be permanently inactive)"
         )
