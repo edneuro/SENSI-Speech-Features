@@ -141,9 +141,13 @@ existing frequency column are drawn from the same corpus.
 
 `build_cohort_trie(entries)` computes `f_min` (minimum nonzero
 frequency across entries), floors any `f == 0` word to it, then builds
-the trie bottom-up so every node's `z`/`sfl` are exact sums over the
-lexicon words passing through it — each `phoneme_scores` call is then
-`O(sequence length)` with `O(1)` work per phoneme (`CohortTrie.walk`).
+the trie **top-down**: each lexicon word is inserted by walking from
+the root to its final phoneme, adding `f`/`f·log2 f` to `z`/`sfl` at
+every node along that root-to-leaf path (creating child nodes as
+needed). After all words are inserted, every node's `z`/`sfl` are
+exact sums over the lexicon words passing through it — each
+`phoneme_scores` call is then `O(sequence length)` with `O(1)` work
+per phoneme (`CohortTrie.walk`).
 `get_cohort_trie(dict_path, strip_stress, primary_only)` memoizes the
 built trie in a module-level `_TRIE_CACHE` keyed on those three
 arguments, since parsing and building over the ~200k-entry dictionary

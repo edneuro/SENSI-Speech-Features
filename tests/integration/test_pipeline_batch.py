@@ -288,13 +288,16 @@ def test_phoneme_surprisal_mat_write_survives_savemat(tmp_path, monkeypatch):
 
     scipy.io.savemat raises `TypeError: Could not convert None to array` if
     the nested 'config' dict passed to phoneme_surprisal_mat_vars contains a
-    bare Python None. main.run_word_level_batch's config dict was fixed to
-    use 'cap': float('nan') instead of 'cap': None, but no committed test
-    drove that exact code path — tests only called phoneme_surprisal_mat_vars
-    directly with a config dict that never had a 'cap' key at all. This test
-    drives run_word_level_batch itself (the real construction site of that
-    config dict) with phoneme-surprisal .mat output enabled, so a future edit
-    that reintroduces a None field fails here instead of only at runtime.
+    bare Python None. main.run_word_level_batch's config dict was originally
+    fixed to use 'cap': float('nan') as a placeholder instead of 'cap': None,
+    but no committed test drove that exact code path — tests only called
+    phoneme_surprisal_mat_vars directly with a config dict that never had a
+    'cap' key at all. A later fix threads the REAL OOV-surprisal cap from the
+    cohort trie (get_cohort_trie(...).cap) into that dict for honest .mat
+    provenance. This test drives run_word_level_batch itself (the real
+    construction site of that config dict) with phoneme-surprisal .mat output
+    enabled, so a future edit that reintroduces a None (or a fake NaN) field
+    fails here instead of only at runtime.
 
     Follows the fake_run/fake_word_df/fake_phone_df pattern from
     test_sidecars_emit_when_struct_and_acoustic_per_column_toggles_off above,
@@ -391,5 +394,8 @@ def test_phoneme_surprisal_mat_write_survives_savemat(tmp_path, monkeypatch):
     assert cfg, "config struct missing/empty after round-trip"
     for key, val in cfg.items():
         assert val is not None, f"config.{key} round-tripped as None"
-    # 'cap' specifically must be NaN (the documented None -> NaN fix).
-    assert np.isnan(float(cfg["cap"]))
+    # 'cap' specifically must be the REAL OOV-surprisal cap from the cohort
+    # trie actually used for scoring (not the earlier None/NaN placeholder) —
+    # main.py fetches it via get_cohort_trie(...).cap for honest provenance.
+    assert np.isfinite(float(cfg["cap"]))
+    assert float(cfg["cap"]) == pytest.approx(trie.cap)

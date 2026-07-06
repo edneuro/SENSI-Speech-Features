@@ -809,26 +809,37 @@ def run_word_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None
 
                 if _want_psr and len(phon_df) > 0:
                     from extractors.phoneme_surprisal import (
-                        add_phoneme_surprisal, phoneme_surprisal_mat_vars)
+                        add_phoneme_surprisal, get_cohort_trie, phoneme_surprisal_mat_vars)
                     _pcfg = getattr(args, 'phoneme_surprisal', {}) or {}
+                    _strip_stress = _pcfg.get('strip_stress', True)
+                    _primary_only = _pcfg.get('primary_only', True)
                     phon_df = add_phoneme_surprisal(
                         phon_df,
-                        strip_stress=_pcfg.get('strip_stress', True),
-                        primary_only=_pcfg.get('primary_only', True),
+                        strip_stress=_strip_stress,
+                        primary_only=_primary_only,
                     )
                     if not getattr(args, 'no_phoneme_surprisal_mat', True) and pair.audio_path:
                         import scipy.io
                         sr = float(_pcfg.get('analysis_sr', 128))
+                        # add_phoneme_surprisal() already built (and memoized) the
+                        # trie for this exact (dict_path, strip_stress, primary_only)
+                        # combo, so this is an O(1) cache hit, not a recompute.
+                        try:
+                            _cap = float(get_cohort_trie(
+                                strip_stress=_strip_stress, primary_only=_primary_only).cap)
+                        except Exception:
+                            # Defensive fallback only: NaN, not None, because
+                            # scipy.io.savemat cannot serialize a bare None
+                            # inside a nested struct field.
+                            _cap = float('nan')
                         mat_vars = phoneme_surprisal_mat_vars(
                             phon_df, _audio_duration(pair.audio_path), sr,
                             {'analysis_sr': sr,
-                             'strip_stress': _pcfg.get('strip_stress', True),
-                             'primary_only': _pcfg.get('primary_only', True),
+                             'strip_stress': _strip_stress,
+                             'primary_only': _primary_only,
                              'context_independent': True,
                              'first_phoneme_empty_context': True,
-                             # NaN, not None: scipy.io.savemat cannot serialize
-                             # a bare None inside a nested struct field.
-                             'cap': float('nan'), 'n_phonemes': int(len(phon_df)),
+                             'cap': _cap, 'n_phonemes': int(len(phon_df)),
                              'duration_s': _audio_duration(pair.audio_path),
                              'lexicon': 'english_us_arpa'})
                         mat_path = (_level_dir(output_dir, 'phoneme')
