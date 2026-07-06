@@ -114,6 +114,9 @@ _SHARED_DOC_MAP: dict[str, str] = {
     "feat_phoneme_onset":    "phoneme.md",
     "feat_phoneme_end":      "phoneme.md",
     "feat_phoneme_duration": "phoneme.md",
+    # Phoneme surprisal + cohort entropy (2 toggles share one explainer)
+    "feat_phoneme_surprisal":       "phoneme_surprisal.md",
+    "feat_phoneme_cohort_entropy":  "phoneme_surprisal.md",
     # Sentence timing (3 toggles share one explainer)
     "feat_sentence_onset": "sentence_timing.md",
     "feat_sentence_end":   "sentence_timing.md",
