@@ -27,8 +27,10 @@ set -euo pipefail
 # Path-based ("prefix") env, mirroring the local ./env convention. Put it on
 # $GROUP_HOME or $OAK — NOT $HOME (quota). Example:
 ENV_PREFIX="${ENV_PREFIX:-$GROUP_HOME/envs/sensi}"
-# Repo location on Sherlock (where you cloned/rsynced this project):
-REPO="${REPO:-$GROUP_HOME/code/SensiExtractor}"
+# Repo root — auto-detected from this script's own location (sherlock/ sits one
+# level below the repo root). Override by setting REPO explicitly if needed.
+_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO="${REPO:-$(dirname "$_SCRIPT_DIR")}"
 # Durable storage base: prefer $OAK if you have it, else fall back to $GROUP_HOME.
 # (The ${OAK:-...} form is safe under `set -u`; a bare $OAK is not.)
 STORAGE_BASE="${STORAGE_BASE:-${OAK:-$GROUP_HOME}}"
@@ -51,7 +53,9 @@ command -v conda >/dev/null 2>&1 || {
 
 # 1. conda layer: python + MFA (Kaldi comes in as a dependency)
 if [ ! -d "$ENV_PREFIX" ]; then
-  conda create -y -p "$ENV_PREFIX" -c conda-forge python=3.10 montreal-forced-aligner
+  # `compilers` pulls a modern conda-forge gcc/g++ — Sherlock's system compiler
+  # (gcc 4.8.5) is too old to build modern C/C++/Cython packages from source.
+  conda create -y -p "$ENV_PREFIX" -c conda-forge python=3.10 montreal-forced-aligner compilers
 else
   echo "[setup] env already exists at $ENV_PREFIX — skipping create"
 fi
@@ -61,7 +65,16 @@ fi
 source "$(conda info --base)/etc/profile.d/conda.sh"
 conda activate "$ENV_PREFIX"
 
+# 1b. Compiled scientific packages from conda-forge (prebuilt binaries). pip
+# otherwise tries to BUILD these from source and stalls/fails on Sherlock's old
+# system compiler — so install them via conda first; pip then sees them as
+# already-satisfied and skips them.
+conda install -y -c conda-forge \
+  pandas numpy scipy pyarrow gensim librosa soundfile praat-parselmouth
+
 # 2. pip layer: everything else the code imports (single source of truth = requirements.txt)
+# Modernize pip first so it prefers prebuilt wheels over compiling from source.
+pip install --upgrade pip setuptools wheel
 pip install -r "$REPO/requirements.txt"
 
 # 3. spaCy English model

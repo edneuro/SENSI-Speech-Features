@@ -7,7 +7,9 @@ num2words>=0.5
 tgt>=1.4.4
 
 # Language model (surprisal)
-transformers>=4.30
+# Upper-bounded at <6: the Sherlock container verified against transformers 5.x;
+# pinning below 6 keeps rebuilds reproducible and blocks a future 6.x API break.
+transformers>=4.30,<6
 torch>=2.0
 
 # Data

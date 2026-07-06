@@ -60,6 +60,47 @@ squeue --me            # watch it
 
 ---
 
+## Container path (RECOMMENDED — start here)
+
+The bare-metal conda path below fights Sherlock at every turn (75k+ env files vs
+`$HOME` file-count quota, gcc 4.8.5 too old to compile modern packages, Anaconda
+officially discouraged, Lmod conflicts). A container turns all of those *run-time*
+unknowns into *build-time* knowns you solve once, locally, then ship as one file.
+Apptainer is the only container runtime allowed on Sherlock (rootless; Docker needs
+a root daemon the cluster won't give you).
+
+| Script | Where | What it does |
+|---|---|---|
+| `Apptainer.def`        | **WSL Ubuntu on your PC** | Recipe for the env-only container (conda MFA/Kaldi + `requirements.txt` + spaCy + MFA models). Build → one `sensi.sif` file. |
+| `run_container.sbatch` | `sbatch` on Sherlock | GPU job that runs `main.py` **inside** `sensi.sif` via `apptainer exec --nv`, with code + Llama weights bind-mounted. |
+
+```bash
+# 1. Build the container in WSL Ubuntu, from the REPO ROOT (needs internet):
+cd /mnt/c/Users/amilcar/Desktop/code/Antigravity/SensiExtractor
+apptainer build sherlock/sensi.sif sherlock/Apptainer.def       # → one ~3-4 GB file
+
+# 2. Ship the one file + the code to Sherlock:
+rsync -avP sherlock/sensi.sif  <you>@login.sherlock.stanford.edu:$GROUP_HOME/sensi/
+rsync -avP  --exclude env --exclude hf_cache --exclude mfa_data \
+      ./  <you>@login.sherlock.stanford.edu:$GROUP_HOME/code/SensiExtractor/
+
+# 3. Prefetch the gated Llama weights ONCE on a login node, THROUGH the container
+#    (huggingface-cli lives inside the .sif, not on the host):
+apptainer exec --bind $SCRATCH:$SCRATCH --env HF_HOME=$SCRATCH/sensi/hf_cache \
+      --env HUGGING_FACE_HUB_TOKEN=hf_xxx \
+      $GROUP_HOME/sensi/sensi.sif huggingface-cli download meta-llama/Meta-Llama-3-8B
+
+# 4. Submit the GPU smoke test:
+sbatch sherlock/run_container.sbatch
+```
+
+Why the split: the `.sif` holds the **environment** (conda/pip/MFA models — the hard
+part). App **code** and the big **gated Llama weights** stay outside and bind-mount
+in, so you can `git pull` or swap models without rebuilding the container.
+
+The conda instructions below remain as a fallback / reference, but you shouldn't
+need them once the container builds.
+
 ## Conda on Sherlock (the main friction — read this)
 
 MFA/Kaldi is **conda-forge-only** (not pip-installable), so the full pipeline *requires*
