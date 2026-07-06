@@ -103,10 +103,12 @@ Config surface split:
 
 ## 5. Outputs
 
-**CSV** — extend `_PHON_COLUMNS` in `extractors/syllabify.py` with `phoneme_surprisal`,
-`cohort_entropy`; the `phoneme_surprisal` stage appends these to `phonemes_df`. One row per
-aligned phoneme, keyed as today (`doc_id`, `sentence_id`, `token_in_sentence_id`, `token`,
-`syllable_id`, `phoneme_id`).
+**CSV** — the new extractor **appends** `phoneme_surprisal` + `cohort_entropy` columns to the
+`phonemes_df` that `syllabify_pairs` produced (it does *not* touch `_PHON_COLUMNS` in
+`syllabify.py`, which `syllabify_pairs` itself never populates with these). One row per aligned
+phoneme, keyed as today. Per-column drop is wired by adding the two keys to `_PHONEME_COLUMN_MAP`
+in `main.py` so `feat_phoneme_surprisal` / `feat_phoneme_cohort_entropy` gate them like every
+other phoneme column.
 
 **`.mat`** — `phoneme/<stim>_phoneme_surprisal.mat`, self-describing like
 `acoustic/<stim>_acoustic.mat`:
@@ -126,24 +128,45 @@ aligned phoneme, keyed as today (`doc_id`, `sentence_id`, `token_in_sentence_id`
   grouped per word by `syllabify_pairs`); produces `phonemes_df.phoneme_surprisal`,
   `phonemes_df.cohort_entropy` — augmenting the artifact in place, mirroring how
   `syllable_prosody` consumes/produces `syllables_df`. Lazy-bound like the others.
-- **FeatureCluster** `phoneme surprisal` — `output_csv="phonemes"`, toggles
-  `feat_phoneme_surprisal` / `feat_phoneme_cohort_entropy`, `master_phoneme_surprisal`,
-  `requires_stages=("spacy_parse","mfa_align","syllabify_pairs","phoneme_surprisal")`.
-- **`.mat` gating:** new Run-tab output key `phoneme_surprisal_mat` (opt-in, default OFF, like
-  `acoustic_ts_mat`). When on, `main.py` rasterizes the augmented `phonemes_df` + audio duration
-  into the `.mat`. Mapped in `_OUTPUT_CSV_MAP` → `phoneme` subfolder.
+- **Two FeatureClusters**, both requiring the `phoneme_surprisal` stage (so enabling *either*
+  the CSV columns or the `.mat` pulls the extractor into the plan):
+  1. `phoneme surprisal` — `output_csv="phonemes"`, toggles `feat_phoneme_surprisal` /
+     `feat_phoneme_cohort_entropy`, `master_phoneme_surprisal`, `emits_columns=("phoneme_surprisal",
+     "cohort_entropy")`, `requires_stages=("spacy_parse","mfa_align","syllabify_pairs","phoneme_surprisal")`.
+  2. `phoneme surprisal mat` — `output_csv="phoneme_surprisal_mat"`, `toggle_keys=()`, no master
+     (gated purely by the output key, like the acoustic cluster), same `requires_stages`.
+- **Output-key routing:** add `"phoneme_surprisal_mat": "phoneme_surprisal_mat"` to
+  `_OUTPUT_CSV_MAP` in `gui/planner/plan.py`; add `"phoneme_surprisal_mat"` to `_WORD_LEVEL_CSVS`
+  in `gui/planner/emit.py`.
+- **emit adapter** (`to_namespace`): `ns.no_phoneme_surprisal = "phoneme_surprisal" not in
+  word_stages`; `ns.no_phoneme_surprisal_mat = "phoneme_surprisal_mat" not in plan.output_csvs`;
+  `ns.phoneme_surprisal = {analysis_sr, strip_stress, primary_only}` from prefs.
+- **main.py `run_word_level_batch`:** widen the sub-word gate so the extractor runs when the CSV
+  columns *or* the `.mat` is enabled; append the two columns to `phon_df` via
+  `add_phoneme_surprisal`; write the `.mat` (rasterized `phon_df` + audio duration from a small
+  `_audio_duration` soundfile helper) to `phoneme/<stim>_phoneme_surprisal.mat` **before** the
+  per-column drop.
 - Requires audio + MFA — **no text-only mode** (onsets come from alignment).
 
-## 7. Prefs — v13 → v14 (additive)
+## 7. Prefs — v15 → v16 (additive)
 
-- `features`: `master_phoneme_surprisal` (default OFF, per v15 opt-in policy),
-  `feat_phoneme_surprisal`, `feat_phoneme_cohort_entropy`.
-- `output`: `phoneme_surprisal_mat` (default OFF).
+The active schema is **v15** (`utils/preferences.py`), not v13 — the master_plan was stale.
+v10–v15 migrate purely by deep-merge against current defaults, so v16 is additive:
+
+- `features`: `master_phoneme_surprisal` (default **ON** — v15 policy: card masters default on,
+  children off), `feat_phoneme_surprisal` (**OFF**), `feat_phoneme_cohort_entropy` (**OFF**).
+- `output`: `phoneme_surprisal_mat` (default **OFF**, opt-in like `acoustic_ts_mat`).
 - New `phoneme_surprisal` config section: `{ analysis_sr: 128, strip_stress: true, primary_only: true }`.
-- Migration chain `v13 → v14` deep-merges the new keys; schema-drift guard updated.
-- GUI: a card on the **Sub-word features** page (`gui/section_subword_features.py`) with the two
-  feature toggles + `analysis_sr` / `strip_stress` / `primary_only` params; `phoneme_surprisal_mat`
-  appears as a Run-tab output toggle.
+- Add `SCHEMA_VERSION_V16` + `DEFAULT_PREFS_V16`, bump `SCHEMA_VERSION`/`DEFAULT_PREFS`, add
+  `SCHEMA_VERSION_V16` to the additive `version in (...)` tuple, add `"phoneme_surprisal"` to
+  `_CURRENT_SECTIONS`.
+- Schema-drift guard (`tests/planner/test_schema_drift.py`): `master_phoneme_surprisal` →
+  `_INTENTIONALLY_UNROUTED_FEATURES`; `phoneme_surprisal_mat` → `_OUTPUT_KEYS_VIA_CSV_MAP`.
+- GUI: a `ClusterCard` on the **Sub-word features** page (`gui/section_subword_features.py`,
+  master `master_phoneme_surprisal`) with the two feature toggles + `analysis_sr` /
+  `strip_stress` / `primary_only` params (saved directly to the `phoneme_surprisal` section,
+  like `pcenter_k` saves to `prosody`). The `phoneme_surprisal_mat` **output** toggle goes on
+  the **Run** page (`gui/section_run.py`), mirroring `acoustic_ts_mat`.
 
 ## 8. Tests
 
