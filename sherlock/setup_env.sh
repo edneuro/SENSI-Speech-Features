@@ -29,8 +29,11 @@ set -euo pipefail
 ENV_PREFIX="${ENV_PREFIX:-$GROUP_HOME/envs/sensi}"
 # Repo location on Sherlock (where you cloned/rsynced this project):
 REPO="${REPO:-$GROUP_HOME/code/SensiExtractor}"
+# Durable storage base: prefer $OAK if you have it, else fall back to $GROUP_HOME.
+# (The ${OAK:-...} form is safe under `set -u`; a bare $OAK is not.)
+STORAGE_BASE="${STORAGE_BASE:-${OAK:-$GROUP_HOME}}"
 # Where MFA stores its acoustic/dictionary models:
-export MFA_ROOT_DIR="${MFA_ROOT_DIR:-$OAK/sensi/mfa_data}"
+export MFA_ROOT_DIR="${MFA_ROOT_DIR:-$STORAGE_BASE/sensi/mfa_data}"
 # -----------------------------------------------------------------------
 
 echo "[setup] ENV_PREFIX = $ENV_PREFIX"

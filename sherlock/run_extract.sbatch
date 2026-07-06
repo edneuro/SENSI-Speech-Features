@@ -18,10 +18,13 @@
 set -euo pipefail
 
 # ------------------------- CONFIG (edit these) -------------------------
+# Durable base (conda env, MFA models): $OAK if present, else $GROUP_HOME.
+STORAGE_BASE="${STORAGE_BASE:-${OAK:-$GROUP_HOME}}"
 ENV_PREFIX="${ENV_PREFIX:-$GROUP_HOME/envs/sensi}"
 REPO="${REPO:-$GROUP_HOME/code/SensiExtractor}"
-export HF_HOME="${HF_HOME:-$OAK/sensi/hf_cache}"
-export MFA_ROOT_DIR="${MFA_ROOT_DIR:-$OAK/sensi/mfa_data}"
+# HF weights on personal $SCRATCH — MUST match download_models.sh's HF_HOME.
+export HF_HOME="${HF_HOME:-${SCRATCH:-$STORAGE_BASE}/sensi/hf_cache}"
+export MFA_ROOT_DIR="${MFA_ROOT_DIR:-$STORAGE_BASE/sensi/mfa_data}"
 
 # Input/output for this run (a small sample for the smoke test):
 TRANSCRIPTS_DIR="${TRANSCRIPTS_DIR:-$SCRATCH/sensi/sample/transcripts}"

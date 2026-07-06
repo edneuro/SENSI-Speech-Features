@@ -8,7 +8,11 @@
 set -euo pipefail
 
 # ------------------------- CONFIG (edit these) -------------------------
-export HF_HOME="${HF_HOME:-$OAK/sensi/hf_cache}"
+# Big model weights (Llama-3-8B ~16 GB, GPT-2) live on personal $SCRATCH by
+# default — they're large and fully regenerable, so they don't belong in shared
+# or backed-up space. NOTE: run_extract.sbatch must use the SAME HF_HOME, or the
+# offline GPU job won't find the weights you download here.
+export HF_HOME="${HF_HOME:-${SCRATCH:-$GROUP_HOME}/sensi/hf_cache}"
 ENV_PREFIX="${ENV_PREFIX:-$GROUP_HOME/envs/sensi}"
 # Which local Llama to cache. NOTE: real HF repo id (see README caveat) —
 # the app's llm_cloze.py label 'meta-llama/Llama-3-8B' maps to this:
