@@ -1,9 +1,11 @@
 """emit.to_namespace adapter tests. Given a Plan + prefs, verify the
 resulting Namespace has the expected no_* flags and pass-through fields."""
 import argparse
+import copy
 
 from gui.planner.plan import plan_from_prefs
 from gui.planner.emit import to_namespace
+from utils.preferences import DEFAULT_PREFS
 
 
 # v7 master toggle defaults (all True) — included in every test prefs dict
@@ -314,3 +316,22 @@ def test_doc_articulation_rate_follows_doc_prosody_master():
     assert "mfa_align" not in plan.stages_to_run
     ns = to_namespace(plan, prefs, level="doc")
     assert ns.no_align is True, "doc-prosody card off must stop MFA for articulation"
+
+
+def test_namespace_enables_phoneme_surprisal_when_active():
+    prefs = copy.deepcopy(DEFAULT_PREFS)
+    prefs["output"]["phonemes_csv"] = True
+    prefs["features"]["master_phoneme_surprisal"] = True
+    prefs["features"]["feat_phoneme_surprisal"] = True
+    prefs["output"]["phoneme_surprisal_mat"] = True
+    ns = to_namespace(plan_from_prefs(prefs), prefs, "word")
+    assert ns.no_phoneme_surprisal is False
+    assert ns.no_phoneme_surprisal_mat is False
+    assert ns.phoneme_surprisal["analysis_sr"] == 128
+
+
+def test_namespace_disables_phoneme_surprisal_by_default():
+    prefs = DEFAULT_PREFS
+    ns = to_namespace(plan_from_prefs(prefs), prefs, "word")
+    assert ns.no_phoneme_surprisal is True
+    assert ns.no_phoneme_surprisal_mat is True

@@ -17,7 +17,7 @@ from extractors.acoustic_ts import MTRF_COMP
 # word-level no_* flags like no_align).
 _WORD_LEVEL_CSVS = frozenset({
     "features", "syllables", "phonemes", "sentences",
-    "word2vec", "bert_word", "bert_sentence",
+    "word2vec", "bert_word", "bert_sentence", "phoneme_surprisal_mat",
 })
 
 # Doc-level output CSVs — used to scope the doc namespace's word-stage flags
@@ -208,6 +208,15 @@ def to_namespace(plan: Plan, prefs: dict, level: str) -> argparse.Namespace:
     ns.no_word2vec      = "word2vec"     not in plan.output_csvs
     ns.no_bert_word     = "bert_word"    not in plan.output_csvs
     ns.no_bert_sentence = "bert_sentence" not in plan.output_csvs
+
+    ns.no_phoneme_surprisal     = "phoneme_surprisal" not in word_stages
+    ns.no_phoneme_surprisal_mat = "phoneme_surprisal_mat" not in plan.output_csvs
+    _psr = prefs.get("phoneme_surprisal", {})
+    ns.phoneme_surprisal = {
+        "analysis_sr":  float(_psr.get("analysis_sr", 128)),
+        "strip_stress": bool(_psr.get("strip_stress", True)),
+        "primary_only": bool(_psr.get("primary_only", True)),
+    }
 
     # Pass-throughs that main.py reads directly from args
     ns.feature_toggles = dict(features)
