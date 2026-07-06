@@ -9,10 +9,12 @@
 
 ## 1. What we're adding
 
-Context-independent **phoneme surprisal** and **cohort entropy** as word-onset-agnostic,
-phoneme-onset-aligned regressors for TRF / cortical-tracking analyses, plus a unit-height
-**phoneme onset** control. All three are emitted as impulse trains in a `.mat` sidecar; the
-two scalar features are additionally written as per-phoneme columns on the existing phoneme CSV.
+Context-independent **phoneme surprisal** and **cohort entropy** as phoneme-onset-aligned
+regressors for TRF / cortical-tracking analyses, plus unit-height **phoneme onset** and
+**word onset** controls (see §2b — Brodbeck-style; the two controls together let a downstream
+analyst reproduce the standard word-onset + non-word-initial-phoneme-onset control set).
+All four are emitted as impulse trains in a `.mat` sidecar; the two scalar features are
+additionally written as per-phoneme columns on the existing phoneme CSV.
 
 These are **acoustically/lexically driven, not LM-driven**: the cohort model uses only a
 frequency-weighted unigram prior, keeping the features decorrelated from the GPT-2 word-level
@@ -39,9 +41,21 @@ entropy(φk)   = log2(Z_after) − SFL_after / Z_after  # entropy of the cohort 
 `entropy` is evaluated at the **after** node (this is load-bearing — see §8 check). Both are
 O(1) per phoneme because `Z`/`SFL` are precomputed at trie-build time.
 
-**OOV path** (aligned sequence steps off the trie — a pronunciation variant not in the lexicon):
-from the first missing phoneme onward, `surprisal = cap` and `entropy = 0`, where
-`cap = −log2(f_min / Z_root)` (the surprisal of the single rarest lexicon word). Never `log(0)`.
+**OOV path** (aligned sequence steps off the trie — a pronunciation **not in the MFA
+dictionary at all**, e.g. a rare variant the aligner produced): from the first missing phoneme
+onward, `surprisal = cap` and `entropy = 0`, where `cap = −log2(f_min / Z_root)` (the surprisal
+of the single rarest lexicon word). Never `log(0)`. This is distinct from a merely low-frequency
+word (§3) — those stay in the trie with a floored frequency.
+
+## 2b. Onset controls
+
+Following Brodbeck et al. (2018/2022), which include both a word-onset control and a
+phoneme-onset control (the latter at non-word-initial phonemes only, to avoid collinearity):
+the `.mat` emits **two** unit-height control trains — `phoneme_onset` (impulse at *every*
+phoneme onset) and `word_onset` (impulse at each word-initial phoneme onset). Emitting both
+(rather than a single all-phoneme onset) lets the analyst either use them directly or recover
+Brodbeck's exact set (`word_onset` plus non-word-initial phoneme onset = `phoneme_onset −
+word_onset`). Word boundaries are already known from the per-word grouping of `phonemes_df`.
 
 ## 3. Sources (reuse, no new deps)
 
@@ -49,8 +63,12 @@ from the first missing phoneme onward, `surprisal = cap` and `entropy = 0`, wher
   exact dictionary MFA aligns against, so the trie's phoneme inventory matches the aligned
   `phones` tier. Format: `word\tPH PH PH` (one line per pronunciation variant).
 - **Frequency f(w):** `wordfreq.word_frequency(w, "en")` (linear), the same SUBTLEX-US-backed
-  source behind the existing `Zipf_Freq` column. Words with `f(w) == 0` (absent from wordfreq)
-  are excluded from the cohort.
+  source behind the existing `Zipf_Freq` column, giving each word a prior proportional to its
+  frequency (Brodbeck/Gillis convention). Dictionary words absent from wordfreq (`f==0`) are
+  **floored** to `f_min` (the minimum nonzero frequency observed across the lexicon), *not*
+  excluded — so the full MFA lexicon stays in the trie and the OOV cap fires only for
+  pronunciations genuinely absent from the dictionary (see §2). `f_min` doubles as the cap
+  numerator, tying the two together.
 - **Aligned pronunciation:** MFA `phones` tier → `parse_phones` → the per-word phoneme sequence
   already grouped by `syllabify_pairs` (the `phonemes_df` rows for a word, in order). This is
   "the variant the aligner chose."
@@ -60,7 +78,8 @@ from the first missing phoneme onward, `surprisal = cap` and `entropy = 0`, wher
 - `load_mfa_lexicon(dict_path, *, strip_stress=True, primary_only=True) -> list[tuple[tuple[str,...], float]]`
   Parse the MFA `.dict`; `strip_stress` drops the trailing ARPABET stress digit (`EH1`→`EH`);
   `primary_only` keeps only the first-listed variant per word. Join each word to `f(w)`.
-- `build_cohort_trie(entries) -> CohortTrie` — nodes cache `z`, `sfl`; also exposes `z_root`
+- `build_cohort_trie(entries) -> CohortTrie` — computes `f_min` (min nonzero freq), floors any
+  `f==0` word to `f_min`, then builds the trie; nodes cache `z`, `sfl`; also exposes `z_root`
   and `f_min` for the cap. Built once, cached per run (module-level cache keyed by
   `(dict_path, strip_stress, primary_only)`).
 - `phoneme_scores(trie, phones, *, context_independent=True, first_phoneme_empty_context=True)`
@@ -70,11 +89,12 @@ from the first missing phoneme onward, `surprisal = cap` and `entropy = 0`, wher
   non-empty-context modes are a future batch). They are **not** prefs/GUI keys — they document
   the modeling commitment at the API level without adding permanent prefs-schema surface (cf.
   the repo's regret over vestigial prefs keys like `master_acoustic_ts`).
-- `rasterize(events, duration_s, analysis_sr) -> dict[str, np.ndarray]` — build the three
+- `rasterize(events, duration_s, analysis_sr) -> dict[str, np.ndarray]` — build the four
   length-`N` impulse trains (`N = round(duration_s * analysis_sr)`), impulses at
   `round(onset_s * analysis_sr)` using MATLAB-style rounding consistent with
-  `acoustic_ts._mround`. `events` = list of `(onset_s, surprisal, entropy)`. Same-sample
-  collisions: value trains sum; `phoneme_onset` stays unit height (1).
+  `acoustic_ts._mround`. `events` = list of `(onset_s, surprisal, entropy, is_word_initial)`.
+  Same-sample collisions: value trains (`phoneme_surprisal`, `cohort_entropy`) sum;
+  `phoneme_onset` / `word_onset` stay unit height (1).
 
 Config surface split:
 - **Functional prefs/GUI flags** (change the numbers): `strip_stress`, `primary_only`, `analysis_sr`.
@@ -90,8 +110,9 @@ aligned phoneme, keyed as today (`doc_id`, `sentence_id`, `token_in_sentence_id`
 
 **`.mat`** — `phoneme/<stim>_phoneme_surprisal.mat`, self-describing like
 `acoustic/<stim>_acoustic.mat`:
-- `phoneme_surprisal`, `cohort_entropy`, `phoneme_onset` — three length-`N` impulse trains,
-  each intended for its own banded-ridge band downstream.
+- `phoneme_surprisal`, `cohort_entropy` — two value-modulated impulse trains, each intended
+  for its own banded-ridge band downstream.
+- `phoneme_onset`, `word_onset` — two unit-height control trains (§2b).
 - `t` (= `arange(N)/analysis_sr`), `fs` (= `analysis_sr`).
 - `config` provenance: `analysis_sr`, `strip_stress`, `primary_only`, `context_independent`,
   `first_phoneme_empty_context`, `cap`, `n_phonemes`, `duration_s`, `lexicon` path.
@@ -131,13 +152,45 @@ aligned phoneme, keyed as today (`doc_id`, `sentence_id`, `token_in_sentence_id`
   case I verified by hand; note that using the *before* node for entropy breaks position 3
   (0 vs a wrong nonzero), so the test pins the "after" convention.
 - OOV-path cap: an aligned sequence that leaves the trie → capped surprisal + 0 entropy.
-- Rasterization: impulse placement (`round(onset*sr)`), grid length `N`, unit-height onset
-  control, same-sample collision behavior.
+- Frequency floor: a dictionary word absent from wordfreq stays in the trie at `f_min` (its
+  aligned path does *not* hit the OOV cap).
+- Rasterization: impulse placement (`round(onset*sr)`), grid length `N`, unit-height
+  `phoneme_onset` (all phonemes) and `word_onset` (word-initial only), same-sample collision
+  behavior.
 - Guard flags raise on non-default.
 - v13→v14 migration + schema-drift guard.
 - Docs: `docs/features/phoneme_surprisal.md` (+ `phoneme_cohort_entropy.md` or shared) with
-  citations (Marslen-Wilson cohort model; Brodbeck et al. phoneme surprisal in TRF; Ettinger
-  et al. — verify live before citing per the citations policy).
+  the §8b citation set (verify live at authoring time per the citations policy).
+
+## 8b. Research fidelity — how this matches the literature
+
+Verified against the primary sources during design (live-fetched 2026-07-06):
+
+- **Surprisal formula.** Gillis et al. 2021 (*J Neurosci* 41(50):10316): `surprisal_i =
+  −log2(freq(cohort_i)/freq(cohort_{i−1}))` — identical to our `log2(Z_before) − log2(Z_after)`.
+- **Entropy convention.** Cohort entropy is `−Σ p·log2 p` over the cohort matching phonemes
+  "from word onset **to** the current phoneme" (includes the current phoneme) — our **after-node**
+  evaluation. (Using the *before* node breaks the hand-check at position 3, §8.)
+- **Frequency-weighted prior.** Brodbeck et al. 2022 (*eLife* e72056): "the prior for each word
+  is proportional to its frequency" (COCA); Gillis uses SUBTLEX-NL. We use SUBTLEX-US via
+  `wordfreq` — same method, US norms.
+- **First phoneme.** Brodbeck models it with the word-initial (empty-context) prior: "At word
+  onset, the prior for each word is proportional to its frequency… With each subsequent phoneme,
+  [inconsistent words] set to 0." We follow Brodbeck; Gillis instead *drops* the first phoneme.
+  Our `first_phoneme_empty_context` guard flag records this choice.
+- **Onset controls.** Brodbeck: "All models included control predictors for word onsets… and
+  phoneme onsets (equal value impulse at the onset of each non-word-initial phoneme)." We emit
+  `word_onset` + all-phoneme `phoneme_onset` so both this exact set and an all-phoneme control
+  are recoverable (§2b).
+- **Representation & rate.** Both papers place "impulses at phoneme onsets modulated by the
+  value" and analyze at **128 Hz** — our impulse-train `.mat` and default `analysis_sr=128`.
+- **Separate predictors.** Each feature enters as its own predictor with its own TRF — our
+  one-band-per-regressor layout.
+
+Citations to place in the feature doc(s), all live-verifiable (verify again at authoring time
+per the citations policy): Marslen-Wilson & Welsh 1978 (cohort model); Brodbeck, Hong & Simon
+2018 (*Current Biology*); Brodbeck et al. 2022 (*eLife* e72056); Gillis, Vanthornhout, Simon,
+Francart & Di Liberto 2021 (*J Neurosci* 41(50):10316); Donhauser & Baillet 2020 (*Neuron*).
 
 ## 9. Non-goals
 
