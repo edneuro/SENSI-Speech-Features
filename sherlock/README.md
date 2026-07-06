@@ -39,9 +39,9 @@ If this experiment doesn't pan out, delete this folder; the app is unaffected.
 **These scripts (run in order):**
 | Script | Where | What it does |
 |---|---|---|
-| `setup_env.sh`      | login node | Builds the conda env: MFA (conda) + `requirements.txt` (pip) + spaCy model + MFA models. |
-| `download_models.sh`| login node | Prefetches HF weights (GPT-2, Llama-3-8B) into `$HF_HOME` so compute nodes run offline. |
-| `run_extract.sbatch`| `sbatch`   | The GPU batch job: activates the env, sets offline/cache env vars, runs `python main.py …`. |
+| `setup_env.sh`      | **sh_dev node** | Builds the conda env: MFA (conda) + `requirements.txt` (pip) + spaCy model + MFA models. Must run on a compute node — see "Conda on Sherlock" below. |
+| `download_models.sh`| login/sh_dev | Prefetches HF weights (GPT-2, Llama-3-8B) into `$HF_HOME`. |
+| `run_extract.sbatch`| `sbatch`   | The GPU batch job: activates the env, sets cache env vars, runs `python main.py …`. |
 
 ---
 
@@ -60,18 +60,45 @@ squeue --me            # watch it
 
 ---
 
-## Gotchas (learned / expected — verify against current Sherlock docs)
+## Conda on Sherlock (the main friction — read this)
 
-- **No compute-node internet.** `HF_HUB_OFFLINE=1` + `TRANSFORMERS_OFFLINE=1` are set
-  in the sbatch job; if a download is attempted at runtime it will fail. Prefetch first.
-- **Env location.** Build the conda prefix env under `$GROUP_HOME`/`$OAK`, never `$HOME`.
+MFA/Kaldi is **conda-forge-only** (not pip-installable), so the full pipeline *requires*
+conda. But Sherlock **officially discourages conda** ("We recommend NOT using Anaconda on
+Sherlock") because it dumps huge file counts into `$HOME` (blows quota), edits `~/.bashrc`
+(slows logins), and conflicts with the module system. You have to thread that needle:
+
+1. Use **miniforge** (conda-forge's minimal installer), **not** full Anaconda.
+2. Install it **outside `$HOME`** — under `$GROUP_HOME` or `$OAK`.
+3. Do the install **on an `sh_dev` compute node**, not a login node (the installer's file
+   count "will likely fail on a login node" per Sherlock docs).
+
+Bootstrap (once, inside an `sh_dev` session):
+```bash
+sh_dev -c 8 -m 32GB -t 02:00:00                       # grab a compute node
+wget https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh
+bash Miniforge3-Linux-x86_64.sh -b -p $GROUP_HOME/miniforge3
+source $GROUP_HOME/miniforge3/etc/profile.d/conda.sh
+bash sherlock/setup_env.sh                             # then build the env
+```
+
+**Hardening path (recommended once it works):** Sherlock's blessed way to carry a hard
+conda dependency is an **Apptainer container** with the env baked in — no `$HOME`/module
+conflicts, fully reproducible. Worth converting to once the smoke test proves out.
+
+## Other gotchas (verify against current Sherlock docs)
+
+- **Compute-node internet — verify.** I earlier assumed compute nodes are offline; but
+  Sherlock telling you to `conda install` on `sh_dev` implies they *do* have outbound
+  internet. If so, the `HF_HUB_OFFLINE`/`TRANSFORMERS_OFFLINE` flags in the sbatch are
+  just belt-and-suspenders (harmless when weights are cached). Confirm before relying
+  on either assumption.
 - **`bitsandbytes` ↔ CUDA.** The 4-bit quantization path needs a `bitsandbytes` build
   matching Sherlock's CUDA/torch. If it fails, the backend falls back to fp16 (fine for
   8B on a large-VRAM card). Match the CUDA module to your torch build.
 - **MFA is easier here than on Windows** — conda-forge `montreal-forced-aligner` is
   best-supported on Linux. Your AMD/Windows MKL crash also does not occur on Sherlock.
 - **Module names are placeholders.** I could not verify exact Lmod module names on
-  Sherlock. Check with `ml spider cuda` / `ml spider miniconda` and adjust the sbatch.
+  Sherlock. Check with `ml spider cuda` and adjust the sbatch.
 
 ## ⚠️ One app-code caveat to resolve before a real run
 

@@ -1,5 +1,18 @@
 #!/usr/bin/env bash
-# Build the SensiExtractor conda env on Sherlock. RUN ON A LOGIN NODE (needs internet).
+# Build the SensiExtractor conda env on Sherlock.
+#
+# RUN ON AN sh_dev COMPUTE NODE, *not* a login node. Sherlock's docs warn that
+# conda's huge file-count "will likely fail on a login node". Grab one with:
+#     sh_dev -c 8 -m 32GB -t 02:00:00
+# then run this script inside that session. (Needs outbound internet for the
+# downloads; Sherlock's own advice to install conda on sh_dev implies compute
+# nodes have it — verify. If not, download packages on a login node first.)
+#
+# WHY CONDA AT ALL: MFA/Kaldi is conda-forge-only (not pip-installable), so a
+# plain venv can't build the full pipeline. Sherlock discourages conda, so:
+#   - use MINIFORGE (conda-forge's minimal installer), NOT full Anaconda
+#   - install it OUTSIDE $HOME (blows the quota) — under $GROUP_HOME / $OAK
+# See sherlock/README.md "Conda on Sherlock" for the miniforge bootstrap.
 #
 # This mirrors the real 4-step recipe (the checked-in environment.yml is incomplete):
 #   1. conda create python + montreal-forced-aligner   (conda-forge)
@@ -25,8 +38,11 @@ echo "[setup] REPO       = $REPO"
 echo "[setup] MFA_ROOT   = $MFA_ROOT_DIR"
 
 command -v conda >/dev/null 2>&1 || {
-  echo "[setup] ERROR: 'conda' not found. Install miniforge under \$GROUP_HOME or"
-  echo "        load Sherlock's conda module first (check: ml spider miniconda)." >&2
+  echo "[setup] ERROR: 'conda' not found. Bootstrap miniforge OUTSIDE \$HOME first," >&2
+  echo "        on an sh_dev node (see sherlock/README.md 'Conda on Sherlock'):" >&2
+  echo "          wget https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh" >&2
+  echo "          bash Miniforge3-Linux-x86_64.sh -b -p \$GROUP_HOME/miniforge3" >&2
+  echo "          source \$GROUP_HOME/miniforge3/etc/profile.d/conda.sh" >&2
   exit 1
 }
 
