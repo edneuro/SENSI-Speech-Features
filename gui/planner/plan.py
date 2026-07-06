@@ -50,6 +50,7 @@ _OUTPUT_CSV_MAP = {
     "bert_sentence_mat": "bert_sentence",
     "document_summary":  "documents_summary",
     "acoustic_ts_mat":   "acoustic",
+    "phoneme_surprisal_mat": "phoneme_surprisal_mat",
 }
 
 

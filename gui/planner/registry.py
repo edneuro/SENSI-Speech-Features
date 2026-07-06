@@ -66,6 +66,7 @@ _add_sentence_prosody  = _lazy("extractors.sentence_prosody", "add_sentence_pros
 _embed_word2vec        = _lazy("extractors.word2vec_embed", "embed_word2vec")
 _embed_bert            = _lazy("extractors.bert_embed", "embed_bert_words_and_sentences")
 _extract_acoustic      = _lazy("extractors.acoustic_ts", "extract_acoustic")
+_add_phoneme_surprisal = _lazy("extractors.phoneme_surprisal", "add_phoneme_surprisal")
 
 STAGES: list[Stage] = [
     # --- §0 Shared stages ---
@@ -140,6 +141,11 @@ STAGES: list[Stage] = [
           consumes=("syllables_df", "phonemes_df"),
           produces=("syllables_df.P_Center",),
           run=_add_pcenter),
+
+    Stage(name="phoneme_surprisal",
+          consumes=("phonemes_df",),
+          produces=("phonemes_df.phoneme_surprisal", "phonemes_df.cohort_entropy"),
+          run=_add_phoneme_surprisal),
 
     # --- §3 Sentence level ---
     Stage(name="sentence_prosody",
@@ -400,6 +406,26 @@ CLUSTERS: list[FeatureCluster] = [
         output_csv="syllables",
         requires_stages=("spacy_parse", "mfa_align", "syllabify_pairs", "pcenter"),
         emits_columns=("P_Center",),
+    ),
+
+    # §2.5 Phoneme surprisal (CSV columns) — Brodbeck/Gillis cohort model
+    FeatureCluster(
+        name="phoneme surprisal",
+        toggle_keys=("feat_phoneme_surprisal", "feat_phoneme_cohort_entropy"),
+        output_csv="phonemes",
+        requires_stages=("spacy_parse", "mfa_align", "syllabify_pairs", "phoneme_surprisal"),
+        emits_columns=("phoneme_surprisal", "cohort_entropy"),
+        master_toggle="master_phoneme_surprisal",
+    ),
+
+    # §2.5b Phoneme surprisal (.mat impulse trains) — gated by the output key
+    # phoneme_surprisal_mat (Run tab), like the acoustic level. No master.
+    FeatureCluster(
+        name="phoneme surprisal mat",
+        toggle_keys=(),
+        output_csv="phoneme_surprisal_mat",
+        requires_stages=("spacy_parse", "mfa_align", "syllabify_pairs", "phoneme_surprisal"),
+        emits_columns=(),
     ),
 
     # --- Sentence level (§3) ---

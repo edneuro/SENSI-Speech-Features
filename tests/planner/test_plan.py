@@ -4,9 +4,12 @@ The contract: given a prefs dict (output + features sections), produce
 a Plan whose stages_to_run satisfies every active cluster's
 requires_stages plus all transitive consumes-dependencies.
 """
+import copy
+
 import pytest
 
 from gui.planner.plan import plan_from_prefs
+from utils.preferences import DEFAULT_PREFS
 
 
 # v7 master toggle defaults (all True) — included in every test prefs dict
@@ -314,3 +317,27 @@ def test_master_and_available_when_both_required(monkeypatch):
         "semantic": {"backend": "liwc"},
     })
     assert "t_stage" in p.stages_to_run
+
+
+def test_phoneme_surprisal_csv_cluster_activates_stage():
+    prefs = copy.deepcopy(DEFAULT_PREFS)
+    prefs["output"]["phonemes_csv"] = True
+    prefs["features"]["master_phoneme_surprisal"] = True
+    prefs["features"]["feat_phoneme_surprisal"] = True
+    plan = plan_from_prefs(prefs)
+    assert "phoneme_surprisal" in plan.stages_to_run
+    assert "phonemes" in plan.output_csvs
+
+
+def test_phoneme_surprisal_mat_output_activates_stage():
+    prefs = copy.deepcopy(DEFAULT_PREFS)
+    prefs["output"]["phoneme_surprisal_mat"] = True
+    plan = plan_from_prefs(prefs)
+    assert "phoneme_surprisal_mat" in plan.output_csvs
+    assert "phoneme_surprisal" in plan.stages_to_run
+
+
+def test_phoneme_surprisal_off_by_default():
+    plan = plan_from_prefs(DEFAULT_PREFS)
+    assert "phoneme_surprisal" not in plan.stages_to_run
+    assert "phoneme_surprisal_mat" not in plan.output_csvs
