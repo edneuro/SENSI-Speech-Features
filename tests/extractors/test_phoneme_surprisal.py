@@ -46,3 +46,25 @@ def test_guard_flags_raise_on_non_default():
         phoneme_scores(trie, ["K"], context_independent=False)
     with pytest.raises(NotImplementedError):
         phoneme_scores(trie, ["K"], first_phoneme_empty_context=False)
+
+
+def test_load_mfa_lexicon_parses_variable_columns(tmp_path):
+    from extractors.phoneme_surprisal import load_mfa_lexicon
+    d = tmp_path / "mini.dict"
+    d.write_text(
+        "cat\t0.99\t0.62\t0.58\t1.07\tK AE1 T\n"   # 4 prob cols then phones
+        "dog\t0.09\t0.48\t1.01\t1.0\tD AO1 G\n"      # first-listed dog variant
+        "dog\t0.99\t0.41\t0.49\t1.06\tD AA1 G\n"     # second variant (dropped when primary_only)
+        "'ve\tV\n"                                     # no prob columns
+        "[bracketed]\t0.99\t0.18\t1.0\t1.0\tspn\n",  # special token -> skipped
+        encoding="utf-8",
+    )
+    entries = dict((p, f) for p, f in
+                   load_mfa_lexicon(str(d), strip_stress=True, primary_only=True))
+    assert ("K", "AE", "T") in entries          # stress stripped
+    assert ("D", "AO", "G") in entries           # first dog variant kept
+    assert ("D", "AA", "G") not in entries       # second variant dropped
+    assert ("V",) in entries                     # no-prob-column line parsed
+    assert not any("spn" in p for p in entries)  # special token skipped
+    # frequencies came from wordfreq (all > 0 for these common words)
+    assert entries[("K", "AE", "T")] > 0

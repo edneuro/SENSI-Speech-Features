@@ -13,6 +13,7 @@ See docs/superpowers/specs/2026-07-06-phoneme-surprisal-design.md.
 from __future__ import annotations
 
 import math
+import os
 from dataclasses import dataclass, field
 
 
@@ -100,3 +101,63 @@ def phoneme_scores(trie: CohortTrie, phones: list[str], *,
         raise NotImplementedError(
             "Only empty-context (word-initial prior) first-phoneme scoring is implemented.")
     return trie.walk(list(phones))
+
+
+_SILENCE_PHONES = {"sil", "sp", "spn", ""}
+_STRESS_DIGITS = ("0", "1", "2")
+
+DEFAULT_DICT_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    "mfa_data", "pretrained_models", "dictionary", "english_us_arpa.dict",
+)
+
+_TRIE_CACHE: dict[tuple, CohortTrie] = {}
+
+
+def _strip_stress(ph: str) -> str:
+    return ph[:-1] if ph and ph[-1] in _STRESS_DIGITS else ph
+
+
+def load_mfa_lexicon(dict_path: str, *, strip_stress: bool = True,
+                     primary_only: bool = True
+                     ) -> list[tuple[tuple[str, ...], float]]:
+    """Parse the MFA .dict into (phone_tuple, frequency) entries.
+
+    The phone string is always the LAST tab-separated field; MFA special tokens
+    ([...]/<...>) and silence/noise phones are skipped. Frequencies come from
+    wordfreq (SUBTLEX-US); f==0 words are kept and floored later by the trie.
+    """
+    from wordfreq import word_frequency
+
+    seen: set[str] = set()
+    entries: list[tuple[tuple[str, ...], float]] = []
+    with open(dict_path, "r", encoding="utf-8") as fh:
+        for line in fh:
+            parts = line.rstrip("\n").split("\t")
+            if len(parts) < 2:
+                continue
+            word = parts[0]
+            if not word or word[0] in "[<":
+                continue
+            if primary_only and word in seen:
+                continue
+            phones = [p for p in parts[-1].split() if p not in _SILENCE_PHONES]
+            if strip_stress:
+                phones = [_strip_stress(p) for p in phones]
+            if not phones:
+                continue
+            seen.add(word)
+            entries.append((tuple(phones), word_frequency(word, "en")))
+    return entries
+
+
+def get_cohort_trie(dict_path: str = DEFAULT_DICT_PATH, *,
+                    strip_stress: bool = True, primary_only: bool = True) -> CohortTrie:
+    """Memoized trie build (parsing 200k dict entries once per process)."""
+    key = (dict_path, strip_stress, primary_only)
+    trie = _TRIE_CACHE.get(key)
+    if trie is None:
+        trie = build_cohort_trie(
+            load_mfa_lexicon(dict_path, strip_stress=strip_stress, primary_only=primary_only))
+        _TRIE_CACHE[key] = trie
+    return trie
