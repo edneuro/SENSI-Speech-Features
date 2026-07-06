@@ -587,6 +587,8 @@ _PHONEME_COLUMN_MAP = {
     "feat_phoneme_onset":    "Onset",
     "feat_phoneme_end":      "End",
     "feat_phoneme_duration": "Duration",
+    "feat_phoneme_surprisal":      "phoneme_surprisal",
+    "feat_phoneme_cohort_entropy": "cohort_entropy",
 }
 
 
@@ -673,6 +675,13 @@ def _level_dir(output_dir: Path, level: str) -> Path:
     d = output_dir / level
     d.mkdir(parents=True, exist_ok=True)
     return d
+
+
+def _audio_duration(audio_path) -> float:
+    """Duration in seconds via soundfile (no full decode)."""
+    import soundfile as sf
+    info = sf.info(str(audio_path))
+    return float(info.frames) / float(info.samplerate)
 
 
 def _word_embedding_vars(emb: np.ndarray, df: pd.DataFrame,
@@ -786,14 +795,45 @@ def run_word_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None
             # syllabify_pairs requires exactly those columns on word_df, so
             # dropping them first silently produces empty syll/phon DataFrames.
             phones_df = getattr(args, '_phones_df', None)
+            _want_psr = (not getattr(args, 'no_phoneme_surprisal', True)
+                         or not getattr(args, 'no_phoneme_surprisal_mat', True))
             if phones_df is not None and len(phones_df) > 0 and (
                 not getattr(args, 'no_syllables', False)
                 or not getattr(args, 'no_phonemes', False)
+                or _want_psr
             ):
                 from extractors.syllabify import syllabify_pairs
                 from extractors.syllable_prosody import add_syllable_prosody
 
                 syll_df, phon_df = syllabify_pairs(df, phones_df)
+
+                if _want_psr and len(phon_df) > 0:
+                    from extractors.phoneme_surprisal import (
+                        add_phoneme_surprisal, phoneme_surprisal_mat_vars)
+                    _pcfg = getattr(args, 'phoneme_surprisal', {}) or {}
+                    phon_df = add_phoneme_surprisal(
+                        phon_df,
+                        strip_stress=_pcfg.get('strip_stress', True),
+                        primary_only=_pcfg.get('primary_only', True),
+                    )
+                    if not getattr(args, 'no_phoneme_surprisal_mat', True) and pair.audio_path:
+                        import scipy.io
+                        sr = float(_pcfg.get('analysis_sr', 128))
+                        mat_vars = phoneme_surprisal_mat_vars(
+                            phon_df, _audio_duration(pair.audio_path), sr,
+                            {'analysis_sr': sr,
+                             'strip_stress': _pcfg.get('strip_stress', True),
+                             'primary_only': _pcfg.get('primary_only', True),
+                             'context_independent': True,
+                             'first_phoneme_empty_context': True,
+                             # NaN, not None: scipy.io.savemat cannot serialize
+                             # a bare None inside a nested struct field.
+                             'cap': float('nan'), 'n_phonemes': int(len(phon_df)),
+                             'duration_s': _audio_duration(pair.audio_path),
+                             'lexicon': 'english_us_arpa'})
+                        mat_path = (_level_dir(output_dir, 'phoneme')
+                                    / f'{pair.stimulus_id}_phoneme_surprisal.mat')
+                        scipy.io.savemat(str(mat_path), mat_vars)
 
                 if not getattr(args, 'no_syllables', False) and len(syll_df) > 0:
                     syll_df = add_syllable_prosody(
