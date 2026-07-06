@@ -161,3 +161,91 @@ def get_cohort_trie(dict_path: str = DEFAULT_DICT_PATH, *,
             load_mfa_lexicon(dict_path, strip_stress=strip_stress, primary_only=primary_only))
         _TRIE_CACHE[key] = trie
     return trie
+
+
+_GROUP_KEYS = ["doc_id", "sentence_id", "token_in_sentence_id"]
+
+
+def add_phoneme_surprisal(phon_df, *, dict_path: str = DEFAULT_DICT_PATH,
+                          strip_stress: bool = True, primary_only: bool = True):
+    """Append phoneme_surprisal + cohort_entropy columns to a phonemes DataFrame.
+
+    Scores each word's aligned phoneme sequence (rows grouped by doc/sentence/
+    token, in phoneme order). Row `Label`s carry ARPABET stress digits; they are
+    stripped here to match the (stress-stripped) trie.
+    """
+    import pandas as pd  # local import keeps module import light
+
+    df = phon_df.copy()
+    if len(df) == 0:
+        df["phoneme_surprisal"] = pd.Series(dtype=float)
+        df["cohort_entropy"] = pd.Series(dtype=float)
+        return df
+
+    trie = get_cohort_trie(dict_path, strip_stress=strip_stress, primary_only=primary_only)
+    surp_col = [None] * len(df)
+    ent_col = [None] * len(df)
+    positions = df.reset_index().rename(columns={"index": "_pos"})
+    for _, grp in positions.groupby(_GROUP_KEYS, sort=False):
+        phones = [_strip_stress(str(lbl)) if strip_stress else str(lbl)
+                  for lbl in grp["Label"]]
+        surp, ent = phoneme_scores(trie, phones)
+        for pos, s, e in zip(grp["_pos"], surp, ent):
+            surp_col[pos] = round(s, 4)
+            ent_col[pos] = round(e, 4)
+    df["phoneme_surprisal"] = surp_col
+    df["cohort_entropy"] = ent_col
+    return df
+
+
+def _mround(v: float) -> int:
+    """MATLAB-style round (half away from zero), matching acoustic_ts._mround."""
+    import numpy as np
+    return int(np.floor(np.abs(v) + 0.5) * np.sign(v))
+
+
+def phoneme_surprisal_mat_vars(phon_df, duration_s: float, analysis_sr: float,
+                               config: dict) -> dict:
+    """Rasterize per-phoneme scores into impulse trains for scipy.io.savemat.
+
+    Four length-N (N = round(duration*sr)) column vectors: value-modulated
+    phoneme_surprisal / cohort_entropy, and unit-height phoneme_onset (every
+    phoneme) / word_onset (first phoneme of each word). Impulses at
+    round(onset*sr); same-sample collisions sum for value trains, stay 1 for
+    controls. Plus t, fs, and a config-provenance struct.
+    """
+    import numpy as np
+
+    n = int(round(duration_s * analysis_sr))
+    n = max(n, 0)
+    surp = np.zeros((n, 1), dtype=np.float64)
+    ent = np.zeros((n, 1), dtype=np.float64)
+    phon_on = np.zeros((n, 1), dtype=np.float64)
+    word_on = np.zeros((n, 1), dtype=np.float64)
+
+    for row in phon_df.itertuples(index=False):
+        onset = getattr(row, "Onset", None)
+        if onset is None or (isinstance(onset, float) and np.isnan(onset)):
+            continue
+        idx = _mround(onset * analysis_sr)
+        if idx < 0 or idx >= n:
+            continue
+        s = getattr(row, "phoneme_surprisal", None)
+        e = getattr(row, "cohort_entropy", None)
+        if s is not None and not (isinstance(s, float) and np.isnan(s)):
+            surp[idx, 0] += float(s)
+        if e is not None and not (isinstance(e, float) and np.isnan(e)):
+            ent[idx, 0] += float(e)
+        phon_on[idx, 0] = 1.0
+        if getattr(row, "syllable_id", None) == 1 and getattr(row, "phoneme_id", None) == 1:
+            word_on[idx, 0] = 1.0
+
+    return {
+        "phoneme_surprisal": surp,
+        "cohort_entropy": ent,
+        "phoneme_onset": phon_on,
+        "word_onset": word_on,
+        "t": (np.arange(n) / analysis_sr).reshape(-1, 1).astype(np.float64),
+        "fs": float(analysis_sr),
+        "config": dict(config),
+    }

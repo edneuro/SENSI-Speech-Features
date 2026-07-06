@@ -1,4 +1,5 @@
 import math
+import pandas as pd
 import pytest
 from extractors.phoneme_surprisal import build_cohort_trie, phoneme_scores
 
@@ -68,3 +69,45 @@ def test_load_mfa_lexicon_parses_variable_columns(tmp_path):
     assert not any("spn" in p for p in entries)  # special token skipped
     # frequencies came from wordfreq (all > 0 for these common words)
     assert entries[("K", "AE", "T")] > 0
+
+
+def _cat_phon_df():
+    # One word "cat", one syllable, three phonemes at 0.10/0.15/0.20 s.
+    return pd.DataFrame([
+        dict(doc_id=1, sentence_id=1, token_in_sentence_id=1, token="cat",
+             syllable_id=1, phoneme_id=1, Label="K", Onset=0.10, End=0.15, Duration=0.05),
+        dict(doc_id=1, sentence_id=1, token_in_sentence_id=1, token="cat",
+             syllable_id=1, phoneme_id=2, Label="AE1", Onset=0.15, End=0.18, Duration=0.03),
+        dict(doc_id=1, sentence_id=1, token_in_sentence_id=1, token="cat",
+             syllable_id=1, phoneme_id=3, Label="T", Onset=0.18, End=0.20, Duration=0.02),
+    ])
+
+
+def test_add_phoneme_surprisal_appends_two_columns(monkeypatch):
+    from extractors import phoneme_surprisal as ps
+    trie = ps.build_cohort_trie([
+        (("K", "AE", "T"), 3.0), (("K", "AE", "B"), 1.0), (("D", "AO", "G"), 2.0)])
+    monkeypatch.setattr(ps, "get_cohort_trie", lambda *a, **k: trie)
+    out = ps.add_phoneme_surprisal(_cat_phon_df())
+    assert list(out["phoneme_surprisal"]) == pytest.approx([0.585, 0.0, 0.415], abs=1e-3)
+    assert list(out["cohort_entropy"]) == pytest.approx([0.811, 0.811, 0.0], abs=1e-3)
+
+
+def test_phoneme_surprisal_mat_vars_impulses_and_controls():
+    from extractors import phoneme_surprisal as ps
+    df = _cat_phon_df()
+    df["phoneme_surprisal"] = [0.585, 0.0, 0.415]
+    df["cohort_entropy"] = [0.811, 0.811, 0.0]
+    out = ps.phoneme_surprisal_mat_vars(df, duration_s=1.0, analysis_sr=100,
+                                        config={"analysis_sr": 100})
+    N = 100  # round(1.0 * 100)
+    for k in ("phoneme_surprisal", "cohort_entropy", "phoneme_onset", "word_onset", "t"):
+        assert out[k].shape[0] == N
+    assert out["fs"] == 100
+    # impulses land at round(onset*sr): 0.10->10, 0.15->15, 0.18->18
+    assert out["phoneme_surprisal"][10, 0] == pytest.approx(0.585, abs=1e-3)
+    assert out["phoneme_surprisal"][18, 0] == pytest.approx(0.415, abs=1e-3)
+    assert out["phoneme_onset"][10, 0] == 1 and out["phoneme_onset"][18, 0] == 1
+    # only the first phoneme of the word is a word onset
+    assert out["word_onset"][10, 0] == 1
+    assert out["word_onset"][15, 0] == 0 and out["word_onset"][18, 0] == 0
