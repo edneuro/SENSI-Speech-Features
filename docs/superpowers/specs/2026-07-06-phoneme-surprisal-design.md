@@ -213,7 +213,8 @@ Verified against the primary sources during design (live-fetched 2026-07-06):
 Citations to place in the feature doc(s), all live-verifiable (verify again at authoring time
 per the citations policy): Marslen-Wilson & Welsh 1978 (cohort model); Brodbeck, Hong & Simon
 2018 (*Current Biology*); Brodbeck et al. 2022 (*eLife* e72056); Gillis, Vanthornhout, Simon,
-Francart & Di Liberto 2021 (*J Neurosci* 41(50):10316); Donhauser & Baillet 2020 (*Neuron*).
+Francart & Brodbeck 2021 (*J Neurosci* 41(50):10316, DOI 10.1523/JNEUROSCI.0812-21.2021);
+Donhauser & Baillet 2020 (*Neuron*).
 
 ## 9. Non-goals
 
