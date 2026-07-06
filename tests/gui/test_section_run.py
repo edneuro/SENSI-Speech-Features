@@ -64,6 +64,18 @@ def test_acoustic_toggle_persists_output_key(qtbot, tmp_path, monkeypatch):
     assert load_preferences()["output"]["acoustic_ts_mat"] is True
 
 
+def test_phoneme_surprisal_mat_toggle_persists_output_key(qtbot, tmp_path, monkeypatch):
+    monkeypatch.setenv("SENSI_PREFS_PATH", str(tmp_path / "prefs.json"))
+    from utils.preferences import load_preferences
+    from gui.section_run import RunSection
+    w = RunSection(get_session_api_key=lambda: "", status_strip=None)
+    qtbot.addWidget(w)
+    assert w.phoneme_surprisal_mat_toggle is not None
+    assert load_preferences()["output"]["phoneme_surprisal_mat"] is False  # opt-in default
+    w.phoneme_surprisal_mat_toggle.set_checked(True)
+    assert load_preferences()["output"]["phoneme_surprisal_mat"] is True
+
+
 def _enable_only_acoustic(save_preferences):
     """Select the acoustic .mat as the ONLY output (audio-only run)."""
     save_preferences({

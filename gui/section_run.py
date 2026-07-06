@@ -30,6 +30,7 @@ _ARTIFACT_DESC: list[tuple[str, str]] = [
     ("syllables",         "syllable/<stim>_syllables.csv"),
     ("phonemes",          "phoneme/<stim>_phonemes.csv"),
     ("acoustic",          "acoustic/<stim>_acoustic.mat   (audio-only)"),
+    ("phoneme_surprisal_mat", "phoneme/<stim>_phoneme_surprisal.mat   (impulse trains)"),
     ("documents_summary", "document/documents_summary_<ts>.csv   (single file, all stimuli)"),
 ]
 
@@ -96,6 +97,11 @@ class RunSection(QWidget):
         self.acoustic_mat_toggle.toggled.connect(
             lambda v: [save_preferences({"output": {"acoustic_ts_mat": v}}), self.refresh(), self.settings_changed.emit()])
         layout.addWidget(self.acoustic_mat_toggle)
+        self.phoneme_surprisal_mat_toggle = ToggleRow("Phoneme surprisal .mat (impulse trains)")
+        self.phoneme_surprisal_mat_toggle.set_checked(prefs["output"]["phoneme_surprisal_mat"])
+        self.phoneme_surprisal_mat_toggle.toggled.connect(
+            lambda v: [save_preferences({"output": {"phoneme_surprisal_mat": v}}), self.refresh(), self.settings_changed.emit()])
+        layout.addWidget(self.phoneme_surprisal_mat_toggle)
 
         # Read-only "what will actually be written" summary (CSV + .mat), derived
         # from the plan so it stays accurate and includes outputs whose toggles

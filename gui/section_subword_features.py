@@ -140,6 +140,50 @@ class SubwordFeaturesSection(QWidget):
         phon_card.settings_changed.connect(self.settings_changed)
         layout.addWidget(phon_card)
 
+        # --- Phoneme surprisal (Brodbeck/Gillis cohort model) ---
+        psr_card = ClusterCard(
+            "Phoneme surprisal",
+            "Context-independent cohort surprisal + entropy per phoneme. "
+            "Requires MFA alignment. Also emits a .mat impulse-train sidecar "
+            "when enabled on the Run page.",
+            master_key="master_phoneme_surprisal",
+            master_label="Emit phoneme surprisal columns",
+        )
+        psr_grid = QGridLayout()
+        psr_keys = [
+            ("feat_phoneme_surprisal",      "phoneme_surprisal (bits)"),
+            ("feat_phoneme_cohort_entropy", "cohort_entropy (bits)"),
+        ]
+        for i, (key, label) in enumerate(psr_keys):
+            psr_grid.addWidget(
+                self._make_toggle(key, label, f[key]),
+                i // 2, i % 2,
+            )
+        psr_card.add_child_layout(psr_grid)
+
+        # Analysis rate, saved directly to the phoneme_surprisal section (like
+        # pcenter_k -> prosody above). It's a config value rather than a
+        # feature toggle, so it is not gated by the master. strip_stress /
+        # primary_only are left at their prefs defaults (still functional
+        # through emit) to keep the card minimal — analysis_sr is the param
+        # researchers change most.
+        _psr = prefs.get("phoneme_surprisal", {})
+        psr_sr_row = QHBoxLayout()
+        psr_sr_row.addWidget(QLabel("Analysis rate (Hz):"))
+        self._psr_sr_spin = QDoubleSpinBox()
+        self._psr_sr_spin.setRange(1.0, 1000.0)
+        self._psr_sr_spin.setDecimals(0)
+        self._psr_sr_spin.setValue(_psr.get("analysis_sr", 128))
+        self._psr_sr_spin.valueChanged.connect(
+            lambda v: save_preferences({"phoneme_surprisal": {"analysis_sr": v}}))
+        psr_sr_row.addWidget(self._psr_sr_spin)
+        psr_sr_row.addStretch(1)
+        psr_sr_w = QWidget()
+        psr_sr_w.setLayout(psr_sr_row)
+        psr_card.add_widget(psr_sr_w)
+        psr_card.settings_changed.connect(self.settings_changed)
+        layout.addWidget(psr_card)
+
         layout.addStretch(1)
 
     def toggle(self, key: str): return self._toggles.get(key)
