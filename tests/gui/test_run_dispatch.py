@@ -551,6 +551,25 @@ def test_word_args_no_subword_no_align_force(prefs_tmp):
     assert args.no_align is True
 
 
+def test_dispatcher_sets_and_pops_hf_token(monkeypatch, tmp_path):
+    monkeypatch.setenv("SENSI_PREFS_PATH", str(tmp_path / "prefs.json"))
+    import os
+    from utils.preferences import save_preferences
+    save_preferences({"output": {"word_level_csv": True}})
+    monkeypatch.delenv("HF_TOKEN", raising=False)
+
+    seen = {}
+    def fake_word(args, **kwargs): seen["during"] = os.environ.get("HF_TOKEN")
+    monkeypatch.setattr("main.run_word_level_batch", fake_word, raising=False)
+
+    from gui.run_dispatch import run
+    run(progress_cb=lambda *a: None, done_cb=lambda *a: None,
+        session_api_key="", session_hf_token="hf_test123", in_thread=False)
+
+    assert seen["during"] == "hf_test123"          # set for the run
+    assert os.environ.get("HF_TOKEN") is None       # popped afterward
+
+
 def test_acoustic_namespace_carries_config():
     from gui.planner.emit import to_acoustic_namespace
     prefs = {

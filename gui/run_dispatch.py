@@ -48,6 +48,7 @@ def _prepare_runtime_args(ns: argparse.Namespace) -> argparse.Namespace:
 def run(progress_cb: Callable[[int, int, str], None],
         done_cb: Callable[[str], None],
         session_api_key: str,
+        session_hf_token: str = "",
         in_thread: bool = True) -> None:
     """Dispatch a run in a background thread (or inline when in_thread=False).
 
@@ -65,6 +66,8 @@ def run(progress_cb: Callable[[int, int, str], None],
         import os
         if session_api_key:
             os.environ["OPENAI_API_KEY"] = session_api_key
+        if session_hf_token:
+            os.environ["HF_TOKEN"] = session_hf_token
         prefs = load_preferences()
         plan = planner.plan_from_prefs(prefs)
         run_ts = _dt.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
@@ -100,6 +103,8 @@ def run(progress_cb: Callable[[int, int, str], None],
         finally:
             if session_api_key:
                 os.environ.pop("OPENAI_API_KEY", None)
+            if session_hf_token:
+                os.environ.pop("HF_TOKEN", None)
 
     if in_thread:
         threading.Thread(target=_go, daemon=True).start()

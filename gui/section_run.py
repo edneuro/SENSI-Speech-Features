@@ -46,9 +46,11 @@ class RunSection(QWidget):
     _progress_event = Signal(int, int, str)
     _done_event = Signal(str)
 
-    def __init__(self, get_session_api_key, status_strip, parent=None):
+    def __init__(self, get_session_api_key, status_strip, parent=None,
+                 get_session_hf_token=None):
         super().__init__(parent)
         self._get_api_key = get_session_api_key
+        self._get_hf_token = get_session_hf_token or (lambda: "")
         self._status_strip = status_strip
         # Wire cross-thread bridges to main-thread slots before any widget
         # creation that might cause them to fire.
@@ -201,7 +203,8 @@ class RunSection(QWidget):
         ok = not missing
         self.run_button.setEnabled(ok)
 
-        warnings = compute_warnings(session_api_key=self._get_api_key())
+        warnings = compute_warnings(session_api_key=self._get_api_key(),
+                                    session_hf_token=self._get_hf_token())
         lines = []
         if acoustic_only:
             lines.append("ℹ Acoustic level is audio-only — every audio file is "
@@ -284,4 +287,5 @@ class RunSection(QWidget):
             progress_cb=self._progress_event.emit,
             done_cb=self._done_event.emit,
             session_api_key=self._get_api_key(),
+            session_hf_token=self._get_hf_token(),
         )

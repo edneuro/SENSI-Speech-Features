@@ -124,6 +124,7 @@ class MainWindow(QMainWindow):
         self.run_section = RunSection(
             get_session_api_key=self.word_features.session_api_key,
             status_strip=self.status_strip,
+            get_session_hf_token=self.word_features.session_hf_token,
         )
         self.logs_section = LogsSection()
 
