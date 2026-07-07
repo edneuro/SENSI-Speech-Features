@@ -62,6 +62,49 @@ def test_preflight_no_warning_on_openai_with_key(prefs_tmp):
     assert not any(k is not None and k.startswith("pred_") for k in keys)
 
 
+def test_preflight_warns_on_gated_local_without_token(prefs_tmp, monkeypatch):
+    import extractors.llm_cloze as m
+    monkeypatch.setattr(m, 'has_hf_token', lambda: False)
+    from utils.preferences import save_preferences
+    from gui.preflight import compute_warnings
+    save_preferences({
+        "output": {"word_level_csv": True},
+        "predictability": {"llm_model": "meta-llama/Meta-Llama-3-8B"},
+        "features": {"pred_cloze": True},
+    })
+    warnings = compute_warnings(session_api_key="", session_hf_token="")
+    msgs = [w.message for w in warnings if w.toggle_key == "pred_cloze"]
+    assert any("HuggingFace token" in msg for msg in msgs)
+
+
+def test_preflight_no_gated_warning_when_token_present(prefs_tmp, monkeypatch):
+    import extractors.llm_cloze as m
+    monkeypatch.setattr(m, 'has_hf_token', lambda: True)
+    from utils.preferences import save_preferences
+    from gui.preflight import compute_warnings
+    save_preferences({
+        "output": {"word_level_csv": True},
+        "predictability": {"llm_model": "meta-llama/Meta-Llama-3-8B"},
+        "features": {"pred_cloze": True},
+    })
+    warnings = compute_warnings(session_api_key="", session_hf_token="")
+    assert not any("HuggingFace token" in w.message for w in warnings)
+
+
+def test_preflight_no_gated_warning_when_session_token_pasted(prefs_tmp, monkeypatch):
+    import extractors.llm_cloze as m
+    monkeypatch.setattr(m, 'has_hf_token', lambda: False)
+    from utils.preferences import save_preferences
+    from gui.preflight import compute_warnings
+    save_preferences({
+        "output": {"word_level_csv": True},
+        "predictability": {"llm_model": "meta-llama/Meta-Llama-3-8B"},
+        "features": {"pred_cloze": True},
+    })
+    warnings = compute_warnings(session_api_key="", session_hf_token="hf_pasted")
+    assert not any("HuggingFace token" in w.message for w in warnings)
+
+
 def test_no_prosody_alignment_warning_anymore(prefs_tmp):
     """The old prosody-needs-alignment warning is gone — the planner resolves
     the dependency automatically. Verify no such warning is emitted even when

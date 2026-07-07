@@ -16,7 +16,10 @@ from pathlib import Path
 
 from utils.preferences import load_preferences
 from gui.planner import plan_from_prefs
-from extractors.llm_cloze import LLM_OPTIONS
+# Imported as a module (not `from ... import has_hf_token`) so that tests can
+# monkeypatch `extractors.llm_cloze.has_hf_token` and have it take effect here
+# — a direct-name import would bind a stale reference at module-load time.
+from extractors import llm_cloze
 
 
 @dataclass(frozen=True)
@@ -66,7 +69,7 @@ _PROSODY_STAGES = frozenset({
 })
 
 
-def compute_warnings(session_api_key: str = "") -> list[Warning]:
+def compute_warnings(session_api_key: str = "", session_hf_token: str = "") -> list[Warning]:
     prefs = load_preferences()
     plan = plan_from_prefs(prefs)
     in_plan = plan.stages_to_run
@@ -92,7 +95,7 @@ def compute_warnings(session_api_key: str = "") -> list[Warning]:
 
     # OpenAI without API key
     if "llm_predict" in in_plan:
-        llm_model = prefs["predictability"].get("llm_model", "") or LLM_OPTIONS[0][0]
+        llm_model = prefs["predictability"].get("llm_model", "") or llm_cloze.LLM_OPTIONS[0][0]
         if llm_model.startswith("gpt-") and not session_api_key:
             for k in ("pred_surprisal_llm", "pred_cloze", "pred_topmatch"):
                 if prefs["features"].get(k, False):
@@ -100,6 +103,15 @@ def compute_warnings(session_api_key: str = "") -> list[Warning]:
                         toggle_key=k, severity="amber",
                         message=f"OpenAI model '{llm_model}' selected but no API key "
                                 "pasted — paste your key in Predictability."))
+        elif (llm_cloze.is_gated_local_model(llm_model) and not session_hf_token
+                and not llm_cloze.has_hf_token()):
+            for k in ("pred_surprisal_llm", "pred_cloze", "pred_topmatch"):
+                if prefs["features"].get(k, False):
+                    out.append(Warning(
+                        toggle_key=k, severity="amber",
+                        message=f"Local model '{llm_model}' needs a HuggingFace token "
+                                "+ accepted license — paste a token in Predictability "
+                                "or run `hf auth login`."))
 
     # LIWC backend selected but no .dic
     if "sem_domain" in in_plan and prefs["semantic"].get("backend") == "liwc":
