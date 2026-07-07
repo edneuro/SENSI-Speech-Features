@@ -86,5 +86,23 @@ PUNCT rows are masked to `NaN`. The probability is stored rounded to
 [Hofmann 2022]: #hofmann-2022
 [Michaelov 2024]: #michaelov-2024
 
+## Setting up the local Llama backend (local runs)
+
+The `meta-llama/*` models are **gated and free**, but require one-time setup:
+
+1. **Accept the license.** Sign in at huggingface.co and open the model page
+   (e.g. <https://huggingface.co/meta-llama/Meta-Llama-3-8B>); accept the terms
+   and wait for "access granted".
+2. **Provide a token.** Create a *Read* token (Settings → Access Tokens). Either
+   paste it into the **HF token** box that appears in Predictability when a Llama
+   model is selected (session-only, never saved to disk), or run `hf auth login`
+   once so it's auto-detected (the box is then replaced by "✓ token detected").
+3. **GPU.** An 8B model needs roughly ≥12 GB VRAM; on CPU it runs but is slow.
+
+No API key or download is needed for the **OpenAI** backend — set
+`OPENAI_API_KEY` and pick a `gpt-*` model for a zero-setup alternative.
+
+*(Running on Sherlock/HPC is documented separately.)*
+
 ## Datasets
 <!-- auto-populated from docs/datasets/*.md once the dataset registry exists -->

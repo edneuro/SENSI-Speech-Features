@@ -9,6 +9,9 @@ status: implemented
 depth: deep
 ---
 
+> Local Llama backends need one-time token/license setup — see
+> **[pred_cloze.md → Setting up the local Llama backend](pred_cloze.md#setting-up-the-local-llama-backend-local-runs)**.
+
 ## Meaning
 Same metric as [`Surprisal`](pred_surprisal_gpt2.md) — negative log₂
 probability of each word given preceding context, in **bits** — but
@@ -88,8 +91,8 @@ Each backend in `LLM_OPTIONS` has its own context-window limit:
 | gpt-4o-mini             | 128K subwords | `ValueError` before API call (`tiktoken`-counted) |
 | gpt-4o                  | 128K subwords | `ValueError` before API call |
 | meta-llama/Llama-3.2-3B | 128K subwords | Chunked sliding window (`_chunk_slices`) |
-| meta-llama/Llama-3-8B   | 8K  subwords  | Chunked sliding window |
-| meta-llama/Llama-3-70B  | 8K  subwords  | Chunked sliding window |
+| meta-llama/Meta-Llama-3-8B   | 8K  subwords  | Chunked sliding window |
+| meta-llama/Meta-Llama-3-70B  | 8K  subwords  | Chunked sliding window |
 
 **Local HuggingFace backends chunk automatically** when the input
 exceeds `model.config.max_position_embeddings`. The strategy is the
