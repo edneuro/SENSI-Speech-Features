@@ -189,7 +189,26 @@ class WordFeaturesSection(QWidget):
             QLineEdit.Normal if v else QLineEdit.Password))
         ak.addWidget(show_btn)
         pred_card.add_widget(self.api_key_row)
-        self._refresh_api_key_visibility()
+
+        # HF token row (only for gated local Llama, shown when no token detected)
+        self.hf_token_row = QWidget()
+        ht = QHBoxLayout(self.hf_token_row); ht.setContentsMargins(0, 0, 0, 0)
+        ht.addWidget(QLabel("HF token:"))
+        self.hf_token_line = QLineEdit()
+        self.hf_token_line.setEchoMode(QLineEdit.Password)
+        self.hf_token_line.setPlaceholderText("Paste HuggingFace token — never saved to disk")
+        self.hf_token_line.textChanged.connect(
+            lambda txt: self.refresh_warnings(
+                session_api_key=self.session_api_key(), session_hf_token=txt))
+        ht.addWidget(self.hf_token_line, 1)
+        hf_show = QPushButton("Show"); hf_show.setCheckable(True)
+        hf_show.toggled.connect(lambda v: self.hf_token_line.setEchoMode(
+            QLineEdit.Normal if v else QLineEdit.Password))
+        ht.addWidget(hf_show)
+        pred_card.add_widget(self.hf_token_row)
+        self.hf_token_detected_label = QLabel("✓ HuggingFace token detected")
+        pred_card.add_widget(self.hf_token_detected_label)
+        self._refresh_llm_credential_visibility()
         if not saved_model:
             # api_key_row exists now — safe to call. Persists the displayed
             # default so preflight and the cost panel see a real model ID.
@@ -386,6 +405,9 @@ class WordFeaturesSection(QWidget):
     def session_api_key(self) -> str:
         return self.api_key_line.text() if self.api_key_row.isVisible() else ""
 
+    def session_hf_token(self) -> str:
+        return self.hf_token_line.text() if self.hf_token_row.isVisible() else ""
+
     def _make_toggle(self, key, label, initial, section):
         row = ToggleRow(label=label, info_key=key)
         row.set_checked(initial)
@@ -417,9 +439,10 @@ class WordFeaturesSection(QWidget):
         save_preferences({"features": {feat_key: value}, "output": {out_key: value}})
         self.settings_changed.emit()
 
-    def refresh_warnings(self, session_api_key: str = "") -> None:
+    def refresh_warnings(self, session_api_key: str = "", session_hf_token: str = "") -> None:
         from gui.preflight import compute_warnings
-        warnings = compute_warnings(session_api_key=session_api_key)
+        warnings = compute_warnings(session_api_key=session_api_key,
+                                    session_hf_token=session_hf_token)
         for row in self._toggles.values():
             row.set_warning(None)
         for w in warnings:
@@ -430,7 +453,7 @@ class WordFeaturesSection(QWidget):
     def _on_model_change(self, label):
         model_id = next((mid for mid, lab in LLM_OPTIONS if lab == label), label)
         save_preferences({"predictability": {"llm_model": model_id}})
-        self._refresh_api_key_visibility()
+        self._refresh_llm_credential_visibility()
         self.settings_changed.emit()
 
     def _on_pitch_units_change(self, label: str) -> None:
@@ -438,10 +461,16 @@ class WordFeaturesSection(QWidget):
         save_preferences({"prosody": {"pitch_units": value}})
         self.settings_changed.emit()
 
-    def _refresh_api_key_visibility(self):
+    def _refresh_llm_credential_visibility(self):
+        from extractors.llm_cloze import is_gated_local_model, has_hf_token
         label = self.llm_model_combo.currentText()
         model_id = next((mid for mid, lab in LLM_OPTIONS if lab == label), label)
-        self.api_key_row.setVisible(model_id.startswith("gpt-"))
+        is_openai = model_id.startswith("gpt-")
+        gated = is_gated_local_model(model_id)
+        token_present = gated and has_hf_token()
+        self.api_key_row.setVisible(is_openai)
+        self.hf_token_row.setVisible(gated and not token_present)
+        self.hf_token_detected_label.setVisible(token_present)
 
     def _on_backend_change(self, backend):
         save_preferences({"semantic": {"backend": backend}})

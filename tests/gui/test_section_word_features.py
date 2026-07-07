@@ -84,3 +84,53 @@ def test_word_prosody_pitch_units_combo_persists(qtbot, prefs_tmp):
     qtbot.addWidget(section)
     section.pitch_units_combo.setCurrentText('Hz')
     assert load_preferences()['prosody']['pitch_units'] == 'hz'
+
+
+def _label_for(model_id):
+    from extractors.llm_cloze import LLM_OPTIONS
+    return next(lab for mid, lab in LLM_OPTIONS if mid == model_id)
+
+
+def test_openai_model_shows_api_key_hides_hf(qtbot, monkeypatch):
+    from gui.section_word_features import WordFeaturesSection
+    w = WordFeaturesSection(); qtbot.addWidget(w)
+    w.show()  # isVisible() requires a shown top-level ancestor (Qt semantics)
+    w.llm_model_combo.setCurrentText(_label_for('gpt-4o-mini'))
+    assert w.api_key_row.isVisible() is True
+    assert w.hf_token_row.isVisible() is False
+
+
+def test_gated_model_no_token_shows_hf_box(qtbot, monkeypatch):
+    import extractors.llm_cloze as m
+    monkeypatch.setattr(m, 'has_hf_token', lambda: False)
+    from gui.section_word_features import WordFeaturesSection
+    w = WordFeaturesSection(); qtbot.addWidget(w)
+    w.show()  # isVisible() requires a shown top-level ancestor (Qt semantics)
+    w.llm_model_combo.setCurrentText(_label_for('meta-llama/Meta-Llama-3-8B'))
+    assert w.hf_token_row.isVisible() is True
+    assert w.hf_token_detected_label.isVisible() is False
+    assert w.api_key_row.isVisible() is False
+
+
+def test_gated_model_with_token_shows_detected_label(qtbot, monkeypatch):
+    import extractors.llm_cloze as m
+    monkeypatch.setattr(m, 'has_hf_token', lambda: True)
+    from gui.section_word_features import WordFeaturesSection
+    w = WordFeaturesSection(); qtbot.addWidget(w)
+    w.show()  # isVisible() requires a shown top-level ancestor (Qt semantics)
+    w.llm_model_combo.setCurrentText(_label_for('meta-llama/Meta-Llama-3-8B'))
+    assert w.hf_token_row.isVisible() is False
+    assert w.hf_token_detected_label.isVisible() is True
+
+
+def test_session_hf_token_returns_text_only_when_visible(qtbot, monkeypatch):
+    import extractors.llm_cloze as m
+    monkeypatch.setattr(m, 'has_hf_token', lambda: False)
+    from gui.section_word_features import WordFeaturesSection
+    w = WordFeaturesSection(); qtbot.addWidget(w)
+    w.show()  # isVisible() requires a shown top-level ancestor (Qt semantics)
+    w.llm_model_combo.setCurrentText(_label_for('meta-llama/Meta-Llama-3-8B'))
+    w.hf_token_line.setText('hf_secret')
+    assert w.session_hf_token() == 'hf_secret'
+    w.llm_model_combo.setCurrentText(_label_for('gpt-4o-mini'))
+    assert w.session_hf_token() == ''   # hidden → empty
