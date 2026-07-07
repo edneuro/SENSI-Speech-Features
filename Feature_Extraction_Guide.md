@@ -273,8 +273,8 @@ The existing `Surprisal` column (GPT-2) is **kept unchanged** as a baseline.
 | Selected when | Model | Approx. cloze r vs Provo | Cost per ~3000-word stimulus |
 |---|---|---|---|
 | `OPENAI_API_KEY` is set | `gpt-4o-mini` | ~0.83 | $0.10–0.30 (API) |
-| GPU VRAM ≥ 48 GB | `meta-llama/Llama-3-70B` | ~0.84 | Free (electricity) |
-| GPU VRAM ≥ 12 GB | `meta-llama/Llama-3-8B` | ~0.79 | Free |
+| GPU VRAM ≥ 48 GB | `meta-llama/Meta-Llama-3-70B` | ~0.84 | Free (electricity) |
+| GPU VRAM ≥ 12 GB | `meta-llama/Meta-Llama-3-8B` | ~0.79 | Free |
 | GPU VRAM ≥ 8 GB | `meta-llama/Llama-3.2-3B` | ~0.76 | Free |
 
 Override with `--llm-model gpt-4o|gpt-4o-mini|llama-3-70b|llama-3-8b|llama-3.2-3b|<hf-id>`.
