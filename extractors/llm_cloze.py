@@ -7,8 +7,8 @@ Produces three columns from a single forward pass per token:
 
 Model selection (auto):
     OPENAI_API_KEY set            → gpt-4o-mini
-    GPU VRAM ≥ 48 GB              → meta-llama/Llama-3-70B
-    GPU VRAM ≥ 12 GB              → meta-llama/Llama-3-8B
+    GPU VRAM ≥ 48 GB              → meta-llama/Meta-Llama-3-70B
+    GPU VRAM ≥ 12 GB              → meta-llama/Meta-Llama-3-8B
     GPU VRAM ≥  8 GB              → meta-llama/Llama-3.2-3B
     otherwise                     → meta-llama/Llama-3.2-3B (CPU)
 
@@ -30,8 +30,8 @@ EXPECTED_COLUMNS = ['LLM_Cloze', 'LLM_Surprisal', 'LLM_TopMatch']
 LLM_OPTIONS = [
     ('gpt-4o-mini',                 'gpt-4o-mini   ($0.10–0.30/stim, r≈0.83, requires OPENAI_API_KEY)'),
     ('gpt-4o',                      'gpt-4o        ($1–3/stim, r≈0.85, requires OPENAI_API_KEY)'),
-    ('meta-llama/Llama-3-70B',      'Llama-3-70B   (free, r≈0.84, needs ≥48GB VRAM)'),
-    ('meta-llama/Llama-3-8B',       'Llama-3-8B    (free, r≈0.79, needs ≥12GB VRAM)'),
+    ('meta-llama/Meta-Llama-3-70B', 'Llama-3-70B   (free, r≈0.84, needs ≥48GB VRAM)'),
+    ('meta-llama/Meta-Llama-3-8B',  'Llama-3-8B    (free, r≈0.79, needs ≥12GB VRAM)'),
     ('meta-llama/Llama-3.2-3B',     'Llama-3.2-3B  (free, r≈0.76, needs ≥8GB VRAM)'),
 ]
 
@@ -89,10 +89,26 @@ def select_model() -> str:
         return 'gpt-4o-mini'
     vram = _available_vram_gb()
     if vram >= 48:
-        return 'meta-llama/Llama-3-70B'
+        return 'meta-llama/Meta-Llama-3-70B'
     if vram >= 12:
-        return 'meta-llama/Llama-3-8B'
+        return 'meta-llama/Meta-Llama-3-8B'
     return 'meta-llama/Llama-3.2-3B'
+
+
+def is_gated_local_model(model_id: str) -> bool:
+    """True for gated local HF models (the meta-llama/* family) that need a token."""
+    return model_id.startswith("meta-llama/")
+
+
+def has_hf_token() -> bool:
+    """True if a HuggingFace token is already available — HF_TOKEN /
+    HUGGING_FACE_HUB_TOKEN env, or a token saved by a prior `hf auth login`.
+    Lazy import so importing this module (and starting the GUI) stays cheap."""
+    try:
+        from huggingface_hub import get_token
+    except Exception:
+        return False
+    return bool(get_token())
 
 
 def _available_vram_gb() -> float:
@@ -115,7 +131,7 @@ def add_llm_cloze(
     df = token_df.copy()
 
     if backend is None:
-        backend = _make_default_backend(model_id or select_model())
+        backend = _cached_backend(model_id or select_model())
 
     tokens = list(df['token'])
     scores = backend.score(text, tokens)
@@ -143,6 +159,22 @@ def _make_default_backend(model_id: str) -> _Backend:
     if model_id.startswith('gpt-'):
         return _OpenAIBackend(model_id)
     return _HuggingFaceBackend(model_id)
+
+
+# Process-wide backend cache. The batch runner calls add_llm_cloze once per
+# document; loading a local 8B model costs minutes each, so we load once per
+# model_id and reuse it across every document (and the word/doc passes) in a
+# run — the same "load once" intent that _align_cache gives MFA. Callers that
+# pass an explicit `backend=` bypass this entirely.
+_BACKEND_CACHE: dict[str, _Backend] = {}
+
+
+def _cached_backend(model_id: str) -> _Backend:
+    backend = _BACKEND_CACHE.get(model_id)
+    if backend is None:
+        backend = _make_default_backend(model_id)
+        _BACKEND_CACHE[model_id] = backend
+    return backend
 
 
 class _HuggingFaceBackend:

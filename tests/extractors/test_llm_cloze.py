@@ -64,9 +64,9 @@ def test_select_model_picks_local_when_no_api_key(monkeypatch):
     with patch('extractors.llm_cloze._available_vram_gb', return_value=8.0):
         assert select_model() == 'meta-llama/Llama-3.2-3B'
     with patch('extractors.llm_cloze._available_vram_gb', return_value=14.0):
-        assert select_model() == 'meta-llama/Llama-3-8B'
+        assert select_model() == 'meta-llama/Meta-Llama-3-8B'
     with patch('extractors.llm_cloze._available_vram_gb', return_value=50.0):
-        assert select_model() == 'meta-llama/Llama-3-70B'
+        assert select_model() == 'meta-llama/Meta-Llama-3-70B'
 
 
 def test_context_limit_passes_when_under():
@@ -157,3 +157,22 @@ def test_chunk_slices_segment_never_exceeds_window():
 def test_chunk_slices_rejects_tiny_window():
     with pytest.raises(ValueError):
         _chunk_slices(n=100, window=1)
+
+
+def test_is_gated_local_model():
+    from extractors.llm_cloze import is_gated_local_model
+    assert is_gated_local_model('meta-llama/Meta-Llama-3-8B') is True
+    assert is_gated_local_model('meta-llama/Llama-3.2-3B') is True
+    assert is_gated_local_model('gpt-4o-mini') is False
+
+
+def test_has_hf_token_true_when_get_token_returns(monkeypatch):
+    import extractors.llm_cloze as m
+    monkeypatch.setattr('huggingface_hub.get_token', lambda: 'hf_abc', raising=False)
+    assert m.has_hf_token() is True
+
+
+def test_has_hf_token_false_when_no_token(monkeypatch):
+    import extractors.llm_cloze as m
+    monkeypatch.setattr('huggingface_hub.get_token', lambda: None, raising=False)
+    assert m.has_hf_token() is False
