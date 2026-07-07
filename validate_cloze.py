@@ -27,9 +27,9 @@ PROVO_CSV = PROVO_DIR / 'provo_predictability.csv'
 EXPECTED_RANGES = {
     'gpt-4o-mini':                (0.78, 0.86),
     'gpt-4o':                     (0.80, 0.88),
-    'meta-llama/Llama-3-70B':     (0.80, 0.88),
-    'meta-llama/Llama-3-8B':      (0.74, 0.83),
-    'meta-llama/Llama-3.2-3B':    (0.70, 0.80),
+    'meta-llama/Meta-Llama-3-70B': (0.80, 0.88),
+    'meta-llama/Meta-Llama-3-8B':  (0.74, 0.83),
+    'meta-llama/Llama-3.2-3B':     (0.70, 0.80),
 }
 
 
