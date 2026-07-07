@@ -177,6 +177,16 @@ def _cached_backend(model_id: str) -> _Backend:
     return backend
 
 
+def _model_load_hint(model_id: str, exc: Exception) -> str:
+    return (
+        f"Could not load local LLM {model_id!r}: {type(exc).__name__}: {exc}\n"
+        f"To fix: (1) accept the license at https://huggingface.co/{model_id} ; "
+        f"(2) provide a HuggingFace token (GUI token box, HF_TOKEN env var, or "
+        f"`hf auth login`); (3) on an offline machine, pre-download the weights "
+        f"first. Or select an OpenAI model (set OPENAI_API_KEY) — no gating or download."
+    )
+
+
 class _HuggingFaceBackend:
     """Local Hugging Face causal-LM backend with 4-bit quantization when possible."""
 
@@ -186,15 +196,21 @@ class _HuggingFaceBackend:
 
         self._torch = torch
         self._model_id = model_id
-        self._tokenizer = AutoTokenizer.from_pretrained(model_id)
         try:
-            quant = BitsAndBytesConfig(load_in_4bit=True, bnb_4bit_compute_dtype=torch.float16)
-            self._model = AutoModelForCausalLM.from_pretrained(
-                model_id, quantization_config=quant, device_map='auto',
-            )
-        except Exception:
-            # Fall back to fp16/cpu if bitsandbytes isn't supported
-            self._model = AutoModelForCausalLM.from_pretrained(model_id)
+            self._tokenizer = AutoTokenizer.from_pretrained(model_id)
+            try:
+                quant = BitsAndBytesConfig(load_in_4bit=True, bnb_4bit_compute_dtype=torch.float16)
+                self._model = AutoModelForCausalLM.from_pretrained(
+                    model_id, quantization_config=quant, device_map='auto',
+                )
+            except Exception:
+                # bitsandbytes unavailable/unsupported on this platform — retry
+                # without 4-bit quantization (fp16/cpu). If the *repo* is the
+                # problem (gated / not found / offline), this retry raises too and
+                # is caught by the outer handler below with actionable guidance.
+                self._model = AutoModelForCausalLM.from_pretrained(model_id)
+        except Exception as exc:
+            raise RuntimeError(_model_load_hint(model_id, exc)) from exc
         self._model.eval()
         self._context_limit = getattr(self._model.config, 'max_position_embeddings', None)
 

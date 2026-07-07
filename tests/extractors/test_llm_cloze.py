@@ -176,3 +176,45 @@ def test_has_hf_token_false_when_no_token(monkeypatch):
     import extractors.llm_cloze as m
     monkeypatch.setattr('huggingface_hub.get_token', lambda: None, raising=False)
     assert m.has_hf_token() is False
+
+
+import types
+import pytest
+
+
+def test_backend_raises_actionable_error_on_gated(monkeypatch):
+    import extractors.llm_cloze as m
+
+    def raise_gated(*a, **k):
+        raise OSError("401 Client Error: gated repo")
+
+    monkeypatch.setattr('transformers.AutoTokenizer.from_pretrained', raise_gated)
+    with pytest.raises(RuntimeError) as ei:
+        m._HuggingFaceBackend('meta-llama/Meta-Llama-3-8B')
+    msg = str(ei.value)
+    assert 'license' in msg and 'token' in msg
+    assert 'meta-llama/Meta-Llama-3-8B' in msg
+
+
+def test_backend_falls_back_to_fp16_on_bnb_error(monkeypatch):
+    import extractors.llm_cloze as m
+    calls = []
+
+    class DummyModel:
+        config = types.SimpleNamespace(max_position_embeddings=1024)
+        def eval(self): pass
+
+    def fake_model(model_id, **kwargs):
+        calls.append(kwargs)
+        if 'quantization_config' in kwargs:
+            raise RuntimeError("bitsandbytes not available on this platform")
+        return DummyModel()
+
+    monkeypatch.setattr('transformers.AutoTokenizer.from_pretrained', lambda *a, **k: object())
+    monkeypatch.setattr('transformers.AutoModelForCausalLM.from_pretrained', fake_model)
+    monkeypatch.setattr('transformers.BitsAndBytesConfig', lambda **k: object())
+
+    backend = m._HuggingFaceBackend('meta-llama/Meta-Llama-3-8B')
+    assert any('quantization_config' in c for c in calls)      # tried quantized
+    assert any('quantization_config' not in c for c in calls)  # fell back to fp16
+    assert backend._context_limit == 1024
