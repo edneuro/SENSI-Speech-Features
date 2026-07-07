@@ -93,11 +93,23 @@ Add `session_hf_token() -> str`: return `hf_token_line.text()` only when
 
 ### D. Preflight warning — `gui/preflight.py`
 
-`compute_warnings` gains awareness of the HF token (accept a `session_hf_token`
-param mirroring `session_api_key`). When the selected model
-`is_gated_local_model(...)` and neither `has_hf_token()` nor a session token is
-present, emit a warning on the LLM-cloze toggle key: "Local Llama needs a
-HuggingFace token + accepted license — paste a token above or run `hf auth login`."
+`compute_warnings(session_api_key="", session_hf_token="")` gains a
+`session_hf_token` param mirroring `session_api_key`. In the existing
+`llm_predict` block (preflight.py:93-102), add an `elif`: when the selected model
+`is_gated_local_model(...)` and neither `has_hf_token()` nor `session_hf_token` is
+present, emit a warning on **each** of the three LLM toggle keys
+(`pred_surprisal_llm`, `pred_cloze`, `pred_topmatch`) that is enabled — mirroring
+the OpenAI loop exactly. Message: "Local model '<id>' needs a HuggingFace token +
+accepted license — paste a token in Predictability or run `hf auth login`."
+
+Must satisfy the `test_preflight_invariants.py` invariant: **no warning instructs
+the user to enable a toggle** — this message does not (it points at the token), so
+it complies.
+
+**Two call sites forward the token** (so the warning clears live as the user
+types): `gui/section_word_features.py` `refresh_warnings` (add a `session_hf_token`
+param; wire `hf_token_line.textChanged` to call it, mirroring `api_key_line` at
+:183-184) and `gui/section_run.py:204`'s `compute_warnings` call.
 
 ### E. Clear backend error — `extractors/llm_cloze.py` `_HuggingFaceBackend.__init__`
 
@@ -149,7 +161,11 @@ math):
 
 ## Risks / notes
 
-- `huggingface_hub.get_token()` API name: verify against the container's
-  `huggingface_hub` version at implementation time; fall back to reading `HF_TOKEN`
-  env + the token file if the helper name differs.
+- `huggingface_hub.get_token()`: **verified present** in the local env
+  (huggingface_hub 1.14.0). The GUI runs locally, so the local env is what matters
+  for detection. (The Sherlock container may differ, but that path is out of scope.)
 - Keep the token strictly session-scoped — no `save_preferences` call ever receives it.
+- Analysis-confirmed anchors: OpenAI-key template `section_word_features.py:177-192`,
+  visibility `:441-444`, getter `:386-387`; run injection `run_dispatch.py:66,100-102`;
+  wiring `section_run.py:286` + `main_window.py:125`; preflight `preflight.py:93-102`;
+  backend `except` `llm_cloze.py:158-166`.
