@@ -38,6 +38,8 @@ output/
 
 # Provo validation cache
 data/provo/
+# Sherlock
+sherlock/
 # Sherlock: built Apptainer container image (3-4 GB, regenerable from Apptainer.def)
 sherlock/*.sif
 # Apptainer build scratch (writable sandbox dirs + interrupted-build leftovers)
