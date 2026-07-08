@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
-# SLURM GPU job: run the SensiExtractor batch CLI on Sherlock INSIDE the Apptainer
-# container (sensi.sif). This is the container-based counterpart to the conda-based
-# run_extract.sbatch — same smoke test, but the environment comes from the .sif
-# instead of a bare-metal conda env, so there is no $HOME/quota/module friction.
+# SLURM GPU job: run the SensiExtractor pipeline on Sherlock INSIDE the Apptainer
+# container (sensiextractor.sif), driven by sherlock/config.yaml. The environment
+# comes from the .sif, so there is no $HOME/quota/module friction.
 # Submit from a login node:   sbatch sherlock/run_container.sbatch
 #
 # --- SLURM directives (placeholders — verify against `sh_part` / Sherlock docs) ---
@@ -30,7 +29,7 @@ STORAGE_BASE="${STORAGE_BASE:-${OAK:-$GROUP_HOME}}"
 # code (and config.yaml) without rebuilding the container.
 REPO="${REPO:-$GROUP_HOME/SensiExtractor}"
 # The built container (one file), rsync'd into the repo's sherlock/ folder.
-SIF="${SIF:-$REPO/sherlock/sensi.sif}"
+SIF="${SIF:-$REPO/sherlock/sensiextractor.sif}"
 # HF weights on personal $SCRATCH — MUST match download_models.sh's HF_HOME.
 export HF_HOME="${HF_HOME:-${SCRATCH:-$STORAGE_BASE}/sensi/hf_cache}"
 

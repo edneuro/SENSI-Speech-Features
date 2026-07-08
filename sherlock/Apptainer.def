@@ -17,12 +17,12 @@
 # below resolve — NOT from inside sherlock/):
 #
 #     cd /mnt/c/Users/amilcar/Desktop/code/Antigravity/SensiExtractor
-#     apptainer build sherlock/sensi.sif sherlock/Apptainer.def
+#     apptainer build sherlock/sensiextractor.sif sherlock/Apptainer.def
 #
 # The build needs outbound internet (conda + pip + spaCy + MFA downloads). It
-# produces ONE file: sherlock/sensi.sif (~3-4 GB). Copy that one file to Sherlock:
+# produces ONE file: sherlock/sensiextractor.sif (~3-4 GB). Copy that one file to Sherlock:
 #
-#     rsync -avP sherlock/sensi.sif <you>@login.sherlock.stanford.edu:$GROUP_HOME/sensi/
+#     rsync -avP sherlock/sensiextractor.sif <you>@login.sherlock.stanford.edu:$GROUP_HOME/sensi/
 #
 # ------------------------------------------------------------------------------
 # WHY miniforge base + conda-forge (not the old setup_env.sh gymnastics): inside
@@ -46,9 +46,12 @@ From: condaforge/miniforge3:latest
     ENV_PREFIX=/opt/sensienv
     MFA_ROOT_DIR=/opt/mfa_data
 
-    # 1. conda layer: python + MFA (Kaldi arrives as a dependency). This is the
-    #    conda-forge-only piece that makes the whole container worthwhile.
-    conda create -y -p "$ENV_PREFIX" -c conda-forge python=3.10 montreal-forced-aligner
+    # 1. conda layer: python + MFA. Pin Kaldi to its CPU build (`kaldi=*=cpu_*`):
+    #    MFA forced alignment is CPU-only, but conda-forge's default CUDA Kaldi
+    #    drags in ~3 GB of NVIDIA/MAGMA libraries the container never uses (the GPU
+    #    it DOES need, for Llama, comes from the pip torch wheel below — not Kaldi).
+    conda create -y -p "$ENV_PREFIX" -c conda-forge python=3.10 \
+        "kaldi=*=cpu_*" montreal-forced-aligner
 
     # 1b. Compiled scientific packages from conda-forge PREBUILT binaries, so the
     #     pip step below sees them satisfied and never compiles from source.
@@ -91,7 +94,7 @@ From: condaforge/miniforge3:latest
     export MKL_THREADING_LAYER=sequential
 
 %runscript
-    # `apptainer run sensi.sif <args>` execs whatever you pass, inside the env.
+    # `apptainer run sensiextractor.sif <args>` execs whatever you pass, inside the env.
     # run_container.sbatch instead uses `apptainer exec ... python <repo>/main.py`.
     exec "$@"
 
@@ -103,5 +106,5 @@ From: condaforge/miniforge3:latest
 %help
     SensiExtractor environment container (environment-only) for Sherlock.
     Build in WSL from the repo root:
-        apptainer build sherlock/sensi.sif sherlock/Apptainer.def
+        apptainer build sherlock/sensiextractor.sif sherlock/Apptainer.def
     Run the batch CLI (code + weights bind-mounted) via run_container.sbatch.
