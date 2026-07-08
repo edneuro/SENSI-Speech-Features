@@ -15,7 +15,7 @@ def _base_config(tmp_path):
 
 
 def test_load_credentials_sets_env_from_files(tmp_path, monkeypatch):
-    import run_extract
+    from sherlock import run_extract
     monkeypatch.delenv("HF_TOKEN", raising=False)
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     hf = tmp_path / "hf.txt"; hf.write_text("hf_secret\n", encoding="utf-8")
@@ -24,14 +24,14 @@ def test_load_credentials_sets_env_from_files(tmp_path, monkeypatch):
 
 
 def test_load_credentials_missing_file_is_noop(tmp_path, monkeypatch):
-    import run_extract
+    from sherlock import run_extract
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     run_extract.load_credentials({"openai_api_key_file": str(tmp_path / "nope.txt")})
     assert "OPENAI_API_KEY" not in os.environ
 
 
 def test_dispatch_runs_word_level_from_output_toggle(tmp_path, monkeypatch):
-    import run_extract
+    from sherlock import run_extract
     calls = {}
     def fake_word(ns, **kw):
         calls["word"] = (ns.transcripts_folder, ns.analyzer)
@@ -48,7 +48,7 @@ def test_dispatch_runs_word_level_from_output_toggle(tmp_path, monkeypatch):
 
 def test_main_exits_when_required_folder_missing(tmp_path, monkeypatch, capsys):
     import pytest
-    import run_extract
+    from sherlock import run_extract
     from utils.config_yaml import prefs_to_config, write_config
     cfg = prefs_to_config(DEFAULT_PREFS)
     cfg["run"]["analyzer"] = "me"

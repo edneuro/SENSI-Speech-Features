@@ -36,12 +36,16 @@ dictionaries/*.csv
 # Run outputs
 output/
 
+#unrelated
+unrelated/
+
 # Provo validation cache
 data/provo/
-# Sherlock
-sherlock/
+
 # Sherlock: built Apptainer container image (3-4 GB, regenerable from Apptainer.def)
 sherlock/*.sif
 # Apptainer build scratch (writable sandbox dirs + interrupted-build leftovers)
 sherlock/build-temp-*/
 sherlock/*_sandbox/
+# Generated run config (machine-specific paths; regenerate with export_config.py)
+sherlock/config.yaml

@@ -10,8 +10,17 @@ import datetime as _dt
 import os
 import sys
 
+# This script lives in sherlock/; add the repo root to the path so `utils.*`,
+# `gui.*`, and `main` imports resolve when run as `python sherlock/run_extract.py`.
+_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _REPO_ROOT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT)
+
 from utils.config_yaml import read_config, validate_config, config_to_prefs
 from gui import planner
+
+# Default config lives alongside this script, in sherlock/.
+_DEFAULT_CONFIG = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.yaml")
 
 
 def load_credentials(run: dict) -> None:
@@ -72,8 +81,8 @@ def dispatch(config: dict) -> None:
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("config", nargs="?", default="config.yaml",
-                    help="path to the YAML config (default: config.yaml)")
+    ap.add_argument("config", nargs="?", default=_DEFAULT_CONFIG,
+                    help="path to the YAML config (default: sherlock/config.yaml)")
     args = ap.parse_args()
 
     config = read_config(args.config)
