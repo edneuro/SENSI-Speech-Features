@@ -79,3 +79,21 @@ def test_validate_config_flags_unknown_section_and_setting():
     errs = validate_config(cfg)
     assert any("bogus_section" in e for e in errs)
     assert any("not_a_setting" in e for e in errs)
+
+
+def test_write_then_read_config_round_trips(tmp_path):
+    from utils.config_yaml import read_config, write_config
+    cfg = prefs_to_config(DEFAULT_PREFS)
+    p = tmp_path / "config.yaml"
+    write_config(cfg, str(p))
+    text = p.read_text(encoding="utf-8")
+    assert text.startswith("#")            # header comment present
+    back = read_config(str(p))
+    assert back == cfg                      # structural round-trip
+
+
+def test_read_config_empty_file_returns_empty_dict(tmp_path):
+    from utils.config_yaml import read_config
+    p = tmp_path / "empty.yaml"
+    p.write_text("", encoding="utf-8")
+    assert read_config(str(p)) == {}
