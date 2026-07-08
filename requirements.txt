@@ -89,3 +89,7 @@ librosa>=0.10
 # Audio I/O — librosa pulls this in transitively, but the acoustic batch runner
 # and tests import it directly (reading/writing .wav fixtures), so declare it.
 soundfile>=0.12
+
+# Config file parsing for the Sherlock run workflow (run_extract.py / export_config.py).
+# Already present in the env transitively; declared here as a direct dependency.
+pyyaml>=6
