@@ -2,7 +2,8 @@
 
 Also covers the `_prealign_batch` fallback: when the batch MFA invocation
 fails outright, the helper must swallow the exception and leave
-`_batch_prealigned` unset so run() falls back to per-document alignment.
+`_batch_prealigned` False so run() falls back to per-document alignment;
+and per-pair isolation: an unreadable transcript skips only its own stimulus.
 """
 import types
 
@@ -72,3 +73,41 @@ def test_prealign_batch_fallback_on_mfa_failure(tmp_path, monkeypatch):
     main._prealign_batch(ns, pairs, tmp_path / "out")
 
     assert getattr(ns, "_batch_prealigned", False) is False
+
+
+def test_prealign_batch_skips_unreadable_transcript(tmp_path, monkeypatch):
+    """An unreadable transcript skips only its own stimulus; the readable ones
+    still get pre-aligned and the batch is not aborted."""
+
+    class FakePair:
+        def __init__(self, stimulus_id, audio_path, transcript_path):
+            self.stimulus_id = stimulus_id
+            self.audio_path = audio_path
+            self.transcript_path = transcript_path
+
+    good_txt = tmp_path / "good.txt"
+    good_txt.write_text("hello world", encoding="utf-8")
+    good_wav = tmp_path / "good.wav"
+    good_wav.write_bytes(b"RIFFgood")
+    bad_wav = tmp_path / "bad.wav"
+    bad_wav.write_bytes(b"RIFFbad")
+    missing_txt = tmp_path / "does_not_exist.txt"  # open() will raise
+
+    pairs = [
+        FakePair("bad", bad_wav, missing_txt),
+        FakePair("good", good_wav, good_txt),
+    ]
+
+    captured = {}
+
+    def _capture(items, persist_dir):
+        captured["items"] = list(items)
+
+    monkeypatch.setattr(aligner, "ensure_alignments", _capture)
+
+    ns = types.SimpleNamespace(no_align=False)
+    main._prealign_batch(ns, pairs, tmp_path / "out")  # must not raise
+
+    audios = [a for a, _ in captured["items"]]
+    assert audios == [str(good_wav)], "only the readable stimulus is staged"
+    assert getattr(ns, "_batch_prealigned", False) is True

@@ -748,12 +748,15 @@ def _prealign_batch(run_args, work_items, output_dir) -> None:
     calls read TextGrids from disk instead of each spawning MFA. On success sets
     run_args._batch_prealigned so run() reads disk only (a disk miss then means
     that stimulus failed to align). If the batch MFA invocation fails outright,
-    fall back to per-document alignment: leave _batch_prealigned unset so run()
+    fall back to per-document alignment: leave _batch_prealigned False so run()
     uses run_if_missing=True and the existing per-pair error handling degrades
     gracefully instead of aborting the whole batch.
 
     No-op when alignment is disabled or no pair has audio.
     """
+    # Default to False so a later pass on a copied namespace can't inherit a
+    # stale True; only a fully-successful pre-pass below flips it on.
+    run_args._batch_prealigned = False
     if getattr(run_args, 'no_align', False):
         return
     from extractors.aligner import alignment_dir, ensure_alignments
@@ -761,8 +764,17 @@ def _prealign_batch(run_args, work_items, output_dir) -> None:
     for pair in work_items:
         if not pair.audio_path:
             continue
-        with open(pair.transcript_path, 'r', encoding='utf-8') as f:
-            transcript_text = f.read()
+        # Read transcripts per-pair defensively: an unreadable transcript (bad
+        # encoding, permissions) skips only its own stimulus, mirroring the
+        # batch loop's per-pair error isolation — it must not abort the whole
+        # pre-pass (and thus the whole dispatch).
+        try:
+            with open(pair.transcript_path, 'r', encoding='utf-8') as f:
+                transcript_text = f.read()
+        except OSError as exc:
+            print(f'[mfa] skipping {pair.stimulus_id} in pre-alignment '
+                  f'(cannot read transcript: {exc})', file=sys.stderr)
+            continue
         items.append((str(pair.audio_path), transcript_text))
     if not items:
         return
