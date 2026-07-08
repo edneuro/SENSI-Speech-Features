@@ -16,7 +16,7 @@
 # BUILD (do this in WSL Ubuntu on your PC, from the REPO ROOT so the %files paths
 # below resolve — NOT from inside sherlock/):
 #
-#     cd /mnt/c/Users/amilcar/Desktop/code/Antigravity/SensiExtractor
+#     cd /path/to/SensiExtractor        # your local clone of the repo
 #     apptainer build sherlock/sensiextractor.sif sherlock/Apptainer.def
 #
 # The build needs outbound internet (conda + pip + spaCy + MFA downloads). It
