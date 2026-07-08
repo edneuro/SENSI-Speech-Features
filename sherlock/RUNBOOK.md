@@ -73,8 +73,11 @@ run:
   audio_folder:       $SCRATCH/sensi/audio
   output_folder:      $SCRATCH/sensi/output
   analyzer:           sherlock-run
-  hf_token_file:      ~/hf_token.txt
+  hf_token_file:      ~/hf_token.txt          # local Llama; you create this file in step 5
+  # openai_api_key_file: ~/openai_key.txt     # only for gpt-* models on an internet-connected machine
 ```
+`hf_token_file` / `openai_api_key_file` are just **paths** — you create those files
+on Sherlock (step 5), so no secret ever goes into this config. Leave the paths as-is.
 
 ## 3 · Connect, note your paths, make the folders — [Sherlock-login], once
 ```bash
@@ -109,12 +112,22 @@ rsync -avP ./my_transcripts/ \
   <sunetid>@login.sherlock.stanford.edu:<SCRATCH>/sensi/transcripts/
 ```
 
-## 5 · Download model weights — [Sherlock-login], once
-Needs internet + a Llama-3-approved token. Create the token file ✎:
+## 5 · Get your HF token, save it, download the weights — [Sherlock-login], once
+The local Llama model is gated, so you need a HuggingFace token — **made once on the
+HF website, saved once on Sherlock:**
+
+1. On huggingface.co (in a browser): sign in → open `meta-llama/Meta-Llama-3-8B` →
+   accept the license (wait for "access granted") → Settings → Access Tokens →
+   create a **Read** token, and copy it.
+2. On Sherlock, save that token into the file your `config.yaml` points at
+   (`hf_token_file: ~/hf_token.txt`, i.e. your home dir), readable only by you —
+   replace `hf_xxx…` with the token you just copied ✎:
 ```bash
-umask 077; printf 'hf_xxx\n' > ~/hf_token.txt; chmod 600 ~/hf_token.txt
+umask 077; printf 'hf_xxxYOURTOKEN\n' > ~/hf_token.txt; chmod 600 ~/hf_token.txt
 ```
-Download into the cache the job reads:
+3. Download the weights into the cache the job reads. This is the only step that
+   uses the token (for the gated download) — the batch job runs offline and needs
+   no token:
 ```bash
 export HF_HOME=$SCRATCH/sensi/hf_cache; mkdir -p $HF_HOME
 apptainer exec --bind $SCRATCH:$SCRATCH --env HF_HOME=$HF_HOME \
@@ -122,6 +135,12 @@ apptainer exec --bind $SCRATCH:$SCRATCH --env HF_HOME=$HF_HOME \
   $GROUP_HOME/SensiExtractor/sherlock/sensiextractor.sif \
   bash -c 'hf download gpt2 && hf download meta-llama/Meta-Llama-3-8B'
 ```
+
+> **Using an OpenAI (`gpt-*`) model instead of Llama?** Save your OpenAI API key the
+> same way — into `~/openai_key.txt` (the config's `openai_api_key_file`), `chmod
+> 600`. But OpenAI needs internet, so it won't run on Sherlock's offline compute
+> nodes; use it only when running `run_extract.py` on an internet-connected machine.
+> With a `gpt-*` model you can skip the Llama download above.
 
 ## 6 · (Optional) dry-run — [Sherlock-compute]
 Validate the config + plumbing before spending a GPU allocation. Get a node:
