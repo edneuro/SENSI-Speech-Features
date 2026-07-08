@@ -196,7 +196,6 @@ def test_ensure_only_realigns_stale_subset(tmp_path, monkeypatch):
     aligner.ensure_alignments([(a1, "hi one"), (a2, "hi two")], persist)
     # Change only two's transcript.
     staged = []
-    orig = aligner._run_mfa
 
     def spy(corpus_dir, output_dir):
         staged.extend(n[:-4] for n in os.listdir(corpus_dir)

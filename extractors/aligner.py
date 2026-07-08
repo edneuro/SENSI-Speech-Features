@@ -254,6 +254,11 @@ def ensure_alignments(items, persist_dir) -> dict:
     into persist_dir with a sidecar. If nothing is stale, no subprocess runs.
 
     Returns {'cached': [...], 'aligned': [...], 'failed': [...]} of stems.
+
+    Note: a per-stimulus alignment miss is reported in 'failed' (no exception),
+    but a whole-subprocess failure raises from `_run_mfa` and propagates — with
+    the stale stems' artifacts already deleted. Callers that must degrade
+    gracefully should catch it (see main._prealign_batch).
     """
     persist_dir = Path(persist_dir)
     persist_dir.mkdir(parents=True, exist_ok=True)
