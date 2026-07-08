@@ -18,6 +18,10 @@ read -p "Press Enter to continue (Ctrl+C to cancel)..."
 
 echo ""
 echo "[1/3] Creating conda environment in ./env ..."
+# Force CPU builds during the solve. Otherwise conda detects the GPU and pulls
+# the CUDA build of Kaldi (MFA's engine) — ~3 GB of NVIDIA/MAGMA libraries that
+# forced alignment never uses (it is CPU-only). Faking no-GPU picks CPU Kaldi.
+export CONDA_OVERRIDE_CUDA=""
 conda env create --prefix ./env -f environment.yml
 
 echo ""

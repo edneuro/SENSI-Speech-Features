@@ -4,6 +4,11 @@ channels:
   - defaults
 dependencies:
   - python=3.10
+  # MFA's Kaldi engine. setup.bat/setup.sh set CONDA_OVERRIDE_CUDA="" so the
+  # solver picks the CPU Kaldi build — the CUDA build pulls ~3 GB of NVIDIA/MAGMA
+  # libraries that forced alignment never uses (it is CPU-only). If you run
+  # `conda env create -f environment.yml` directly, set CONDA_OVERRIDE_CUDA=""
+  # first, or you will get the bloated CUDA build.
   - montreal-forced-aligner
   - pip
   - pip:
