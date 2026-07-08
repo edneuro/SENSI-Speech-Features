@@ -11,6 +11,16 @@ The flow: **build the container** and **configure the run** on my laptop → **s
 the container + code + a `config.yaml` to Sherlock → **run** the pipeline there,
 inside the container, via `run_extract.py`.
 
+## Two folders on Sherlock (fixed names — used everywhere below)
+| Purpose | Folder | Holds |
+|---|---|---|
+| **Durable** (code + container) | `$GROUP_HOME/SensiExtractor` | the repo, incl. `sherlock/sensi.sif` and `sherlock/config.yaml` |
+| **Working** (data + weights) | `$SCRATCH/sensi` | `transcripts/`, `audio/`, `output/`, `hf_cache/` |
+
+`$GROUP_HOME` is shared with the whole group — if a labmate also uses a folder
+called `SensiExtractor`, put a personal one in front (e.g. `$GROUP_HOME/amilcar/…`)
+and adjust the paths. Step 3 creates both folders.
+
 ## Which terminal runs what
 Each step's heading names the terminal. Don't mix them.
 - **[WSL]** — the Ubuntu terminal on my laptop. Apptainer and rsync/ssh live here.
@@ -19,7 +29,7 @@ Each step's heading names the terminal. Don't mix them.
 - **[Sherlock-compute]** — a node from `sh_dev` (or the batch job). Everything that actually runs the pipeline.
 
 The only 3 things I edit are marked **✎**: the GPU partition, the HF token, and the
-`run:` block of `config.yaml`. Every path below is already mine.
+`run:` block of `config.yaml`.
 
 ---
 
@@ -46,45 +56,45 @@ Export those choices to `sherlock\config.yaml`:
 ```bat
 python sherlock\export_config.py
 ```
-Then open `sherlock\config.yaml` and fill the **`run:`** block ✎ (the GUI can't know
-Sherlock's paths; `$SCRATCH`/`~` are expanded on Sherlock):
+Then open `sherlock\config.yaml` and fill the **`run:`** block ✎ (`$SCRATCH`/`~` are
+expanded on Sherlock, so these point at the working folder from the table):
 ```yaml
 run:
-  transcripts_folder: $SCRATCH/sensi/sample/transcripts
-  audio_folder:       $SCRATCH/sensi/sample/audio
-  output_folder:      $SCRATCH/sensi/sample/out
+  transcripts_folder: $SCRATCH/sensi/transcripts
+  audio_folder:       $SCRATCH/sensi/audio
+  output_folder:      $SCRATCH/sensi/output
   analyzer:           sherlock-run
   hf_token_file:      ~/hf_token.txt
 ```
 
-## 3 · Create the Sherlock folders — [Sherlock-login], once
+## 3 · Create the two Sherlock folders — [Sherlock-login], once
 Must exist *before* the upload writes into them. Connect:
 ```bash
 ssh amilcarm@login.sherlock.stanford.edu
 ```
-Make the folders:
+Make them:
 ```bash
-mkdir -p $GROUP_HOME/amilcar/sensi $SCRATCH/sensi/sample/{transcripts,audio,out}
+mkdir -p $GROUP_HOME/SensiExtractor $SCRATCH/sensi/{transcripts,audio,output,hf_cache}
 ```
 
-## 4 · Upload container + code + data — [WSL]
+## 4 · Upload code, container, data — [WSL]
 `$GROUP_HOME` does NOT expand over rsync, so the literal path is used.
-Container (~5 GB):
+Code first (small; carries `sherlock/config.yaml`; `*.sif` excluded so the container isn't sent here):
 ```bash
 cd /mnt/c/Users/amilcar/Desktop/code/Antigravity/SensiExtractor
-rsync -avP sherlock/sensi.sif \
-  amilcarm@login.sherlock.stanford.edu:/home/groups/brucemc/amilcar/sensi/
-```
-Code (small; carries `sherlock/config.yaml`; the `*.sif` exclude avoids re-sending the container):
-```bash
 rsync -avP --exclude env --exclude hf_cache --exclude mfa_data --exclude .git \
   --exclude '*.sif' --exclude '__pycache__' \
-  ./ amilcarm@login.sherlock.stanford.edu:/home/groups/brucemc/amilcar/sensi/SensiExtractor/
+  ./ amilcarm@login.sherlock.stanford.edu:/home/groups/brucemc/SensiExtractor/
+```
+Container into the repo's `sherlock/` folder (~5 GB):
+```bash
+rsync -avP sherlock/sensi.sif \
+  amilcarm@login.sherlock.stanford.edu:/home/groups/brucemc/SensiExtractor/sherlock/
 ```
 Sample data (paths must match the `run:` block from step 2):
 ```bash
 rsync -avP ./my_transcripts/ \
-  amilcarm@login.sherlock.stanford.edu:/scratch/users/amilcarm/sensi/sample/transcripts/
+  amilcarm@login.sherlock.stanford.edu:/scratch/users/amilcarm/sensi/transcripts/
 ```
 
 ## 5 · Download model weights — [Sherlock-login], once
@@ -97,7 +107,7 @@ Download into the cache the job reads:
 export HF_HOME=$SCRATCH/sensi/hf_cache; mkdir -p $HF_HOME
 apptainer exec --bind $SCRATCH:$SCRATCH --env HF_HOME=$HF_HOME \
   --env HF_TOKEN="$(cat ~/hf_token.txt)" --env HF_HUB_DISABLE_XET=1 \
-  $GROUP_HOME/amilcar/sensi/sensi.sif \
+  $GROUP_HOME/SensiExtractor/sherlock/sensi.sif \
   bash -c 'hf download gpt2 && hf download meta-llama/Meta-Llama-3-8B'
 ```
 
@@ -112,20 +122,20 @@ ulimit -n "$(ulimit -Hn)"
 export HF_HOME=$SCRATCH/sensi/hf_cache
 apptainer exec \
   --bind $SCRATCH:$SCRATCH \
-  --bind $GROUP_HOME/amilcar/sensi/SensiExtractor:$GROUP_HOME/amilcar/sensi/SensiExtractor \
+  --bind $GROUP_HOME/SensiExtractor:$GROUP_HOME/SensiExtractor \
   --env HF_HOME=$HF_HOME --env HF_HUB_OFFLINE=1 --env TRANSFORMERS_OFFLINE=1 \
-  $GROUP_HOME/amilcar/sensi/sensi.sif \
-  python $GROUP_HOME/amilcar/sensi/SensiExtractor/sherlock/run_extract.py
+  $GROUP_HOME/SensiExtractor/sherlock/sensi.sif \
+  python $GROUP_HOME/SensiExtractor/sherlock/run_extract.py
 ```
 
 ## 7 · Submit the GPU job — [Sherlock-login]
-Set the GPU partition once ✎ (the sbatch already points at my paths otherwise):
+Set the GPU partition once ✎ (the sbatch already points at the two folders otherwise):
 ```bash
-nano $GROUP_HOME/amilcar/sensi/SensiExtractor/sherlock/run_container.sbatch
+nano $GROUP_HOME/SensiExtractor/sherlock/run_container.sbatch
 ```
 Submit:
 ```bash
-sbatch $GROUP_HOME/amilcar/sensi/SensiExtractor/sherlock/run_container.sbatch
+sbatch $GROUP_HOME/SensiExtractor/sherlock/run_container.sbatch
 ```
 Check the queue (note the JobID):
 ```bash
@@ -139,7 +149,7 @@ tail -f slurm-<JobID>.out
 ## 8 · Collect results — [WSL]
 ```bash
 rsync -avP \
-  amilcarm@login.sherlock.stanford.edu:/scratch/users/amilcarm/sensi/sample/out/ \
+  amilcarm@login.sherlock.stanford.edu:/scratch/users/amilcarm/sensi/output/ \
   ./sherlock_out/
 ```
 
