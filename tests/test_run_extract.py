@@ -44,3 +44,20 @@ def test_dispatch_runs_word_level_from_output_toggle(tmp_path, monkeypatch):
     run_extract.dispatch(cfg)
     assert calls["word"] == (str(tmp_path / "t"), "tester")
     assert "doc" not in calls
+
+
+def test_main_exits_when_required_folder_missing(tmp_path, monkeypatch, capsys):
+    import pytest
+    import run_extract
+    from utils.config_yaml import prefs_to_config, write_config
+    cfg = prefs_to_config(DEFAULT_PREFS)
+    cfg["run"]["analyzer"] = "me"
+    cfg["run"]["transcripts_folder"] = ""            # required, missing
+    cfg["run"]["output_folder"] = str(tmp_path / "o")
+    p = tmp_path / "config.yaml"
+    write_config(cfg, str(p))
+    monkeypatch.setattr("sys.argv", ["run_extract.py", str(p)])
+    with pytest.raises(SystemExit) as ei:
+        run_extract.main()
+    assert ei.value.code == 1
+    assert "transcripts_folder" in capsys.readouterr().err

@@ -73,9 +73,15 @@ def config_to_prefs(config: dict) -> dict:
         prefs["semantic"].update(sem)
     run = config.get("run") or {}
     shared = prefs["shared"]
-    shared["last_transcripts_folder"] = run.get("transcripts_folder") or ""
-    shared["last_audio_folder"] = run.get("audio_folder") or ""
-    shared["last_output_folder"] = run.get("output_folder") or ""
+
+    def _expand(p):
+        # Expand ~ and $VARS so Sherlock paths like $SCRATCH/... or ~/... resolve
+        # (symmetric with run_extract.load_credentials' handling of token files).
+        return os.path.expanduser(os.path.expandvars(p)) if p else ""
+
+    shared["last_transcripts_folder"] = _expand(run.get("transcripts_folder"))
+    shared["last_audio_folder"] = _expand(run.get("audio_folder"))
+    shared["last_output_folder"] = _expand(run.get("output_folder"))
     shared["analyzer_name"] = run.get("analyzer") or ""
     return prefs
 

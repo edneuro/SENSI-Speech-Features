@@ -88,6 +88,11 @@ def main() -> None:
     if not (run.get("analyzer") or "").strip():
         print("run.analyzer is required (name for this run).", file=sys.stderr)
         sys.exit(1)
+    missing = [k for k in ("transcripts_folder", "output_folder")
+               if not (run.get(k) or "").strip()]
+    if missing:
+        print(f"run section missing required folder(s): {', '.join(missing)}", file=sys.stderr)
+        sys.exit(1)
 
     load_credentials(run)
     dispatch(config)

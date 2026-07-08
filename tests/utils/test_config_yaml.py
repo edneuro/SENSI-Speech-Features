@@ -97,3 +97,22 @@ def test_read_config_empty_file_returns_empty_dict(tmp_path):
     p = tmp_path / "empty.yaml"
     p.write_text("", encoding="utf-8")
     assert read_config(str(p)) == {}
+
+
+def test_config_to_prefs_expands_user_and_env_in_run_folders(monkeypatch):
+    import os
+    monkeypatch.setenv("MYSCRATCH", "/scratch/users/x")
+    cfg = prefs_to_config(DEFAULT_PREFS)
+    cfg["run"]["transcripts_folder"] = "$MYSCRATCH/t"
+    cfg["run"]["audio_folder"] = "$MYSCRATCH/a"
+    cfg["run"]["output_folder"] = "~/out"
+    prefs = config_to_prefs(cfg)
+    assert prefs["shared"]["last_transcripts_folder"] == "/scratch/users/x/t"
+    assert prefs["shared"]["last_audio_folder"] == "/scratch/users/x/a"
+    assert prefs["shared"]["last_output_folder"] == os.path.expanduser("~/out")
+
+
+def test_features_and_output_key_sets_are_disjoint():
+    # config_yaml's flatten (prefs_to_config) and membership routing
+    # (config_to_prefs) assume no key appears in both prefs sections. Guard it.
+    assert set(DEFAULT_PREFS["features"]) & set(DEFAULT_PREFS["output"]) == set()
