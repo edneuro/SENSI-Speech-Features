@@ -159,29 +159,46 @@ apptainer exec \
   python $GROUP_HOME/SensiExtractor/sherlock/run_extract.py
 ```
 
-## 7 · Submit the GPU job — [Sherlock-login]
-In `run_container.sbatch`, set your GPU partition and VRAM once ✎ (it already
-points at the two folders otherwise):
-- `#SBATCH --partition=` → a GPU partition from `sh_part`.
-- **VRAM:** Llama-3-8B in 4-bit needs ~6–8 GB, so **request ≥16 GB** — uncomment/set
-  `#SBATCH -C GPU_MEM:16GB`. Bump to `24GB` for headroom or if you hit the fp16
-  fallback (see `CUDA out of memory` in Gotchas). Most Sherlock GPUs are ≥16 GB, so
-  if you don't pin VRAM you'll usually still land on a big-enough card.
+## 7 · Build & submit the GPU job — [Sherlock-login]
+
+**a. See what you can request.** Which partitions you can submit to, and which VRAM
+sizes actually exist on the cluster:
+```bash
+sh_part
+```
+```bash
+sinfo -o "%P %f" | grep -o "GPU_MEM:[0-9]*GB" | sort -u
+```
+
+**b. Edit two lines in the sbatch** (it already points at the two folders otherwise):
 ```bash
 nano $GROUP_HOME/SensiExtractor/sherlock/run_container.sbatch
 ```
-Submit:
+- `#SBATCH --partition=` → a GPU partition from `sh_part` ✎.
+- Uncomment `#SBATCH -C GPU_MEM:__GB` and set it to a value from the `sinfo` list
+  above that fits your model ✎:
+  - **Llama-3-8B** (default, 4-bit) → `16GB` is plenty (needs ~6–8 GB).
+  - **Llama-3-70B** (4-bit) → `48GB` or `80GB` (and set `settings.llm_model` +
+    download those weights in step 5).
+  - Bigger VRAM = **longer queue**, so don't over-request.
+
+  In nano: to uncomment, delete one `#` from `##SBATCH …`. Save = **Ctrl+O**, Enter;
+  exit = **Ctrl+X**.
+
+**c. Submit:**
 ```bash
 sbatch $GROUP_HOME/SensiExtractor/sherlock/run_container.sbatch
 ```
-Check the queue (note the JobID):
+
+**d. Watch it.** Note the JobID, then follow the log:
 ```bash
 squeue --me
 ```
-Watch the log:
 ```bash
 tail -f slurm-<JobID>.out
 ```
+The top of the log runs `nvidia-smi` — that confirms which GPU you landed on and its
+VRAM, so you can verify you got the size you asked for.
 
 ## 8 · Collect results — [linux]
 Literal `<SCRATCH>` again:
