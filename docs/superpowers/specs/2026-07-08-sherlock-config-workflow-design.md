@@ -33,9 +33,14 @@ Workflow: GUI (local) → `export_config.py` → `config.yaml` → rsync → She
 ## Existing anchors this builds on (verified)
 
 - `utils/preferences.py`: `load_preferences()` resolves the prefs file
-  (`SENSI_PREFS_PATH` override, else default) and returns the nested prefs dict;
-  `DEFAULT_PREFS_V3` / `_FEATURES_DEFAULT` / `_OUTPUT_DEFAULT` define the valid keys
-  and defaults; `schema_version` is present.
+  (`SENSI_PREFS_PATH` override, else default) and returns the nested prefs dict
+  (base = `deepcopy(DEFAULT_PREFS)` overlaid with the saved file). `DEFAULT_PREFS`
+  and `SCHEMA_VERSION` are the **active** aliases (currently v16). The mapping must
+  be **schema-agnostic** — derive valid keys and settings sections from the live
+  `DEFAULT_PREFS` at runtime, never hardcode a specific version's key list (the
+  schema has churned v2→v16). Sections in the active default: `shared`, `features`,
+  `output`, `predictability`, `semantic`, `prosody`, `acoustic_ts`,
+  `phoneme_surprisal`, plus `schema_version`.
 - `gui/planner/emit.py:156-169` `to_namespace(plan, prefs, level)` reads
   `transcripts_folder`/`audio_folder`/`output_folder`/`analyzer` from
   `prefs["shared"]` (`last_transcripts_folder`, `last_audio_folder`,
@@ -89,11 +94,14 @@ Pure functions, no I/O side effects beyond file read/write helpers:
   `DEFAULT_PREFS` copy (so schema_version + any unspecified keys keep defaults);
   map the `run:` folders/analyzer into `prefs["shared"]`
   (`last_transcripts_folder` etc., `analyzer_name`). Each key under the YAML
-  `features:` block is **routed by membership**: keys defined in
-  `_FEATURES_DEFAULT` go to `prefs["features"]`, keys defined in `_OUTPUT_DEFAULT`
-  go to `prefs["output"]` (a key in neither is an error, caught by
-  `validate_config`). `prefs_to_config` performs the inverse — it flattens both
-  prefs sections into the single YAML `features:` block.
+  `features:` block is **routed by membership**: keys present in
+  `DEFAULT_PREFS["features"]` go to `prefs["features"]`, keys present in
+  `DEFAULT_PREFS["output"]` go to `prefs["output"]` (a key in neither is an error,
+  caught by `validate_config`). `prefs_to_config` performs the inverse — it
+  flattens both prefs sections into the single YAML `features:` block. "Settings"
+  sections = every top-level prefs section except `schema_version`, `shared`,
+  `features`, `output`, `semantic` (i.e. predictability/prosody/acoustic_ts/
+  phoneme_surprisal), derived dynamically so new sections flow through.
 - `validate_config(config: dict) -> list[str]` — return human-readable errors for
   unknown feature/output keys (typo protection, checked against DEFAULT_PREFS
   keys), wrong scalar types, and unknown top-level sections. Empty list = valid.
