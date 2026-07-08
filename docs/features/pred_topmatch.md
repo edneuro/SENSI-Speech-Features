@@ -9,6 +9,9 @@ status: implemented
 depth: shallow
 ---
 
+> The OpenAI and gated-Llama backends both need credentials before they run —
+> see **[LLM access & credentials](llm_credentials.md)**.
+
 ## Meaning
 Binary flag (`0` or `1`) indicating whether the LLM's **most likely
 next word** at this position matched the actual word in the

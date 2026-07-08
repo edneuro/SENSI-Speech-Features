@@ -173,6 +173,19 @@ class WordFeaturesSection(QWidget):
         mp_w = QWidget(); mp_w.setLayout(mp)
         pred_card.add_widget(mp_w)
 
+        # Credentials help — text + the same blue ⓘ info-icon used by feature
+        # toggles, opening the shared setup doc (OpenAI key / gated Llama
+        # license + token) in the in-app feature-info dialog.
+        from gui.info_popup import InfoIcon
+        cred_help = QHBoxLayout()
+        cred_help.setContentsMargins(0, 0, 0, 0)
+        cred_help.addWidget(QLabel("How to get an API key / HuggingFace access"))
+        self.credentials_help_icon = InfoIcon("llm_credentials", self)
+        cred_help.addWidget(self.credentials_help_icon)
+        cred_help.addStretch(1)
+        cred_help_w = QWidget(); cred_help_w.setLayout(cred_help)
+        pred_card.add_widget(cred_help_w)
+
         # API key row (only for OpenAI) — non-gated
         self.api_key_row = QWidget()
         ak = QHBoxLayout(self.api_key_row); ak.setContentsMargins(0, 0, 0, 0)

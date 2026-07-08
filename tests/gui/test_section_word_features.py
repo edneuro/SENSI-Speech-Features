@@ -27,6 +27,40 @@ def test_word_section_acoustic_has_four_per_column_toggles(qtbot):
         assert w.toggle(k) is not None, k
 
 
+def test_credentials_help_icon_opens_shared_doc(qtbot, monkeypatch):
+    """The Predictability card exposes the standard blue ⓘ info-icon next to
+    text, targeting the shared LLM-credentials doc; clicking it opens the
+    feature-info dialog on 'llm_credentials'."""
+    from gui.section_word_features import WordFeaturesSection
+    from gui.info_popup import InfoIcon
+    w = WordFeaturesSection()
+    qtbot.addWidget(w)
+    assert isinstance(w.credentials_help_icon, InfoIcon)
+    assert w.credentials_help_icon._toggle_key == "llm_credentials"
+
+    opened = {}
+    import gui.info_popup as ip
+
+    class _FakeDialog:
+        def __init__(self, key, parent=None):
+            opened["key"] = key
+        def exec(self):
+            opened["exec"] = True
+
+    monkeypatch.setattr(ip, "FeatureInfoDialog", _FakeDialog)
+    w.credentials_help_icon.click()
+    assert opened == {"key": "llm_credentials", "exec": True}
+
+
+def test_llm_credentials_doc_exists_and_is_loadable():
+    """The shared credentials doc the button targets must resolve as a real
+    feature-doc file (key == filename), else the button opens a 'not found'."""
+    from gui.feature_docs import load_feature_doc
+    doc = load_feature_doc("llm_credentials")
+    assert doc is not None
+    assert "OPENAI_API_KEY" in doc.body and "HF_TOKEN" in doc.body
+
+
 def test_word_section_has_configure_categories_button(qtbot):
     from gui.section_word_features import WordFeaturesSection
     w = WordFeaturesSection()
