@@ -26,11 +26,11 @@ ulimit -n "$(ulimit -Hn)" 2>/dev/null || true
 # ------------------------- CONFIG (edit these) -------------------------
 # Durable base ($OAK if present, else $GROUP_HOME).
 STORAGE_BASE="${STORAGE_BASE:-${OAK:-$GROUP_HOME}}"
-# The built container (one file). Copy it here with rsync after building in WSL.
-SIF="${SIF:-$GROUP_HOME/sensi/sensi.sif}"
-# App code — bind-mounted, NOT baked into the .sif, so you can `git pull` and
-# re-run without rebuilding the container.
-REPO="${REPO:-$GROUP_HOME/code/SensiExtractor}"
+# The built container (one file), rsync'd over after building in WSL.
+SIF="${SIF:-$GROUP_HOME/amilcar/sensi/sensi.sif}"
+# App code — bind-mounted, NOT baked into the .sif, so a `git pull`/re-rsync
+# updates the code (and config.yaml) without rebuilding the container.
+REPO="${REPO:-$GROUP_HOME/amilcar/sensi/SensiExtractor}"
 # HF weights on personal $SCRATCH — MUST match download_models.sh's HF_HOME.
 export HF_HOME="${HF_HOME:-${SCRATCH:-$STORAGE_BASE}/sensi/hf_cache}"
 
