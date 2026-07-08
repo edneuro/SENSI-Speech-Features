@@ -9,8 +9,8 @@ status: implemented
 depth: deep
 ---
 
-> Local Llama backends need one-time token/license setup — see
-> **[pred_cloze.md → Setting up the local Llama backend](pred_cloze.md#setting-up-the-local-llama-backend-local-runs)**.
+> The OpenAI and gated-Llama backends both need credentials before they run —
+> see **[LLM access & credentials](llm_credentials.md)**.
 
 ## Meaning
 Same metric as [`Surprisal`](pred_surprisal_gpt2.md) — negative log₂
@@ -48,10 +48,14 @@ the same file.
    available VRAM).
 2. Scores the transcript:
    - Local backend (`_HuggingFaceBackend`): autoregressive LM forward
-     pass; 4-bit quantization via `BitsAndBytesConfig` when supported,
-     fp16 fallback otherwise. **Single forward pass when the tokenised
-     transcript fits the model's context window; chunked sliding
-     window otherwise** — see *Long-text handling* below.
+     pass. Device placement cascades **4-bit GPU → fp16 GPU → CPU**
+     (`_load_tiers`): 4-bit via `BitsAndBytesConfig` when bitsandbytes
+     works, fp16 on the GPU when it doesn't, CPU only when no CUDA GPU
+     is present — and it logs a warning if a GPU exists but both GPU
+     loads failed (so a silent CPU landing is visible). **Single
+     forward pass when the tokenised transcript fits the model's
+     context window; chunked sliding window otherwise** — see
+     *Long-text handling* below.
    - OpenAI backend (`_OpenAIBackend`): calls `/v1/completions` with
      `echo=True, max_tokens=0, logprobs=5` to score the prompt itself.
      Tokenises locally with `tiktoken` and **raises** `ValueError`
@@ -80,7 +84,12 @@ below applies to all three columns simultaneously.
   paste it?). Local Llama is the free / private fallback.
 - *4-bit quantization via bitsandbytes on the local backend* —
   Llama-3-8B fits in ~6 GB VRAM at 4-bit (vs ~16 GB at fp16), so most
-  researcher-grade GPUs can run it. fp16/CPU is a graceful fallback.
+  researcher-grade GPUs can run it. When bitsandbytes is missing/broken
+  (common on Windows) the backend still uses the GPU in fp16 rather than
+  dropping to CPU; CPU is the last resort and only when no CUDA GPU is
+  present. ⚠️ The fp16-GPU tier exists specifically because the older
+  code fell straight from "4-bit failed" to a CPU load, leaving the GPU
+  idle on any machine without a working bitsandbytes build.
 
 ### Long-text handling
 

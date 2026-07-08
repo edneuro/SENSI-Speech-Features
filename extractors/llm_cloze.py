@@ -16,12 +16,15 @@ Override with `--llm-model <id>`. The backend interface is pluggable so
 tests can inject mock backends (see _FakeBackend in the unit tests).
 """
 
+import logging
 import math
 import os
 from typing import Protocol
 
 import numpy as np
 import pandas as pd
+
+logger = logging.getLogger(__name__)
 
 EXPECTED_COLUMNS = ['LLM_Cloze', 'LLM_Surprisal', 'LLM_TopMatch']
 
@@ -177,6 +180,19 @@ def _cached_backend(model_id: str) -> _Backend:
     return backend
 
 
+def _load_tiers(cuda: bool) -> list[str]:
+    """Ordered model-load strategies, most-VRAM-efficient first.
+
+    The GPU tiers ('4-bit GPU', 'fp16 GPU') are only attempted when CUDA is
+    actually present; on a CPU-only machine we go straight to 'CPU' rather
+    than fail a bitsandbytes/CUDA load first. The 4-bit tier depends on a
+    working bitsandbytes build (frequently broken on Windows), so 'fp16 GPU'
+    exists specifically so a GPU still gets used when quantization is
+    unavailable — otherwise we'd silently drop to CPU with the GPU idle.
+    """
+    return ['4-bit GPU', 'fp16 GPU', 'CPU'] if cuda else ['CPU']
+
+
 def _model_load_hint(model_id: str, exc: Exception) -> str:
     return (
         f"Could not load local LLM {model_id!r}: {type(exc).__name__}: {exc}\n"
@@ -196,23 +212,52 @@ class _HuggingFaceBackend:
 
         self._torch = torch
         self._model_id = model_id
+        cuda = bool(torch.cuda.is_available())
+
+        def _load(tier: str):
+            if tier == '4-bit GPU':
+                quant = BitsAndBytesConfig(
+                    load_in_4bit=True, bnb_4bit_compute_dtype=torch.float16)
+                return AutoModelForCausalLM.from_pretrained(
+                    model_id, quantization_config=quant, device_map='auto')
+            if tier == 'fp16 GPU':
+                return AutoModelForCausalLM.from_pretrained(
+                    model_id, torch_dtype=torch.float16, device_map='auto')
+            return AutoModelForCausalLM.from_pretrained(model_id)  # CPU, default dtype
+
         try:
+            # A gated / missing / offline repo fails on the tokenizer first, so
+            # the actionable hint below fires before we try any device tier.
             self._tokenizer = AutoTokenizer.from_pretrained(model_id)
-            try:
-                quant = BitsAndBytesConfig(load_in_4bit=True, bnb_4bit_compute_dtype=torch.float16)
-                self._model = AutoModelForCausalLM.from_pretrained(
-                    model_id, quantization_config=quant, device_map='auto',
-                )
-            except Exception:
-                # bitsandbytes unavailable/unsupported on this platform — retry
-                # without 4-bit quantization (fp16/cpu). If the *repo* is the
-                # problem (gated / not found / offline), this retry raises too and
-                # is caught by the outer handler below with actionable guidance.
-                self._model = AutoModelForCausalLM.from_pretrained(model_id)
+            last_exc: Exception | None = None
+            self._load_tier = None
+            for tier in _load_tiers(cuda):
+                try:
+                    self._model = _load(tier)
+                    self._load_tier = tier
+                    break
+                except Exception as exc:   # noqa: BLE001 — many unrelated load failures
+                    last_exc = exc
+                    logger.info(
+                        "Local LLM load tier %r failed for %s: %s", tier, model_id, exc)
+            if self._load_tier is None:
+                raise last_exc if last_exc is not None else RuntimeError("no load tier")
         except Exception as exc:
             raise RuntimeError(_model_load_hint(model_id, exc)) from exc
+
         self._model.eval()
         self._context_limit = getattr(self._model.config, 'max_position_embeddings', None)
+        try:
+            device = next(self._model.parameters()).device
+        except Exception:
+            device = 'unknown'
+        logger.info(
+            "Loaded local LLM %s via %s (device=%s)", model_id, self._load_tier, device)
+        if cuda and self._load_tier == 'CPU':
+            logger.warning(
+                "GPU detected but %s loaded on CPU — the 4-bit and fp16 GPU loads "
+                "both failed (check bitsandbytes / accelerate). Inference will be "
+                "much slower; fix the GPU deps or pick a smaller model.", model_id)
 
     def score(self, text: str, tokens: list[str]) -> list[dict]:
         torch = self._torch

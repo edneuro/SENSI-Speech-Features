@@ -196,25 +196,102 @@ def test_backend_raises_actionable_error_on_gated(monkeypatch):
     assert 'meta-llama/Meta-Llama-3-8B' in msg
 
 
-def test_backend_falls_back_to_fp16_on_bnb_error(monkeypatch):
-    import extractors.llm_cloze as m
-    calls = []
+# ---- device-tier cascade for the local HuggingFace backend ----
 
-    class DummyModel:
-        config = types.SimpleNamespace(max_position_embeddings=1024)
-        def eval(self): pass
 
-    def fake_model(model_id, **kwargs):
-        calls.append(kwargs)
-        if 'quantization_config' in kwargs:
-            raise RuntimeError("bitsandbytes not available on this platform")
-        return DummyModel()
+class _DummyParam:
+    def __init__(self, device):
+        self.device = device
 
-    monkeypatch.setattr('transformers.AutoTokenizer.from_pretrained', lambda *a, **k: object())
+
+class _DummyModel:
+    def __init__(self, device='cpu'):
+        self.config = types.SimpleNamespace(max_position_embeddings=1024)
+        self._device = device
+
+    def eval(self):
+        return self
+
+    def parameters(self):
+        yield _DummyParam(self._device)
+
+
+def _patch_transformers(monkeypatch, fake_model):
+    monkeypatch.setattr('transformers.AutoTokenizer.from_pretrained',
+                        lambda *a, **k: object())
     monkeypatch.setattr('transformers.AutoModelForCausalLM.from_pretrained', fake_model)
     monkeypatch.setattr('transformers.BitsAndBytesConfig', lambda **k: object())
 
-    backend = m._HuggingFaceBackend('meta-llama/Meta-Llama-3-8B')
-    assert any('quantization_config' in c for c in calls)      # tried quantized
-    assert any('quantization_config' not in c for c in calls)  # fell back to fp16
-    assert backend._context_limit == 1024
+
+def test_load_tiers_prefers_gpu_only_when_cuda():
+    from extractors.llm_cloze import _load_tiers
+    assert _load_tiers(True) == ['4-bit GPU', 'fp16 GPU', 'CPU']
+    assert _load_tiers(False) == ['CPU']
+
+
+def test_backend_loads_4bit_on_gpu(monkeypatch):
+    import extractors.llm_cloze as m
+    monkeypatch.setattr('torch.cuda.is_available', lambda: True)
+    _patch_transformers(monkeypatch, lambda model_id, **kw: _DummyModel('cuda:0'))
+    b = m._HuggingFaceBackend('meta-llama/Meta-Llama-3-8B')
+    assert b._load_tier == '4-bit GPU'
+
+
+def test_backend_falls_back_to_fp16_gpu_on_bnb_error(monkeypatch):
+    """bitsandbytes broken (typical on Windows) but a GPU is present → fp16 GPU,
+    NOT a silent drop to CPU."""
+    import extractors.llm_cloze as m
+    monkeypatch.setattr('torch.cuda.is_available', lambda: True)
+    calls = []
+
+    def fake_model(model_id, **kw):
+        calls.append(kw)
+        if 'quantization_config' in kw:
+            raise RuntimeError("bitsandbytes not available on this platform")
+        return _DummyModel('cuda:0')
+
+    _patch_transformers(monkeypatch, fake_model)
+    b = m._HuggingFaceBackend('meta-llama/Meta-Llama-3-8B')
+    assert b._load_tier == 'fp16 GPU'
+    assert any('quantization_config' in c for c in calls)          # tried 4-bit
+    assert any(c.get('torch_dtype') is not None for c in calls)     # then fp16
+    assert b._context_limit == 1024
+
+
+def test_backend_falls_back_to_cpu_and_warns(monkeypatch, caplog):
+    """Both GPU loads fail while CUDA is present → CPU, with a loud warning so
+    the CPU landing is never silent."""
+    import logging
+    import extractors.llm_cloze as m
+    monkeypatch.setattr('torch.cuda.is_available', lambda: True)
+
+    def fake_model(model_id, **kw):
+        if kw.get('device_map') == 'auto':      # both GPU tiers use device_map
+            raise RuntimeError("gpu load failed")
+        return _DummyModel('cpu')
+
+    _patch_transformers(monkeypatch, fake_model)
+    with caplog.at_level(logging.WARNING):
+        b = m._HuggingFaceBackend('meta-llama/Meta-Llama-3-8B')
+    assert b._load_tier == 'CPU'
+    assert 'CPU' in caplog.text and 'slower' in caplog.text
+
+
+def test_backend_cpu_only_when_no_cuda(monkeypatch, caplog):
+    """No GPU at all → only the CPU tier is attempted (no bnb/CUDA load), and
+    no false 'GPU idle' warning."""
+    import logging
+    import extractors.llm_cloze as m
+    monkeypatch.setattr('torch.cuda.is_available', lambda: False)
+    calls = []
+
+    def fake_model(model_id, **kw):
+        calls.append(kw)
+        return _DummyModel('cpu')
+
+    _patch_transformers(monkeypatch, fake_model)
+    with caplog.at_level(logging.WARNING):
+        b = m._HuggingFaceBackend('meta-llama/Llama-3.2-3B')
+    assert b._load_tier == 'CPU'
+    assert calls == [{}]                                    # no GPU load attempted
+    assert not any(r.levelno >= logging.WARNING for r in caplog.records)
