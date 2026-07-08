@@ -63,8 +63,10 @@ scipy>=1.11
 # Readability
 textstat>=0.7
 
-# GUI (PySide6)
-PySide6>=6.6
+# GUI (PySide6). Upper-bounded: 6.11.x fails to load its Qt DLLs in this conda
+# toolchain on Windows ("DLL load failed importing QtCore: procedure not found").
+# 6.7.x is verified working; keep to a mature line.
+PySide6>=6.7,<6.8
 
 # Token counting for OpenAI cost estimate
 tiktoken>=0.6
