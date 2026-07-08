@@ -76,3 +76,54 @@ def config_to_prefs(config: dict) -> dict:
     shared["last_output_folder"] = run.get("output_folder") or ""
     shared["analyzer_name"] = run.get("analyzer") or ""
     return prefs
+
+
+_KNOWN_TOP = frozenset({"run", "features", "settings", "semantic_categories"})
+
+
+def _type_ok(default_val, val) -> bool:
+    if isinstance(default_val, bool):
+        return isinstance(val, bool)
+    if isinstance(default_val, (int, float)):
+        return isinstance(val, (int, float)) and not isinstance(val, bool)
+    if isinstance(default_val, str):
+        return isinstance(val, str)
+    if isinstance(default_val, list):
+        return isinstance(val, list)
+    return True
+
+
+def validate_config(config: dict) -> list[str]:
+    """Return human-readable errors for a config; empty list means valid."""
+    if not isinstance(config, dict):
+        return ["config root must be a mapping (a YAML object)"]
+    errors: list[str] = []
+    for key in config:
+        if key not in _KNOWN_TOP:
+            errors.append(f"unknown top-level section: {key!r} (expected {sorted(_KNOWN_TOP)})")
+    valid_toggles = set(DEFAULT_PREFS["features"]) | set(DEFAULT_PREFS["output"])
+    for key, val in (config.get("features") or {}).items():
+        if key not in valid_toggles:
+            errors.append(f"unknown feature/output toggle: {key!r}")
+        elif not isinstance(val, bool):
+            errors.append(f"toggle {key!r} must be true/false, got {type(val).__name__}")
+    settings_sections = set(_settings_sections())
+    for section, values in (config.get("settings") or {}).items():
+        if section not in settings_sections:
+            errors.append(f"unknown settings section: {section!r} (expected {sorted(settings_sections)})")
+            continue
+        default_section = DEFAULT_PREFS[section]
+        if isinstance(default_section, dict) and isinstance(values, dict):
+            for k, v in values.items():
+                if k not in default_section:
+                    errors.append(f"unknown setting: {section}.{k}")
+                elif not _type_ok(default_section[k], v):
+                    errors.append(
+                        f"setting {section}.{k} must be {type(default_section[k]).__name__}, "
+                        f"got {type(v).__name__}")
+    sem = config.get("semantic_categories")
+    if isinstance(sem, dict):
+        for k in sem:
+            if k not in DEFAULT_PREFS["semantic"]:
+                errors.append(f"unknown semantic_categories key: {k!r}")
+    return errors

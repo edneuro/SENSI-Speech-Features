@@ -47,3 +47,35 @@ def test_config_to_prefs_routes_toggles_and_run_folders():
     assert prefs["shared"]["last_audio_folder"] == "/scratch/a"
     assert prefs["shared"]["last_output_folder"] == "/scratch/o"
     assert prefs["shared"]["analyzer_name"] == "me"
+
+
+from utils.config_yaml import validate_config
+
+
+def test_validate_config_accepts_exported_default():
+    cfg = prefs_to_config(DEFAULT_PREFS)
+    assert validate_config(cfg) == []
+
+
+def test_validate_config_flags_unknown_toggle():
+    cfg = prefs_to_config(DEFAULT_PREFS)
+    cfg["features"]["not_a_real_toggle"] = True
+    errs = validate_config(cfg)
+    assert any("not_a_real_toggle" in e for e in errs)
+
+
+def test_validate_config_flags_bad_toggle_type():
+    cfg = prefs_to_config(DEFAULT_PREFS)
+    key = next(iter(DEFAULT_PREFS["features"]))
+    cfg["features"][key] = "yes"  # not a bool
+    errs = validate_config(cfg)
+    assert any(key in e and "true/false" in e for e in errs)
+
+
+def test_validate_config_flags_unknown_section_and_setting():
+    cfg = prefs_to_config(DEFAULT_PREFS)
+    cfg["bogus_section"] = {}
+    cfg["settings"].setdefault("prosody", {})["not_a_setting"] = 1
+    errs = validate_config(cfg)
+    assert any("bogus_section" in e for e in errs)
+    assert any("not_a_setting" in e for e in errs)
