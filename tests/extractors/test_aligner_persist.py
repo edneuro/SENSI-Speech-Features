@@ -127,3 +127,84 @@ def test_run_if_missing_true_falls_back_to_mfa(tmp_path, monkeypatch):
         str(tmp_path / "stim.wav"), "hello",
         persist_dir=persist, run_if_missing=True)
     assert list(w["Onset"]) == [0.0]
+
+
+def _install_fake_mfa(monkeypatch, aligned_stems=None):
+    """Replace _run_mfa with one that writes a TextGrid per staged .lab.
+
+    aligned_stems=None => align everything staged; otherwise only those stems
+    get a TextGrid (simulating per-stimulus alignment failure).
+    """
+    runs = {"count": 0}
+
+    def fake(corpus_dir, output_dir):
+        runs["count"] += 1
+        for name in os.listdir(corpus_dir):
+            if not name.endswith(".lab"):
+                continue
+            stem = name[:-4]
+            if aligned_stems is not None and stem not in aligned_stems:
+                continue
+            with open(os.path.join(output_dir, f"{stem}.TextGrid"), "w") as f:
+                f.write(f"tg for {stem}")
+
+    monkeypatch.setattr(aligner, "_run_mfa", fake)
+    return runs
+
+
+def test_ensure_aligns_all_missing_in_one_run(tmp_path, monkeypatch):
+    persist = tmp_path / "align"
+    a1 = _make_audio(tmp_path, "one.wav", b"aaaa")
+    a2 = _make_audio(tmp_path, "two.wav", b"bbbb")
+    runs = _install_fake_mfa(monkeypatch)
+    res = aligner.ensure_alignments([(a1, "hi one"), (a2, "hi two")], persist)
+    assert runs["count"] == 1, "one MFA invocation for the whole batch"
+    assert set(res["aligned"]) == {"one", "two"}
+    assert (persist / "one.TextGrid").exists()
+    assert (persist / "two.json").exists()
+
+
+def test_ensure_skips_mfa_when_all_fresh(tmp_path, monkeypatch):
+    persist = tmp_path / "align"
+    a1 = _make_audio(tmp_path, "one.wav", b"aaaa")
+    _install_fake_mfa(monkeypatch)  # first call populates disk
+    aligner.ensure_alignments([(a1, "hi one")], persist)
+    runs2 = _install_fake_mfa(monkeypatch)  # fresh counter
+    res = aligner.ensure_alignments([(a1, "hi one")], persist)
+    assert runs2["count"] == 0, "no MFA when everything is fresh"
+    assert res["cached"] == ["one"] and res["aligned"] == []
+
+
+def test_ensure_deletes_stale_before_realign(tmp_path, monkeypatch):
+    persist = tmp_path / "align"
+    a1 = _make_audio(tmp_path, "one.wav", b"aaaa")
+    _install_fake_mfa(monkeypatch)
+    aligner.ensure_alignments([(a1, "old transcript")], persist)
+    # New transcript => stale. MFA now "fails" for this stem (produces nothing).
+    _install_fake_mfa(monkeypatch, aligned_stems=set())
+    res = aligner.ensure_alignments([(a1, "new transcript")], persist)
+    assert res["failed"] == ["one"]
+    assert not (persist / "one.TextGrid").exists(), \
+        "stale TextGrid must be removed, not left for reuse"
+
+
+def test_ensure_only_realigns_stale_subset(tmp_path, monkeypatch):
+    persist = tmp_path / "align"
+    a1 = _make_audio(tmp_path, "one.wav", b"aaaa")
+    a2 = _make_audio(tmp_path, "two.wav", b"bbbb")
+    _install_fake_mfa(monkeypatch)
+    aligner.ensure_alignments([(a1, "hi one"), (a2, "hi two")], persist)
+    # Change only two's transcript.
+    staged = []
+    orig = aligner._run_mfa
+
+    def spy(corpus_dir, output_dir):
+        staged.extend(n[:-4] for n in os.listdir(corpus_dir)
+                      if n.endswith(".lab"))
+        for s in staged:
+            with open(os.path.join(output_dir, f"{s}.TextGrid"), "w") as f:
+                f.write("tg")
+    monkeypatch.setattr(aligner, "_run_mfa", spy)
+    res = aligner.ensure_alignments([(a1, "hi one"), (a2, "CHANGED")], persist)
+    assert staged == ["two"], "only the stale stimulus is re-aligned"
+    assert res["cached"] == ["one"] and res["aligned"] == ["two"]

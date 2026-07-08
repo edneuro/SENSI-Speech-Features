@@ -244,6 +244,75 @@ def _parse_textgrid(tg_path: str) -> tuple[pd.DataFrame, pd.DataFrame]:
     return word_df, phone_df
 
 
+def ensure_alignments(items, persist_dir) -> dict:
+    """Ensure a fresh <stem>.TextGrid exists under persist_dir for each item.
+
+    items: iterable of (audio_path, transcript_text). The stem is derived from
+    the audio basename. Fresh stimuli (matching sidecar) are left untouched;
+    stale/missing ones have their old artifacts deleted, then the whole stale
+    set is aligned in a SINGLE `mfa align` invocation and each result is moved
+    into persist_dir with a sidecar. If nothing is stale, no subprocess runs.
+
+    Returns {'cached': [...], 'aligned': [...], 'failed': [...]} of stems.
+    """
+    persist_dir = Path(persist_dir)
+    persist_dir.mkdir(parents=True, exist_ok=True)
+
+    cached: list[str] = []
+    # Dedup by stem (unique stimulus ids expected); last transcript wins.
+    stale_by_stem: dict[str, tuple[str, str]] = {}
+    for audio_path, transcript_text in items:
+        stem = _stem(audio_path)
+        if _is_fresh(persist_dir, stem, audio_path, transcript_text):
+            cached.append(stem)
+        else:
+            if stem in stale_by_stem:
+                print(f"[mfa] WARNING: duplicate stem {stem!r} in batch; "
+                      "last transcript wins")
+            stale_by_stem[stem] = (audio_path, transcript_text)
+
+    if not stale_by_stem:
+        print(f"[mfa] {len(cached)} stimuli: all cached, 0 aligned")
+        return {'cached': cached, 'aligned': [], 'failed': []}
+
+    # Delete stale artifacts first so a failed realign can't leave a stale file
+    # for run() to pick up.
+    for stem in stale_by_stem:
+        (persist_dir / f'{stem}.TextGrid').unlink(missing_ok=True)
+        (persist_dir / f'{stem}.json').unlink(missing_ok=True)
+
+    aligned: list[str] = []
+    failed: list[str] = []
+    with tempfile.TemporaryDirectory() as tmpdir:
+        corpus_dir = os.path.join(tmpdir, 'corpus')
+        output_dir = os.path.join(tmpdir, 'output')
+        os.makedirs(corpus_dir)
+        os.makedirs(output_dir)
+        for stem, (audio_path, transcript_text) in stale_by_stem.items():
+            shutil.copy(audio_path, os.path.join(corpus_dir, f'{stem}.wav'))
+            with open(os.path.join(corpus_dir, f'{stem}.lab'), 'w',
+                      encoding='utf-8') as f:
+                f.write(prepare_for_aligner(transcript_text))
+
+        _run_mfa(corpus_dir, output_dir)   # single invocation for the batch
+
+        for stem, (audio_path, transcript_text) in stale_by_stem.items():
+            produced = os.path.join(output_dir, f'{stem}.TextGrid')
+            if os.path.exists(produced):
+                shutil.move(produced, str(persist_dir / f'{stem}.TextGrid'))
+                _write_sidecar(persist_dir, stem, audio_path, transcript_text)
+                aligned.append(stem)
+            else:
+                failed.append(stem)
+
+    msg = (f"[mfa] {len(cached) + len(stale_by_stem)} stimuli: "
+           f"{len(cached)} cached, {len(aligned)} aligned in 1 run")
+    if failed:
+        msg += f", {len(failed)} failed ({', '.join(failed)})"
+    print(msg)
+    return {'cached': cached, 'aligned': aligned, 'failed': failed}
+
+
 def align(audio_path: str, transcript: str) -> pd.DataFrame:
     """Run MFA forced alignment on one audio+transcript pair.
 
