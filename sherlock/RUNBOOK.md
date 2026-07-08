@@ -184,6 +184,18 @@ sbatch --partition=gpu -C GPU_MEM:16GB \
 (Drop `--partition=gpu` if `gpu` is already your default; swap it for your partition
 otherwise. Change `16GB` to any value from the `sinfo` list.)
 
+> **⚠️ Paths.** The sbatch assumes the folder layout from **step 3**
+> (`$GROUP_HOME/SensiExtractor` for code+container, `$SCRATCH/sensi/hf_cache` for
+> weights). If you followed step 3, it just works. **If you used different folders,**
+> tell the sbatch where they are — add them to the same `--export` flag:
+> ```bash
+> sbatch --partition=gpu -C GPU_MEM:16GB \
+>   --export=ALL,REPO=/your/path/SensiExtractor,HF_HOME=/your/scratch/hf_cache \
+>   /your/path/SensiExtractor/sherlock/run_container.sbatch
+> ```
+> If a path is wrong the job exits immediately with `ERROR: … not found at <path>`
+> and the override hint — so it fails clearly, never silently.
+
 **c. Watch it.** Note the JobID, then follow the log:
 ```bash
 squeue --me

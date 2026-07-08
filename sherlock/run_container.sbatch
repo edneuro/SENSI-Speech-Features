@@ -25,7 +25,12 @@ set -euo pipefail
 # on a compute node). Harmless if already high.
 ulimit -n "$(ulimit -Hn)" 2>/dev/null || true
 
-# ------------------------- CONFIG (edit these) -------------------------
+# ------------------------- CONFIG -------------------------------------
+# These default to the folder layout in RUNBOOK.md step 3. If you put the repo
+# or weights somewhere else, DON'T edit this file — override at submit time, e.g.
+#   sbatch --export=ALL,REPO=/my/path/SensiExtractor,HF_HOME=/my/scratch/hf_cache \
+#          -C GPU_MEM:16GB sherlock/run_container.sbatch
+# (editing here works too, but a re-rsync of the repo would overwrite it).
 # Durable base ($OAK if present, else $GROUP_HOME).
 STORAGE_BASE="${STORAGE_BASE:-${OAK:-$GROUP_HOME}}"
 # App code — bind-mounted, NOT baked into the .sif, so a re-rsync updates the
@@ -45,9 +50,13 @@ CONFIG="${CONFIG:-$REPO/sherlock/config.yaml}"
 echo "[job] node=$(hostname)  gpu=${CUDA_VISIBLE_DEVICES:-none}  jobid=${SLURM_JOB_ID:-?}"
 nvidia-smi || echo "[job] WARNING: nvidia-smi failed — is this a GPU node?"
 
-[ -f "$SIF" ]    || { echo "[job] ERROR: container not found at $SIF (build it in WSL, rsync it over)"; exit 1; }
-[ -d "$REPO" ]   || { echo "[job] ERROR: repo not found at $REPO"; exit 1; }
-[ -f "$CONFIG" ] || { echo "[job] ERROR: config not found at $CONFIG (run export_config.py, rsync it over)"; exit 1; }
+# Fail fast with the exact wrong path + how to point it right (override REPO/SIF/
+# HF_HOME/CONFIG via `sbatch --export=ALL,VAR=...`; see the CONFIG note above).
+_hint="If this path is wrong, pass the right one, e.g. sbatch --export=ALL,REPO=/your/path ..."
+[ -f "$SIF" ]    || { echo "[job] ERROR: container not found at $SIF"; echo "  $_hint"; exit 1; }
+[ -d "$REPO" ]   || { echo "[job] ERROR: repo not found at $REPO"; echo "  $_hint"; exit 1; }
+[ -f "$CONFIG" ] || { echo "[job] ERROR: config not found at $CONFIG (run export_config.py + rsync it over)"; echo "  $_hint"; exit 1; }
+[ -d "$HF_HOME" ] || echo "[job] WARNING: HF_HOME $HF_HOME not found — weights may be missing (see step 5). $_hint"
 
 # Bind host paths INTO the container. Everything the job touches at run time —
 # code, weights, data — lives outside the .sif and is mounted here. MFA models
