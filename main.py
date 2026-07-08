@@ -400,16 +400,27 @@ def run(args) -> pd.DataFrame:
 
     args._phones_df = None  # reset each run; populated below when alignment runs
     if not args.no_align and args.audio:
-        from extractors.aligner import align_with_phones as mfa_align
+        from extractors.aligner import (
+            align_with_phones as mfa_align, alignment_dir,
+        )
         # Reuse a per-document alignment across passes (word + doc batches in
         # one GUI run share `_align_cache`), so MFA runs at most once per doc.
         _align_cache = getattr(args, '_align_cache', None)
+        # In batch mode the pre-pass (run_*_level_batch) has already aligned
+        # every stimulus to <output_folder>/Montreal Forced Alignment/, so run()
+        # reads TextGrids from disk and must NOT spawn MFA (run_if_missing=False).
+        # CLI single-run has no output_folder: persist_dir=None, MFA runs once.
+        persist_dir = (alignment_dir(args.output_folder)
+                       if getattr(args, 'output_folder', None) else None)
+        run_if_missing = not getattr(args, '_batch_prealigned', False)
         if _align_cache is not None and (
                 os.path.abspath(args.audio), text) in _align_cache:
             print('[mfa] Reusing cached alignment…')
         else:
-            print('[mfa] Running MFA alignment…')
-        align_df, phones_df = mfa_align(args.audio, text, cache=_align_cache)
+            print('[mfa] Loading alignment…')
+        align_df, phones_df = mfa_align(
+            args.audio, text, cache=_align_cache,
+            persist_dir=persist_dir, run_if_missing=run_if_missing)
         args._phones_df = phones_df
         if df is not None:
             df = _merge_alignment(df, align_df)
@@ -730,6 +741,40 @@ def _sentence_embedding_vars(emb: np.ndarray, df: pd.DataFrame,
     }
 
 
+def _prealign_batch(run_args, work_items, output_dir) -> None:
+    """Align every audio-bearing stimulus in the batch once, up front.
+
+    Populates <output_dir>/Montreal Forced Alignment/ so the per-document run()
+    calls read TextGrids from disk instead of each spawning MFA. On success sets
+    run_args._batch_prealigned so run() reads disk only (a disk miss then means
+    that stimulus failed to align). If the batch MFA invocation fails outright,
+    fall back to per-document alignment: leave _batch_prealigned unset so run()
+    uses run_if_missing=True and the existing per-pair error handling degrades
+    gracefully instead of aborting the whole batch.
+
+    No-op when alignment is disabled or no pair has audio.
+    """
+    if getattr(run_args, 'no_align', False):
+        return
+    from extractors.aligner import alignment_dir, ensure_alignments
+    items = []
+    for pair in work_items:
+        if not pair.audio_path:
+            continue
+        with open(pair.transcript_path, 'r', encoding='utf-8') as f:
+            transcript_text = f.read()
+        items.append((str(pair.audio_path), transcript_text))
+    if not items:
+        return
+    try:
+        ensure_alignments(items, alignment_dir(output_dir))
+    except Exception as exc:
+        print(f'[mfa] batch pre-alignment failed ({exc}); falling back to '
+              'per-document alignment', file=sys.stderr)
+        return
+    run_args._batch_prealigned = True
+
+
 def run_word_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None:
     """Process all matched (transcript, audio) pairs in the configured folders."""
     transcripts_dir = Path(args.transcripts_folder)
@@ -777,6 +822,7 @@ def run_word_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None
         logger.record_unmatched_audio(unmatched)
 
     work_items = _batch_work_items(pairing)
+    _prealign_batch(args, work_items, output_dir)
     for i, pair in enumerate(work_items):
         if should_cancel and should_cancel():
             logger.add_warning('Run cancelled by user before processing complete')
@@ -1089,6 +1135,7 @@ def run_doc_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None:
         extract_args.no_prosody = False
 
     work_items = _batch_work_items(pairing)
+    _prealign_batch(extract_args, work_items, output_dir)
     for i, pair in enumerate(work_items):
         if should_cancel and should_cancel():
             logger.add_warning('Run cancelled by user before processing complete')
