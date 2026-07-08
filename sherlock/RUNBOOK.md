@@ -1,15 +1,16 @@
 # Sherlock run — quick reference
 
 ## What this is and why
-Sherlock (the HPC cluster) can't run our Windows GUI or the local `./env` conda
-environment. So we package the whole environment — Python + MFA/Kaldi + models —
-into a single Linux **container image**, `sensi.sif`, using **Apptainer** (the
-container runtime HPC clusters allow). That one file runs unchanged on Sherlock's
-compute nodes, including a GPU for the Llama LLM‑cloze.
+Sherlock is a remote, **headless** HPC cluster — there's no desktop to run the GUI
+on, and a local conda env is built for one OS/CPU so it won't run on Sherlock's
+nodes as-is. So we package the whole environment — Python + MFA/Kaldi + models —
+into a single portable Linux **container image**, `sensi.sif`, built with
+**Apptainer** (the container runtime HPC clusters allow). That one file runs
+unchanged on Sherlock's compute nodes, including a GPU for the Llama LLM‑cloze.
 
-The flow: **build the container** and **configure the run** on my laptop → **ship**
-the container + code + a `config.yaml` to Sherlock → **run** the pipeline there,
-inside the container, via `run_extract.py`.
+The flow: **build the container** and **configure the run** on your own computer →
+**ship** the container + code + a `config.yaml` to Sherlock → **run** the pipeline
+there, inside the container, via `run_extract.py`.
 
 ## Two folders on Sherlock (fixed names — used everywhere below)
 | Purpose | Folder | Holds |
@@ -23,40 +24,41 @@ and adjust the paths. Step 3 creates both folders.
 
 ## Which terminal runs what
 Each step's heading names the terminal. Don't mix them.
-- **[WSL]** — the Ubuntu terminal on my laptop. Apptainer and rsync/ssh live here.
-- **[Anaconda Prompt]** — Windows, after `conda activate .\env`. The GUI + Python tools.
+- **[local]** — your computer, in the project's conda env (`conda activate ./env`). Runs the GUI + `export_config.py`. *(Linux/macOS: your terminal. Windows: Anaconda Prompt.)*
+- **[linux]** — a Linux shell with Apptainer, for building the container and rsync/ssh. *(Linux: your terminal. Windows: WSL. macOS: a Linux VM — Apptainer is Linux-only.)*
 - **[Sherlock-login]** — inside `ssh amilcarm@login.sherlock.stanford.edu`. Setup / transfer / submit only.
 - **[Sherlock-compute]** — a node from `sh_dev` (or the batch job). Everything that actually runs the pipeline.
 
-The only 3 things I edit are marked **✎**: the GPU partition, the HF token, and the
-`run:` block of `config.yaml`.
+Commands use forward-slash paths and `./env`, which work on every OS. The only 3
+things I edit are marked **✎**: the GPU partition, the HF token, and the `run:`
+block of `config.yaml`.
 
 ---
 
-## 1 · Build the container — [WSL], once
-One-time tools:
+## 1 · Build the container — [linux], once
+One-time tools *(Debian/Ubuntu shown; use your distro's package manager)*:
 ```bash
 sudo apt update && sudo apt install -y apptainer uidmap squashfuse fuse2fs
 ```
-Build it (~5 GB → `sherlock/sensi.sif`):
+Build it from the repo root (~5 GB → `sherlock/sensi.sif`). On Windows/WSL the repo
+is under `/mnt/c/...`; on Linux/macOS use its path:
 ```bash
 cd /mnt/c/Users/amilcar/Desktop/code/Antigravity/SensiExtractor
 export APPTAINER_TMPDIR=/var/tmp/apptmp APPTAINER_CACHEDIR=/var/tmp/apptmp/cache
 apptainer build sherlock/sensi.sif sherlock/Apptainer.def
 ```
 
-## 2 · Configure the run — [Anaconda Prompt]
-Set features/model in the GUI, then close it:
-```bat
-cd C:\Users\amilcar\Desktop\code\Antigravity\SensiExtractor
-conda activate .\env
+## 2 · Configure the run — [local]
+From the repo root: set features/model in the GUI, then close it:
+```bash
+conda activate ./env
 python gui.py
 ```
-Export those choices to `sherlock\config.yaml`:
-```bat
-python sherlock\export_config.py
+Export those choices to `sherlock/config.yaml`:
+```bash
+python sherlock/export_config.py
 ```
-Then open `sherlock\config.yaml` and fill the **`run:`** block ✎ (`$SCRATCH`/`~` are
+Then open `sherlock/config.yaml` and fill the **`run:`** block ✎ (`$SCRATCH`/`~` are
 expanded on Sherlock, so these point at the working folder from the table):
 ```yaml
 run:
@@ -77,7 +79,7 @@ Make them:
 mkdir -p $GROUP_HOME/SensiExtractor $SCRATCH/sensi/{transcripts,audio,output,hf_cache}
 ```
 
-## 4 · Upload code, container, data — [WSL]
+## 4 · Upload code, container, data — [linux]
 `$GROUP_HOME` does NOT expand over rsync, so the literal path is used.
 Code first (small; carries `sherlock/config.yaml`; `*.sif` excluded so the container isn't sent here):
 ```bash
@@ -146,7 +148,7 @@ Watch the log:
 tail -f slurm-<JobID>.out
 ```
 
-## 8 · Collect results — [WSL]
+## 8 · Collect results — [linux]
 ```bash
 rsync -avP \
   amilcarm@login.sherlock.stanford.edu:/scratch/users/amilcarm/sensi/output/ \
