@@ -170,27 +170,21 @@ sh_part
 sinfo -o "%P %f" | grep -o "GPU_MEM:[0-9]*GB" | sort -u
 ```
 
-**b. Edit two lines in the sbatch** (it already points at the two folders otherwise):
+**b. Submit — pass the partition and VRAM as flags** (no file editing; these `sbatch`
+flags override the script's defaults). Pick a partition from `sh_part` and a VRAM
+size from the `sinfo` list that fits your model:
+- **Llama-3-8B** (default, 4-bit) → `16GB` is plenty (needs ~6–8 GB).
+- **Llama-3-70B** (4-bit) → `48GB` or `80GB` (also set `settings.llm_model` + download
+  those weights in step 5).
+- Bigger VRAM = **longer queue**, so don't over-request.
 ```bash
-nano $GROUP_HOME/SensiExtractor/sherlock/run_container.sbatch
+sbatch --partition=gpu -C GPU_MEM:16GB \
+  $GROUP_HOME/SensiExtractor/sherlock/run_container.sbatch
 ```
-- `#SBATCH --partition=` → a GPU partition from `sh_part` ✎.
-- Uncomment `#SBATCH -C GPU_MEM:__GB` and set it to a value from the `sinfo` list
-  above that fits your model ✎:
-  - **Llama-3-8B** (default, 4-bit) → `16GB` is plenty (needs ~6–8 GB).
-  - **Llama-3-70B** (4-bit) → `48GB` or `80GB` (and set `settings.llm_model` +
-    download those weights in step 5).
-  - Bigger VRAM = **longer queue**, so don't over-request.
+(Drop `--partition=gpu` if `gpu` is already your default; swap it for your partition
+otherwise. Change `16GB` to any value from the `sinfo` list.)
 
-  In nano: to uncomment, delete one `#` from `##SBATCH …`. Save = **Ctrl+O**, Enter;
-  exit = **Ctrl+X**.
-
-**c. Submit:**
-```bash
-sbatch $GROUP_HOME/SensiExtractor/sherlock/run_container.sbatch
-```
-
-**d. Watch it.** Note the JobID, then follow the log:
+**c. Watch it.** Note the JobID, then follow the log:
 ```bash
 squeue --me
 ```
