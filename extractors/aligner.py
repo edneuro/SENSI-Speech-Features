@@ -25,10 +25,13 @@ Note on accuracy:
     not heuristic estimates.
 """
 
+import hashlib
+import json
 import os
 import shutil
 import subprocess
 import tempfile
+from pathlib import Path
 
 import pandas as pd
 
@@ -37,6 +40,88 @@ from utils.textgrid_parser import parse_words, parse_phones
 
 MFA_ACOUSTIC_MODEL = 'english_us_arpa'
 MFA_DICTIONARY = 'english_us_arpa'
+
+ALIGNMENT_SUBDIR = 'Montreal Forced Alignment'
+SIDECAR_VERSION = 1
+
+
+def alignment_dir(output_folder) -> Path:
+    """Return <output_folder>/Montreal Forced Alignment (not created here)."""
+    return Path(output_folder) / ALIGNMENT_SUBDIR
+
+
+def _stem(audio_path: str) -> str:
+    """Stimulus id used for on-disk artifact names: the audio basename sans ext.
+
+    Both the batch pre-pass and align_with_phones derive the stem this way, so
+    the TextGrid a pass writes is the one a later pass looks up.
+    """
+    return os.path.splitext(os.path.basename(audio_path))[0]
+
+
+def _sha256_text(s: str) -> str:
+    return hashlib.sha256(s.encode('utf-8')).hexdigest()
+
+
+def _sha256_file(path: str, _chunk: int = 1 << 20) -> str:
+    h = hashlib.sha256()
+    with open(path, 'rb') as f:
+        for block in iter(lambda: f.read(_chunk), b''):
+            h.update(block)
+    return h.hexdigest()
+
+
+def _freshness_dict(audio_path: str, transcript_text: str) -> dict:
+    """The sidecar contents identifying the inputs a TextGrid was aligned from."""
+    return {
+        'transcript_sha256': _sha256_text(prepare_for_aligner(transcript_text)),
+        'audio_sha256': _sha256_file(audio_path),
+        'audio_size': os.path.getsize(audio_path),
+        'mfa_acoustic': MFA_ACOUSTIC_MODEL,
+        'mfa_dictionary': MFA_DICTIONARY,
+        'version': SIDECAR_VERSION,
+    }
+
+
+def _write_sidecar(persist_dir, stem: str, audio_path: str,
+                   transcript_text: str) -> None:
+    meta = _freshness_dict(audio_path, transcript_text)
+    (Path(persist_dir) / f'{stem}.json').write_text(
+        json.dumps(meta, indent=2, sort_keys=True), encoding='utf-8')
+
+
+def _is_fresh(persist_dir, stem: str, audio_path: str,
+              transcript_text: str) -> bool:
+    """True iff a reusable, current TextGrid exists for this stimulus.
+
+    Requires the TextGrid and sidecar to exist and every key in the sidecar to
+    match the current inputs. audio_size is a cheap pre-filter: a size mismatch
+    short-circuits to stale without hashing the audio.
+    """
+    persist_dir = Path(persist_dir)
+    tg = persist_dir / f'{stem}.TextGrid'
+    side = persist_dir / f'{stem}.json'
+    if not tg.exists() or not side.exists():
+        return False
+    try:
+        meta = json.loads(side.read_text(encoding='utf-8'))
+    except (OSError, ValueError):
+        return False
+    if meta.get('version') != SIDECAR_VERSION:
+        return False
+    if meta.get('mfa_acoustic') != MFA_ACOUSTIC_MODEL:
+        return False
+    if meta.get('mfa_dictionary') != MFA_DICTIONARY:
+        return False
+    if meta.get('transcript_sha256') != _sha256_text(
+            prepare_for_aligner(transcript_text)):
+        return False
+    try:
+        if meta.get('audio_size') != os.path.getsize(audio_path):
+            return False
+    except OSError:
+        return False
+    return meta.get('audio_sha256') == _sha256_file(audio_path)
 
 
 def align_with_phones(
