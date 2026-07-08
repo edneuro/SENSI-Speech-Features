@@ -106,22 +106,24 @@ Container into the repo's `sherlock/` folder (a few GB):
 rsync -avP sherlock/sensiextractor.sif \
   <sunetid>@login.sherlock.stanford.edu:<GROUP_HOME>/SensiExtractor/sherlock/
 ```
-**Your input files — the data you actually want to analyze.** Upload your
-transcripts, and (only if you enabled alignment / prosody / acoustic features) their
-audio, into the `$SCRATCH/sensi/{transcripts,audio}` folders your `config.yaml`
-`run:` block points at. **Each `.wav` must share its transcript's basename** — e.g.
-`story1.txt` ↔ `story1.wav`; a transcript with no matching `.wav` is processed
-text-only.
-```bash
-# transcripts (.txt) — always required:
-rsync -avP path/to/your/transcripts/ \
-  <sunetid>@login.sherlock.stanford.edu:<SCRATCH>/sensi/transcripts/
-```
-```bash
-# audio (.wav) — only if using alignment/prosody/acoustic features:
-rsync -avP path/to/your/audio/ \
-  <sunetid>@login.sherlock.stanford.edu:<SCRATCH>/sensi/audio/
-```
+**Your input files — the data you actually want to analyze.** These go into
+`$SCRATCH/sensi/transcripts` and (only if using alignment / prosody / acoustic
+features) `$SCRATCH/sensi/audio`. **Each `.wav` must share its transcript's
+basename** — e.g. `story1.txt` ↔ `story1.wav`; a transcript with no matching `.wav`
+is processed text-only. You change these run-to-run, so the easy way is the web:
+
+- **Easiest — Sherlock's web file browser (no rsync):** open
+  <https://ondemand.sherlock.stanford.edu> → **Files** → browse to
+  `$SCRATCH/sensi/transcripts` (and `/audio`) → **Upload** (drag-and-drop). Also how
+  you'll grab results later (step 8).
+- **Bulk / scripted — rsync** (better for hundreds of files) [linux]:
+  ```bash
+  rsync -avP path/to/your/transcripts/ <sunetid>@login.sherlock.stanford.edu:<SCRATCH>/sensi/transcripts/
+  rsync -avP path/to/your/audio/       <sunetid>@login.sherlock.stanford.edu:<SCRATCH>/sensi/audio/
+  ```
+
+(The code + container above still go by rsync — they're large/many-file and
+one-time — but your *data* can just drag-and-drop through the browser.)
 
 ## 5 · Get your HF token, save it, download the weights — [Sherlock-login], once
 The local Llama model is gated, so you need a HuggingFace token — **made once on the
@@ -217,13 +219,15 @@ tail -f slurm-<JobID>.out
 The top of the log runs `nvidia-smi` — that confirms which GPU you landed on and its
 VRAM, so you can verify you got the size you asked for.
 
-## 8 · Collect results — [linux]
-Literal `<SCRATCH>` again:
-```bash
-rsync -avP \
-  <sunetid>@login.sherlock.stanford.edu:<SCRATCH>/sensi/output/ \
-  ./sherlock_out/
-```
+## 8 · Collect results
+The output CSVs are in `$SCRATCH/sensi/output`. Grab them either way:
+
+- **Easiest — web:** <https://ondemand.sherlock.stanford.edu> → **Files** → browse to
+  `$SCRATCH/sensi/output` → select → **Download**.
+- **rsync** [linux] (literal `<SCRATCH>`):
+  ```bash
+  rsync -avP <sunetid>@login.sherlock.stanford.edu:<SCRATCH>/sensi/output/ ./sherlock_out/
+  ```
 
 ## Gotchas
 - Anything that runs the pipeline must be on a **compute node** (`sh_dev`), never the login node (256 open-file cap → `Too many open files`). The sbatch raises the limit itself.
