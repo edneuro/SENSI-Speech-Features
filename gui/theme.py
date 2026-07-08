@@ -86,7 +86,7 @@ QListWidget {{
 QListWidget::item {{
     padding: 8px 12px;
     border-radius: 6px;
-    margin: 2px 4px;
+    min-height: 20px;
     color: {TEXT_PRIMARY};
 }}
 QListWidget::item:selected {{

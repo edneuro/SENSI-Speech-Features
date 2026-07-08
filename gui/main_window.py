@@ -58,6 +58,10 @@ class MainWindow(QMainWindow):
         sb_layout.setContentsMargins(8, 8, 8, 8)
         self.sidebar = QListWidget()
         self.sidebar.setFrameShape(QFrame.NoFrame)
+        # Gap between nav items. Use view spacing, not QSS `::item` margin —
+        # Qt 6.9 renders item margins as overlap, so the selected pill bled
+        # onto its neighbours ("tabs on top of each other").
+        self.sidebar.setSpacing(4)
         # No scrollbars in the sidebar — items always fit at minimum window height.
         self.sidebar.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.sidebar.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
