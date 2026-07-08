@@ -125,7 +125,11 @@ def _is_fresh(persist_dir, stem: str, audio_path: str,
 
 
 def align_with_phones(
-    audio_path: str, transcript: str, cache: dict | None = None
+    audio_path: str,
+    transcript: str,
+    cache: dict | None = None,
+    persist_dir=None,
+    run_if_missing: bool = True,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Run MFA forced alignment and return both word and phone tiers.
 
@@ -138,6 +142,19 @@ def align_with_phones(
                      word batch and the doc batch in a single GUI run), passing
                      a shared dict makes MFA run at most once per document.
                      When None (CLI single runs, tests), no caching is done.
+        persist_dir: Optional directory that may already hold a reusable
+                     `<stem>.TextGrid` from a prior run (see `alignment_dir` /
+                     the batch pre-alignment pass). When set and a TextGrid for
+                     this stimulus exists there, it is parsed directly and MFA
+                     is not invoked. This function only reads from
+                     `persist_dir` — it never writes to it (only
+                     `ensure_alignments` writes).
+        run_if_missing: When True (default), a disk miss under `persist_dir`
+                     falls back to running MFA via `_align_uncached`. When
+                     False, a disk miss raises RuntimeError instead — used by
+                     batch passes that run after pre-alignment, where a miss
+                     means the stimulus already failed to align and MFA should
+                     not be retried silently.
 
     Returns:
         Tuple of (words_df, phones_df).
@@ -149,15 +166,34 @@ def align_with_phones(
         a caller mutating them can't corrupt the cached entry for later passes.
 
     Raises:
-        RuntimeError: if MFA is not installed or alignment fails.
+        RuntimeError: if MFA is not installed or alignment fails, or if
+                     `run_if_missing` is False and no disk alignment exists.
     """
-    if cache is None:
-        return _align_uncached(audio_path, transcript)
     key = (os.path.abspath(audio_path), transcript)
-    if key not in cache:
-        cache[key] = _align_uncached(audio_path, transcript)
-    word_df, phone_df = cache[key]
-    return word_df.copy(), phone_df.copy()
+    if cache is not None and key in cache:
+        word_df, phone_df = cache[key]
+        return word_df.copy(), phone_df.copy()
+
+    result = None
+    if persist_dir is not None:
+        tg = Path(persist_dir) / f'{_stem(audio_path)}.TextGrid'
+        if tg.exists():
+            result = _parse_textgrid(str(tg))
+    if result is None:
+        if not run_if_missing:
+            raise RuntimeError(
+                f"No alignment on disk for {_stem(audio_path)!r} under "
+                f"{persist_dir} and MFA is disabled for this pass. The batch "
+                "pre-alignment step should have produced it; this stimulus "
+                "likely failed to align."
+            )
+        result = _align_uncached(audio_path, transcript)
+
+    if cache is not None:
+        cache[key] = result
+        word_df, phone_df = result
+        return word_df.copy(), phone_df.copy()
+    return result
 
 
 def _align_uncached(
@@ -188,11 +224,18 @@ def _align_uncached(
                 f"MFA did not produce a TextGrid for {stem}. "
                 "Check that the audio and transcript match, and that MFA models are downloaded."
             )
+        return _parse_textgrid(tg_path)
 
-        word_df = parse_words(tg_path)
-        phone_df = parse_phones(tg_path)
 
-    # Rename columns to match pipeline convention
+def _parse_textgrid(tg_path: str) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Parse an MFA TextGrid into (word_df, phone_df) with pipeline columns.
+
+    word_df columns: Transcript / Onset / End. phone_df columns: phone / onset /
+    offset. Shared by both the fresh-MFA path and the disk-reuse path so the two
+    return identical schemas.
+    """
+    word_df = parse_words(tg_path)
+    phone_df = parse_phones(tg_path)
     word_df = word_df.rename(columns={
         'word': 'Transcript',
         'onset': 'Onset',
