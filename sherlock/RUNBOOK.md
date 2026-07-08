@@ -106,10 +106,21 @@ Container into the repo's `sherlock/` folder (a few GB):
 rsync -avP sherlock/sensiextractor.sif \
   <sunetid>@login.sherlock.stanford.edu:<GROUP_HOME>/SensiExtractor/sherlock/
 ```
-Sample data (paths must match the `run:` block from step 2):
+**Your input files — the data you actually want to analyze.** Upload your
+transcripts, and (only if you enabled alignment / prosody / acoustic features) their
+audio, into the `$SCRATCH/sensi/{transcripts,audio}` folders your `config.yaml`
+`run:` block points at. **Each `.wav` must share its transcript's basename** — e.g.
+`story1.txt` ↔ `story1.wav`; a transcript with no matching `.wav` is processed
+text-only.
 ```bash
-rsync -avP ./my_transcripts/ \
+# transcripts (.txt) — always required:
+rsync -avP path/to/your/transcripts/ \
   <sunetid>@login.sherlock.stanford.edu:<SCRATCH>/sensi/transcripts/
+```
+```bash
+# audio (.wav) — only if using alignment/prosody/acoustic features:
+rsync -avP path/to/your/audio/ \
+  <sunetid>@login.sherlock.stanford.edu:<SCRATCH>/sensi/audio/
 ```
 
 ## 5 · Get your HF token, save it, download the weights — [Sherlock-login], once
