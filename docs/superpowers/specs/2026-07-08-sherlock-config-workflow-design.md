@@ -25,7 +25,9 @@ Workflow: GUI (local) → `export_config.py` → `config.yaml` → rsync → She
 - No new feature-extraction logic; this is orchestration over existing runners.
 - No GUI code changes — export is a standalone script reading the GUI's saved prefs.
 - Updating the Sherlock RUNBOOK/docs is a **separate issue** (out of scope here).
-- The token is never stored in the config; the config is safe to share/commit/rsync.
+- No secret (HF token or OpenAI key) is ever stored in the config; each is read
+  from a plain key-file the config only references by path — the config stays safe
+  to share/commit/rsync.
 - Not exposing a curated subset — every prefs toggle/setting is representable.
 
 ## Existing anchors this builds on (verified)
@@ -56,7 +58,10 @@ run:                     # Sherlock-specific; the GUI can't supply these
   audio_folder: ""
   output_folder: ""
   analyzer: ""
-  hf_token_file: ~/hf_token.txt   # plain file you create; token read from it if present
+  # Secrets stay OUT of this file — point at plain files you create in $HOME.
+  # Only the one matching your chosen llm_model is needed:
+  hf_token_file: ~/hf_token.txt          # for local Llama (meta-llama/*) gated download
+  openai_api_key_file: ~/openai_key.txt  # for OpenAI models (gpt-*); needs internet
 features:                # booleans — feat_*/lexling_*/freq_*/pred_*/sem_*/acoustic_*
   ...
   word_level_csv: true   # output toggles live here too (what to produce)
@@ -105,9 +110,12 @@ Prints where it wrote and a one-line reminder to fill the `run:` section on Sher
 
 Thin CLI: `run_extract.py [config.yaml]` (default `config.yaml` in CWD).
 1. `read_config` → `validate_config` (exit non-zero with the error list if invalid).
-2. If `run.hf_token_file` exists (expand `~`/env), read it and set
-   `os.environ["HF_TOKEN"]` (for on-demand download; the offline batch job that
-   sets `HF_HUB_OFFLINE=1` simply won't use it).
+2. Load credentials from whichever key-file is present (expand `~`/env): if
+   `run.hf_token_file` exists, set `os.environ["HF_TOKEN"]` (local-Llama download;
+   the offline batch job with `HF_HUB_OFFLINE=1` won't use it); if
+   `run.openai_api_key_file` exists, set `os.environ["OPENAI_API_KEY"]` (OpenAI
+   backends — requires internet, so not usable on Sherlock's offline compute
+   nodes). Both are optional; only the one matching the selected `llm_model` matters.
 3. `config_to_prefs(config)` → prefs dict.
 4. Mirror `run_dispatch.run()`'s dispatch: `plan_from_prefs(prefs)`; for each enabled
    output, `to_namespace(plan, prefs, level)`, share one `_align_cache`, call the
@@ -135,8 +143,10 @@ config.yaml ─read_config─▶ validate_config ─config_to_prefs (merge on DE
 - Invalid config (unknown key / bad type / missing `run` folders when a matching
   level is enabled) → `run_extract.py` prints the collected errors and exits non-zero
   before any extraction starts.
-- Missing `hf_token_file` is not an error (offline runs need no token); a present but
-  unreadable path is a warning.
+- A missing `hf_token_file` / `openai_api_key_file` is not an error (offline local
+  runs need no token); a path that is set but unreadable is a warning. If the
+  selected `llm_model` needs a credential that isn't available (no key-file and no
+  env var), the backend's own actionable error fires at load time.
 
 ## Testing
 
@@ -149,7 +159,9 @@ Per project TDD scope (mapping/validation = logic → TDD; script glue = test-af
 - `tests/test_run_extract.py` (test-after): drives `run_extract.py`'s dispatch on a
   tiny text-only config (monkeypatched batch runners) — asserts the right levels
   fire from the output toggles and that `run:` folders reach the namespaces; one
-  real end-to-end word-level run on a fixture transcript producing a CSV.
+  real end-to-end word-level run on a fixture transcript producing a CSV. Also
+  assert credential loading: a present `hf_token_file`/`openai_api_key_file` sets
+  the matching env var, a missing one is a silent no-op.
 - `export_config.py` / `run_extract.py` entry points: a smoke test each.
 
 ## Risks / notes
