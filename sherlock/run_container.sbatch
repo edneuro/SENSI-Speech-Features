@@ -6,8 +6,11 @@
 #
 # --- SLURM directives (placeholders — verify against `sh_part` / Sherlock docs) ---
 #SBATCH --job-name=sensi-extract
-#SBATCH --partition=gpu          # or an owners partition you belong to
-#SBATCH --gpus=1                 # one GPU; add -C GPU_MEM:24GB to pin VRAM class
+#SBATCH --partition=gpu          # or an owners partition you belong to (see `sh_part`)
+#SBATCH --gpus=1                 # one GPU
+##SBATCH -C GPU_MEM:16GB         # VRAM: Llama-3-8B in 4-bit needs ~6-8 GB; 16 GB is
+                                 # comfortable. Uncomment to pin (use 24GB for the
+                                 # fp16 fallback / headroom). Remove the extra '#' to enable.
 #SBATCH --cpus-per-task=8        # MFA/spaCy are CPU-bound — give them cores
 #SBATCH --mem=32G
 #SBATCH --time=04:00:00

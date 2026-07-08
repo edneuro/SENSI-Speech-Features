@@ -160,7 +160,13 @@ apptainer exec \
 ```
 
 ## 7 · Submit the GPU job — [Sherlock-login]
-Set the GPU partition once ✎ (the sbatch already points at the two folders otherwise):
+In `run_container.sbatch`, set your GPU partition and VRAM once ✎ (it already
+points at the two folders otherwise):
+- `#SBATCH --partition=` → a GPU partition from `sh_part`.
+- **VRAM:** Llama-3-8B in 4-bit needs ~6–8 GB, so **request ≥16 GB** — uncomment/set
+  `#SBATCH -C GPU_MEM:16GB`. Bump to `24GB` for headroom or if you hit the fp16
+  fallback (see `CUDA out of memory` in Gotchas). Most Sherlock GPUs are ≥16 GB, so
+  if you don't pin VRAM you'll usually still land on a big-enough card.
 ```bash
 nano $GROUP_HOME/SensiExtractor/sherlock/run_container.sbatch
 ```
