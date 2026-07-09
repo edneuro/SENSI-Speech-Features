@@ -3,7 +3,7 @@ feature (`extractors/lexical_norms.py`).
 
 Run once from the project root:
 
-    python download_lexical_norms.py
+    python utils/download_lexical_norms.py
 
 It fetches the published norm sets from public mirrors and writes the parquet
 files SensiExtractor expects into `dictionaries/` (plus a `.csv` mirror of each
@@ -25,7 +25,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-_DICT_DIR = Path(__file__).resolve().parent / "dictionaries"
+# This script lives in utils/; the project root (where dictionaries/ lives) is one up.
+_DICT_DIR = Path(__file__).resolve().parent.parent / "dictionaries"
 
 
 def _clean_mrc(df: pd.DataFrame) -> pd.DataFrame:

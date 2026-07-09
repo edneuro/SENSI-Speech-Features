@@ -99,7 +99,7 @@ def _load_lookup(path: Path, source: str) -> pd.DataFrame | None:
     if not path.exists():
         logger.warning(
             'Lexical-norms lookup for %r not found at %s - its columns will be '
-            'NaN. Build the norm tables with download_lexical_norms.py (or see '
+            'NaN. Build the norm tables with utils/download_lexical_norms.py (or see '
             'dictionaries/README.md for sources and the expected schema).',
             source, path,
         )

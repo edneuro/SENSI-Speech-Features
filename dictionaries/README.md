@@ -8,7 +8,7 @@ are emitted as `NaN` with a warning — the run still completes.
 From the project root:
 
 ```bash
-python download_lexical_norms.py
+python utils/download_lexical_norms.py
 ```
 
 This downloads all four published norm sets and writes

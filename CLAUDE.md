@@ -19,7 +19,6 @@ SensiExtractor is the standardized SOP tool for the SENSI naturalistic-EEG pipel
 SensiExtractor/
 ├── gui.py                 # Entry point (launches PySide6 GUI)
 ├── main.py                # CLI entry point
-├── download_models.py     # One-time model download helper
 ├── requirements.txt
 ├── environment.yml        # conda env spec (needed for MFA/Kaldi)
 ├── setup.bat / setup.sh   # One-time setup scripts
@@ -58,7 +57,10 @@ SensiExtractor/
 │   └── surprisal.py       # GPT-2 surprisal
 └── utils/
     ├── transcript_prep.py # Number spelling (num2words), whitespace normalization
-    └── textgrid_parser.py # MFA TextGrid → DataFrame
+    ├── textgrid_parser.py # MFA TextGrid → DataFrame
+    ├── download_models.py # One-time MFA/spaCy model download helper (run: python utils/download_models.py)
+    ├── download_lexical_norms.py # Builds dictionaries/*.parquet lexical-norm tables
+    └── validate_cloze.py  # LLM-cloze validation against Provo Corpus
 ```
 
 **Do not touch or analyze**: `env/` (path-based conda env, OS-specific binaries including Kaldi), `hf_cache/` (GPT-2 weights), `mfa_data/` (MFA acoustic models).

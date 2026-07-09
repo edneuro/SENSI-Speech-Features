@@ -278,7 +278,7 @@ The existing `Surprisal` column (GPT-2) is **kept unchanged** as a baseline.
 | GPU VRAM ≥ 8 GB | `meta-llama/Llama-3.2-3B` | ~0.76 | Free |
 
 Override with `--llm-model gpt-4o|gpt-4o-mini|llama-3-70b|llama-3-8b|llama-3.2-3b|<hf-id>`.
-Run `python validate_cloze.py` once after install to confirm the chosen model
+Run `python utils/validate_cloze.py` once after install to confirm the chosen model
 correlates with human cloze norms in the expected range.
 
 ### Derived timing — `Word_Duration`, `Word_Gap`
@@ -333,7 +333,7 @@ Three artifacts in the output folder, named with the run timestamp:
 The manifest captures the analyzer, system info, configuration snapshot, and
 per-pair runtimes — sufficient to reproduce or debug a run later.
 
-### Validation: `validate_cloze.py`
+### Validation: `utils/validate_cloze.py`
 
 Runs the configured LLM over Provo Corpus and reports correlation with human
 cloze norms. Use after installation to confirm the LLM-cloze setup is working.

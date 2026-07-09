@@ -17,17 +17,23 @@ echo ""
 read -p "Press Enter to continue (Ctrl+C to cancel)..."
 
 echo ""
-echo "[1/3] Creating conda environment in ./env ..."
+echo "[1/4] Creating conda environment in ./env ..."
 # CPU Kaldi is pinned in environment.yml (kaldi=*=cpu_*), which keeps the
 # ~3 GB CUDA/MAGMA stack out of the env — MFA alignment is CPU-only.
 conda env create --prefix ./env -f environment.yml
 
 echo ""
-echo "[2/3] Downloading MFA models into ./mfa_data ..."
-conda run --prefix ./env python download_models.py
+echo "[2/4] Installing Python dependencies from requirements.txt ..."
+# environment.yml only bootstraps conda-level deps (Kaldi/MFA/python/pip);
+# the full Python dependency set lives in requirements.txt.
+conda run --prefix ./env pip install -r requirements.txt
 
 echo ""
-echo "[3/3] Downloading spaCy model into ./env ..."
+echo "[3/4] Downloading MFA models into ./mfa_data ..."
+conda run --prefix ./env python utils/download_models.py
+
+echo ""
+echo "[4/4] Downloading spaCy model into ./env ..."
 conda run --prefix ./env python -m spacy download en_core_web_sm
 
 echo ""

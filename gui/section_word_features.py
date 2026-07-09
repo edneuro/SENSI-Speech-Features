@@ -285,7 +285,7 @@ class WordFeaturesSection(QWidget):
         sim_card = Card(
             "Semantic similarity",
             "Pretrained word embeddings saved as .mat sidecars in word/. "
-            "Word2Vec requires a one-time manual download — see download_models.py.",
+            "Word2Vec requires a one-time manual download — see utils/download_models.py.",
         )
         sim_card.add_widget(self._make_embed_toggle(
             "master_word2vec", "Word2Vec — Google News 300-d → <stim>_word2vec.mat",

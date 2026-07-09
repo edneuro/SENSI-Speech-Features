@@ -117,13 +117,14 @@ setup.bat
 bash setup.sh
 ```
 
-This creates the conda environment, downloads MFA models (~1 GB), and installs
-the spaCy model. You only do this once.
+This creates the conda environment, installs the Python dependencies from
+`requirements.txt`, downloads MFA models (~1 GB), and installs the spaCy model.
+You only do this once.
 
 ### Step 3 — Launch the app
 
 ```bash
-conda activate sensi
+conda activate ./env
 python gui.py
 ```
 
@@ -132,7 +133,7 @@ python gui.py
 ## Running the GUI
 
 ```bash
-conda activate sensi   # (or your venv if skipping alignment)
+conda activate ./env   # (or your venv if skipping alignment)
 python gui.py
 ```
 
