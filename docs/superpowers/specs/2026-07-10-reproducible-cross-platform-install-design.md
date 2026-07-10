@@ -37,6 +37,20 @@ Docker is a documented *nice-to-have*, not the primary path. Zero-install-for-ou
 - conda-lock locks pip deps only when they are listed **inline** in `environment.yml`'s `dependencies.pip:` section (vendored Poetry solver). It does **not** reliably support `- -r requirements.txt` inside that section, and **`requirements.txt` is not a supported `-f` input**. → drives the "relock splice" decision below.
 - GitHub Actions `macos-latest` runs on **Apple Silicon (arm64)**; `ubuntu-latest` = linux-64, `windows-latest` = win-64. All three lock targets are CI-verifiable on hosted runners.
 
+## Cross-platform correctness strategy (load-bearing)
+
+The user has **no cross-platform experience and cannot self-verify** macOS/Linux. Development happens on **Windows**. Therefore correctness cannot rest on the author inspecting generated locks — it must be *demonstrated by real machines*. This section defines how each of the three targets is actually proven, and where the honest gap is.
+
+| Platform | How the lock is generated | How it is proven to *run* |
+|---|---|---|
+| `win-64` | conda-lock on this host | **Locally, native** — full pytest suite |
+| `linux-64` | conda-lock on this host | **Locally, via WSL Ubuntu** — full pytest suite (same WSL used to build the `.sif`) |
+| `osx-arm64` | conda-lock on this host (solves from repodata; no Mac needed) | **CI only** — GitHub `macos-latest` (Apple Silicon): env installs from lock + model-independent tests pass |
+
+- "Resolves" ≠ "runs." conda-lock solving for a platform from Windows proves only that a consistent set *exists*, not that it imports. Running is proven by the table above.
+- **CI is the primary correctness mechanism, not a nice-to-have** (see below). Green on all three OSes is the merge gate.
+- **Honest residual gap:** CI runs from a fresh checkout, which lacks the ~1.5 GB vendored MFA/GPT-2 models. So CI proves *env-install + import + model-independent tests* on all three; the *full MFA/GPT-2 pipeline* is proven only where the models exist (local Windows + WSL-Linux). "MFA produces byte-identical alignment on macOS" is therefore **not verified by anyone lacking a Mac** — stated plainly, not implied away. If bit-identical macOS alignment ever becomes required, it needs a real Mac (a lab machine or a paid macOS CI runner with models mounted) — out of scope here.
+
 ## Architecture
 
 ### Tier 1 — Source (human-edited, universal)
@@ -78,9 +92,17 @@ Because conda-lock can't read `requirements.txt` directly, a small script bridge
 - `%files`: add `conda-lock.yml` (keep `requirements.txt` only if still referenced elsewhere).
 - `%post`: replace `conda create … && pip install -r requirements.txt` with `conda-lock install -p /opt/sensienv conda-lock.yml`. The `.sif` becomes bit-reproducible from the same lock as everyone else. spaCy/MFA-model steps unchanged.
 
-### Cross-platform verification (CI) — *included per user*
+### Cross-platform verification (CI) — **core, not optional**
 
-- **`.github/workflows/env-smoke.yml`**: matrix over `ubuntu-latest`, `windows-latest`, `macos-latest`. Each job: install `./env` from `conda-lock.yml`, then run a fast pytest smoke subset (not the full 490 — a representative slice that exercises import + one extractor). This is what *proves* parity instead of asserting it. Phased: lands after the locks work locally.
+This is the *only* proof that `osx-arm64` runs at all, so it is part of Core, not a later phase.
+
+- **`.github/workflows/env-verify.yml`**: matrix over `ubuntu-latest`, `windows-latest`, `macos-latest`. Each job:
+  1. install conda-lock,
+  2. `conda-lock install -p ./env conda-lock.yml` (installs the *committed* lock — same artifact users get, not a fresh solve),
+  3. `python -m spacy download en_core_web_sm` (pinned),
+  4. run the **model-independent pytest subset** (import checks + extractors that don't require MFA/GPT-2 weights). The implementation plan must identify exactly which tests are model-independent (the full suite needs vendored models absent from a checkout).
+- Green on all three OSes is the **merge gate**. As the author I will push the branch and let CI run, so approval rests on real green checks on real machines — not on my inspection.
+- On `macos-latest`, additionally assert `bitsandbytes` is **absent** from the installed env (the Darwin-marker check, verified on an actual Mac rather than by reading the lock).
 
 ### Archival snapshot (the "10-year" layer) — *documented, best-effort*
 
@@ -89,17 +111,18 @@ Because conda-lock can't read `requirements.txt` directly, a small script bridge
 
 ## Scope & phasing
 
-1. **Core** (delivers goals 1–3): Tier-1 edits + `scripts/relock` + generate `conda-lock.yml` + rewrite `setup.sh`/`setup.bat`/`README` + Apptainer fix.
-2. **Verify**: GitHub Actions matrix smoke test.
-3. **Archive**: `docs/reproducibility.md`; optional `Dockerfile` only on request.
+1. **Core** (delivers goals 1–3 *and their proof*): Tier-1 edits + `scripts/relock` + generate `conda-lock.yml` + rewrite `setup.sh`/`setup.bat`/`README` + Apptainer fix + **CI matrix verify** (promoted into Core — it is the sole proof `osx-arm64` runs).
+2. **Archive**: `docs/reproducibility.md`; optional `Dockerfile` only on request.
 
 ## Testing gate
 
-TDD does not apply (no `extractors/` math — this is env/tooling; per memory, test-after/verify-by-running). The completion gate is empirical:
+TDD does not apply (no `extractors/` math — this is env/tooling; per memory, test-after/verify-by-running). The completion gate is empirical and **layered by platform** (see Cross-platform correctness strategy):
 
-- After generating `conda-lock.yml`, build `./env` **from the lock** on this Windows machine and confirm the pytest baseline (**490 passed / 2 skipped**) still holds. A lock that resolves but doesn't run is a failure.
-- Inspect the resolved lock to confirm the `bitsandbytes` Darwin marker resolved correctly per platform.
-- CI job green on all three OSes (phase 2).
+1. **win-64 (local, native):** build `./env` **from the committed lock** and confirm the pytest baseline (**490 passed / 2 skipped**) holds. A lock that resolves but doesn't run is a failure.
+2. **linux-64 (local, WSL Ubuntu):** build `./env` from the same lock and run the pytest suite. Two of three targets proven locally with full models.
+3. **osx-arm64 (CI only):** `env-verify.yml` green on `macos-latest` — env installs from the committed lock, model-independent tests pass, `bitsandbytes` confirmed absent.
+4. **All three green in CI** is the merge gate. The author pushes the branch and lets CI run so sign-off rests on real machines, not inspection.
+5. Inspect the resolved `conda-lock.yml` to confirm each platform pins the **same version numbers** where a shared version exists (parity), differing only in build/wheel — and that the `bitsandbytes` Darwin exclusion resolved correctly.
 
 ## Out of scope
 
