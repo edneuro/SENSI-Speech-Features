@@ -22,6 +22,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # linux-64's torch pulls ~5 GB of nvidia-*-cu12 CUDA wheels (GPU support
+      # for Sherlock), which overflows the runner's ~14 GB disk. Reclaim space
+      # by dropping preinstalled toolchains conda doesn't use. Linux only —
+      # these paths are Ubuntu-runner specific.
+      - name: Free disk space (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo rm -rf /usr/local/lib/android /opt/ghc /usr/local/.ghcup \
+                      /usr/share/dotnet /opt/hostedtoolcache/CodeQL
+          df -h /
+
       - uses: conda-incubator/setup-miniconda@v3
         with:
           miniforge-version: latest
@@ -31,7 +42,11 @@ jobs:
         run: conda install -n base -c conda-forge conda-lock -y
 
       - name: Install env from the committed lock
-        run: conda-lock install -p ./env conda-lock.yml
+        # Force plain conda (not mamba/micromamba) for the install: under CI's
+        # mamba the pip layer silently failed to land on Windows (spaCy missing
+        # despite exit 0). conda's run/pip path is the battle-tested one, and
+        # installing from an explicit lock doesn't need mamba's solve speed.
+        run: conda-lock install --no-mamba --no-micromamba -p ./env conda-lock.yml
 
       - name: Download spaCy model
         run: conda run -p ./env python -m spacy download en_core_web_sm
