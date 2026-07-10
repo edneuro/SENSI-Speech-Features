@@ -38,7 +38,8 @@ dictionaries/*.csv
 runGUI.command
 runGUI.sh
 runGUI.bat
-runGUI.desktop
+SensiExtractor.lnk
+SensiExtractor.desktop
 
 # Run outputs
 output/

@@ -111,12 +111,13 @@ the spaCy model. You only do this once.
 
 ### Step 3 — Launch
 
-Setup creates a **`runGUI`** launcher tailored to your machine — just
-double-click it in your file browser (no terminal needed):
+Setup creates a double-click launcher tailored to your machine. A small
+console window opens alongside the GUI showing live progress logs (that's
+intentional — close the GUI and press a key to dismiss it).
 
-- **Windows:** `runGUI.bat`
-- **macOS:** `runGUI.command`
-- **Linux:** `runGUI.sh`
+- **Windows:** double-click **`SensiExtractor`** (a shortcut with the app icon; it runs `runGUI.bat`).
+- **Linux:** double-click **`SensiExtractor`** (a `.desktop` entry with the app icon; it runs `runGUI.sh`).
+- **macOS:** double-click **`runGUI.command`** (functional launcher; a custom icon needs Mac-only tooling).
 
 Or launch from a terminal:
 ```bash
@@ -132,8 +133,9 @@ python gui.py
 
 ### GUI (recommended)
 
-Double-click the **`runGUI`** launcher created by setup (`runGUI.bat` on
-Windows, `runGUI.command` on macOS, `runGUI.sh` on Linux), or from a terminal:
+Double-click the launcher created by setup (**`SensiExtractor`** — the
+app-icon shortcut — on Windows/Linux, `runGUI.command` on macOS), or from a
+terminal:
 
 ```bash
 conda activate ./env
