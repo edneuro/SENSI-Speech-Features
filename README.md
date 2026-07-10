@@ -97,19 +97,8 @@ depends on native Kaldi libraries that cannot be installed via pip.
 - **Windows**: download the `.exe` from https://docs.conda.io/en/latest/miniconda.html  
   Run the installer — default options are fine. Use **Anaconda Prompt** (added
   to your Start Menu) to run the commands below.
-- **Mac (Apple Silicon — M1/M2/M3/M4)**: download the Apple-Silicon `.pkg` from
-  https://docs.conda.io/en/latest/miniconda.html and run it. Then hook conda into
-  your shell and open a **fresh** Terminal — otherwise `conda activate` later fails
-  with `Run 'conda init' before 'conda activate'`:
-  ```bash
-  conda init zsh          # zsh is the macOS default; substitute your shell if different
-  ```
-  Close the Terminal and open a new one before continuing.
-
-  > **Intel Macs are not supported.** PyTorch dropped Intel-macOS builds after
-  > 2.2.2, which is incompatible with this project's NumPy 2.x. A macOS VM running
-  > on an Intel/AMD (e.g. Ryzen) host is an Intel Mac. Use Windows, Linux, or an
-  > Apple-Silicon Mac.
+- **Mac**: download the `.pkg` or `.sh` installer for your chip (Intel or Apple Silicon).  
+  Run it, then open a new **Terminal** window.
 
 If you don't need forced alignment (Onset/End columns), skip this step entirely
 and use a regular Python virtual environment instead.
@@ -138,11 +127,6 @@ You only do this once.
 conda activate ./env
 python gui.py
 ```
-
-> **Mac**: if `conda activate` errors with `Run 'conda init' before 'conda activate'`,
-> you skipped the init step above — run `conda init zsh`, reopen Terminal, and retry.
-> To activate without restarting the shell:
-> `source "$(conda info --base)/etc/profile.d/conda.sh"` then `conda activate ./env`.
 
 ---
 
