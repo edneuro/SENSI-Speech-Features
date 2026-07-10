@@ -13,7 +13,7 @@ Portable word-level stimulus feature extraction pipeline for EEG naturalistic st
 - **Document-level prosody** (16 columns) in `documents_summary_*.csv`: same pitch/volume aggregates over the whole stimulus, mean absolute deltas, HNR, articulation rate (syllables/sec excluding pauses), and 4 pause statistics.
 - **Praat-Parselmouth backend** — autocorrelation pitch tracking + HNR. Single pass per stimulus, contours cached on the args namespace and reused at the doc-summary stage.
 - **Pitch units toggle** — choose Hz or semitones (relative to per-stimulus voiced-pitch median) via the GUI or `--pitch-units`. Pitch floor/ceiling and pause threshold are also configurable.
-- **GUI cards** on both word and document feature pages; preflight warns when prosody is enabled without alignment or without the `praat-parselmouth`/`pyphen` deps installed.
+- **GUI cards** on both word and document feature pages; preflight warns when prosody is enabled without alignment or without the `praat-parselmouth`/`pyphen` deps installed. .
 - **Prefs schema bumped to v5** — additive only; existing v1-v4 prefs auto-migrate.
 - **New deps**: `praat-parselmouth>=0.4`, `pyphen>=0.14`.
 
@@ -89,19 +89,19 @@ All features are optional and can be toggled in the GUI or via CLI flags.
 
 ## Setup
 
-### Step 1 — Install Miniconda (only needed for MFA alignment)
+### Step 1 — Install Miniconda (required)
 
-Miniconda is a minimal conda installer (~100 MB). You only need it because MFA
-depends on native Kaldi libraries that cannot be installed via pip.
+Miniconda is a minimal conda installer (~100 MB). The whole environment is
+conda-based: MFA depends on native Kaldi libraries, and the compiled scientific
+stack (NumPy, pandas, SciPy, librosa, …) is installed from conda-forge. A plain
+pip virtualenv is **not** supported.
 
 - **Windows**: download the `.exe` from https://docs.conda.io/en/latest/miniconda.html  
   Run the installer — default options are fine. Use **Anaconda Prompt** (added
   to your Start Menu) to run the commands below.
-- **Mac**: download the `.pkg` or `.sh` installer for your chip (Intel or Apple Silicon).  
-  Run it, then open a new **Terminal** window.
-
-If you don't need forced alignment (Onset/End columns), skip this step entirely
-and use a regular Python virtual environment instead.
+- **Mac (Apple Silicon)**: download the Apple-Silicon `.pkg` or `.sh` installer.  
+  Run it, then open a new **Terminal** window. (Intel Macs are not supported — see below.)
+- **Linux**: download the `.sh` installer, run it, then open a new shell.
 
 ### Step 2 — Run the setup script
 
@@ -151,7 +151,7 @@ dependency:
 ## Running the GUI
 
 ```bash
-conda activate ./env   # (or your venv if skipping alignment)
+conda activate ./env
 python gui.py
 ```
 
@@ -169,7 +169,7 @@ The GUI lets you:
 # Full pipeline (all features)
 python main.py --audio stimulus.wav --transcript stimulus.txt
 
-# Text features only — no audio needed, no conda needed
+# Text features only — no audio needed (MFA alignment skipped; conda env still required)
 python main.py --transcript stimulus.txt --no-align
 
 # Skip GPT-2 surprisal (it downloads ~500 MB on first run)
@@ -214,13 +214,14 @@ python main.py \
 SensiExtractor/
 ├── gui.py                     # Graphical interface (recommended entry point)
 ├── main.py                    # CLI entry point
-├── requirements.txt
-├── extractors/
-│   ├── text_parser.py         # spaCy linguistic annotation
-│   ├── aligner.py             # MFA forced alignment
-│   ├── word_freq.py           # wordfreq (Zipf frequency)
-│   └── surprisal.py           # GPT-2 surprisal
-└── utils/
-    ├── transcript_prep.py     # Number spelling, whitespace normalization
-    └── textgrid_parser.py     # MFA TextGrid → DataFrame
+├── environment.yml            # conda deps (source: Python, Kaldi/MFA, sci stack)
+├── requirements.txt           # pip deps (source)
+├── conda-lock.yml             # GENERATED exact lock (all platforms) — never hand-edit
+├── setup.bat / setup.sh       # one-time setup (installs ./env from conda-lock.yml)
+├── extractors/                # feature extractors (spaCy, MFA, wordfreq, GPT-2, …)
+├── utils/                     # transcript prep, TextGrid parsing, model download
+├── scripts/
+│   └── relock.py              # regenerates conda-lock.yml from the source specs
+└── docs/
+    └── reproducibility.md     # env-lock model, dependency changes, archival ritual
 ```

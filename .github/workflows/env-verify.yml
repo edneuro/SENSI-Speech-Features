@@ -2,8 +2,10 @@ name: env-verify
 
 on:
   push:
-    branches: [main, reproducible-install]
+    branches: [main]
+    paths-ignore: ['**.md', 'docs/**']
   pull_request:
+    paths-ignore: ['**.md', 'docs/**']
 
 jobs:
   verify:
