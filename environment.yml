@@ -1,7 +1,9 @@
 name: sensi
 channels:
+  # conda-forge only. The Anaconda `defaults` channel is intentionally omitted:
+  # every package already resolves from conda-forge, and `defaults` carries
+  # Anaconda's commercial-use license terms we don't want to depend on.
   - conda-forge
-  - defaults
 # conda-lock reads this non-standard key to know which platforms to lock.
 # NEVER add osx-64 — Intel Mac is dropped upstream (see design spec).
 platforms:

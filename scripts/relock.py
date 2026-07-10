@@ -12,6 +12,11 @@ The committed artifact is conda-lock.yml (all platforms, exact + hashed).
 
 Usage:   python scripts/relock.py
 Requires: conda-lock on PATH  (conda install -n base -c conda-forge conda-lock)
+
+Note: if conda-lock.yml already exists, conda-lock does an *incremental* update
+(minimal churn — good for reproducibility). But if you CHANGE THE CHANNELS in
+environment.yml, that incremental update is refused ("channel configuration has
+changed"); delete conda-lock.yml first and re-run to force a full re-solve.
 """
 from __future__ import annotations
 

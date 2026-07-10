@@ -17,10 +17,10 @@ os.environ.setdefault("MKL_THREADING_LAYER", "sequential")
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-# Runnable helper scripts that execute work at *import* time (not just when run
-# as __main__) — importing them would trigger downloads/side effects. They are
-# not part of the app's import graph (users run them; nothing imports them), so
-# a smoke test of the importable surface skips them.
+# Run-only helper scripts: users invoke them directly; nothing in the app
+# imports them, so they're outside the import surface this smoke test covers.
+# (download_models guards its work under __main__, so importing it is now
+# side-effect-free — it stays here only because import-testing it adds nothing.)
 SKIP = {"utils.download_models"}
 
 targets = ["main", "PySide6.QtWidgets"]

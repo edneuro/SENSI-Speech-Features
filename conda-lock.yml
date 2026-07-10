@@ -9,24 +9,22 @@
 # To update a single package to the latest version compatible with the version constraints in the source:
 #     conda-lock lock  --lockfile conda-lock.yml --update PACKAGE
 # To re-solve the entire environment, e.g. after changing a version constraint in the source file:
-#     conda-lock -f tmp6t7x85xu.yml --lockfile conda-lock.yml
+#     conda-lock -f tmpg__rfe74.yml --lockfile conda-lock.yml
 version: 1
 metadata:
   content_hash:
-    linux-64: 7bff69f0aef1b001a5e506e226f589fed0c9f769bec5aa2b6a89730450f95cb9
-    osx-arm64: 78f87a48108b6b16745fb1495ac920062cc2f909eb9d06c2f895b8d7a08f5337
-    win-64: 0a70961ec3e548a7ccc5b4cfd57d129e78f4c611a17a4c8d2dff958b79b85039
+    linux-64: f57a2f324b42605b45040832c22ff648f950263591723d21ca49c45311a03890
+    osx-arm64: cde0e5fd4e39e25d98f26cbf163fccdd7639f72d8ec89818288fd39abf915b60
+    win-64: d2f90b1749222ef04d60526192282e4bc80ad25cee13fe072547ebd3a351ca69
   channels:
   - url: conda-forge
-    used_env_vars: []
-  - url: defaults
     used_env_vars: []
   platforms:
   - linux-64
   - osx-arm64
   - win-64
   sources:
-  - tmp6t7x85xu.yml
+  - tmpg__rfe74.yml
 package:
 - name: _openmp_mutex
   version: '4.5'
