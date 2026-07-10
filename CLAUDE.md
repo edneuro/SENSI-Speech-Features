@@ -19,9 +19,10 @@ SensiExtractor is the standardized SOP tool for the SENSI naturalistic-EEG pipel
 SensiExtractor/
 ├── gui.py                 # Entry point (launches PySide6 GUI)
 ├── main.py                # CLI entry point
-├── requirements.txt
-├── environment.yml        # conda env spec (needed for MFA/Kaldi)
-├── setup.bat / setup.sh   # One-time setup scripts
+├── requirements.txt       # pip deps (source; spliced into conda-lock.yml, never installed directly)
+├── environment.yml        # conda deps (source; Python, Kaldi/MFA, compiled sci stack + platforms: key)
+├── conda-lock.yml         # GENERATED lock (all 3 platforms, exact+hashed) — never hand-edit; regenerate via scripts/relock.py
+├── setup.bat / setup.sh   # One-time setup scripts (install from conda-lock.yml)
 ├── gui/
 │   ├── __init__.py
 │   ├── main_window.py        # Main QMainWindow + 7-item sidebar (Inputs, Word/Doc/Sub-word/Sentence features, Run, Logs) + status strip
@@ -48,6 +49,7 @@ SensiExtractor/
 │   ├── check.svg, dash.svg, dot.svg  # Checkbox / radio indicator graphics
 ├── docs/
 │   ├── master_plan.md        # Single entry point for project state (read first)
+│   ├── reproducibility.md    # Env lock runbook: two-tier model, dep changes, platform support, archival ritual
 │   ├── features/             # Per-feature .md registry — one file per documented toggle (or one shared file for related toggles), surfaced in the GUI via gui/info_popup.py
 │   └── superpowers/          # Batch specs + plans (one per feature batch)
 ├── extractors/
@@ -55,13 +57,17 @@ SensiExtractor/
 │   ├── aligner.py         # MFA forced alignment
 │   ├── word_freq.py       # wordfreq
 │   └── surprisal.py       # GPT-2 surprisal
-└── utils/
-    ├── transcript_prep.py # Number spelling (num2words), whitespace normalization
-    ├── textgrid_parser.py # MFA TextGrid → DataFrame
-    ├── download_models.py # One-time MFA/spaCy model download helper (run: python utils/download_models.py)
-    ├── download_lexical_norms.py # Builds dictionaries/*.parquet lexical-norm tables
-    └── validate_cloze.py  # LLM-cloze validation against Provo Corpus
+├── utils/
+│   ├── transcript_prep.py # Number spelling (num2words), whitespace normalization
+│   ├── textgrid_parser.py # MFA TextGrid → DataFrame
+│   ├── download_models.py # One-time MFA/spaCy model download helper (run: python utils/download_models.py)
+│   ├── download_lexical_norms.py # Builds dictionaries/*.parquet lexical-norm tables
+│   └── validate_cloze.py  # LLM-cloze validation against Provo Corpus
+└── scripts/
+    └── relock.py          # Regenerates conda-lock.yml from environment.yml + requirements.txt
 ```
+
+CI: `.github/workflows/env-verify.yml` installs from `conda-lock.yml` on all three platforms (install+import smoke; merge gate) — see `docs/reproducibility.md`.
 
 **Do not touch or analyze**: `env/` (path-based conda env, OS-specific binaries including Kaldi), `hf_cache/` (GPT-2 weights), `mfa_data/` (MFA acoustic models).
 
@@ -69,7 +75,7 @@ SensiExtractor/
 
 The Python environment is a **path-based conda env at `env/`** (a "prefix" env — identified by its directory path, not a registered name). It is NOT a Python venv, and there is no env named `sensi`. MFA + Kaldi are installed via conda inside it.
 
-Activate with `conda activate ./env` from the project root. `pip install -r requirements.txt` inside the activated env adds the Python deps.
+Activate with `conda activate ./env` from the project root. `./env` is built by running `setup.sh` / `setup.bat`, which installs it from the committed `conda-lock.yml` (a generated, exact-pinned lock for Windows/Linux/Apple-Silicon macOS) — not from `pip install -r requirements.txt` directly. To change a dependency, see **[`docs/reproducibility.md`](docs/reproducibility.md)**: edit `environment.yml`/`requirements.txt`, run `python scripts/relock.py`, commit the regenerated `conda-lock.yml`.
 
 ## Running
 
