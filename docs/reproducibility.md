@@ -124,12 +124,19 @@ via `conda run`, not via the bare interpreter path.
 Be precise about this — it's the difference between "should work" and
 "known to work":
 
-- **win-64**: proven. Full test suite (**608 passing**) run natively on
-  Windows against an env installed from the committed `conda-lock.yml`.
-- **linux-64**: proven. Same full suite, same pass count, run inside WSL
-  against an independently-installed env from the same lock — two different
-  machines/environments converging on identical results is the strongest
-  local evidence this effort produced.
+- **win-64**: proven. Full test suite (**608 passed, 1 failed**) run natively
+  on Windows against an env installed from the committed `conda-lock.yml`. The
+  single failure (`test_batch_emits_syllables_and_phonemes_sidecars`) is a
+  pre-existing, non-lock-related fragile test — it feeds MFA a synthetic
+  out-of-vocabulary token and its skip-guard doesn't catch every alignment
+  outcome. Not introduced by this work (see below).
+- **linux-64**: proven. Same full suite, **identical result (608 passed, 1
+  failed — the same test)**, run inside WSL against an independently-installed
+  env from the same lock. Two different machines/environments converging on the
+  identical pass *and* failure set is the strongest local evidence this effort
+  produced — and the identical failure across both OSes (both pinning the same
+  MFA 3.4.0) confirms that one failure is platform-independent and lock-neutral,
+  not a regression.
 - **osx-arm64 (Apple Silicon)**: proven only at the **install + import**
   level, via CI (`.github/workflows/env-verify.yml`). No one on this project
   has run the full pipeline — MFA forced alignment, GPT-2 surprisal, the
