@@ -69,3 +69,28 @@ def test_band_filter_all_bands_matches_previous_behavior(tmp_path):
     for col in ('Edu_Zipf_K2', 'Edu_Zipf_3to5', 'Edu_Zipf_6to8',
                 'Edu_Zipf_9to12', 'Edu_Zipf_Overall'):
         assert col in out.columns
+
+
+def test_duplicate_words_in_lookup_keep_first(tmp_path):
+    """A user-supplied parquet with duplicate word keys must not crash the
+    whole EWFG step (pandas reindex raises on a non-unique index)."""
+    lookup = pd.DataFrame([
+        {'word': 'cat', 'edu_zipf_k2': 5.5, 'edu_zipf_3to5': 5.2,
+         'edu_zipf_6to8': 4.9, 'edu_zipf_9to12': 4.5, 'edu_zipf_overall': 5.0},
+        {'word': 'cat', 'edu_zipf_k2': 1.1, 'edu_zipf_3to5': 1.1,
+         'edu_zipf_6to8': 1.1, 'edu_zipf_9to12': 1.1, 'edu_zipf_overall': 1.1},
+    ])
+    path = tmp_path / 'edu_dup.parquet'
+    lookup.to_parquet(path)
+    df = pd.DataFrame({'token': ['cat'], 'lemma': ['cat'], 'upos': ['NOUN']})
+    out = add_edu_freq(df, lookup_path=path)
+    assert out['Edu_Zipf_K2'].iloc[0] == pytest.approx(5.5)   # first row wins
+
+
+def test_invalid_band_raises_with_valid_keys(tmp_path):
+    df = pd.DataFrame({'token': ['cat'], 'lemma': ['cat'], 'upos': ['NOUN']})
+    with pytest.raises(ValueError) as ei:
+        add_edu_freq(df, lookup_path=_write_lookup(tmp_path), bands=['k2', 'kindergarten'])
+    msg = str(ei.value)
+    assert 'kindergarten' in msg
+    assert 'k2' in msg and 'overall' in msg     # lists the accepted keys

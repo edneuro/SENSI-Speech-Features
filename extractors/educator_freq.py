@@ -67,6 +67,12 @@ def add_edu_freq(
     path = Path(lookup_path) if lookup_path else _DEFAULT_LOOKUP_PATH
 
     active_bands = _ALL_BANDS if bands is None else bands
+    unknown = [b for b in active_bands if b not in _BAND_MAP]
+    if unknown:
+        raise ValueError(
+            f"Unknown EWFG band(s) {unknown!r}. "
+            f"Accepted keys: {', '.join(_ALL_BANDS)}."
+        )
     active_cols = [_BAND_MAP[b] for b in active_bands]
     active_lookup_cols = [_LOOKUP_COLUMNS[EXPECTED_COLUMNS.index(c)] for c in active_cols]
 
@@ -104,5 +110,8 @@ def _load_lookup(path: Path) -> pd.DataFrame | None:
     except Exception as exc:
         logger.warning('Failed to load EWFG lookup from %s: %s', path, exc)
         return None
+    # Drop duplicate word keys (reindex requires a unique index) — mirrors
+    # extractors/lexical_norms.py; user-supplied tables do contain dupes.
+    df = df[~df.index.duplicated(keep='first')]
     _lookup_cache[path] = df
     return df
