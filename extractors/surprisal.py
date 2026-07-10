@@ -9,24 +9,36 @@ Unit: bits (log base 2). Higher = less predictable in context.
 
 How it works:
     GPT-2 tokenizes text into subword pieces. For each spaCy token we
-    collect all GPT-2 subword tokens that map to it, sum their
-    log-probabilities, and negate to get surprisal in bits.
+    collect the GPT-2 subword tokens that map to it, sum their
+    log-probabilities, and negate to get surprisal in bits. Each subword
+    is charged to exactly one spaCy token (the first it overlaps), so a
+    subword straddling a token boundary is never double-counted.
 
     Because GPT-2 context is cumulative, the model is run once over the
     full text. Each token's surprisal reflects everything that came before
     it, matching standard psycholinguistic usage.
 
-Punctuation tokens (upos == 'PUNCT') receive NaN.
+Punctuation tokens (upos == 'PUNCT') receive NaN. The document's FIRST
+word also receives NaN: its first subword has no preceding context, so
+GPT-2 assigns it no probability — emitting 0 bits there would fake a
+"perfectly predictable" first word.
+
+Results are memoized per (text, token sequence): when the word-level and
+document-level batches process the same stimulus in one run, GPT-2 runs
+once and the second pass is served from cache (without even loading the
+model).
 
 Notes:
     - First call downloads the GPT-2 weights (~500 MB); cached after that.
     - Model runs on CPU by default; set USE_GPU=True below if a GPU is
       available and torch.cuda.is_available().
-    - Long texts (>1024 GPT-2 tokens) are split at sentence boundaries
-      with a sliding context window to avoid truncation artifacts.
+    - Long texts (>1024 GPT-2 tokens) are split with a sliding context
+      window to avoid truncation artifacts.
 """
 
+import hashlib
 import math
+from collections import OrderedDict
 
 import pandas as pd
 import torch
@@ -37,6 +49,11 @@ USE_GPU = False
 _tokenizer = None
 _model = None
 
+# (text, tokens) → per-token surprisal list. Sized to comfortably hold one
+# GUI dispatch (word pass + doc pass over the same stimuli); FIFO-evicted.
+_SURPRISAL_CACHE: OrderedDict[str, list] = OrderedDict()
+_CACHE_MAX_ENTRIES = 256
+
 
 def _load():
     global _tokenizer, _model
@@ -46,6 +63,13 @@ def _load():
         _model.eval()
         if USE_GPU and torch.cuda.is_available():
             _model = _model.cuda()
+
+
+def _cache_key(text: str, tokens: list[str]) -> str:
+    h = hashlib.sha256(text.encode('utf-8'))
+    h.update(b'\x00')
+    h.update('\x00'.join(tokens).encode('utf-8'))
+    return h.hexdigest()
 
 
 def add_surprisal(token_df: pd.DataFrame, text: str) -> pd.DataFrame:
@@ -59,15 +83,22 @@ def add_surprisal(token_df: pd.DataFrame, text: str) -> pd.DataFrame:
 
     Returns:
         A copy of token_df with 'Surprisal' column (float, bits).
-        Punctuation rows have NaN.
+        Punctuation rows and the document's first word have NaN.
     """
-    _load()
-    surprisals = _compute_surprisals(text, [row['token'] for _, row in token_df.iterrows()])
+    tokens = [str(t) for t in token_df['token'].tolist()]
+    key = _cache_key(text, tokens)
+    surprisals = _SURPRISAL_CACHE.get(key)
+    if surprisals is None:
+        _load()
+        surprisals = _compute_surprisals(text, tokens)
+        _SURPRISAL_CACHE[key] = surprisals
+        while len(_SURPRISAL_CACHE) > _CACHE_MAX_ENTRIES:
+            _SURPRISAL_CACHE.popitem(last=False)
 
     df = token_df.copy()
     df['Surprisal'] = [
-        None if row['upos'] == 'PUNCT' else surprisals[i]
-        for i, (_, row) in enumerate(token_df.iterrows())
+        None if upos == 'PUNCT' else surprisals[i]
+        for i, upos in enumerate(token_df['upos'].tolist())
     ]
     return df
 
@@ -79,24 +110,85 @@ def add_surprisal(token_df: pd.DataFrame, text: str) -> pd.DataFrame:
 _MAX_GPT2_TOKENS = 1024
 
 
-def _compute_surprisals(text: str, spacy_tokens: list[str]) -> list[float | None]:
+def map_tokens_to_subwords(
+    text: str,
+    spacy_tokens: list[str],
+    offsets: list[tuple[int, int]],
+) -> list[list[int]]:
+    """Assign each subword to exactly one spaCy token.
+
+    Tokens are located in `text` left to right; a subword belongs to the
+    FIRST token whose character span it overlaps, and is then consumed —
+    a subword straddling a token boundary (e.g. GPT-2 "don" over spaCy
+    "do" + "n't") is never charged twice. Returns one (possibly empty)
+    list of subword indices per token. Shared with the LLM-cloze
+    HuggingFace backend, which does the same bookkeeping.
+    """
+    spans: list[list[int]] = []
+    char_pos = 0
+    sub_idx = 0
+    n_subs = len(offsets)
+
+    for token in spacy_tokens:
+        idx = text.find(token, char_pos)
+        if idx == -1:
+            spans.append([])
+            continue
+        tok_start, tok_end = idx, idx + len(token)
+        char_pos = tok_end
+
+        # Skip subwords that end before this token starts.
+        while sub_idx < n_subs and offsets[sub_idx][1] <= tok_start:
+            sub_idx += 1
+        own: list[int] = []
+        while sub_idx < n_subs and offsets[sub_idx][0] < tok_end:
+            own.append(sub_idx)
+            sub_idx += 1
+        spans.append(own)
+
+    return spans
+
+
+def _token_surprisals(
+    spans: list[list[int]],
+    log_probs: list,
+) -> list:
+    """Per-token surprisal (bits) from subword spans and log-probs.
+
+    A token is None when it has no subwords, or when any of its subwords
+    has no log-prob (log_probs[i] is None — the context-less position 0).
+    """
+    results = []
+    for own in spans:
+        if not own or any(log_probs[i] is None for i in own):
+            results.append(None)
+            continue
+        total_lp = sum(log_probs[i] for i in own)
+        results.append(round(-total_lp / math.log(2), 4))
+    return results
+
+
+def _compute_surprisals(text: str, spacy_tokens: list[str]) -> list:
     """Return one surprisal value per spaCy token (None for unmatched)."""
     enc = _tokenizer(text, return_offsets_mapping=True, add_special_tokens=False)
     gpt2_ids = enc['input_ids']
     offsets = enc['offset_mapping']  # (char_start, char_end) per subword
 
-    # Get per-subword log-probs via a single forward pass (or chunked for long texts)
+    # Per-subword log-probs via a single forward pass (chunked for long texts)
     log_probs = _subword_log_probs(gpt2_ids)
 
-    # Map each spaCy token to its GPT-2 subwords via character spans
-    token_surprisals = _align_tokens_to_subwords(
-        text, spacy_tokens, offsets, log_probs
-    )
-    return token_surprisals
+    spans = map_tokens_to_subwords(text, spacy_tokens, offsets)
+    return _token_surprisals(spans, log_probs)
 
 
-def _subword_log_probs(input_ids: list[int]) -> list[float]:
-    """Return log P(token_i | context) for each subword token."""
+def _subword_log_probs(input_ids: list[int]) -> list:
+    """Return log P(token_i | context) for each subword token.
+
+    Position 0 has no prior context — GPT-2 cannot score it, so its entry
+    is None (propagated to NaN for whichever word owns it).
+    """
+    if not input_ids:
+        return []
     device = next(_model.parameters()).device
     ids_tensor = torch.tensor([input_ids], device=device)
 
@@ -110,8 +202,7 @@ def _subword_log_probs(input_ids: list[int]) -> list[float]:
     # logits[i] predicts token[i+1]; shift so index aligns with input
     log_probs_all = torch.log_softmax(logits, dim=-1)
     # For token at position i, its log-prob is log_probs_all[i-1, id[i]]
-    # Position 0 has no prior context — assign 0 (neutral)
-    lp = [0.0]
+    lp: list = [None]
     for i in range(1, len(input_ids)):
         lp.append(log_probs_all[i - 1, input_ids[i]].item())
     return lp
@@ -131,44 +222,3 @@ def _chunked_logits(input_ids: list[int], device) -> torch.Tensor:
         offset = start - context_start
         all_logits.append(logits_seg[offset:])
     return torch.cat(all_logits, dim=0)
-
-
-def _align_tokens_to_subwords(
-    text: str,
-    spacy_tokens: list[str],
-    offsets: list[tuple[int, int]],
-    log_probs: list[float],
-) -> list[float | None]:
-    """Sum subword log-probs for each spaCy token, return surprisal (bits)."""
-    results = []
-    char_pos = 0
-
-    for token in spacy_tokens:
-        # Find where this token starts in the text (simple left-to-right scan)
-        idx = text.find(token, char_pos)
-        if idx == -1:
-            results.append(None)
-            continue
-        tok_start = idx
-        tok_end = idx + len(token)
-        char_pos = tok_end
-
-        # Collect GPT-2 subwords that overlap with [tok_start, tok_end)
-        total_lp = 0.0
-        found = False
-        for sub_idx, (s, e) in enumerate(offsets):
-            if e <= tok_start:
-                continue
-            if s >= tok_end:
-                break
-            total_lp += log_probs[sub_idx]
-            found = True
-
-        if not found:
-            results.append(None)
-        else:
-            # Surprisal = -log2 P = -log_e P / log_e 2
-            surprisal_bits = -total_lp / math.log(2)
-            results.append(round(surprisal_bits, 4))
-
-    return results

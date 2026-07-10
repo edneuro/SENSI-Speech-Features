@@ -19,6 +19,7 @@ tests can inject mock backends (see _FakeBackend in the unit tests).
 import logging
 import math
 import os
+from collections import OrderedDict
 from typing import Protocol
 
 import numpy as np
@@ -124,31 +125,60 @@ def _available_vram_gb() -> float:
     return 0.0
 
 
+# (model_id, text/tokens digest) → scores. Sized to hold one GUI dispatch
+# (word pass + doc pass over the same stimuli); FIFO-evicted. Mirrors
+# extractors.surprisal._SURPRISAL_CACHE so the doc-level batch never
+# re-scores a document the word-level batch already paid for.
+_SCORE_CACHE: OrderedDict = OrderedDict()
+_SCORE_CACHE_MAX = 256
+
+
+def _text_tokens_digest(text: str, tokens: list[str]) -> str:
+    import hashlib
+    h = hashlib.sha256(text.encode('utf-8'))
+    h.update(b'\x00')
+    h.update('\x00'.join(tokens).encode('utf-8'))
+    return h.hexdigest()
+
+
 def add_llm_cloze(
     token_df: pd.DataFrame,
     text: str,
     backend: _Backend | None = None,
     model_id: str | None = None,
 ) -> pd.DataFrame:
-    """Append LLM_Cloze, LLM_Surprisal, LLM_TopMatch columns to token_df."""
+    """Append LLM_Cloze, LLM_Surprisal, LLM_TopMatch columns to token_df.
+
+    Punctuation rows are NaN across all three columns. The document's
+    first word is NaN/NaN/NaN too — it has no preceding context, so the
+    model cannot score it (the backend reports top_match=None there).
+    """
     df = token_df.copy()
 
+    tokens = [str(t) for t in df['token'].tolist()]
     if backend is None:
-        backend = _cached_backend(model_id or select_model())
-
-    tokens = list(df['token'])
-    scores = backend.score(text, tokens)
+        mid = model_id or select_model()
+        key = (mid, _text_tokens_digest(text, tokens))
+        scores = _SCORE_CACHE.get(key)
+        if scores is None:
+            scores = _cached_backend(mid).score(text, tokens)
+            _SCORE_CACHE[key] = scores
+            while len(_SCORE_CACHE) > _SCORE_CACHE_MAX:
+                _SCORE_CACHE.popitem(last=False)
+    else:
+        scores = backend.score(text, tokens)
 
     p_col, surp_col, top_col = [], [], []
-    for (i, row), score in zip(df.iterrows(), scores):
-        if row['upos'] == 'PUNCT':
+    for upos, score in zip(df['upos'].tolist(), scores):
+        if upos == 'PUNCT':
             p_col.append(np.nan)
             surp_col.append(np.nan)
             top_col.append(np.nan)
             continue
         p_col.append(round(score['p'], 6))
         surp_col.append(round(score['surprisal'], 4))
-        top_col.append(int(score['top_match']))
+        top_col.append(np.nan if score['top_match'] is None
+                       else int(score['top_match']))
 
     df['LLM_Cloze'] = p_col
     df['LLM_Surprisal'] = surp_col
@@ -157,6 +187,41 @@ def add_llm_cloze(
 
 
 # --------------------- backends ---------------------
+
+def _scores_from_subwords(
+    text: str,
+    tokens: list[str],
+    offsets: list[tuple[int, int]],
+    sub_log_p: list,
+    sub_top1: list,
+    ids: list[int],
+) -> list[dict]:
+    """Per-token {p, surprisal, top_match} from per-subword log-probs.
+
+    Subword→token bookkeeping is shared with extractors.surprisal
+    (map_tokens_to_subwords): each subword is charged to exactly one
+    token. A token is unscoreable — {nan, nan, None} — when it has no
+    subwords or contains the context-less first subword (sub_log_p[i]
+    is None).
+    """
+    from extractors.surprisal import map_tokens_to_subwords
+
+    spans = map_tokens_to_subwords(text, tokens, offsets)
+    results = []
+    for own in spans:
+        if not own or any(sub_log_p[i] is None for i in own):
+            results.append({'p': float('nan'), 'surprisal': float('nan'),
+                            'top_match': None})
+            continue
+        total_lp = sum(sub_log_p[i] for i in own)
+        first_sub = own[0]
+        results.append({
+            'p': math.exp(total_lp),
+            'surprisal': -total_lp / math.log(2),
+            'top_match': 1 if sub_top1[first_sub] == ids[first_sub] else 0,
+        })
+    return results
+
 
 def _make_default_backend(model_id: str) -> _Backend:
     if model_id.startswith('gpt-'):
@@ -286,43 +351,16 @@ class _HuggingFaceBackend:
             logits = torch.cat(chunks, dim=0)
 
         log_probs = torch.log_softmax(logits, dim=-1)
-        # Per-subword log-prob and top-1 prediction
-        sub_log_p = [0.0]
-        sub_top1 = [None]
+        # Per-subword log-prob and top-1 prediction. Position 0 has no
+        # preceding context — None marks it unscoreable (not "0 bits").
+        sub_log_p: list = [None]
+        sub_top1: list = [None]
         for i in range(1, len(ids)):
             sub_log_p.append(log_probs[i - 1, ids[i]].item())
             sub_top1.append(int(log_probs[i - 1].argmax().item()))
 
-        # Map subwords → spaCy tokens via character offsets
-        results = []
-        char_pos = 0
-        for tok in tokens:
-            idx = text.find(tok, char_pos)
-            if idx == -1:
-                results.append({'p': float('nan'), 'surprisal': float('nan'), 'top_match': 0})
-                continue
-            tok_start, tok_end = idx, idx + len(tok)
-            char_pos = tok_end
-            total_lp = 0.0
-            first_sub = None
-            found = False
-            for sub_idx, (s, e) in enumerate(offsets):
-                if e <= tok_start:
-                    continue
-                if s >= tok_end:
-                    break
-                total_lp += sub_log_p[sub_idx]
-                if first_sub is None:
-                    first_sub = sub_idx
-                found = True
-            if not found:
-                results.append({'p': float('nan'), 'surprisal': float('nan'), 'top_match': 0})
-                continue
-            p = math.exp(total_lp)
-            surprisal = -total_lp / math.log(2)
-            top_match = 1 if (first_sub is not None and sub_top1[first_sub] == ids[first_sub]) else 0
-            results.append({'p': p, 'surprisal': surprisal, 'top_match': top_match})
-        return results
+        return _scores_from_subwords(text, tokens, offsets,
+                                     sub_log_p, sub_top1, ids)
 
 
 class _OpenAIBackend:

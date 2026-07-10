@@ -61,10 +61,15 @@ the same file.
      Tokenises locally with `tiktoken` and **raises** `ValueError`
      before the API call if the prompt exceeds the model's context
      limit — see *Long-text handling*.
-3. Per spaCy token, finds the contiguous run of LLM subwords whose
-   character offsets overlap that token, sums their log-probabilities,
+3. Per spaCy token, assigns each LLM subword to exactly ONE token —
+   the first whose character span it overlaps (shared bookkeeping with
+   [GPT-2 surprisal](pred_surprisal_gpt2.md); a subword straddling a
+   token boundary is never charged twice) — then sums log-probabilities
    and converts to bits: `-Σ log_e P / log_e 2`.
-4. `upos == "PUNCT"` → `NaN`.
+4. `upos == "PUNCT"` → `NaN`; the document's first word is `NaN` too
+   (no preceding context to condition on). Scores are memoized per
+   (model, text, tokens) so the doc-level pass reuses the word-level
+   pass's forward pass.
 
 This **also produces** [`LLM_Cloze`](pred_cloze.md) and
 [`LLM_TopMatch`](pred_topmatch.md) from the same forward pass — they're

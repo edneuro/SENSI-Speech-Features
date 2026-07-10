@@ -182,6 +182,78 @@ import types
 import pytest
 
 
+# ---- pure scoring math shared with extractors/surprisal.py ----
+
+
+def test_scores_from_subwords_first_token_has_no_context():
+    from extractors.llm_cloze import _scores_from_subwords
+    # "hi there": subword 0 is context-less → its word must be NaN/NaN/None,
+    # not p=1.0 / surprisal=0 ("perfectly predictable").
+    text = "hi there"
+    offsets = [(0, 2), (2, 8)]
+    sub_log_p = [None, -1.0]
+    sub_top1 = [None, 7]
+    ids = [5, 7]
+    out = _scores_from_subwords(text, ["hi", "there"], offsets,
+                                sub_log_p, sub_top1, ids)
+    assert math.isnan(out[0]['p']) and math.isnan(out[0]['surprisal'])
+    assert out[0]['top_match'] is None
+    assert out[1]['p'] == pytest.approx(math.exp(-1.0))
+    assert out[1]['top_match'] == 1          # argmax 7 == actual id 7
+
+
+def test_scores_from_subwords_straddling_subword_counted_once():
+    from extractors.llm_cloze import _scores_from_subwords
+    # Subword "don" (0,3) straddles "do"+"n't": charged to "do" only.
+    text = "don't go"
+    offsets = [(0, 3), (3, 5), (5, 8)]
+    sub_log_p = [None, -1.0, -2.0]
+    sub_top1 = [None, 1, 2]
+    ids = [0, 1, 9]
+    out = _scores_from_subwords(text, ["do", "n't", "go"], offsets,
+                                sub_log_p, sub_top1, ids)
+    # "n't" owns exactly subword 1 (lp -1.0), "go" owns subword 2 (lp -2.0).
+    assert out[1]['surprisal'] == pytest.approx(1.0 / math.log(2))
+    assert out[2]['surprisal'] == pytest.approx(2.0 / math.log(2))
+
+
+def test_add_llm_cloze_maps_none_top_match_to_nan():
+    class _FirstWordBackend:
+        def score(self, text, tokens):
+            return [{'p': float('nan'), 'surprisal': float('nan'),
+                     'top_match': None}] + [
+                {'p': 0.5, 'surprisal': 1.0, 'top_match': 1}
+                for _ in tokens[1:]
+            ]
+
+    df = pd.DataFrame({'token': ['hi', 'there'], 'upos': ['INTJ', 'ADV']})
+    out = add_llm_cloze(df, text='hi there', backend=_FirstWordBackend())
+    assert math.isnan(out['LLM_TopMatch'].iloc[0])
+    assert math.isnan(out['LLM_Cloze'].iloc[0])
+    assert out['LLM_TopMatch'].iloc[1] == 1
+
+
+def test_add_llm_cloze_caches_scores_across_passes(monkeypatch):
+    import extractors.llm_cloze as m
+
+    calls = []
+
+    class _CountingBackend:
+        def score(self, text, tokens):
+            calls.append(text)
+            return [{'p': 0.5, 'surprisal': 1.0, 'top_match': 1}
+                    for _ in tokens]
+
+    monkeypatch.setattr(m, '_cached_backend', lambda mid: _CountingBackend())
+    m._SCORE_CACHE.clear()
+    df = pd.DataFrame({'token': ['a', 'b'], 'upos': ['DET', 'NOUN']})
+    m.add_llm_cloze(df, text='a b', model_id='m1')   # word-level pass
+    m.add_llm_cloze(df, text='a b', model_id='m1')   # doc-level pass
+    assert calls == ['a b']                          # scored once
+    m.add_llm_cloze(df, text='a b', model_id='m2')   # other model → rescore
+    assert calls == ['a b', 'a b']
+
+
 def test_backend_raises_actionable_error_on_gated(monkeypatch):
     import extractors.llm_cloze as m
 

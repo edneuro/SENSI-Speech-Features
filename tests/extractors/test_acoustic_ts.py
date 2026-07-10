@@ -143,6 +143,60 @@ def test_log_mel_equals_hand_composed_stft_filterbank_db():
     np.testing.assert_allclose(ours, expected, atol=1e-9, rtol=0)
 
 
+def _slaney_mel_filterbank(sr, n_fft, n_mels, fmin, fmax):
+    """Independent numpy port of the Slaney-scale mel filterbank algorithm.
+
+    Written from the published Slaney auditory-toolbox design (linear below
+    1 kHz, log above) with area normalization — NOT copied from librosa — so
+    agreement with librosa.filters.mel confirms librosa builds the standard
+    filterbank our features rely on.
+    """
+    def hz_to_mel(f):
+        f = np.asarray(f, dtype=np.float64)
+        f_sp = 200.0 / 3.0
+        mels = f / f_sp
+        min_log_hz, logstep = 1000.0, np.log(6.4) / 27.0
+        min_log_mel = min_log_hz / f_sp
+        hi = f >= min_log_hz
+        mels[hi] = min_log_mel + np.log(f[hi] / min_log_hz) / logstep
+        return mels
+
+    def mel_to_hz(m):
+        m = np.asarray(m, dtype=np.float64)
+        f_sp = 200.0 / 3.0
+        freqs = f_sp * m
+        min_log_hz, logstep = 1000.0, np.log(6.4) / 27.0
+        min_log_mel = min_log_hz / f_sp
+        hi = m >= min_log_mel
+        freqs[hi] = min_log_hz * np.exp(logstep * (m[hi] - min_log_mel))
+        return freqs
+
+    n_bins = 1 + n_fft // 2
+    fftfreqs = np.linspace(0.0, sr / 2.0, n_bins)
+    mel_pts = np.linspace(hz_to_mel([fmin])[0], hz_to_mel([fmax])[0], n_mels + 2)
+    freqs = mel_to_hz(mel_pts)                       # band edges, length n_mels+2
+    fdiff = np.diff(freqs)
+    ramps = freqs[:, None] - fftfreqs[None, :]
+    weights = np.zeros((n_mels, n_bins))
+    for i in range(n_mels):
+        lower = -ramps[i] / fdiff[i]
+        upper = ramps[i + 2] / fdiff[i + 1]
+        weights[i] = np.maximum(0.0, np.minimum(lower, upper))
+    enorm = 2.0 / (freqs[2:n_mels + 2] - freqs[:n_mels])
+    return weights * enorm[:, None]
+
+
+def test_mel_filterbank_matches_independent_slaney_port():
+    import librosa
+    sr, n_fft, n_mels, fmin, fmax = 16000, 512, 32, 50.0, 8000.0
+    # librosa.filters.mel defaults to float32; ask for float64 to compare at
+    # full precision against the independent port.
+    ours = librosa.filters.mel(sr=sr, n_fft=n_fft, n_mels=n_mels,
+                               fmin=fmin, fmax=fmax, dtype=np.float64)
+    ref = _slaney_mel_filterbank(sr, n_fft, n_mels, fmin, fmax)
+    np.testing.assert_allclose(ours, ref, atol=1e-12, rtol=0)
+
+
 def test_log_mel_silence_hits_fixed_floor_not_neg_inf():
     # Absolute dB with amin=1e-10 floors silence at ~ -100 dB (finite), not
     # -inf, and not the per-file-relative 0 the old ref=np.max produced.

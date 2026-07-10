@@ -22,7 +22,8 @@ transcript:
 
 Comparison is made at the **first subword** of the spaCy token (BERT
 or LLM subwords don't always align 1:1 with spaCy tokens). PUNCT rows
-are `NaN`.
+are `NaN`, and so is the document's first word — it has no preceding
+context, so the model makes no prediction for it.
 
 ## EEG rationale
 Whereas [`LLM_Cloze`](pred_cloze.md) and

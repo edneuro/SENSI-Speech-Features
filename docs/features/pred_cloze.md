@@ -19,7 +19,9 @@ Mathematical exponential inverse of [`LLM_Surprisal`](pred_surprisal_llm.md):
 
     LLM_Cloze = 2^(-LLM_Surprisal)
 
-PUNCT rows are `NaN`. Both columns come from the same forward pass —
+PUNCT rows are `NaN`, and so is the document's first word (no
+preceding context to condition on). Both columns come from the same
+forward pass —
 enabling either triggers the full LLM extractor.
 
 ## EEG rationale

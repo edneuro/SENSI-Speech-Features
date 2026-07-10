@@ -18,7 +18,8 @@ in **bits**:
 
 A high-frequency word in a strongly constraining context has low
 surprisal (≈ 1–3 bits); a low-frequency or contextually unexpected word
-has high surprisal (≈ 8–20 bits). PUNCT rows are `NaN`.
+has high surprisal (≈ 8–20 bits). PUNCT rows are `NaN`, and so is the
+document's first word (no left context to condition on).
 
 `Surprisal` is the **legacy GPT-2 baseline** column. The
 [`LLM_Surprisal`](pred_surprisal_llm.md) column carries the same metric
@@ -146,18 +147,25 @@ for a ~512× compute reduction.
 3. `_subword_log_probs` returns one log P(subwordᵢ | context) per
    subword via a single forward pass (≤ 1024 subwords) or via
    `_chunked_logits` otherwise.
-4. `_align_tokens_to_subwords` walks the spaCy tokens in document
-   order, finds the contiguous run of GPT-2 subwords overlapping each
-   token's character span, sums their log-probabilities, and converts
-   to bits (`-log_e P / log_e 2`). Summing subword log-probs gives the
-   joint log-probability of the word — see *Math / linguistics* above.
+4. `map_tokens_to_subwords` walks the spaCy tokens in document order
+   and assigns each GPT-2 subword to exactly ONE token — the first
+   token whose character span it overlaps (a subword straddling a
+   token boundary, e.g. GPT-2 `"don"` over spaCy `"do"` + `"n't"`, is
+   never charged twice). `_token_surprisals` sums each token's subword
+   log-probabilities and converts to bits (`-log_e P / log_e 2`) —
+   the joint log-probability of the word; see *Math / linguistics*.
 5. Rows with `upos == "PUNCT"` are masked to `NaN`.
+6. Results are memoized per (text, token sequence): when the
+   word-level and document-level batches process the same stimulus in
+   one run, GPT-2 runs once and the second pass is a cache hit.
 
 ### Why (design notes)
-- *Sentinel `0` for the first word*: there is no left context to
-  condition on, so any value is arbitrary. `0` was chosen rather than
-  `NaN` because downstream code historically expected a numeric
-  column; drop or skip that row in surprisal regressions.
+- *`NaN` for the first word*: its first subword has no left context,
+  so GPT-2 cannot assign it a probability. Emitting `0` bits there
+  (the pre-2026-07 behavior) faked a "perfectly predictable" first
+  word; `NaN` follows the pipeline-wide no-value convention. Any word
+  whose subwords include position 0 is affected (i.e. exactly the
+  document-initial word).
 - *PUNCT → `NaN`*: GPT-2 does assign probabilities to punctuation,
   but surprisal regressions in the EEG literature are typically over
   content words. ⚠️ The mask is applied here so downstream code
