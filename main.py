@@ -152,8 +152,12 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument('--analysis-rate', type=float, default=128.0,
                    help='Acoustic level: output sample rate in Hz (match your EEG).')
     p.add_argument('--env-method', choices=['rms', 'hilbert'], default='rms')
-    p.add_argument('--env-comp', type=float, default=0.3,
-                   help='Envelope power-law compression exponent.')
+    from extractors.acoustic_ts import MTRF_COMP
+    p.add_argument('--env-comp', type=float, default=MTRF_COMP,
+                   help='Envelope power-law compression exponent '
+                        '(default: log10(2) ≈ 0.30103, exactly matching '
+                        'mTRFenvelope.m — a rounded 0.3 breaks the '
+                        'bit-for-bit mTRF replication).')
     p.add_argument('--env-window', type=float, default=1.0,
                    help='Envelope averaging window (mTRF window; >1 overlaps frames for smoothing).')
     p.add_argument('--n-mels', type=int, default=16)

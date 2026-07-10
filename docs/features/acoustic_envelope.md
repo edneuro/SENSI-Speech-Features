@@ -25,7 +25,8 @@ series.
 ## What it is / how it's computed
 SensiExtractor offers two envelope methods (toggle: `env_method`). Both
 return a value at every point of the canonical grid `N = round(duration ×
-rate)` and then apply a power-law compression `comp` (default `0.3`).
+rate)` and then apply a power-law compression `comp` (default
+`log₁₀(2) ≈ 0.30103`).
 
 **`rms` (default) — faithful replica of `mTRFenvelope.m` → `mTRFresample.m`.**
 This is a direct port of the mTRF-Toolbox envelope routine [Crosse 2016], the
@@ -48,8 +49,14 @@ buffer, working along the time axis):
    samples; values `> 1` overlap adjacent frames for extra smoothing **without**
    changing the output rate — the same `window` argument as `mTRFresample`.
 
-   The mTRF default, which SensiExtractor matches, is `comp = log₁₀(2) ≈
-   0.301` (we expose it as `0.3`). This is not arbitrary: Stevens' loudness
+   The mTRF default, which SensiExtractor matches, is the **exact** constant
+   `comp = log₁₀(2) ≈ 0.30103` — carried at full float precision, not the
+   rounded `0.3`. On normalized audio (values < 1) the difference is
+   systematic: a rounded `0.3` makes every frame slightly larger than
+   MATLAB's, so the `rms` method would no longer be bit-for-bit with
+   `mTRFenvelope.m`. (Prior to prefs v17 the shipped default was `0.3`,
+   which quietly broke that replication; v17 migrates a stored `0.3` back to
+   the exact constant.) This is not arbitrary: Stevens' loudness
    law found that the perceived loudness of a tone grows as a power function
    of intensity with exponent `log₁₀(2)` [Stevens 1955], so the compression
    pulls the raw acoustic envelope toward a *perceptual* loudness contour.
@@ -128,7 +135,9 @@ import librosa
 from extractors.acoustic_ts import amplitude_envelope
 
 y, sr = librosa.load("stim.wav", sr=None, mono=True)
-env = amplitude_envelope(y, sr, rate=128, method="rms", comp=0.3, window=1.0)
+import numpy as np
+env = amplitude_envelope(y, sr, rate=128, method="rms",
+                         comp=float(np.log10(2)), window=1.0)
 # env.shape == (round(len(y)/sr * 128),)
 ```
 

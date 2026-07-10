@@ -25,12 +25,16 @@ Schema (v13 — active):
       "acoustic_ts": {analysis_rate, env_method, env_comp, n_mels, n_mfcc, mel_preset}
     }
 
-Migration chain (all paths terminate at v13):
+Migration chain (all paths terminate at the current version):
   v1 → v2 → v3 → v4 → v5 → v6 → v7 → v8 → v9 → v10
-  v2 → … → v10
-  v9 → v10
-  v10 files are deep-merged against v13 defaults (additive: v11 coerces liwc→empath,
-    v12 adds lexical-norms keys, v13 adds acoustic_ts section)
+  v10..current files are deep-merged against the current defaults (additive).
+  Finalize steps applied to any older source: v11 coerces liwc→empath,
+    v14 recovers the struct-id rename, v17 upgrades the old rounded
+    acoustic_ts.env_comp default (0.3) to the exact mTRF constant log10(2)
+    and coerces stored OpenAI (gpt-*) llm_model to "" (auto).
+  Later additive versions (v12 lexical-norms, v13 acoustic_ts, v15 opt-in
+    defaults, v16 phoneme surprisal, v17 above) only add keys / correct
+    defaults; missing keys are filled from the current defaults.
 
 Default location: <project_root>/config/preferences.json
 Override via SENSI_PREFS_PATH environment variable.
@@ -762,11 +766,41 @@ DEFAULT_PREFS_V16: dict[str, Any] = {
 }
 
 # ---------------------------------------------------------------------------
+# v17 constants
+#
+# Release-hardening batch (2026-07-10). Two default corrections, no new keys:
+#   - acoustic_ts.env_comp: 0.3 → log10(2) ≈ 0.30103. The envelope extractor
+#     replicates mTRFenvelope.m bit-for-bit ONLY at exactly log10(2)
+#     (see extractors/acoustic_ts.MTRF_COMP); the rounded 0.3 default made
+#     every GUI/CLI run deviate from the documented replication claim.
+#     Migration coerces a stored value of exactly 0.3 (the old default) from
+#     any pre-v17 file; any other stored value is the user's and is kept.
+#   - predictability.llm_model: stored OpenAI ids (gpt-*) are coerced to ""
+#     (auto) — the OpenAI scoring endpoint no longer exists, so a saved gpt-*
+#     selection could only fail at run time (see extractors/llm_cloze.py).
+# ---------------------------------------------------------------------------
+
+SCHEMA_VERSION_V17 = 17
+
+# Exact mTRF power-law compression exponent. Kept as a literal here so
+# utils.preferences never imports extractors; cross-module equality with
+# extractors.acoustic_ts.MTRF_COMP is pinned by a migration test.
+import math as _math
+MTRF_ENV_COMP = float(_math.log10(2))
+
+DEFAULT_PREFS_V17: dict[str, Any] = {
+    **DEFAULT_PREFS_V16,
+    "schema_version": SCHEMA_VERSION_V17,
+    "acoustic_ts": {**DEFAULT_PREFS_V16["acoustic_ts"],
+                    "env_comp": MTRF_ENV_COMP},
+}
+
+# ---------------------------------------------------------------------------
 # Active schema aliases
 # ---------------------------------------------------------------------------
 
-SCHEMA_VERSION = SCHEMA_VERSION_V16  # active version
-DEFAULT_PREFS: dict[str, Any] = DEFAULT_PREFS_V16  # active defaults
+SCHEMA_VERSION = SCHEMA_VERSION_V17  # active version
+DEFAULT_PREFS: dict[str, Any] = DEFAULT_PREFS_V17  # active defaults
 
 
 # ---------------------------------------------------------------------------
@@ -814,7 +848,7 @@ def load_preferences() -> dict[str, Any]:
                 user_sem[right_key] = user_sem.pop(wrong_key)
     if version in (SCHEMA_VERSION_V10, SCHEMA_VERSION_V11,
                    SCHEMA_VERSION_V12, SCHEMA_VERSION_V13, SCHEMA_VERSION_V14,
-                   SCHEMA_VERSION_V15, SCHEMA_VERSION_V16):
+                   SCHEMA_VERSION_V15, SCHEMA_VERSION_V16, SCHEMA_VERSION_V17):
         # v10–v15 are additive: missing keys are filled from the current
         # defaults (merged starts as DEFAULT_PREFS). v11's backend coercion and
         # the version stamp are applied in the finalize step below, which
@@ -936,6 +970,12 @@ def load_preferences() -> dict[str, Any]:
     if isinstance(f, dict) and "feat_struct_term_id" in f:
         f["feat_struct_token_in_sentence_id"] = f.get("feat_struct_token_id", True)
         f["feat_struct_token_id"] = f.pop("feat_struct_term_id")
+    # v17 finalize (pre-v17 sources only — post-v17 values are the user's):
+    # upgrade the old rounded env_comp default to the exact mTRF constant.
+    if isinstance(version, int) and version < SCHEMA_VERSION_V17:
+        ac = merged.get("acoustic_ts")
+        if isinstance(ac, dict) and ac.get("env_comp") == 0.3:
+            ac["env_comp"] = MTRF_ENV_COMP
     if merged.get("schema_version") != SCHEMA_VERSION:
         merged["schema_version"] = SCHEMA_VERSION
         _write(path, merged)

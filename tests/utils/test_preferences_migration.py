@@ -887,7 +887,7 @@ def test_v15_prefs_migrate_to_v16_additively(tmp_path, monkeypatch):
                  encoding="utf-8")
     monkeypatch.setenv("SENSI_PREFS_PATH", str(p))
     prefs = P.load_preferences()
-    assert prefs["schema_version"] == 16
+    assert prefs["schema_version"] == P.SCHEMA_VERSION   # lands on current
     assert prefs["features"]["master_phoneme_surprisal"] is True
     assert prefs["features"]["feat_phoneme_surprisal"] is False
     assert prefs["features"]["feat_phoneme_cohort_entropy"] is False
@@ -895,3 +895,59 @@ def test_v15_prefs_migrate_to_v16_additively(tmp_path, monkeypatch):
     assert prefs["phoneme_surprisal"]["analysis_sr"] == 128
     assert prefs["phoneme_surprisal"]["strip_stress"] is True
     assert prefs["phoneme_surprisal"]["primary_only"] is True
+
+
+# ---------------------------------------------------------------------------
+# v17 — env_comp default becomes the exact mTRF constant log10(2)
+# ---------------------------------------------------------------------------
+
+def test_default_env_comp_is_exact_mtrf_constant():
+    """The extractor docstring requires comp == log10(2) for the claimed
+    bit-for-bit mTRFenvelope.m replication; the prefs default (0.3) silently
+    broke that for every GUI run. Guard both the value and cross-module drift."""
+    from extractors.acoustic_ts import MTRF_COMP
+    import math
+    assert DEFAULT_PREFS["acoustic_ts"]["env_comp"] == MTRF_COMP
+    assert MTRF_COMP == pytest.approx(math.log10(2), abs=0)
+
+
+def test_v16_env_comp_030_coerced_to_mtrf(tmp_path, monkeypatch):
+    import json
+    from utils import preferences as P
+    from extractors.acoustic_ts import MTRF_COMP
+    p = tmp_path / "prefs.json"
+    p.write_text(json.dumps({"schema_version": 16,
+                             "acoustic_ts": {"env_comp": 0.3}}),
+                 encoding="utf-8")
+    monkeypatch.setenv("SENSI_PREFS_PATH", str(p))
+    prefs = P.load_preferences()
+    assert prefs["schema_version"] == P.SCHEMA_VERSION
+    assert prefs["acoustic_ts"]["env_comp"] == MTRF_COMP
+
+
+def test_v16_custom_env_comp_preserved(tmp_path, monkeypatch):
+    """Only the old DEFAULT (exactly 0.3) is upgraded; a deliberately chosen
+    exponent is the user's to keep."""
+    import json
+    from utils import preferences as P
+    p = tmp_path / "prefs.json"
+    p.write_text(json.dumps({"schema_version": 16,
+                             "acoustic_ts": {"env_comp": 0.45}}),
+                 encoding="utf-8")
+    monkeypatch.setenv("SENSI_PREFS_PATH", str(p))
+    prefs = P.load_preferences()
+    assert prefs["acoustic_ts"]["env_comp"] == 0.45
+
+
+def test_v17_deliberate_030_not_coerced(tmp_path, monkeypatch):
+    """Post-v17, a user who intentionally sets 0.3 keeps it — the coercion
+    fires only when migrating from pre-v17 files."""
+    import json
+    from utils import preferences as P
+    p = tmp_path / "prefs.json"
+    p.write_text(json.dumps({"schema_version": P.SCHEMA_VERSION_V17,
+                             "acoustic_ts": {"env_comp": 0.3}}),
+                 encoding="utf-8")
+    monkeypatch.setenv("SENSI_PREFS_PATH", str(p))
+    prefs = P.load_preferences()
+    assert prefs["acoustic_ts"]["env_comp"] == 0.3
