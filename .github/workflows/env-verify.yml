@@ -1,0 +1,46 @@
+name: env-verify
+
+on:
+  push:
+    branches: [main, reproducible-install]
+  pull_request:
+
+jobs:
+  verify:
+    name: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    defaults:
+      run:
+        shell: bash -el {0}
+    env:
+      MKL_THREADING_LAYER: sequential
+      QT_QPA_PLATFORM: offscreen
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: conda-incubator/setup-miniconda@v3
+        with:
+          miniforge-version: latest
+          activate-environment: ""
+
+      - name: Install conda-lock
+        run: conda install -n base -c conda-forge conda-lock -y
+
+      - name: Install env from the committed lock
+        run: conda-lock install -p ./env conda-lock.yml
+
+      - name: Download spaCy model
+        run: conda run -p ./env python -m spacy download en_core_web_sm
+
+      - name: Import smoke (env installs AND imports on this OS)
+        run: conda run -p ./env python scripts/import_smoke.py
+
+      - name: bitsandbytes absent on macOS (Darwin marker honored)
+        if: matrix.os == 'macos-latest'
+        run: |
+          conda run -p ./env python -c "import importlib.util, sys; \
+          sys.exit(0 if importlib.util.find_spec('bitsandbytes') is None else 1)"
