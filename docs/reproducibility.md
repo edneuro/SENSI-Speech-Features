@@ -137,9 +137,12 @@ Be precise about this — it's the difference between "should work" and
   produced — and the identical failure across both OSes (both pinning the same
   MFA 3.4.0) confirms that one failure is platform-independent and lock-neutral,
   not a regression.
-- **osx-arm64 (Apple Silicon)**: proven only at the **install + import**
-  level, via CI (`.github/workflows/env-verify.yml`). No one on this project
-  has run the full pipeline — MFA forced alignment, GPT-2 surprisal, the
+- **osx-arm64 (Apple Silicon)**: verified only at the **install + import**
+  level, and only by CI (`.github/workflows/env-verify.yml`) — a green
+  `macos-latest` run across all three OSes is the merge gate, so this holds
+  the moment the branch merges; until that run is green, treat macOS as
+  *expected to work* (the lock installs an identical package set) rather than
+  proven. No one on this project has run the full pipeline — MFA forced alignment, GPT-2 surprisal, the
   acoustic/prosody extractors — on real macOS hardware, because CI runners
   don't carry the vendored `mfa_data/`/`hf_cache/` models and no Mac was
   available. **"MFA produces byte-identical alignment output on macOS" is
