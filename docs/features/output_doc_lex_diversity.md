@@ -34,28 +34,38 @@ For ERP studies that pool across many stimuli of varying length, MTLD
 is the right per-stimulus covariate to include in a regression.
 
 ## Math / linguistics
-- **TTR** = `|unique_lemmas| / n_tokens`. As text grows, the
-  probability of seeing a new type drops, so TTR monotonically
-  decreases — making comparisons across different-length texts
-  meaningless without correction.
+- **TTR** = `|unique_forms| / n_tokens` over lowercased content-word
+  surface forms. As text grows, the probability of seeing a new type
+  drops, so TTR monotonically decreases — making comparisons across
+  different-length texts meaningless without correction.
 - **MTLD** walks through the text counting tokens until the running
-  TTR drops below a threshold (default 0.72), then resets. The number
-  of full "factors" (segments) the text breaks into is the MTLD value
-  ([McCarthy 2010]). Higher MTLD = it takes more tokens before TTR
-  drops to the threshold = the text uses more types per token.
+  TTR drops to or below a threshold (default 0.72), then counts a
+  "factor" and resets. Leftover tokens at the end contribute a
+  proportional partial factor, `(1 − TTR_remaining) / (1 − 0.72)`.
+  `MTLD = n_tokens / factors`, averaged over a forward and a reverse
+  pass ([McCarthy 2010]). Higher MTLD = it takes more tokens before
+  TTR drops to the threshold = the text uses more types per token.
 
 ## Implementation in SensiExtractor
-Computed in `main.py`'s document-batch finishing step using the
-`lexicalrichness` package, which implements MTLD as defined in
-[McCarthy 2010]. Tokens are lowercased and PUNCT is excluded before
-the calculation.
+Computed in `extractors/lexical_diversity.py` (in-house implementation
+of the published procedure — equivalent to [McCarthy 2010], not
+verified bit-for-bit against the authors' original tool), called from
+`utils/doc_summary.py`. Both measures run over **content words only**
+(NOUN/VERB/ADJ/ADV/PROPN surface tokens, lowercased); punctuation and
+function words are excluded before the calculation.
+
+Edge convention: a text that never completes any factor (running TTR
+never reaches 0.72 in either direction — fully unique token
+sequences, very short texts) returns **NaN**: MTLD is undefined
+there, and fabricating a finite value would make it scale with text
+length, exactly the artifact MTLD exists to remove.
 
 ## Library
 ```python
-from lexicalrichness import LexicalRichness
-lex = LexicalRichness("the cat sat on the mat the cat slept")
-print(lex.ttr)    # 0.6
-print(lex.mtld()) # ~30 for a short text
+from extractors.lexical_diversity import compute_ttr, compute_mtld
+tokens = ["cat", "sat", "mat", "cat", "slept"]   # content words, lowercased
+compute_ttr(tokens)    # 0.8
+compute_mtld(tokens)   # forward+reverse mean; NaN if no factor completes
 ```
 
 ## Papers
