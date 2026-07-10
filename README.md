@@ -2,8 +2,7 @@
 
 Turn a spoken-word **audio file + its transcript** into publication-ready,
 **word-level feature tables** for naturalistic EEG analysis (e.g. N400 or TRF
-regressors). Part of the SENSI naturalistic-EEG pipeline (PI: Blair Kaneshiro,
-ISC Wu Tsai dataset).
+regressors). Part of the SENSI naturalistic-EEG pipeline.
 
 Every feature is optional and toggleable from either a desktop **GUI** or the
 **command line**.
@@ -51,10 +50,10 @@ column definitions.
 
 ## Requirements
 
-- **A supported platform:** Windows 11+, Linux, or **Apple-Silicon macOS** (M1/M2/M3/M4).
-  - **Intel Macs are not supported** — PyTorch dropped Intel-macOS builds after 2.2.2, which is incompatible with this project's NumPy 2.x. (A macOS VM on an Intel/AMD host counts as an Intel Mac.)
+- **A supported platform:** Windows 11+, Linux, or Apple-Silicon macOS (M1/M2/M3/M4).
+  - **Intel Macs are not supported** — PyTorch dropped Intel-macOS builds after 2.2.2, which is incompatible with this project's NumPy 2.x. 
 - **Miniconda** (a minimal conda installer). The whole environment is conda-based: forced alignment needs native Kaldi libraries, and the compiled scientific stack (NumPy, pandas, SciPy, librosa, …) comes from conda-forge. A plain pip `virtualenv` will **not** work.
-- **~4–5 GB free disk**: the environment (~2 GB) plus bundled models (~1.5 GB, already in the repo).
+- **~10 GB free disk**: the environment (~2 GB) plus bundled models (~1.5 GB, already in the repo).
 
 ---
 
@@ -71,7 +70,7 @@ Download the installer for your OS from
 
 **macOS (Apple Silicon)**
 - Run the Apple-Silicon `.pkg` (or `.sh`) installer.
-- Initialize conda for your shell, then **open a fresh Terminal** — otherwise `conda activate` (and `setup.sh`) fail with `Run 'conda init' before 'conda activate'`:
+- Initialize conda for your shell, then **open a fresh Terminal**:
   ```bash
   conda init zsh          # zsh is the macOS default; use your shell name if different
   ```
@@ -93,7 +92,7 @@ Download the installer for your OS from
 
 ### Step 2 — Run the setup script
 
-From the project folder:
+From the SensiExtractor project folder:
 
 **Windows** (Anaconda Prompt):
 ```
@@ -106,12 +105,20 @@ bash setup.sh
 ```
 
 This installs [conda-lock](https://github.com/conda/conda-lock) into your base
-conda environment, builds `./env` from the committed `conda-lock.yml` (an exact,
+conda environment, builds `./env` from `conda-lock.yml` (an exact,
 pinned dependency set for your platform), downloads the MFA models, and installs
 the spaCy model. You only do this once.
 
 ### Step 3 — Launch
 
+Setup creates a **`runGUI`** launcher tailored to your machine — just
+double-click it in your file browser (no terminal needed):
+
+- **Windows:** `runGUI.bat`
+- **macOS:** `runGUI.command`
+- **Linux:** `runGUI.sh`
+
+Or launch from a terminal:
 ```bash
 conda activate ./env
 python gui.py
@@ -124,6 +131,9 @@ python gui.py
 ## Usage
 
 ### GUI (recommended)
+
+Double-click the **`runGUI`** launcher created by setup (`runGUI.bat` on
+Windows, `runGUI.command` on macOS, `runGUI.sh` on Linux), or from a terminal:
 
 ```bash
 conda activate ./env
@@ -213,29 +223,6 @@ To add or change a package: edit `environment.yml` (conda packages) or
 `requirements.txt` (pip packages), run `python scripts/relock.py`, and commit the
 regenerated `conda-lock.yml`. Full details, platform support, and the archival
 policy are in **[`docs/reproducibility.md`](docs/reproducibility.md)**.
-
----
-
-## Models & data
-
-The two large model folders ship **in the repo**, so collaborators skip ~1.5 GB
-of downloads:
-
-| Model | Purpose | Ships in repo? |
-|-------|---------|----------------|
-| MFA acoustic model + dictionary (`english_us_arpa`) | Forced alignment | Yes (`mfa_data/`) |
-| GPT-2 | Word surprisal | Yes (`hf_cache/`) |
-| BERT (`bert-base-uncased`) | Word/sentence embeddings | Yes (`hf_cache/`) |
-| spaCy `en_core_web_sm` | Tokenize/POS/parse | Downloaded by `setup.sh`/`setup.bat` |
-| Word2Vec (Google News 300d) | Word embeddings | Downloaded on first use (~1.7 GB, cached) |
-
-**Sharing with colleagues:** zip the folder *including* `mfa_data/` and
-`hf_cache/`, but *excluding* `env/` (it contains OS-specific binaries and must be
-rebuilt per machine). Recipients just run `setup.sh` / `setup.bat`.
-
-Lexical-norm tables live in `dictionaries/`. The EWFG grade-band frequency table
-(`dictionaries/edu_zipf.parquet`) is license-bound and **not** bundled — supply
-your own to enable the `Edu_Zipf_*` columns.
 
 ---
 
