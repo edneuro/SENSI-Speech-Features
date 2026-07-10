@@ -30,7 +30,7 @@ All optional; grouped by level.
 
 - **Word-level**
   - *Structural / linguistic* (spaCy): sentence & token indices, lemma, POS, morphology, dependency parse
-  - *Frequency*: `Zipf_Freq` (SUBTLEX-US); optional grade-band frequencies (EWFG)
+  - *Frequency*: `Zipf_Freq` (wordfreq combined English list — SUBTLEX subtitles + Wikipedia/books/news/web); optional grade-band frequencies (EWFG)
   - *Predictability*: `Surprisal` (GPT-2); LLM-cloze (`LLM_Cloze`, `LLM_Surprisal`, `LLM_TopMatch`)
   - *Semantics*: semantic-domain category flags (Empath/LIWC); Word2Vec & BERT embeddings
   - *Lexical norms* (opt-in, bring-your-own data): age-of-acquisition, concreteness, imageability, familiarity, valence/arousal/dominance

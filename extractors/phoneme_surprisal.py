@@ -125,7 +125,8 @@ def load_mfa_lexicon(dict_path: str, *, strip_stress: bool = True,
 
     The phone string is always the LAST tab-separated field; MFA special tokens
     ([...]/<...>) and silence/noise phones are skipped. Frequencies come from
-    wordfreq (SUBTLEX-US); f==0 words are kept and floored later by the trie.
+    wordfreq's combined English list (SUBTLEX subtitles blended with
+    Wikipedia/books/news/web); f==0 words are kept and floored later by the trie.
     """
     from wordfreq import word_frequency
 

@@ -17,8 +17,8 @@ from utils.preferences import load_preferences, save_preferences
 _AGG_STAGE_REQ: dict[str, tuple[str, str]] = {
     "output_doc_agg_zipf_freq": (
         "word_freq",
-        "<b>Will output NaN</b> — SUBTLEX frequency is not in the run plan.<br>"
-        "• Enable SUBTLEX corpus frequency on the Word-level features page<br>"
+        "<b>Will output NaN</b> — corpus frequency is not in the run plan.<br>"
+        "• Enable corpus frequency (wordfreq) on the Word-level features page<br>"
         "• Ensure Word-level CSVs output is on (Run tab)",
     ),
     "output_doc_agg_edu_zipf": (
@@ -88,7 +88,7 @@ class DocFeaturesSection(QWidget):
         agg_card = Card("Aggregates", "Means of word-level metrics.")
         for key, label in [
             ("output_doc_agg_zipf_freq",
-             "mean_zipf_freq  (SUBTLEX corpus mean)"),
+             "mean_zipf_freq  (corpus-frequency mean, wordfreq)"),
             ("output_doc_agg_edu_zipf",
              "mean_edu_zipf_*  (EWFG grade-band means: K2/3–5/6–8/9–12/Overall)"),
             ("output_doc_agg_surprisal",

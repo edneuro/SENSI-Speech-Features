@@ -84,7 +84,7 @@ class WordFeaturesSection(QWidget):
         freq_card.settings_changed.connect(self.settings_changed)
         freq_card.add_child(self._make_toggle(
             "freq_subtlex",
-            "General-corpus frequency (SUBTLEX-US, Zipf scale) → Zipf_Freq",
+            "General-corpus frequency (wordfreq blend, Zipf scale) → Zipf_Freq",
             f["freq_subtlex"], "features"))
         ewfg_label = QLabel("Grade-banded (EWFG):")
         ewfg_label.setObjectName("Subtitle")

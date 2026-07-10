@@ -1,6 +1,6 @@
 ---
 key: freq_subtlex
-name: SUBTLEX-US frequency (Zipf)
+name: Word frequency (Zipf, wordfreq)
 levels: [word]
 gui_toggle: freq_subtlex
 output_columns: [Zipf_Freq]
@@ -10,11 +10,20 @@ depth: deep
 ---
 
 ## Meaning
-Per-word lexical frequency on the **Zipf scale**, looked up from
-SUBTLEX-US — a 51-million-word corpus of American English film and TV
-subtitles ([Brysbaert 2009]). Subtitle corpora track conversational /
-naturalistic frequency much better than book/newspaper corpora, which
-is why they are the default reference for psycholinguistic stimuli.
+Per-word lexical frequency on the **Zipf scale**, looked up from the
+`wordfreq` library's **combined English list**. That list blends several
+corpora — the SUBTLEX subtitle corpora ([Brysbaert 2009]) are a major
+component, alongside Wikipedia, books, news, web, and social-media text
+(see the [wordfreq source inventory](https://github.com/rspeer/wordfreq)).
+
+> ⚠️ **Methods-section wording:** cite these values as *"Zipf frequency
+> from the wordfreq combined English list (Speer et al.)"* — they are
+> **not** pure SUBTLEX-US norms, and will differ slightly from values
+> looked up in the SUBTLEX-US spreadsheet.
+
+Subtitle corpora track conversational / naturalistic frequency much
+better than book/newspaper corpora, which is why they anchor the blend
+and why wordfreq is a standard reference for psycholinguistic stimuli.
 
 The Zipf scale is `log₁₀(occurrences per million) + 3`, calibrated so:
 
@@ -24,7 +33,7 @@ The Zipf scale is `log₁₀(occurrences per million) + 3`, calibrated so:
 | 5–6 | 100–1,000 | Typical content words: *house, run, important* |
 | 3–4 | 1–10 | Lower-frequency content: *moustache, perimeter* |
 | 1–2 | < 1 | Rare words |
-| 0 | 0 | Out-of-vocabulary (`zipf_frequency` returns 0.0) |
+| NaN | — | Out-of-vocabulary (wordfreq's 0.0 sentinel is converted to NaN) |
 
 ## EEG rationale
 Word frequency is a well replicated lexical predictor of word-level
@@ -69,29 +78,30 @@ Source: `extractors/word_freq.py:add_word_freq`.
 
 - *Lookup keyed on `lemma`, not `token`* — collapses inflectional
   variants (`running`, `runs`, `ran` → `run`) so the value reflects the
-  word's lexeme-level frequency rather than its surface form. This
-  matches standard psycholinguistic practice of treating frequency as
-  a lexeme-level property; surface-form frequencies are typically
-  reserved for studies of morphological access specifically.
-- *PUNCT → NaN, OOV → 0.0* — distinguishes "this row is structurally
-  not a word" from "this row is a word the corpus has never seen,"
-  which downstream code can handle differently (NaN typically masked
-  from regression; 0.0 retained but flags as out-of-corpus).
+  word's lexeme-level frequency rather than its surface form. Note that
+  much of the EEG/reading literature uses **surface-form** frequency;
+  if your analysis needs that, derive it from the `token` column with
+  `wordfreq.zipf_frequency(token, "en")` directly.
+- *PUNCT → NaN and OOV → NaN* — wordfreq returns `0.0` as an
+  out-of-vocabulary *sentinel*, not a real Zipf value; propagating it
+  would silently bias document-level means (a fake "Zipf 0" word).
+  NaN follows the pipeline-wide "no value, never imputed" convention
+  (cf. [lexical norms](lexical_norms.md)).
 - *wordfreq library over a hand-rolled SUBTLEX-US lookup* — `wordfreq`
-  bundles SUBTLEX-US with proper Zipf normalization and a stable
-  Python API; reimplementing the lookup would add maintenance burden
-  for no benefit.
+  provides proper Zipf normalization, wide vocabulary coverage, and a
+  stable Python API; the trade-off is the multi-corpus provenance
+  called out above.
 
 ## Library
 ```python
 from wordfreq import zipf_frequency
 zipf_frequency("house",     "en")  # ≈ 5.61
 zipf_frequency("perimeter", "en")  # ≈ 3.84
-zipf_frequency("zyzzyva",   "en")  # 0.0 (OOV)
+zipf_frequency("zyzzyva",   "en")  # 0.0 (OOV sentinel → NaN in Zipf_Freq)
 ```
 
 ## Papers
-- <a name="brysbaert-2009"></a>**[Brysbaert 2009]** Brysbaert & New. *Moving beyond Kučera and Francis: A critical evaluation of current word frequency norms and the introduction of a new and improved word frequency measure for American English.* Behavior Research Methods 41(4), 977–990. [doi:10.3758/BRM.41.4.977](https://doi.org/10.3758/BRM.41.4.977) — the SUBTLEX-US norms underlying `wordfreq`'s English Zipf values; establishes that the frequency effect on reading and lexical decision time is logarithmic in raw frequency (i.e. linear in Zipf).
+- <a name="brysbaert-2009"></a>**[Brysbaert 2009]** Brysbaert & New. *Moving beyond Kučera and Francis: A critical evaluation of current word frequency norms and the introduction of a new and improved word frequency measure for American English.* Behavior Research Methods 41(4), 977–990. [doi:10.3758/BRM.41.4.977](https://doi.org/10.3758/BRM.41.4.977) — the SUBTLEX-US norms, a major component of `wordfreq`'s combined English list; establishes that the frequency effect on reading and lexical decision time is logarithmic in raw frequency (i.e. linear in Zipf).
 - <a name="vanpetten-1990"></a>**[Van Petten 1990]** Van Petten & Kutas. *Interactions between sentence context and word frequency in event-related brain potentials.* Memory & Cognition 18(4), 380–393. [doi:10.3758/BF03197127](https://doi.org/10.3758/BF03197127) — direct demonstration that less-frequent words elicit larger N400s than more-frequent words (modulated by sentence position).
 - <a name="dambacher-2006"></a>**[Dambacher 2006]** Dambacher, Kliegl, Hofmann, Jacobs. *Frequency and predictability effects on event-related potentials during reading.* Brain Research 1084(1), 89–103. [doi:10.1016/j.brainres.2006.02.010](https://doi.org/10.1016/j.brainres.2006.02.010) — separating frequency and predictability ERP effects.
 

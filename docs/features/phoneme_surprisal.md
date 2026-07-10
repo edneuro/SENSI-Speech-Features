@@ -109,8 +109,8 @@ phonemes the maximum surprisal a real dictionary entry could have,
 rather than an arbitrary sentinel.
 
 **Frequency floor.** A dictionary word with `wordfreq` frequency `0`
-(present in the MFA lexicon but not observed in the SUBTLEX-US corpus
-backing `wordfreq`) is **not** dropped — it is floored to `f_min`, the
+(present in the MFA lexicon but not observed in the combined corpus
+blend backing `wordfreq`) is **not** dropped — it is floored to `f_min`, the
 minimum nonzero frequency in the lexicon, and stays in the trie. This
 keeps the OOV cap reserved for pronunciations genuinely absent from
 the dictionary, rather than firing on every merely-rare word.
@@ -133,9 +133,12 @@ grouping already treats stress as a separate concern from phoneme
 identity. `primary_only` keeps only the first-listed pronunciation
 variant per word (MFA dictionaries list multiple pronunciations for
 some words). Frequency `f(w)` comes from `wordfreq.word_frequency(w,
-"en")` — the same SUBTLEX-US-backed linear-frequency source already
-behind the `Zipf_Freq` word column, so the cohort prior and the
-existing frequency column are drawn from the same corpus.
+"en")` — the same linear-frequency source already behind the
+`Zipf_Freq` word column (wordfreq's combined English list: SUBTLEX
+subtitles blended with Wikipedia/books/news/web — see
+[freq_subtlex](freq_subtlex.md) for the provenance caveat), so the
+cohort prior and the existing frequency column are drawn from the
+same source.
 
 ### Trie construction and caching
 
@@ -246,7 +249,7 @@ from wordfreq import word_frequency
 line = "cat\tK AE1 T"
 word, phones = line.split("\t")
 phones = phones.split()                       # ["K", "AE1", "T"]
-freq = word_frequency(word, "en")             # linear SUBTLEX-US frequency
+freq = word_frequency(word, "en")             # linear frequency (wordfreq blend)
 
 # Build the trie once, then score a word's aligned phones in O(1)/phoneme:
 # trie = build_cohort_trie(load_mfa_lexicon(dict_path))
