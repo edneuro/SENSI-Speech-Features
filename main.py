@@ -31,9 +31,11 @@ Column order in output CSV:
 
 Merge strategy (alignment + parse):
     After alignment, Transcript words are merged into the token DataFrame
-    on a normalized form of the token. Punctuation and numbers (which MFA
-    spells out) are handled via the prepared transcript. Words MFA could
-    not align will have NaN in Onset/End.
+    by monotonic sequence matching (extractors/align_merge.py): both word
+    streams are consumed left to right, with local repair for tokenization
+    differences (contractions, digits vs. spelled-out numbers, hyphenated
+    words). Tokens that cannot be paired get NaN Onset/End — never the
+    timing of a same-form word elsewhere in the document.
 """
 
 import argparse
@@ -233,66 +235,6 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 # ---------------------------------------------------------------------------
-# Merge helpers
-# ---------------------------------------------------------------------------
-
-def _normalize(word: str) -> str:
-    """Lowercase, strip punctuation from edges for fuzzy merge."""
-    import re
-    return re.sub(r"[^\w'-]", '', word.lower())
-
-
-def _merge_alignment(token_df: pd.DataFrame, align_df: pd.DataFrame) -> pd.DataFrame:
-    """Left-join alignment (Onset/End/Transcript) onto token_df.
-
-    Alignment is word-level and excludes punctuation; token_df includes
-    punctuation. We match on normalized token form. Unmatched tokens
-    (punctuation, OOV for MFA) get NaN Onset/End.
-    """
-    # Only try to merge non-punctuation tokens
-    token_df = token_df.copy()
-    token_df['_norm'] = token_df['token'].apply(_normalize)
-
-    align_df = align_df.copy()
-    align_df['_norm'] = align_df['Transcript'].apply(_normalize)
-
-    # align_df may have repeated words; track which rows have been consumed
-    used = [False] * len(align_df)
-    onsets, ends, transcripts = [], [], []
-
-    for _, row in token_df.iterrows():
-        if row['upos'] == 'PUNCT':
-            onsets.append(None)
-            ends.append(None)
-            transcripts.append(None)
-            continue
-
-        norm = row['_norm']
-        matched = False
-        for i, arow in align_df.iterrows():
-            if used[i]:
-                continue
-            if arow['_norm'] == norm:
-                onsets.append(arow['Onset'])
-                ends.append(arow['End'])
-                transcripts.append(arow['Transcript'])
-                used[i] = True
-                matched = True
-                break
-
-        if not matched:
-            onsets.append(None)
-            ends.append(None)
-            transcripts.append(None)
-
-    token_df['Transcript'] = transcripts
-    token_df['Onset'] = onsets
-    token_df['End'] = ends
-    token_df.drop(columns=['_norm'], inplace=True)
-    return token_df
-
-
-# ---------------------------------------------------------------------------
 # Column ordering
 # ---------------------------------------------------------------------------
 
@@ -423,7 +365,8 @@ def run(args) -> pd.DataFrame:
             persist_dir=persist_dir, run_if_missing=run_if_missing)
         args._phones_df = phones_df
         if df is not None:
-            df = _merge_alignment(df, align_df)
+            from extractors.align_merge import merge_alignment
+            df = merge_alignment(df, align_df)
         else:
             df = align_df
 
