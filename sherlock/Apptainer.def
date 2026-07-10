@@ -1,10 +1,11 @@
 # SensiExtractor environment container for Sherlock.
 #
 # WHAT THIS IS: a single-file (.sif) build of the *environment only* — conda
-# (MFA/Kaldi) + the pip layer from requirements.txt + spaCy + MFA models. It does
-# NOT bake in the app code or the big gated LLM weights; those are bind-mounted at
-# run time (see run_container.sbatch). This mirrors the folder's philosophy: the
-# container is the environment, the repo stays the repo.
+# (MFA/Kaldi) + the pip layer, both installed from the committed conda-lock.yml,
+# + spaCy + MFA models. It does NOT bake in the app code or the big gated LLM
+# weights; those are bind-mounted at run time (see run_container.sbatch). This
+# mirrors the folder's philosophy: the container is the environment, the repo
+# stays the repo.
 #
 # WHY A CONTAINER: the bare-metal conda path fights Sherlock at every turn (75k+
 # files vs $HOME quota, gcc 4.8.5 too old to compile, Anaconda discouraged, Lmod
@@ -28,17 +29,18 @@
 # WHY miniforge base + conda-forge (not the old setup_env.sh gymnastics): inside
 # the container we start from a clean Debian with a modern gcc, so the "compilers"
 # workaround and the "install on sh_dev not login node" dance are both unnecessary.
-# We still install the compiled scientific stack via conda-forge so pip never tries
-# to build from source.
+# conda-lock.yml still pins the compiled scientific stack via conda-forge so pip
+# never tries to build from source.
 
 Bootstrap: docker
 From: condaforge/miniforge3:latest
 
 %files
     # Source paths are relative to the build's working directory (the repo root,
-    # per the BUILD note above). Only requirements.txt is needed to build the env;
-    # app code is bind-mounted at run time, not copied in.
-    requirements.txt /opt/requirements.txt
+    # per the BUILD note above). conda-lock.yml pins the entire env exactly (all
+    # platforms); the container installs from it so the .sif matches every other
+    # install target. App code is bind-mounted at run time, not copied in.
+    conda-lock.yml /opt/conda-lock.yml
 
 %post
     set -eux
@@ -46,33 +48,18 @@ From: condaforge/miniforge3:latest
     ENV_PREFIX=/opt/sensienv
     MFA_ROOT_DIR=/opt/mfa_data
 
-    # 1. conda layer: python + MFA. Pin Kaldi to its CPU build (`kaldi=*=cpu_*`):
-    #    MFA forced alignment is CPU-only, but conda-forge's default CUDA Kaldi
-    #    drags in ~3 GB of NVIDIA/MAGMA libraries the container never uses (the GPU
-    #    it DOES need, for Llama, comes from the pip torch wheel below — not Kaldi).
-    conda create -y -p "$ENV_PREFIX" -c conda-forge python=3.10 \
-        "kaldi=*=cpu_*" montreal-forced-aligner
+    # 1. Build the env from the committed lock (identical to setup.sh / CI).
+    #    Kaldi CPU pin, MFA, compiled sci stack, and the full pip layer are all
+    #    captured in conda-lock.yml — no floors, no source compilation, no drift.
+    #    torch's default Linux wheel bundles its own CUDA runtime, so GPU works
+    #    via `--nv` at run time with no CUDA base image.
+    conda install -n base -c conda-forge conda-lock -y
+    conda-lock install -p "$ENV_PREFIX" /opt/conda-lock.yml
 
-    # 1b. Compiled scientific packages from conda-forge PREBUILT binaries, so the
-    #     pip step below sees them satisfied and never compiles from source.
-    #     NOTE: praat-parselmouth and soundfile are deliberately NOT here — both
-    #     are PyPI-only spellings (conda-forge has no praat-parselmouth; its
-    #     soundfile is named pysoundfile) that ship manylinux wheels, so the pip
-    #     step installs them from wheels without compiling. conda's librosa pulls
-    #     pysoundfile transitively, so the conda solve still resolves cleanly.
-    conda install -y -p "$ENV_PREFIX" -c conda-forge \
-        pandas numpy scipy pyarrow gensim librosa
-
-    # 2. pip layer: single source of truth = requirements.txt. torch's default
-    #    Linux wheel bundles its own CUDA runtime, so GPU works via `--nv` at run
-    #    time with no CUDA base image. bitsandbytes (4-bit Llama) installs on Linux.
-    "$ENV_PREFIX/bin/pip" install --upgrade pip setuptools wheel
-    "$ENV_PREFIX/bin/pip" install -r /opt/requirements.txt
-
-    # 3. spaCy English model
+    # 2. spaCy English model
     "$ENV_PREFIX/bin/python" -m spacy download en_core_web_sm
 
-    # 4. MFA acoustic + dictionary models, BAKED IN (ungated, stable, ~a few
+    # 3. MFA acoustic + dictionary models, BAKED IN (ungated, stable, ~a few
     #    hundred MB) so alignment needs no network on Sherlock's offline compute
     #    nodes. The big GATED Llama weights are deliberately NOT baked — they stay
     #    on $SCRATCH/$OAK and bind-mount in (see download_models.sh + sbatch).
@@ -100,7 +87,7 @@ From: condaforge/miniforge3:latest
 
 %labels
     org.sensi.role      environment-only
-    org.sensi.contains  conda(MFA/Kaldi)+pip(requirements.txt)+spaCy+MFA-models
+    org.sensi.contains  conda(MFA/Kaldi)+pip(conda-lock.yml)+spaCy+MFA-models
     org.sensi.excludes  app-code(bind-mount) llama-weights(bind-mount)
 
 %help
