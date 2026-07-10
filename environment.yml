@@ -2,19 +2,28 @@ name: sensi
 channels:
   - conda-forge
   - defaults
+# conda-lock reads this non-standard key to know which platforms to lock.
+# NEVER add osx-64 — Intel Mac is dropped upstream (see design spec).
+platforms:
+  - linux-64
+  - osx-arm64
+  - win-64
 dependencies:
   - python=3.10
-  # Pin Kaldi (MFA's engine) to its CPU build. With a GPU present conda otherwise
-  # resolves the CUDA build, pulling ~3 GB of NVIDIA + MAGMA libraries that forced
-  # alignment never uses (it is CPU-only). `cpu_*` is the conda-forge CPU variant;
-  # a dry-run confirmed this pin drops cuda-cudart/nvrtc/magma from the solve.
-  # (This pin, not an env var, is the fix — it is shell-independent.)
+  # Kaldi (MFA's engine) pinned to its CPU build: forced alignment is CPU-only,
+  # and the CUDA build drags in ~3 GB of NVIDIA/MAGMA libs it never uses.
   - kaldi=*=cpu_*
   - montreal-forced-aligner
+  # Compiled scientific stack from conda-forge PREBUILT binaries so the pip layer
+  # never compiles from source and NumPy has a single (conda) provider. Mirrors
+  # the proven sherlock/Apptainer.def split. These are deliberately NOT in
+  # requirements.txt (that file is pip-only).
+  - numpy
+  - pandas
+  - scipy
+  - pyarrow
+  - gensim
+  - librosa
   - pip
-  # NOTE: the full Python dependency set is intentionally NOT duplicated here.
-  # requirements.txt is the single source of truth for pip deps; setup.sh /
-  # setup.bat run `pip install -r requirements.txt` right after this env is
-  # created. (Previously this file listed a subset that silently drifted out of
-  # sync with requirements.txt, leaving fresh installs missing librosa,
-  # parselmouth, gensim, etc.)
+  # The full pip dependency set lives in requirements.txt and is spliced into the
+  # lock by scripts/relock.py (conda-lock cannot read `-r requirements.txt`).
