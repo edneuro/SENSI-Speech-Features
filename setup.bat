@@ -13,26 +13,24 @@ echo.
 pause
 
 echo.
-echo [1/4] Creating conda environment in .\env ...
-rem CPU Kaldi is pinned in environment.yml (kaldi=*=cpu_*), which keeps the
-rem ~3 GB CUDA/MAGMA stack out of the env — MFA alignment is CPU-only.
-call conda env create --prefix .\env -f environment.yml
+echo [1/4] Installing conda-lock (deterministic installer) ...
+call conda install -n base -c conda-forge conda-lock -y
 if errorlevel 1 (
     echo.
-    echo ERROR: conda env create failed.
+    echo ERROR: conda install -n base -c conda-forge conda-lock failed.
     echo Make sure you are running this from Anaconda Prompt.
     pause
     exit /b 1
 )
 
 echo.
-echo [2/4] Installing Python dependencies from requirements.txt ...
-rem environment.yml only bootstraps conda-level deps (Kaldi/MFA/python/pip);
-rem the full Python dependency set lives in requirements.txt.
-call conda run --prefix .\env pip install -r requirements.txt
+echo [2/4] Creating .\env from conda-lock.yml (exact, pinned versions) ...
+rem conda-lock.yml pins every package for this platform. CPU Kaldi is pinned in
+rem environment.yml; the lock captures it exactly.
+call conda-lock install -p .\env conda-lock.yml
 if errorlevel 1 (
     echo.
-    echo ERROR: pip install -r requirements.txt failed.
+    echo ERROR: conda-lock install failed.
     pause
     exit /b 1
 )

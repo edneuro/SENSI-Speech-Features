@@ -1,8 +1,6 @@
 #!/bin/bash
 # SensiExtractor - First-time setup (macOS / Linux)
-# Run from inside the SensiExtractor folder:
-#   bash setup.sh
-
+# Run from inside the SensiExtractor folder:  bash setup.sh
 set -e
 
 echo "============================================================"
@@ -17,16 +15,14 @@ echo ""
 read -p "Press Enter to continue (Ctrl+C to cancel)..."
 
 echo ""
-echo "[1/4] Creating conda environment in ./env ..."
-# CPU Kaldi is pinned in environment.yml (kaldi=*=cpu_*), which keeps the
-# ~3 GB CUDA/MAGMA stack out of the env — MFA alignment is CPU-only.
-conda env create --prefix ./env -f environment.yml
+echo "[1/4] Installing conda-lock (deterministic installer) ..."
+conda install -n base -c conda-forge conda-lock -y
 
 echo ""
-echo "[2/4] Installing Python dependencies from requirements.txt ..."
-# environment.yml only bootstraps conda-level deps (Kaldi/MFA/python/pip);
-# the full Python dependency set lives in requirements.txt.
-conda run --prefix ./env pip install -r requirements.txt
+echo "[2/4] Creating ./env from conda-lock.yml (exact, pinned versions) ..."
+# conda-lock.yml pins every package for this platform. CPU Kaldi is pinned in
+# environment.yml; the lock captures it exactly.
+conda-lock install -p ./env conda-lock.yml
 
 echo ""
 echo "[3/4] Downloading MFA models into ./mfa_data ..."

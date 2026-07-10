@@ -117,9 +117,15 @@ setup.bat
 bash setup.sh
 ```
 
-This creates the conda environment, installs the Python dependencies from
-`requirements.txt`, downloads MFA models (~1 GB), and installs the spaCy model.
-You only do this once.
+This installs [conda-lock](https://github.com/conda/conda-lock) into your
+base conda environment, then builds `./env` from the committed
+`conda-lock.yml` — an exact, pinned dependency set (conda + pip) for your
+platform — downloads MFA models (~1 GB), and installs the spaCy model. You
+only do this once.
+
+**Supported platforms**: Windows 11+, Linux, and Apple-Silicon macOS.
+Intel (x86_64) macOS is **not supported** — PyTorch dropped Intel-Mac wheels
+upstream, so it can't be pinned against a modern NumPy.
 
 ### Step 3 — Launch the app
 
@@ -127,6 +133,18 @@ You only do this once.
 conda activate ./env
 python gui.py
 ```
+
+### Updating dependencies
+
+Never hand-edit `conda-lock.yml` — it's a generated file. To change a
+dependency:
+
+1. Edit `environment.yml` (conda-level deps) or `requirements.txt` (pip-level
+   deps).
+2. Run `python scripts/relock.py` to regenerate `conda-lock.yml` for all
+   supported platforms.
+3. Commit the regenerated `conda-lock.yml` alongside your `environment.yml` /
+   `requirements.txt` change.
 
 ---
 
