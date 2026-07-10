@@ -3,11 +3,25 @@ Transcript preprocessing utilities.
 
 Prepares raw transcript text before it is sent to the forced aligner.
 The key requirement is that numbers must be spelled out — MFA's pronunciation
-dictionary contains English words, not digits.
+dictionary contains English words, not digits. The same spelling function is
+used by the alignment merge (extractors/align_merge.py) so a digit token in
+the spaCy parse can be matched back to the spelled-out words MFA aligned.
 """
 
 import re
 from num2words import num2words
+
+# One pattern, alternation ordered most-specific-first so e.g. "1,000" is
+# consumed as one grouped number before \b\d+\b can grab the "1".
+_NUMBER_RE = re.compile(
+    r"""
+    \b\d{1,3}(?:,\d{3})+\b      # grouped thousands: 1,000 / 1,234,567
+    | \b\d+\.\d+\b              # decimals: 3.5
+    | \b(\d+)(st|nd|rd|th)\b    # ordinals: 1st, 2nd, 3rd, 24th
+    | \b\d+\b                   # bare integers
+    """,
+    re.VERBOSE | re.IGNORECASE,
+)
 
 
 def spell_out_numbers(text: str) -> str:
@@ -15,18 +29,28 @@ def spell_out_numbers(text: str) -> str:
 
     Examples:
         "Bella has 2 apples."      -> "Bella has two apples."
-        "Joseph gives 6 more."     -> "Joseph gives six more."
         "There were 24 scenarios." -> "There were twenty-four scenarios."
+        "over 1,000 people"        -> "over one thousand people"
+        "It weighs 3.5 kg"         -> "It weighs three point five kg"
+        "the 1st time"             -> "the first time"
 
-    Edge cases handled:
-        Ordinals ("1st", "2nd") are not matched by this pattern — only
-        bare integers. If ordinals appear in transcripts, extend this
-        function using num2words(n, to='ordinal').
+    Known limitation: four-digit years are read as cardinals ("1997" ->
+    "one thousand, nine hundred and ninety-seven"), not as a speaker would
+    ("nineteen ninety-seven") — digits vs. years are not distinguishable
+    from text alone. If a narrator reads years aloud, spell them out in the
+    transcript file itself.
     """
-    def _replace(match):
-        return num2words(int(match.group()))
+    def _replace(match: re.Match) -> str:
+        s = match.group()
+        if match.group(1) is not None:              # ordinal: digits + suffix
+            return num2words(int(match.group(1)), to='ordinal')
+        if ',' in s:                                # grouped thousands
+            return num2words(int(s.replace(',', '')))
+        if '.' in s:                                # decimal
+            return num2words(float(s))
+        return num2words(int(s))
 
-    return re.sub(r'\b\d+\b', _replace, text)
+    return _NUMBER_RE.sub(_replace, text)
 
 
 def normalize_whitespace(text: str) -> str:
