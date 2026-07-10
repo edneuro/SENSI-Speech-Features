@@ -1,210 +1,241 @@
 # SensiExtractor
 
-Portable word-level stimulus feature extraction pipeline for EEG naturalistic studies.
+Turn a spoken-word **audio file + its transcript** into publication-ready,
+**word-level feature tables** for naturalistic EEG analysis (e.g. N400 or TRF
+regressors). Part of the SENSI naturalistic-EEG pipeline (PI: Blair Kaneshiro,
+ISC Wu Tsai dataset).
 
-**Input**: audio (.wav) + transcript (.txt)  
-**Output**: one CSV with one row per token, with linguistic and acoustic features
-
----
-
-## What's new (prosody batch, 2026-05-12)
-
-- **Word-level acoustic prosody** (10 columns): `Pitch_Mean/Min/Max/Std`, `Volume_Mean/Min/Max/Std`, `Pitch_Delta`, `Volume_Delta`. Min/Max use p5/p95 percentiles (robust to pitch-tracker errors); deltas are Brain Treebank-style word-to-word changes.
-- **Document-level prosody** (16 columns) in `documents_summary_*.csv`: same pitch/volume aggregates over the whole stimulus, mean absolute deltas, HNR, articulation rate (syllables/sec excluding pauses), and 4 pause statistics.
-- **Praat-Parselmouth backend** — autocorrelation pitch tracking + HNR. Single pass per stimulus, contours cached on the args namespace and reused at the doc-summary stage.
-- **Pitch units toggle** — choose Hz or semitones (relative to per-stimulus voiced-pitch median) via the GUI or `--pitch-units`. Pitch floor/ceiling and pause threshold are also configurable.
-- **GUI cards** on both word and document feature pages; preflight warns when prosody is enabled without alignment or without the `praat-parselmouth`/`pyphen` deps installed. .
-- **Prefs schema bumped to v5** — additive only; existing v1-v4 prefs auto-migrate.
-- **New deps**: `praat-parselmouth>=0.4`, `pyphen>=0.14`.
-
-See `Feature_Extraction_Guide.md` § "Acoustic Prosody (added 2026-05-12)" for column definitions and `docs/superpowers/specs/2026-05-12-prosody-design.md` for design rationale.
+Every feature is optional and toggleable from either a desktop **GUI** or the
+**command line**.
 
 ---
 
-## What's new (batch 1.5, 2026-05-10)
+## What it does
 
-- **Tabbed GUI**: word-level and document-level workflows are now fully independent tabs with their own feature toggles, category selections, and Run buttons.
-- **New doc-level features**: lexical diversity (TTR, MTLD), readability (Flesch reading ease, FK-grade), LIWC summary scores (Authentic, Analytic, Tone, Clout — LIWC backend only).
-- **Master doc-level CSV**: `documents_summary_<ts>.csv` with one row per matched pair, replacing the per-stim summary sidecar.
-- **CLI `--level word|document` flag**: defaults to `word` for backward compatibility.
-- **Categories dialog**: closing via the window X now saves the selection (previously discarded).
-- **`preferences.json` schema**: migrated from a flat layout to `shared / word_level / document_level` sections. Auto-migration runs on first load.
+**Input:** one `.wav` audio file + one plain-text transcript (`.txt`/`.tsv`/`.md`),
+or folders of matched pairs for batch processing. (Text-only and audio-only runs
+are also supported — see [Usage](#usage).)
 
-See `Feature_Extraction_Guide.md` for full documentation.
+**Output:** CSV tables with one row per word (and optional sub-word, sentence,
+and document-level tables), each column a linguistic or acoustic feature aligned
+to the audio, ready to time-lock against EEG.
 
----
+A word row ties together three things for each token: **where it is in the text**
+(sentence/position), **what it is linguistically** (lemma, POS, frequency,
+predictability, meaning), and **where it is in the audio** (onset/offset in
+seconds, from forced alignment).
 
-## What's new (batch 1, 2026-05-10)
+## What it extracts
 
-- **Folder-pair batch mode**: select a transcripts folder and an audio folder; the app pairs files by base filename and processes them all in one run.
-- **Run logs**: every batch emits a `.log`, a structured `manifest.json`, and a `no-match.csv` in the output folder.
-- **Analyzer field**: required for batch runs; recorded in the manifest.
-- **EWFG grade-band frequencies** (`Edu_Zipf_*`): bring your own EWFG lookup parquet; pipeline emits NaN until you do.
-- **Semantic-domain indicators** (`Sem_*`): LIWC-primary / Empath-fallback, configurable category set via GUI modal.
-- **LLM-cloze** (`LLM_Cloze`, `LLM_Surprisal`, `LLM_TopMatch`): modern LLM-based predictability alongside the existing GPT-2 `Surprisal` column.
-- **Derived timing** (`Word_Duration`, `Word_Gap`): cheap aggregations of MFA outputs.
-- **Document-level sidecar**: `<stimulus>_summary.csv` per batch run.
-- **GUI overhaul**: grouped feature toggles, LLM model dropdown, dictionary backend radio, semantic category modal, progress + cancellation.
+All optional; grouped by level.
 
-See `Feature_Extraction_Guide.md` for full documentation, and
-`docs/superpowers/specs/2026-05-10-feature-batch-1-design.md` for design rationale.
+- **Word-level**
+  - *Structural / linguistic* (spaCy): sentence & token indices, lemma, POS, morphology, dependency parse
+  - *Frequency*: `Zipf_Freq` (SUBTLEX-US); optional grade-band frequencies (EWFG)
+  - *Predictability*: `Surprisal` (GPT-2); LLM-cloze (`LLM_Cloze`, `LLM_Surprisal`, `LLM_TopMatch`)
+  - *Semantics*: semantic-domain category flags (Empath/LIWC); Word2Vec & BERT embeddings
+  - *Lexical norms* (opt-in, bring-your-own data): age-of-acquisition, concreteness, imageability, familiarity, valence/arousal/dominance
+  - *Acoustic timing* (MFA forced alignment): `Onset`, `End`, `Word_Duration`, `Word_Gap`
+  - *Prosody* (Praat/Parselmouth): pitch & volume mean/min/max/std/delta
+- **Sub-word**
+  - *Syllable*: timing, ARPABET label, prosody, P-center
+  - *Phoneme*: timing, label, phoneme surprisal / cohort entropy
+- **Sentence-level**: timing, prosody (pitch/volume/HNR), BERT sentence embedding
+- **Document-level** (one row per stimulus): token/sentence counts, mean frequency/surprisal, lexical diversity (TTR, MTLD), readability (Flesch), category proportions, composite psycholinguistic scores, document prosody & pause statistics
+- **Acoustic level** (audio-only, no transcript): continuous TRF predictors — broadband & onset envelopes, log-mel spectrogram, MFCCs — written as `.mat` time series
 
----
-
-## Features extracted
-
-| Column | Source | Description |
-|--------|--------|-------------|
-| `doc_id`, `paragraph_id`, `sentence_id` | spaCy | Document/sentence location |
-| `sentence` | spaCy | Full sentence text |
-| `start`, `end` | spaCy | Character offsets within `sentence` |
-| `token_id`, `token_in_sentence_id` | spaCy | Global and per-sentence token index |
-| `token` | spaCy | Original word form |
-| `lemma` | spaCy | Dictionary base form |
-| `upos`, `xpos` | spaCy | Universal and Penn Treebank POS tags |
-| `feats` | spaCy | Morphological features |
-| `dep_rel`, `head_token_id` | spaCy | Syntactic dependency |
-| `deps`, `misc` | spaCy | Enhanced deps; space/punctuation flags |
-| `Zipf_Freq` | wordfreq | Log word frequency (SUBTLEX-US, Zipf scale) |
-| `Surprisal` | GPT-2 | Contextual predictability in bits |
-| `Transcript` | MFA | Word form sent to aligner (numbers spelled out) |
-| `Onset` | MFA | Word start time in audio (seconds) |
-| `End` | MFA | Word end time in audio (seconds) |
-
-All features are optional and can be toggled in the GUI or via CLI flags.
+See **[`Feature_Extraction_Guide.md`](Feature_Extraction_Guide.md)** for exact
+column definitions.
 
 ---
 
-## Sharing with colleagues
+## Requirements
 
-| Folder | Share it? | Why |
-|--------|-----------|-----|
-| `env/` | No | Contains OS-specific compiled binaries and absolute paths — must be built per machine |
-| `mfa_data/` | Yes | Model weight files — no OS-specific code, work on any platform |
-| `hf_cache/` | Yes | GPT-2 weights in platform-agnostic format |
-
-**Recommended**: zip the folder including `mfa_data/` and `hf_cache/`. Recipients skip ~1.5 GB of downloads and only need to run `setup.bat` / `setup.sh` to build their local `env/`.
+- **A supported platform:** Windows 11+, Linux, or **Apple-Silicon macOS** (M1/M2/M3/M4).
+  - **Intel Macs are not supported** — PyTorch dropped Intel-macOS builds after 2.2.2, which is incompatible with this project's NumPy 2.x. (A macOS VM on an Intel/AMD host counts as an Intel Mac.)
+- **Miniconda** (a minimal conda installer). The whole environment is conda-based: forced alignment needs native Kaldi libraries, and the compiled scientific stack (NumPy, pandas, SciPy, librosa, …) comes from conda-forge. A plain pip `virtualenv` will **not** work.
+- **~4–5 GB free disk**: the environment (~2 GB) plus bundled models (~1.5 GB, already in the repo).
 
 ---
 
-## Setup
+## Installation
 
-### Step 1 — Install Miniconda (required)
+### Step 1 — Install Miniconda and hook it into your shell
 
-Miniconda is a minimal conda installer (~100 MB). The whole environment is
-conda-based: MFA depends on native Kaldi libraries, and the compiled scientific
-stack (NumPy, pandas, SciPy, librosa, …) is installed from conda-forge. A plain
-pip virtualenv is **not** supported.
+Download the installer for your OS from
+<https://docs.conda.io/en/latest/miniconda.html>.
 
-- **Windows**: download the `.exe` from https://docs.conda.io/en/latest/miniconda.html  
-  Run the installer — default options are fine. Use **Anaconda Prompt** (added
-  to your Start Menu) to run the commands below.
-- **Mac (Apple Silicon)**: download the Apple-Silicon `.pkg` or `.sh` installer.  
-  Run it, then open a new **Terminal** window. (Intel Macs are not supported — see below.)
-- **Linux**: download the `.sh` installer, run it, then open a new shell.
+**Windows**
+- Run the `.exe` (default options are fine).
+- Use the **Anaconda Prompt** (added to your Start Menu) for all commands below — it already has `conda` initialized.
+
+**macOS (Apple Silicon)**
+- Run the Apple-Silicon `.pkg` (or `.sh`) installer.
+- Initialize conda for your shell, then **open a fresh Terminal** — otherwise `conda activate` (and `setup.sh`) fail with `Run 'conda init' before 'conda activate'`:
+  ```bash
+  conda init zsh          # zsh is the macOS default; use your shell name if different
+  ```
+- Close the Terminal and open a new one before continuing.
+
+**Linux**
+- Run the `.sh` installer.
+- Initialize conda for your shell, then open a fresh shell:
+  ```bash
+  conda init bash         # or zsh/fish — whatever you use
+  ```
+
+> **Troubleshooting — `Run 'conda init' before 'conda activate'`:** you skipped
+> or haven't reloaded the init step. Run `conda init <your-shell>`, open a new
+> terminal, and retry. To activate in the *current* shell without reopening it:
+> ```bash
+> source "$(conda info --base)/etc/profile.d/conda.sh"
+> ```
 
 ### Step 2 — Run the setup script
 
-Navigate to the SensiExtractor folder in your terminal, then:
+From the project folder:
 
 **Windows** (Anaconda Prompt):
 ```
 setup.bat
 ```
 
-**Mac / Linux** (Terminal):
+**macOS / Linux** (Terminal):
 ```bash
 bash setup.sh
 ```
 
-This installs [conda-lock](https://github.com/conda/conda-lock) into your
-base conda environment, then builds `./env` from the committed
-`conda-lock.yml` — an exact, pinned dependency set (conda + pip) for your
-platform — downloads MFA models (~1 GB), and installs the spaCy model. You
-only do this once.
+This installs [conda-lock](https://github.com/conda/conda-lock) into your base
+conda environment, builds `./env` from the committed `conda-lock.yml` (an exact,
+pinned dependency set for your platform), downloads the MFA models, and installs
+the spaCy model. You only do this once.
 
-**Supported platforms**: Windows 11+, Linux, and Apple-Silicon macOS.
-Intel (x86_64) macOS is **not supported** — PyTorch dropped Intel-Mac wheels
-upstream, so it can't be pinned against a modern NumPy.
-
-### Step 3 — Launch the app
+### Step 3 — Launch
 
 ```bash
 conda activate ./env
 python gui.py
 ```
 
-### Updating dependencies
-
-Never hand-edit `conda-lock.yml` — it's a generated file. To change a
-dependency:
-
-1. Edit `environment.yml` (conda-level deps) or `requirements.txt` (pip-level
-   deps).
-2. Run `python scripts/relock.py` to regenerate `conda-lock.yml` for all
-   supported platforms.
-3. Commit the regenerated `conda-lock.yml` alongside your `environment.yml` /
-   `requirements.txt` change.
+(If `conda activate` errors, see the Step 1 troubleshooting note.)
 
 ---
 
-## Running the GUI
+## Usage
+
+### GUI (recommended)
 
 ```bash
 conda activate ./env
 python gui.py
 ```
 
-The GUI lets you:
-- Browse for an audio file and a transcript file
-- Check/uncheck which features to extract
-- Choose an output folder and filename
-- Watch progress in a live log panel
+The window has a sidebar — **Inputs, Word-level, Document-level, Sub-word,
+Sentence, Acoustic, Run, Logs**. Pick your input files/folders, toggle the
+features you want on each page, then go to **Run** to choose which output files
+to write and start the job. The Run page shows readiness warnings and (for the
+LLM features) a cost estimate; the **Logs** page live-tails the run.
 
----
+### Command line
 
-## Running from the command line
-
+Single file:
 ```bash
-# Full pipeline (all features)
-python main.py --audio stimulus.wav --transcript stimulus.txt
+# Full pipeline (audio + transcript)
+python main.py --audio stimulus.wav --transcript stimulus.txt --output features.csv
 
-# Text features only — no audio needed (MFA alignment skipped; conda env still required)
+# Text features only (no audio, alignment skipped) — conda env still required
 python main.py --transcript stimulus.txt --no-align
+```
 
-# Skip GPT-2 surprisal (it downloads ~500 MB on first run)
-python main.py --audio stimulus.wav --transcript stimulus.txt --no-surprisal
-
-# Custom output path
-python main.py --audio stimulus.wav --transcript stimulus.txt --output my_features.csv
-
-# Batch mode (recommended for multiple stimuli)
+Batch (recommended for multiple stimuli — pairs files by shared basename, e.g.
+`story1.txt` ↔ `story1.wav`):
+```bash
 python main.py \
   --transcripts-folder path/to/transcripts \
-  --audio-folder path/to/audio \
-  --output-folder path/to/output \
-  --analyzer "Your Name"
+  --audio-folder       path/to/audio \
+  --output-folder      path/to/output \
+  --analyzer "Your Name" \
+  --level word          # word (default) | document | acoustic
 ```
 
-### CLI flags
+Commonly used flags (run `python main.py --help` for the complete list — there
+are many per-feature toggles):
 
-| Flag | Default | Effect |
-|------|---------|--------|
-| `--audio PATH` | — | Path to .wav audio file |
-| `--transcript PATH` | required | Path to plain-text transcript |
-| `--output PATH` | `features.csv` | Output CSV path |
-| `--no-align` | off | Skip MFA forced alignment |
-| `--no-parse` | off | Skip spaCy annotation |
-| `--no-freq` | off | Skip word frequency |
-| `--no-surprisal` | off | Skip GPT-2 surprisal |
+| Flag | Effect |
+|------|--------|
+| `--no-align` | Skip MFA forced alignment (`Onset`/`End`) |
+| `--no-surprisal` | Skip GPT-2 surprisal |
+| `--no-llm-cloze` | Skip LLM-cloze metrics |
+| `--no-prosody` / `--no-doc-prosody` | Skip word- / document-level prosody |
+| `--pitch-units hz\|semitones` | Pitch unit (default `semitones`) |
+| `--sem-dict liwc\|empath\|auto\|<path>` | Semantic-domain backend (default `auto`) |
+| `--level word\|document\|acoustic` | Batch runner: word CSV, document summary, or audio-only TRF `.mat` |
+| `--analyzer NAME` | **Required for batch mode**; recorded in the run manifest |
+
+### Outputs
+
+A batch run writes, under your output folder:
+
+```
+output/
+├── word/       <stim>_features.csv          # one row per word
+│                <stim>_word2vec.mat, <stim>_bert_word.mat
+├── syllable/   <stim>_syllables.csv
+├── phoneme/    <stim>_phonemes.csv, <stim>_phoneme_surprisal.mat
+├── sentence/   <stim>_sentences.csv, <stim>_bert_sentence.mat
+├── document/   documents_summary_<timestamp>.csv   # one row per stimulus (--level document)
+├── acoustic/   <stim>_acoustic.mat                 # audio-only TRF features (--level acoustic)
+├── Montreal Forced Alignment/                      # cached MFA alignments, reused across runs
+└── logs/       run_<ts>.log, run_<ts>_manifest.json, ...
+```
+
+Single-file mode writes only the one CSV given by `--output`.
 
 ---
 
-## Notes on accuracy
+## Running on Sherlock (HPC)
 
-- **Onset/End** values are true acoustic word boundaries from MFA (Kaldi-based), suitable for EEG word-onset analysis.
-- **Surprisal** uses GPT-2 base model with full left-context. For texts longer than 1024 GPT-2 subword tokens, a sliding context window is applied automatically.
-- **`start`/`end`** (lowercase) are character offsets in the sentence string — not audio times. Do not confuse with `Onset`/`End` (uppercase), which are seconds in the audio file.
+The GUI can't run on Sherlock (it's headless), and a local `./env` is built for
+one OS so it won't run on the cluster's nodes. Instead, the whole environment is
+packaged into a portable **Apptainer container** (`sensiextractor.sif`) and run
+there via a config file.
+
+Everything for that workflow — building the container, configuring the run,
+transferring files, submitting the GPU job, and collecting results — is in
+**[`sherlock/RUNBOOK.md`](sherlock/RUNBOOK.md)**.
+
+---
+
+## Changing dependencies
+
+Dependencies are locked in `conda-lock.yml` (generated — **never hand-edit it**).
+To add or change a package: edit `environment.yml` (conda packages) or
+`requirements.txt` (pip packages), run `python scripts/relock.py`, and commit the
+regenerated `conda-lock.yml`. Full details, platform support, and the archival
+policy are in **[`docs/reproducibility.md`](docs/reproducibility.md)**.
+
+---
+
+## Models & data
+
+The two large model folders ship **in the repo**, so collaborators skip ~1.5 GB
+of downloads:
+
+| Model | Purpose | Ships in repo? |
+|-------|---------|----------------|
+| MFA acoustic model + dictionary (`english_us_arpa`) | Forced alignment | Yes (`mfa_data/`) |
+| GPT-2 | Word surprisal | Yes (`hf_cache/`) |
+| BERT (`bert-base-uncased`) | Word/sentence embeddings | Yes (`hf_cache/`) |
+| spaCy `en_core_web_sm` | Tokenize/POS/parse | Downloaded by `setup.sh`/`setup.bat` |
+| Word2Vec (Google News 300d) | Word embeddings | Downloaded on first use (~1.7 GB, cached) |
+
+**Sharing with colleagues:** zip the folder *including* `mfa_data/` and
+`hf_cache/`, but *excluding* `env/` (it contains OS-specific binaries and must be
+rebuilt per machine). Recipients just run `setup.sh` / `setup.bat`.
+
+Lexical-norm tables live in `dictionaries/`. The EWFG grade-band frequency table
+(`dictionaries/edu_zipf.parquet`) is license-bound and **not** bundled — supply
+your own to enable the `Edu_Zipf_*` columns.
 
 ---
 
@@ -212,16 +243,29 @@ python main.py \
 
 ```
 SensiExtractor/
-├── gui.py                     # Graphical interface (recommended entry point)
+├── gui.py                     # GUI entry point (recommended)
 ├── main.py                    # CLI entry point
-├── environment.yml            # conda deps (source: Python, Kaldi/MFA, sci stack)
+├── environment.yml            # conda deps (source)
 ├── requirements.txt           # pip deps (source)
 ├── conda-lock.yml             # GENERATED exact lock (all platforms) — never hand-edit
 ├── setup.bat / setup.sh       # one-time setup (installs ./env from conda-lock.yml)
-├── extractors/                # feature extractors (spaCy, MFA, wordfreq, GPT-2, …)
+├── gui/                       # PySide6 GUI (one module per sidebar page)
+├── extractors/                # feature extractors (spaCy, MFA, GPT-2, prosody, …)
 ├── utils/                     # transcript prep, TextGrid parsing, model download
-├── scripts/
-│   └── relock.py              # regenerates conda-lock.yml from the source specs
+├── scripts/relock.py          # regenerates conda-lock.yml from the source specs
+├── dictionaries/              # lexical-norm lookup tables
+├── mfa_data/                  # bundled MFA models (do not edit)
+├── hf_cache/                  # bundled GPT-2/BERT weights (do not edit)
+├── sherlock/                  # HPC container + run workflow (see sherlock/RUNBOOK.md)
 └── docs/
-    └── reproducibility.md     # env-lock model, dependency changes, archival ritual
+    ├── reproducibility.md     # dependency/lock model + archival policy
+    ├── master_plan.md         # project state & roadmap
+    └── features/              # per-feature documentation
 ```
+
+---
+
+## A note on coordinates (don't confuse these)
+
+- **`Onset` / `End`** (capitalized) — acoustic word boundaries **in seconds**, from MFA. Use these for EEG time-locking.
+- **`start` / `end`** (lowercase) — character offsets **within the sentence string**, from spaCy. Not time.
