@@ -41,6 +41,33 @@ def test_nan_in_inputs_propagates():
     assert math.isnan(out['Word_Gap'].iloc[2])
 
 
+def test_word_gap_skips_punctuation_rows():
+    # Punctuation rows have no acoustic interval, but the silence between
+    # the words on either side of a comma is still a real, measurable gap.
+    df = pd.DataFrame({
+        'token': ['well', ',', 'yes'],
+        'upos': ['INTJ', 'PUNCT', 'INTJ'],
+        'Onset': [0.0, None, 0.9],
+        'End': [0.4, None, 1.3],
+    })
+    out = add_timing_columns(df)
+    assert out['Word_Gap'].iloc[2] == pytest.approx(0.5)  # 0.9 - 0.4
+    assert math.isnan(out['Word_Gap'].iloc[1])
+
+
+def test_word_gap_spans_unaligned_word():
+    # A word MFA couldn't align sits between two aligned words: the gap is
+    # measured back to the most recent aligned End (documented behavior).
+    df = pd.DataFrame({
+        'token': ['one', 'kumquat', 'three'],
+        'upos': ['NUM', 'NOUN', 'NUM'],
+        'Onset': [0.0, None, 2.0],
+        'End': [0.5, None, 2.4],
+    })
+    out = add_timing_columns(df)
+    assert out['Word_Gap'].iloc[2] == pytest.approx(1.5)  # 2.0 - 0.5
+
+
 def test_no_alignment_columns_emits_nan():
     df = pd.DataFrame({'token': ['the'], 'upos': ['DET']})
     out = add_timing_columns(df)

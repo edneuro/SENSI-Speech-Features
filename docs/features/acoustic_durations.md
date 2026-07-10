@@ -16,7 +16,7 @@ Two derived timing columns, both in **seconds**, computed from
 | Column | Formula | Meaning |
 |---|---|---|
 | `Word_Duration` | `End − Onset` | How long the word took to articulate. |
-| `Word_Gap`      | `Onset[i] − End[i-1]` | Silence between the end of the previous word and the start of this one. `NaN` for the first word of the audio. May be negative for slightly overlapping words. |
+| `Word_Gap`      | `Onset[i] − End[j]`, `j` = most recent prior row with a known `End` | Silence between the end of the previous *aligned* word and the start of this one. Punctuation tokens (which carry no acoustic interval) are skipped over, so the gap across a comma is still measured. `NaN` for the first aligned word of the audio. May be negative for slightly overlapping words. |
 
 ## EEG rationale
 - **`Word_Duration`** is a covariate for any word-locked analysis that
@@ -38,14 +38,19 @@ acoustic-temporal structure.
 ## Implementation in SensiExtractor
 These columns are added downstream of
 [`Onset` / `End`](acoustic_boundaries.md) (from MFA). The
-derivation lives in `main.py`'s word-batch finishing step — both are
-simple arithmetic on the alignment output, so the columns are
-guaranteed to be NaN-aligned with the underlying acoustic boundaries
-(e.g. if a word didn't align, all four — `Onset`, `End`,
-`Word_Duration`, `Word_Gap` — are absent or NaN together).
+derivation lives in `extractors/timing.py` — both are simple
+arithmetic on the alignment output. `Word_Duration` is NaN-aligned
+with the underlying boundaries (a word that didn't align has NaN
+`Onset`, `End`, and `Word_Duration`).
 
-`Word_Gap` for the first word of the audio is `NaN` (no previous
-word). Negative values arise occasionally when MFA assigns
+`Word_Gap` measures back to the **most recent row with a known
+`End`**: punctuation rows and (rarely) words MFA could not align are
+skipped over rather than producing a NaN gap on the following word.
+Consequence: if an unaligned word sits between two aligned ones, the
+following word's gap spans the unaligned word — it is "time since the
+last known word ended", not "duration of pure silence" in that rare
+case. `Word_Gap` for the first aligned word of the audio is `NaN`.
+Negative values arise occasionally when MFA assigns
 slightly-overlapping boundaries to fast-spoken words — these are
 faithful to the acoustic data, not bugs.
 

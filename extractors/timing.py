@@ -5,7 +5,13 @@ dependencies. If alignment hasn't been run, both columns are emitted as
 all-NaN to keep the output schema stable.
 
 Word_Duration[i] = End[i] - Onset[i]
-Word_Gap[i]      = Onset[i] - End[i-1]   (NaN for i=0 or if either neighbor is NaN)
+Word_Gap[i]      = Onset[i] - End[j], where j is the most recent PRIOR row
+                   with a non-NaN End. Punctuation rows (no acoustic
+                   interval) are skipped over rather than breaking the
+                   chain, so the silence across a comma is still measured.
+                   If an unaligned word sits between two aligned ones, the
+                   gap spans it. NaN for the first aligned word and for
+                   rows whose own Onset is NaN.
 """
 
 import numpy as np
@@ -20,8 +26,14 @@ def add_timing_columns(token_df: pd.DataFrame) -> pd.DataFrame:
         df['Word_Gap'] = np.nan
         return df
 
-    df['Word_Duration'] = df['End'] - df['Onset']
+    onset = pd.to_numeric(df['Onset'], errors='coerce')
+    end = pd.to_numeric(df['End'], errors='coerce')
 
-    prev_end = df['End'].shift(1)
-    df['Word_Gap'] = df['Onset'] - prev_end
+    df['Word_Duration'] = end - onset
+
+    # Most recent known End strictly before each row (ffill skips the
+    # NaN-End rows — punctuation and unaligned words — instead of
+    # poisoning the following word's gap).
+    prev_end = end.ffill().shift(1)
+    df['Word_Gap'] = onset - prev_end
     return df
