@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from gui.planner.registry import STAGES, CLUSTERS
+from gui.planner.registry import STAGES, CLUSTERS, PREDICTABILITY_CLUSTER_NAME
 from gui.planner.stages import Plan, FeatureCluster
 
 
@@ -123,7 +123,7 @@ def _active_clusters(prefs: dict, active_csvs: frozenset[str]) -> list[FeatureCl
         # _predictability_active/_predictability_columns — see its docstring
         # in registry.py. Skip it here so it never gets falsely marked active
         # just because master_predictability is on and "features" is wanted.
-        if c.name == "Predictability":
+        if c.name == PREDICTABILITY_CLUSTER_NAME:
             continue
         # 1. available_when: hard env gate
         if c.available_when is not None:

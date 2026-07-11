@@ -377,3 +377,20 @@ def test_predictability_inactive_when_no_metric(monkeypatch):
                                "metrics": {"surprisal": False, "cloze": False,
                                            "topmatch": False}}
     assert "predictability" not in plan_from_prefs(prefs).stages_to_run
+
+
+def test_predictability_inactive_when_master_off(monkeypatch):
+    # The third leg of the activation AND: models + metrics populated but the
+    # card master is off → nothing runs (and no dynamic columns emitted).
+    from gui.planner import plan_from_prefs
+    from utils.preferences import DEFAULT_PREFS
+    import copy
+    prefs = copy.deepcopy(DEFAULT_PREFS)
+    prefs["features"]["master_predictability"] = False
+    prefs["output"]["word_level_csv"] = True
+    prefs["predictability"] = {"models": ["gpt2"],
+                               "metrics": {"surprisal": True, "cloze": False,
+                                           "topmatch": False}}
+    plan = plan_from_prefs(prefs)
+    assert "predictability" not in plan.stages_to_run
+    assert plan.emitted_columns_for("predictability") == ()

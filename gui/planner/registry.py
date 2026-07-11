@@ -215,6 +215,14 @@ STAGES: list[Stage] = [
 ]
 
 
+# The predictability cluster is registered (so test_registry/test_schema_drift
+# can validate its shape) but its activation + dynamic columns are computed
+# separately in gui/planner/plan.py. Both the cluster definition below and
+# plan.py's skip-and-compute logic reference this single constant, so the
+# coupling is import-visible rather than a bare duplicated string literal.
+PREDICTABILITY_CLUSTER_NAME = "Predictability"
+
+
 CLUSTERS: list[FeatureCluster] = [
     # --- Word level (§1 of feature_dependencies.md) ---
 
@@ -287,7 +295,7 @@ CLUSTERS: list[FeatureCluster] = [
     # (_predictability_active / _predictability_columns). Do not add
     # toggle_keys here expecting them to gate anything — they won't be read.
     FeatureCluster(
-        name="Predictability",
+        name=PREDICTABILITY_CLUSTER_NAME,
         toggle_keys=(),
         output_csv="features",
         requires_stages=("spacy_parse", "predictability"),
