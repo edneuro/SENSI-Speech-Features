@@ -15,9 +15,13 @@ Requires: transformers, torch (already in requirements.txt).
 """
 from __future__ import annotations
 
+import logging
+
 import numpy as np
 import pandas as pd
 import torch
+
+logger = logging.getLogger(__name__)
 
 _DEFAULT_MODEL_NAME = "bert-base-uncased"
 _MAX_EFFECTIVE_TOKENS = 510   # 512 - 2 for [CLS] and [SEP]
@@ -103,6 +107,19 @@ def embed_bert_words_and_sentences(
         ]
         current_tokens = [tok for _, tok in content_indices]
         n_current      = _count_tokens(tokenizer, current_tokens) if current_tokens else 0
+
+        # A single sentence longer than the window can't be given any left
+        # context, and the tokenizer truncates its own tail — those tail
+        # words end up zero-vectored with word_valid=False. Warn so the
+        # silent data loss is visible (name the sentence for locating it).
+        if n_current > _MAX_EFFECTIVE_TOKENS:
+            sent_preview = str(s["tokens"][0] if s["tokens"] else "")[:40]
+            logger.warning(
+                "BERT: sentence (doc_id=%s, sentence_id=%s, starts %r) has %d "
+                "subwords, exceeding the %d-token window — it is truncated and "
+                "its tail words get no embedding (word_valid=False).",
+                s["doc_id"], s["sent_id"], sent_preview, n_current,
+                _MAX_EFFECTIVE_TOKENS)
 
         context_token_lists: list[list[str]] = []
         remaining = _MAX_EFFECTIVE_TOKENS - n_current

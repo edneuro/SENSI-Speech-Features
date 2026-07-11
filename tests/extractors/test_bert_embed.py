@@ -115,6 +115,39 @@ def test_punct_excluded_from_sentence_mean():
     np.testing.assert_allclose(sent_with[0], sent_without[0], atol=1e-5)
 
 
+def test_oversize_sentence_warns_and_marks_tail_invalid(caplog):
+    # A single sentence longer than the 510-subword window is truncated by
+    # the tokenizer; the dropped tail words silently stayed zero-vectored
+    # with word_valid=False. Now the extractor logs a warning naming the
+    # sentence so the silent data loss is visible.
+    import logging
+    from extractors.bert_embed import embed_bert_words_and_sentences
+
+    tokenizer, model = _make_tiny_bert()
+    n_words = 600                      # > 510 single-subword tokens
+    rows = [("d", 0, "one huge sentence", f"word{w}") for w in range(n_words)]
+    df = make_word_df(rows)
+    with caplog.at_level(logging.WARNING):
+        _, word_valid, _, _ = embed_bert_words_and_sentences(
+            df, tokenizer=tokenizer, model=model)
+    # Something got dropped: not every content word could be embedded.
+    assert not word_valid.all()
+    assert any("truncat" in r.message.lower() or "510" in r.message
+               or "window" in r.message.lower() for r in caplog.records)
+
+
+def test_normal_sentence_does_not_warn(caplog):
+    import logging
+    from extractors.bert_embed import embed_bert_words_and_sentences
+
+    tokenizer, model = _make_tiny_bert()
+    df = make_word_df([("d", 0, "short one", "short"),
+                       ("d", 0, "short one", "one")])
+    with caplog.at_level(logging.WARNING):
+        embed_bert_words_and_sentences(df, tokenizer=tokenizer, model=model)
+    assert not any("truncat" in r.message.lower() for r in caplog.records)
+
+
 def test_punct_word_is_zero_and_invalid():
     from extractors.bert_embed import embed_bert_words_and_sentences
 
