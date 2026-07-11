@@ -5,12 +5,18 @@ from PySide6.QtCore import Signal
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QLabel,
     QButtonGroup, QRadioButton, QComboBox, QLineEdit, QPushButton,
-    QDoubleSpinBox,
+    QDoubleSpinBox, QCheckBox,
 )
 
 from gui.widgets import Card, ClusterCard, ToggleRow
 from utils.preferences import load_preferences, save_preferences
-from extractors.llm_cloze import LLM_OPTIONS
+from extractors.predictability_models import all_specs, is_gated
+# Imported as a module (not `from ... import has_hf_token`) so that tests can
+# monkeypatch `extractors.predictability.has_hf_token` and have it take
+# effect here — a direct-name import would bind a stale reference at
+# module-load time (mirrors gui/preflight.py's `from extractors import
+# llm_cloze` pattern).
+from extractors import predictability as _predictability_mod
 
 
 class WordFeaturesSection(QWidget):
@@ -130,80 +136,69 @@ class WordFeaturesSection(QWidget):
         layout.addWidget(freq_card)
 
         # --- Predictability ---
-        # Feature toggles are gated by the master; model picker and API key
-        # are configuration widgets added via add_widget (non-gated path) so
-        # they remain accessible even when the master is off.
+        # Model + metric selectors are configuration widgets added via
+        # add_widget (non-gated path) so they remain accessible even when
+        # the master is off — mirrors the old model-picker/credentials rows.
+        # There are no more per-column feature toggles here: every
+        # <slug>_<Metric> word column is produced dynamically from the
+        # models x metrics selection (see extractors/predictability.py and
+        # gui/planner/plan.py's _predictability_columns).
         pred_card = ClusterCard(
-            "Predictability", "Context-conditional probability features.",
+            "Predictability",
+            "Context-conditional probability features. Each selected model "
+            "is scored once per stimulus; each selected metric is emitted "
+            "as a <slug>_<Metric> column per model (e.g. gpt2_Surprisal).",
             master_key="master_predictability",
             master_label="Enable all predictability columns",
         )
         pred_card.settings_changed.connect(self.settings_changed)
-        surp_label = QLabel("Surprisal — -log₂ P(word | preceding context), in bits.")
-        pred_card.add_child(surp_label)
-        pred_card.add_child(self._make_toggle(
-            "pred_surprisal_gpt2",
-            "From GPT-2 → column: Surprisal (legacy baseline)",
-            f["pred_surprisal_gpt2"], "features"))
-        pred_card.add_child(self._make_toggle(
-            "pred_surprisal_llm",
-            "From LLM → column: LLM_Surprisal",
-            f["pred_surprisal_llm"], "features"))
-        cloze_label = QLabel("Cloze features (LLM forward pass)")
-        pred_card.add_child(cloze_label)
-        pred_card.add_child(self._make_toggle(
-            "pred_cloze", "Cloze probability → LLM_Cloze",
-            f["pred_cloze"], "features"))
-        pred_card.add_child(self._make_toggle(
-            "pred_topmatch", "Top-1 match → LLM_TopMatch",
-            f["pred_topmatch"], "features"))
 
-        # Model picker — non-gated (config, not output)
-        mp = QHBoxLayout()
-        mp.addWidget(QLabel("LLM model:"))
-        self.llm_model_combo = QComboBox()
-        self.llm_model_combo.addItems([lab for _, lab in LLM_OPTIONS])
-        saved_model = prefs["predictability"].get("llm_model", "")
-        saved_label = next(
-            (lab for mid, lab in LLM_OPTIONS if mid == saved_model),
-            LLM_OPTIONS[0][1])
-        self.llm_model_combo.setCurrentText(saved_label)
-        self.llm_model_combo.currentTextChanged.connect(self._on_model_change)
-        mp.addWidget(self.llm_model_combo, 1)
-        mp_w = QWidget(); mp_w.setLayout(mp)
-        pred_card.add_widget(mp_w)
+        pred_prefs = prefs["predictability"]
+        saved_models = set(pred_prefs.get("models") or [])
+        saved_metrics = pred_prefs.get("metrics") or {}
+
+        models_label = QLabel("Models:")
+        models_label.setObjectName("Subtitle")
+        pred_card.add_widget(models_label)
+        self.model_checkboxes: dict[str, QCheckBox] = {}
+        for spec in all_specs():
+            cb = QCheckBox(f"{spec.label} — {spec.note}")
+            cb.setChecked(spec.slug in saved_models)
+            cb.toggled.connect(lambda _v, s=spec.slug: self._on_model_toggled(s, _v))
+            self.model_checkboxes[spec.slug] = cb
+            pred_card.add_widget(cb)
+
+        metrics_label = QLabel("Metrics:")
+        metrics_label.setObjectName("Subtitle")
+        pred_card.add_widget(metrics_label)
+        self.metric_checkboxes: dict[str, QCheckBox] = {}
+        for key, label in [
+            ("surprisal", "Surprisal — -log₂ P(word | preceding context), in bits"),
+            ("cloze", "Cloze — P(word | preceding context)"),
+            ("topmatch", "Top-match — 1 if the model's top predicted next "
+                         "token equals the actual word"),
+        ]:
+            cb = QCheckBox(label)
+            cb.setChecked(bool(saved_metrics.get(key, False)))
+            cb.toggled.connect(lambda _v, k=key: self._on_metric_toggled(k, _v))
+            self.metric_checkboxes[key] = cb
+            pred_card.add_widget(cb)
 
         # Credentials help — text + the same blue ⓘ info-icon used by feature
-        # toggles, opening the shared setup doc (OpenAI key / gated Llama
-        # license + token) in the in-app feature-info dialog.
+        # toggles, opening the shared setup doc (gated Llama license + HF
+        # token) in the in-app feature-info dialog. OpenAI is no longer
+        # offered (see extractors/predictability.py), so this is HF-only.
         from gui.info_popup import InfoIcon
         cred_help = QHBoxLayout()
         cred_help.setContentsMargins(0, 0, 0, 0)
-        cred_help.addWidget(QLabel("How to get an API key / HuggingFace access"))
+        cred_help.addWidget(QLabel("How to get HuggingFace access"))
         self.credentials_help_icon = InfoIcon("llm_credentials", self)
         cred_help.addWidget(self.credentials_help_icon)
         cred_help.addStretch(1)
         cred_help_w = QWidget(); cred_help_w.setLayout(cred_help)
         pred_card.add_widget(cred_help_w)
 
-        # API key row (only for OpenAI) — non-gated
-        self.api_key_row = QWidget()
-        ak = QHBoxLayout(self.api_key_row); ak.setContentsMargins(0, 0, 0, 0)
-        ak.addWidget(QLabel("API key:"))
-        self.api_key_line = QLineEdit()
-        self.api_key_line.setEchoMode(QLineEdit.Password)
-        self.api_key_line.setPlaceholderText("Paste OpenAI API key — never saved to disk")
-        self.api_key_line.textChanged.connect(
-            lambda txt: self.refresh_warnings(session_api_key=txt))
-        ak.addWidget(self.api_key_line, 1)
-        show_btn = QPushButton("Show")
-        show_btn.setCheckable(True)
-        show_btn.toggled.connect(lambda v: self.api_key_line.setEchoMode(
-            QLineEdit.Normal if v else QLineEdit.Password))
-        ak.addWidget(show_btn)
-        pred_card.add_widget(self.api_key_row)
-
-        # HF token row (only for gated local Llama, shown when no token detected)
+        # HF token row (only for gated local models, shown when no token detected)
         self.hf_token_row = QWidget()
         ht = QHBoxLayout(self.hf_token_row); ht.setContentsMargins(0, 0, 0, 0)
         ht.addWidget(QLabel("HF token:"))
@@ -211,8 +206,7 @@ class WordFeaturesSection(QWidget):
         self.hf_token_line.setEchoMode(QLineEdit.Password)
         self.hf_token_line.setPlaceholderText("Paste HuggingFace token — never saved to disk")
         self.hf_token_line.textChanged.connect(
-            lambda txt: self.refresh_warnings(
-                session_api_key=self.session_api_key(), session_hf_token=txt))
+            lambda txt: self.refresh_warnings(session_hf_token=txt))
         ht.addWidget(self.hf_token_line, 1)
         hf_show = QPushButton("Show"); hf_show.setCheckable(True)
         hf_show.toggled.connect(lambda v: self.hf_token_line.setEchoMode(
@@ -222,10 +216,6 @@ class WordFeaturesSection(QWidget):
         self.hf_token_detected_label = QLabel("✓ HuggingFace token detected")
         pred_card.add_widget(self.hf_token_detected_label)
         self._refresh_llm_credential_visibility()
-        if not saved_model:
-            # api_key_row exists now — safe to call. Persists the displayed
-            # default so preflight and the cost panel see a real model ID.
-            self._on_model_change(self.llm_model_combo.currentText())
         layout.addWidget(pred_card)
 
         # --- Semantic indicators ---
@@ -416,7 +406,11 @@ class WordFeaturesSection(QWidget):
     def toggle(self, key: str): return self._toggles.get(key)
 
     def session_api_key(self) -> str:
-        return self.api_key_line.text() if self.api_key_row.isVisible() else ""
+        """Inert no-op — the OpenAI backend was removed (local HuggingFace
+        models only; see extractors/predictability.py). Kept so
+        gui/main_window.py's existing `get_session_api_key=self.word_features
+        .session_api_key` wiring stays valid without a main_window.py edit."""
+        return ""
 
     def session_hf_token(self) -> str:
         return self.hf_token_line.text() if self.hf_token_row.isVisible() else ""
@@ -463,10 +457,15 @@ class WordFeaturesSection(QWidget):
             if row is not None:
                 row.set_warning(w.message)
 
-    def _on_model_change(self, label):
-        model_id = next((mid for mid, lab in LLM_OPTIONS if lab == label), label)
-        save_preferences({"predictability": {"llm_model": model_id}})
+    def _on_model_toggled(self, slug: str, _checked: bool) -> None:
+        selected = [s for s, cb in self.model_checkboxes.items() if cb.isChecked()]
+        save_preferences({"predictability": {"models": selected}})
         self._refresh_llm_credential_visibility()
+        self.settings_changed.emit()
+
+    def _on_metric_toggled(self, _key: str, _checked: bool) -> None:
+        metrics = {k: cb.isChecked() for k, cb in self.metric_checkboxes.items()}
+        save_preferences({"predictability": {"metrics": metrics}})
         self.settings_changed.emit()
 
     def _on_pitch_units_change(self, label: str) -> None:
@@ -475,14 +474,10 @@ class WordFeaturesSection(QWidget):
         self.settings_changed.emit()
 
     def _refresh_llm_credential_visibility(self):
-        from extractors.llm_cloze import is_gated_local_model, has_hf_token
-        label = self.llm_model_combo.currentText()
-        model_id = next((mid for mid, lab in LLM_OPTIONS if lab == label), label)
-        is_openai = model_id.startswith("gpt-")
-        gated = is_gated_local_model(model_id)
-        token_present = gated and has_hf_token()
-        self.api_key_row.setVisible(is_openai)
-        self.hf_token_row.setVisible(gated and not token_present)
+        checked = [s for s, cb in self.model_checkboxes.items() if cb.isChecked()]
+        gated_selected = any(is_gated(s) for s in checked)
+        token_present = gated_selected and _predictability_mod.has_hf_token()
+        self.hf_token_row.setVisible(gated_selected and not token_present)
         self.hf_token_detected_label.setVisible(token_present)
 
     def _on_backend_change(self, backend):

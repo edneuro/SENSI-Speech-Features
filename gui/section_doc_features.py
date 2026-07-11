@@ -27,16 +27,11 @@ _AGG_STAGE_REQ: dict[str, tuple[str, str]] = {
         "• Enable at least one EWFG band on the Word-level features page<br>"
         "• Ensure Word-level CSVs output is on (Run tab)",
     ),
-    "output_doc_agg_surprisal": (
-        "gpt2_surprisal",
-        "<b>Will output NaN</b> — GPT-2 surprisal is not in the run plan.<br>"
-        "• Enable GPT-2 surprisal on the Word-level features page<br>"
-        "• Ensure Word-level CSVs output is on (Run tab)",
-    ),
-    "output_doc_agg_llm": (
-        "llm_predict",
-        "<b>Will output NaN</b> — LLM predictability is not in the run plan.<br>"
-        "• Enable at least one LLM feature (Cloze / Surprisal / TopMatch) on the Word-level features page<br>"
+    "output_doc_agg_predictability": (
+        "predictability",
+        "<b>Will output NaN</b> — predictability is not in the run plan.<br>"
+        "• Select at least one model and one metric in the Predictability "
+        "card on the Word-level features page<br>"
         "• Ensure Word-level CSVs output is on (Run tab)",
     ),
 }
@@ -91,10 +86,9 @@ class DocFeaturesSection(QWidget):
              "mean_zipf_freq  (corpus-frequency mean, wordfreq)"),
             ("output_doc_agg_edu_zipf",
              "mean_edu_zipf_*  (EWFG grade-band means: K2/3–5/6–8/9–12/Overall)"),
-            ("output_doc_agg_surprisal",
-             "mean_surprisal  (GPT-2 surprisal mean)"),
-            ("output_doc_agg_llm",
-             "mean_llm_cloze + mean_llm_surprisal + mean_llm_top_match_prop"),
+            ("output_doc_agg_predictability",
+             "mean_<model>_<metric>  (per selected model x metric — see "
+             "the Predictability card)"),
             ("output_doc_agg_lexical_norms",
              "Lexical-norm aggregates (mean AoA/concreteness/…, prop_late_acquired, coverage)"),
         ]:

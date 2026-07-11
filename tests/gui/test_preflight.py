@@ -35,63 +35,121 @@ def test_preflight_warns_on_missing_ewfg(prefs_tmp):
     assert any(k is not None and k.startswith("freq_ewfg_") for k in keys)
 
 
-def test_preflight_no_openai_key_warning_for_gpt_model(prefs_tmp):
-    # OpenAI cloze is no longer offered, so preflight must NOT emit an
-    # "OpenAI key missing" warning — even if a stale gpt-* id somehow sits
-    # in prefs, that path is gone (the run would raise an actionable error).
+def test_preflight_ignores_unrecognized_model_slug(prefs_tmp):
+    """A stale/unrecognized slug (e.g. left over from a hand-edited prefs
+    file, or an old OpenAI id from before the predictability unification)
+    must not crash preflight — is_gated() would KeyError on it, so it's
+    simply skipped for the gating check rather than raising."""
     from utils.preferences import save_preferences
     from gui.preflight import compute_warnings
     save_preferences({
         "output": {"word_level_csv": True},
-        "features": {"pred_cloze": True},
-        "predictability": {"llm_model": "gpt-4o-mini"},
+        "predictability": {"models": ["gpt-4o-mini"],
+                            "metrics": {"surprisal": True, "cloze": False, "topmatch": False}},
     })
-    warnings = compute_warnings(session_api_key="")
-    assert not any("API key" in w.message or "OpenAI" in w.message
-                   for w in warnings)
+    warnings = compute_warnings()  # must not raise
+    assert not any("HuggingFace token" in w.message for w in warnings)
 
 
-def test_preflight_warns_on_gated_local_without_token(prefs_tmp, monkeypatch):
-    import extractors.llm_cloze as m
+def test_preflight_warns_on_gated_model_without_token(prefs_tmp, monkeypatch):
+    import extractors.predictability as m
     monkeypatch.setattr(m, 'has_hf_token', lambda: False)
     from utils.preferences import save_preferences
     from gui.preflight import compute_warnings
     save_preferences({
         "output": {"word_level_csv": True},
-        "predictability": {"llm_model": "meta-llama/Meta-Llama-3-8B"},
-        "features": {"pred_cloze": True},
+        "predictability": {"models": ["llama3_8b"],
+                            "metrics": {"surprisal": True, "cloze": False, "topmatch": False}},
     })
-    warnings = compute_warnings(session_api_key="", session_hf_token="")
-    msgs = [w.message for w in warnings if w.toggle_key == "pred_cloze"]
-    assert any("HuggingFace token" in msg for msg in msgs)
+    warnings = compute_warnings(session_hf_token="")
+    assert any("HuggingFace token" in w.message for w in warnings)
 
 
 def test_preflight_no_gated_warning_when_token_present(prefs_tmp, monkeypatch):
-    import extractors.llm_cloze as m
+    import extractors.predictability as m
     monkeypatch.setattr(m, 'has_hf_token', lambda: True)
     from utils.preferences import save_preferences
     from gui.preflight import compute_warnings
     save_preferences({
         "output": {"word_level_csv": True},
-        "predictability": {"llm_model": "meta-llama/Meta-Llama-3-8B"},
-        "features": {"pred_cloze": True},
+        "predictability": {"models": ["llama3_8b"],
+                            "metrics": {"surprisal": True, "cloze": False, "topmatch": False}},
     })
-    warnings = compute_warnings(session_api_key="", session_hf_token="")
+    warnings = compute_warnings(session_hf_token="")
     assert not any("HuggingFace token" in w.message for w in warnings)
 
 
 def test_preflight_no_gated_warning_when_session_token_pasted(prefs_tmp, monkeypatch):
-    import extractors.llm_cloze as m
+    import extractors.predictability as m
     monkeypatch.setattr(m, 'has_hf_token', lambda: False)
     from utils.preferences import save_preferences
     from gui.preflight import compute_warnings
     save_preferences({
         "output": {"word_level_csv": True},
-        "predictability": {"llm_model": "meta-llama/Meta-Llama-3-8B"},
-        "features": {"pred_cloze": True},
+        "predictability": {"models": ["llama3_8b"],
+                            "metrics": {"surprisal": True, "cloze": False, "topmatch": False}},
     })
-    warnings = compute_warnings(session_api_key="", session_hf_token="hf_pasted")
+    warnings = compute_warnings(session_hf_token="hf_pasted")
     assert not any("HuggingFace token" in w.message for w in warnings)
+
+
+def test_preflight_no_gated_warning_for_free_model(prefs_tmp, monkeypatch):
+    """GPT-2 is the roster's only ungated model — selecting it must never
+    trigger the HuggingFace-token warning, even with no token available."""
+    import extractors.predictability as m
+    monkeypatch.setattr(m, 'has_hf_token', lambda: False)
+    from utils.preferences import save_preferences
+    from gui.preflight import compute_warnings
+    save_preferences({
+        "output": {"word_level_csv": True},
+        "predictability": {"models": ["gpt2"],
+                            "metrics": {"surprisal": True, "cloze": False, "topmatch": False}},
+    })
+    warnings = compute_warnings(session_hf_token="")
+    assert not any("HuggingFace token" in w.message for w in warnings)
+
+
+def test_preflight_warns_models_without_metrics(prefs_tmp):
+    """A model is picked but no metric is turned on — nothing will be
+    produced; preflight should say so."""
+    from utils.preferences import save_preferences
+    from gui.preflight import compute_warnings
+    save_preferences({
+        "output": {"word_level_csv": True},
+        "predictability": {"models": ["gpt2"],
+                            "metrics": {"surprisal": False, "cloze": False, "topmatch": False}},
+    })
+    warnings = compute_warnings()
+    assert any("nothing will be produced" in w.message.lower() for w in warnings)
+
+
+def test_preflight_warns_metrics_without_models(prefs_tmp):
+    """A metric is turned on but no model is picked — the mirror case."""
+    from utils.preferences import save_preferences
+    from gui.preflight import compute_warnings
+    save_preferences({
+        "output": {"word_level_csv": True},
+        "predictability": {"models": [],
+                            "metrics": {"surprisal": True, "cloze": False, "topmatch": False}},
+    })
+    warnings = compute_warnings()
+    assert any("nothing will be produced" in w.message.lower() for w in warnings)
+
+
+def test_preflight_no_predictability_warnings_when_fully_configured(prefs_tmp, monkeypatch):
+    import extractors.predictability as m
+    monkeypatch.setattr(m, 'has_hf_token', lambda: True)
+    from utils.preferences import save_preferences
+    from gui.preflight import compute_warnings
+    save_preferences({
+        "output": {"word_level_csv": True},
+        "predictability": {"models": ["gpt2"],
+                            "metrics": {"surprisal": True, "cloze": False, "topmatch": False}},
+    })
+    warnings = compute_warnings()
+    assert not any(
+        "nothing will be produced" in w.message.lower() or "HuggingFace token" in w.message
+        for w in warnings)
 
 
 def test_no_prosody_alignment_warning_anymore(prefs_tmp):

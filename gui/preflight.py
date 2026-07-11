@@ -17,9 +17,11 @@ from pathlib import Path
 from utils.preferences import load_preferences
 from gui.planner import plan_from_prefs
 # Imported as a module (not `from ... import has_hf_token`) so that tests can
-# monkeypatch `extractors.llm_cloze.has_hf_token` and have it take effect here
-# — a direct-name import would bind a stale reference at module-load time.
-from extractors import llm_cloze
+# monkeypatch `extractors.predictability.has_hf_token` and have it take
+# effect here — a direct-name import would bind a stale reference at
+# module-load time.
+from extractors import predictability
+from extractors.predictability_models import is_gated, all_specs
 
 
 @dataclass(frozen=True)
@@ -93,20 +95,41 @@ def compute_warnings(session_api_key: str = "", session_hf_token: str = "") -> l
                     message="EWFG parquet not found at dictionaries/edu_zipf.parquet "
                             "— columns will be NaN. See README for acquisition."))
 
-    # Gated local model without a HuggingFace token. (LLM cloze uses local
-    # HF models only — OpenAI is no longer offered, so there is no
-    # API-key warning here.)
-    if "llm_predict" in in_plan:
-        llm_model = prefs["predictability"].get("llm_model", "") or llm_cloze.LLM_OPTIONS[0][0]
-        if (llm_cloze.is_gated_local_model(llm_model) and not session_hf_token
-                and not llm_cloze.has_hf_token()):
-            for k in ("pred_surprisal_llm", "pred_cloze", "pred_topmatch"):
-                if prefs["features"].get(k, False):
-                    out.append(Warning(
-                        toggle_key=k, severity="amber",
-                        message=f"Local model '{llm_model}' needs a HuggingFace token "
-                                "+ accepted license — paste a token in Predictability "
-                                "or run `hf auth login`."))
+    # Predictability (v18: models/metrics, not a single llm_model). Local
+    # HuggingFace models only — OpenAI is no longer offered, so there is no
+    # API-key warning here. Relevant only when the word-level CSV — the only
+    # place <slug>_<Metric> columns land — is actually being produced.
+    if "features" in plan.output_csvs:
+        pred = prefs.get("predictability", {}) or {}
+        models = list(pred.get("models") or [])
+        metrics_on = pred.get("metrics", {}) or {}
+        metrics = [m for m in ("surprisal", "cloze", "topmatch") if metrics_on.get(m)]
+        _valid_slugs = {spec.slug for spec in all_specs()}
+        for slug in models:
+            # Skip unrecognized slugs (e.g. a stale/hand-edited prefs file) —
+            # is_gated() would KeyError on an unknown slug; preflight must
+            # never crash on a malformed-but-loadable prefs file.
+            if slug not in _valid_slugs:
+                continue
+            if (is_gated(slug) and not session_hf_token
+                    and not predictability.has_hf_token()):
+                out.append(Warning(
+                    toggle_key=None, severity="amber",
+                    message=f"Model '{slug}' is gated and needs a HuggingFace "
+                            "token + accepted license — paste a token in "
+                            "Predictability or run `hf auth login`."))
+        if models and not metrics:
+            out.append(Warning(
+                toggle_key=None, severity="amber",
+                message="Predictability model(s) selected but no metric is "
+                        "turned on — nothing will be produced. Turn on "
+                        "Surprisal, Cloze, or Top-match in Predictability."))
+        if metrics and not models:
+            out.append(Warning(
+                toggle_key=None, severity="amber",
+                message="Predictability metric(s) turned on but no model is "
+                        "selected — nothing will be produced. Pick at least "
+                        "one model in Predictability."))
 
     # LIWC backend selected but no .dic
     if "sem_domain" in in_plan and prefs["semantic"].get("backend") == "liwc":

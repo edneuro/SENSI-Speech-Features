@@ -1,55 +1,37 @@
-"""Tests for the planner-gated cost panel in RunSection.
+"""Tests for the (now permanently dead) cost panel in RunSection.
 
-The cost panel must appear only when both conditions hold:
-  1. 'llm_predict' is in plan.stages_to_run (i.e. at least one LLM toggle is on
-     AND the features CSV output is requested).
-  2. The configured LLM model starts with 'gpt-'.
+Predictability offers local HuggingFace models only (see
+extractors/predictability.py, extractors/predictability_models.py) — the
+OpenAI backend was removed, so there is no paid usage left to estimate. The
+panel is kept in the widget tree (hidden) rather than deleted so a future
+paid backend could be wired back in without rebuilding the UI; these tests
+lock in that it stays hidden regardless of predictability configuration.
 """
 
-import pytest
 from utils.preferences import save_preferences
 
 
-def test_cost_panel_hidden_when_llm_toggles_off(qtbot, prefs_tmp):
-    """GPT model set but all LLM feature toggles are off — cost panel must be hidden."""
-    save_preferences({
-        "output": {"word_level_csv": True},
-        "predictability": {"llm_model": "gpt-4o-mini"},
-        "features": {
-            "pred_surprisal_llm": False,
-            "pred_cloze": False,
-            "pred_topmatch": False,
-        },
-    })
+def test_cost_panel_hidden_by_default(qtbot, prefs_tmp):
     from gui.section_run import RunSection
     section = RunSection(get_session_api_key=lambda: "", status_strip=None)
     qtbot.addWidget(section)
     section.refresh()
-    # setVisible(False) sets the explicit-hide flag; isHidden() reflects it
-    # even for unshown top-level widgets.
     assert section.cost_panel.isHidden()
 
 
-def test_cost_panel_visible_when_llm_toggle_on(qtbot, prefs_tmp):
-    """GPT model set AND at least one LLM toggle is on — cost panel must not be hidden."""
+def test_cost_panel_stays_hidden_with_models_and_metrics_selected(qtbot, prefs_tmp):
+    """Even a fully-configured local-model predictability setup (which does
+    real, free, local computation) must not surface the cost panel — there
+    is no paid backend left for it to estimate."""
     save_preferences({
         "output": {"word_level_csv": True},
-        "predictability": {"llm_model": "gpt-4o-mini"},
-        "features": {
-            "pred_surprisal_llm": True,
-            "pred_cloze": False,
-            "pred_topmatch": False,
+        "predictability": {
+            "models": ["gpt2", "llama3_8b"],
+            "metrics": {"surprisal": True, "cloze": True, "topmatch": True},
         },
     })
     from gui.section_run import RunSection
     section = RunSection(get_session_api_key=lambda: "", status_strip=None)
     qtbot.addWidget(section)
     section.refresh()
-    # isVisible() is False for unshown top-level widgets regardless of setVisible().
-    # isHidden() reflects the widget's own explicit-hide flag — False means
-    # setVisible(True) was called (the cost panel should be shown when rendered).
-    assert not section.cost_panel.isHidden()
-    # And the gated branch actually populated cost_detail (rather than leaving the
-    # default empty QLabel text untouched, which would happen if we'd entered the
-    # hidden else-branch).
-    assert section.cost_detail.text() != ""
+    assert section.cost_panel.isHidden()

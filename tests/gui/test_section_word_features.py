@@ -71,13 +71,20 @@ def test_word_section_has_configure_categories_button(qtbot):
 
 
 def test_word_section_lexling_freq_predict_sem_carried_over(qtbot):
-    """The lex-ling/freq/predictability/semantic subsections still render."""
+    """The lex-ling/freq/predictability/semantic subsections still render.
+
+    Predictability (v18) has no per-column feature toggles anymore — it's
+    model_checkboxes + metric_checkboxes — so it's checked separately here
+    rather than via toggle().
+    """
     from gui.section_word_features import WordFeaturesSection
     w = WordFeaturesSection()
     qtbot.addWidget(w)
-    for k in ("lexling_tokens", "freq_subtlex", "pred_surprisal_gpt2",
+    for k in ("lexling_tokens", "freq_subtlex",
               "sem_indicators", "freq_ewfg_k2"):
         assert w.toggle(k) is not None, k
+    assert "gpt2" in w.model_checkboxes
+    assert "surprisal" in w.metric_checkboxes
 
 
 def test_ewfg_toggles_are_disabled_unavailable(qtbot, prefs_tmp):
@@ -121,56 +128,94 @@ def test_word_prosody_pitch_units_combo_persists(qtbot, prefs_tmp):
     assert load_preferences()['prosody']['pitch_units'] == 'hz'
 
 
-def _label_for(model_id):
-    from extractors.llm_cloze import LLM_OPTIONS
-    return next(lab for mid, lab in LLM_OPTIONS if mid == model_id)
+# --- Predictability v18: model_checkboxes / metric_checkboxes ------------
+# Replaces the old single llm_model_combo + api_key_row design (OpenAI
+# removed; model selection is now a multi-select roster, see
+# extractors/predictability_models.py).
 
-
-def test_no_openai_option_in_model_combo(qtbot):
-    # OpenAI is no longer a selectable backend, so the API-key row can never
-    # be shown by picking a model. The combo must offer local models only.
+def test_model_rows_persist_selection(qtbot, prefs_tmp):
     from gui.section_word_features import WordFeaturesSection
-    from extractors.llm_cloze import LLM_OPTIONS
+    from utils.preferences import load_preferences
     w = WordFeaturesSection(); qtbot.addWidget(w)
-    labels = [w.llm_model_combo.itemText(i)
-              for i in range(w.llm_model_combo.count())]
-    assert labels == [lab for _mid, lab in LLM_OPTIONS]
-    assert not any(mid.startswith('gpt-') for mid, _ in LLM_OPTIONS)
+    w.model_checkboxes["gpt2"].setChecked(True)
+    assert "gpt2" in load_preferences()["predictability"]["models"]
 
 
-def test_gated_model_no_token_shows_hf_box(qtbot, monkeypatch):
-    import extractors.llm_cloze as m
-    monkeypatch.setattr(m, 'has_hf_token', lambda: False)
+def test_metric_toggles_persist(qtbot, prefs_tmp):
+    from gui.section_word_features import WordFeaturesSection
+    from utils.preferences import load_preferences
+    w = WordFeaturesSection(); qtbot.addWidget(w)
+    w.metric_checkboxes["cloze"].setChecked(True)
+    assert load_preferences()["predictability"]["metrics"]["cloze"] is True
+
+
+def test_model_rows_cover_full_roster_with_gating_hint(qtbot):
+    """One checkbox per extractors.predictability_models.all_specs() entry,
+    labeled with the spec's note (which carries the 'free, no token' vs
+    'gated' hint the brief asks for)."""
+    from gui.section_word_features import WordFeaturesSection
+    from extractors.predictability_models import all_specs
+    w = WordFeaturesSection(); qtbot.addWidget(w)
+    for spec in all_specs():
+        assert spec.slug in w.model_checkboxes
+        cb = w.model_checkboxes[spec.slug]
+        assert spec.label in cb.text()
+        assert spec.note in cb.text()
+
+
+def test_no_openai_widgets_anymore(qtbot):
+    """OpenAI is no longer a selectable backend — the old combo/API-key
+    widgets from the pre-unification design must be gone entirely."""
     from gui.section_word_features import WordFeaturesSection
     w = WordFeaturesSection(); qtbot.addWidget(w)
-    w.show()  # isVisible() requires a shown top-level ancestor (Qt semantics)
-    w.llm_model_combo.setCurrentText(_label_for('meta-llama/Meta-Llama-3-8B'))
+    assert not hasattr(w, "llm_model_combo")
+    assert not hasattr(w, "api_key_row")
+    assert not hasattr(w, "api_key_line")
+
+
+def test_hf_box_shown_when_gated_model_selected_without_token(qtbot, prefs_tmp, monkeypatch):
+    import extractors.predictability as m
+    monkeypatch.setattr(m, "has_hf_token", lambda: False)
+    from gui.section_word_features import WordFeaturesSection
+    w = WordFeaturesSection(); qtbot.addWidget(w); w.show()
+    w.model_checkboxes["llama3_8b"].setChecked(True)
     assert w.hf_token_row.isVisible() is True
     assert w.hf_token_detected_label.isVisible() is False
-    assert w.api_key_row.isVisible() is False
+    w.model_checkboxes["llama3_8b"].setChecked(False)
+    w.model_checkboxes["gpt2"].setChecked(True)   # free model
+    assert w.hf_token_row.isVisible() is False
 
 
 def test_gated_model_with_token_shows_detected_label(qtbot, monkeypatch):
-    import extractors.llm_cloze as m
+    import extractors.predictability as m
     monkeypatch.setattr(m, 'has_hf_token', lambda: True)
     from gui.section_word_features import WordFeaturesSection
     w = WordFeaturesSection(); qtbot.addWidget(w)
     w.show()  # isVisible() requires a shown top-level ancestor (Qt semantics)
-    w.llm_model_combo.setCurrentText(_label_for('meta-llama/Meta-Llama-3-8B'))
+    w.model_checkboxes['llama3_8b'].setChecked(True)
     assert w.hf_token_row.isVisible() is False
     assert w.hf_token_detected_label.isVisible() is True
 
 
 def test_session_hf_token_returns_text_only_when_visible(qtbot, monkeypatch):
-    import extractors.llm_cloze as m
+    import extractors.predictability as m
     monkeypatch.setattr(m, 'has_hf_token', lambda: False)
     from gui.section_word_features import WordFeaturesSection
     w = WordFeaturesSection(); qtbot.addWidget(w)
     w.show()  # isVisible() requires a shown top-level ancestor (Qt semantics)
-    w.llm_model_combo.setCurrentText(_label_for('meta-llama/Meta-Llama-3-8B'))
+    w.model_checkboxes['llama3_8b'].setChecked(True)
     w.hf_token_line.setText('hf_secret')
     assert w.session_hf_token() == 'hf_secret'
     # When a token is already detected, the input row hides → session empty.
     monkeypatch.setattr(m, 'has_hf_token', lambda: True)
-    w.llm_model_combo.setCurrentText(_label_for('meta-llama/Llama-3.2-3B'))
+    w.model_checkboxes['llama3_8b'].setChecked(False)
+    w.model_checkboxes['llama32_3b'].setChecked(True)
     assert w.session_hf_token() == ''   # hidden → empty
+
+
+def test_session_api_key_is_inert(qtbot):
+    """OpenAI backend removed — session_api_key() is a permanent no-op kept
+    only so gui/main_window.py's existing wiring stays valid."""
+    from gui.section_word_features import WordFeaturesSection
+    w = WordFeaturesSection(); qtbot.addWidget(w)
+    assert w.session_api_key() == ""

@@ -166,66 +166,64 @@ def test_doc_args_no_prosody_when_all_doc_toggles_off(prefs_tmp):
     assert args.no_doc_prosody is True
 
 
-def test_doc_args_skip_llm_when_word_llm_toggles_off(prefs_tmp):
-    """If the user turned off every word-level LLM toggle, the doc-level args
-    must NOT request the LLM-cloze extractor. The crash path (missing API key)
-    is gated by no_llm_cloze; no_doc_mean_llm_cloze is now independently
-    controlled by the doc_agg_llm output toggle.
-    Regression for the 2026-05-12 'OpenAIError: Missing credentials' bug.
+def test_doc_args_predictability_dict_mirrors_prefs_regardless_of_level(prefs_tmp):
+    """v18: the old no_llm_cloze/no_surprisal word-extractor flags and the
+    no_doc_mean_llm_cloze/no_doc_mean_surprisal aggregate flags are gone,
+    replaced by a single dynamic ns.predictability = {models, metrics} dict
+    (mirrors prefs verbatim — see gui/planner/emit.py) plus one aggregate
+    flag, ns.no_doc_predictability, driven purely by the doc_agg_predictability
+    output toggle. An empty models list must not crash and must not force
+    the aggregate flag on.
+    Regression for the 2026-05-12 'OpenAIError: Missing credentials' bug
+    (the underlying concern — no accidental paid-extractor invocation — now
+    expressed via the empty-models-list case below).
     """
     from utils.preferences import save_preferences
     from gui.run_dispatch import build_args_doc_level
     save_preferences({
-        "output": {"document_summary": True, "doc_agg_llm": True},
-        "features": {
-            "pred_surprisal_llm": False,
-            "pred_cloze": False,
-            "pred_topmatch": False,
-        }})
+        "output": {"document_summary": True, "doc_agg_predictability": True},
+        "predictability": {"models": [],
+                            "metrics": {"surprisal": False, "cloze": False, "topmatch": False}},
+    })
     args = build_args_doc_level()
-    # Extractor must be skipped — this is what prevents the crash.
-    assert args.no_llm_cloze is True
-    # Aggregate flag depends on the doc_agg_llm output toggle (default True),
-    # not on word-level feature toggles. doc_summary.py gracefully handles
-    # absent LLM columns without crashing.
-    assert args.no_doc_mean_llm_cloze is False
+    assert args.predictability == {
+        "models": [], "metrics": {"surprisal": False, "cloze": False, "topmatch": False}}
+    # The aggregate is still requested (doc_agg_predictability=True); it's
+    # main.run_doc_level_batch's job (not the GUI namespace) to no-op
+    # gracefully when no predictability columns exist to aggregate.
+    assert args.no_doc_predictability is False
 
 
-def test_doc_args_skip_surprisal_when_word_gpt2_off(prefs_tmp):
-    """GPT-2 surprisal extractor must not run when the user turned off its
-    word-level toggle. The aggregate flag is independently controlled by
-    doc_agg_surprisal (default True); doc_summary.py skips absent columns."""
+def test_doc_args_no_doc_predictability_off_when_aggregate_toggle_off(prefs_tmp):
+    """The doc aggregate flag is driven purely by the doc_agg_predictability
+    output toggle, independent of which models/metrics are selected."""
     from utils.preferences import save_preferences
     from gui.run_dispatch import build_args_doc_level
     save_preferences({
-        "output": {"document_summary": True, "doc_agg_surprisal": True},
-        "features": {"pred_surprisal_gpt2": False}})
+        "output": {"document_summary": True, "doc_agg_predictability": False},
+        "predictability": {"models": ["gpt2"],
+                            "metrics": {"surprisal": True, "cloze": False, "topmatch": False}},
+    })
     args = build_args_doc_level()
-    assert args.no_surprisal is True
-    assert args.no_doc_mean_surprisal is False  # doc_agg_surprisal requested
+    assert args.predictability == {
+        "models": ["gpt2"], "metrics": {"surprisal": True, "cloze": False, "topmatch": False}}
+    assert args.no_doc_predictability is True
 
 
-def test_doc_args_llm_driven_by_doc_aggregate_not_word_toggle(prefs_tmp):
-    """The doc namespace's word-extractor flags are scoped to doc-level needs,
-    not word-level toggles — a word LLM toggle must NOT by itself make the doc
-    batch run the (paid) LLM extractor. The doc LLM aggregate is independently
-    requested via doc_agg_llm, and main.run_doc_level_batch re-enables the
-    extractor from that doc output toggle. (Mirror of the surprisal case.)"""
+def test_doc_args_predictability_driven_by_doc_aggregate_not_models(prefs_tmp):
+    """Mirror of the old llm-vs-word-toggle regression: the doc aggregate
+    flag is independently controlled by doc_agg_predictability, not by which
+    word-level models/metrics happen to be selected."""
     from utils.preferences import save_preferences
     from gui.run_dispatch import build_args_doc_level
     save_preferences({
-        "output": {"document_summary": True, "doc_agg_llm": True},
-        "features": {
-            "pred_surprisal_llm": False,
-            "pred_cloze": True,
-            "pred_topmatch": False,
-        }})
+        "output": {"document_summary": True, "doc_agg_predictability": True},
+        "predictability": {"models": ["llama32_3b"],
+                            "metrics": {"surprisal": False, "cloze": True, "topmatch": False}},
+    })
     args = build_args_doc_level()
-    # Word toggle no longer bleeds into the doc namespace's extractor flag.
-    assert args.no_llm_cloze is True
-    # The doc aggregate is still requested (doc_agg_llm defaults on); the doc
-    # batch enables the extractor for it in run_doc_level_batch.
-    assert args.no_doc_mean_llm_cloze is False
+    assert args.no_doc_predictability is False
+    assert args.predictability["models"] == ["llama32_3b"]
 
 
 def test_doc_args_passes_categories_from_unified_key(prefs_tmp):

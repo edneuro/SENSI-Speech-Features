@@ -9,11 +9,9 @@ from PySide6.QtWidgets import (
 
 from gui.widgets import SectionHeader, ToggleRow
 from gui.preflight import compute_warnings
-from gui.cost_estimate import estimate, count_input_tokens
 from gui.run_dispatch import run as dispatch_run
 from gui.planner import plan_from_prefs
 from utils.preferences import load_preferences, save_preferences
-from extractors.llm_cloze import LLM_OPTIONS
 
 
 # Maps a plan output-CSV id -> the artifact it actually writes (path template +
@@ -56,11 +54,6 @@ class RunSection(QWidget):
         # creation that might cause them to fire.
         self._progress_event.connect(self._on_progress_main)
         self._done_event.connect(self._on_done_main)
-        # Cache for tiktoken cost computation — keyed by (model_id, folder_path).
-        # Re-tokenizing every transcript file on every feature toggle was a
-        # 1-3s freeze; we recompute only when model or folder changes.
-        self._cost_cache_key: tuple[str, str] | None = None
-        self._cost_cache_value: tuple[int, int] | None = None
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(24, 16, 24, 16)
@@ -219,44 +212,12 @@ class RunSection(QWidget):
             self.readiness_label.setText("✓  Ready to run.")
         self.warnings_label.setText("\n".join(lines))
 
-        # Cost panel — only for paid (OpenAI, gpt-*) models. LLM cloze now
-        # offers local HF models only, which are free, so the panel is
-        # effectively always hidden; the gpt-* guard is retained so the panel
-        # would reappear automatically if a paid backend is ever restored.
-        model = prefs["predictability"].get("llm_model", "") or LLM_OPTIONS[0][0]
-        if "llm_predict" in plan.stages_to_run and model.startswith("gpt-"):
-            self.cost_panel.setVisible(True)
-            tdir = prefs["shared"].get("last_transcripts_folder", "")
-            # _dir_ok guards the empty-path case: Path("").is_dir() is True (-> "."
-            # -> cwd), which would otherwise tokenize the whole project as transcripts.
-            if _dir_ok(tdir):
-                t = Path(tdir)
-                cache_key = (model, str(t))
-                if cache_key == self._cost_cache_key and self._cost_cache_value is not None:
-                    n_in, n_out = self._cost_cache_value
-                else:
-                    paths = [p for p in t.iterdir() if p.is_file()]
-                    n_in = count_input_tokens(paths, model)
-                    n_out = sum(len(p.read_text(encoding="utf-8", errors="ignore").split())
-                                 for p in paths if p.is_file())
-                    self._cost_cache_key = cache_key
-                    self._cost_cache_value = (n_in, n_out)
-                est = estimate(model_id=model, n_input_tokens=n_in,
-                                n_output_tokens=n_out)
-                self.cost_detail.setText(
-                    f"Model: {est.model_id}<br>"
-                    f"Input tokens: ~ {est.n_input_tokens:,} (tiktoken)<br>"
-                    f"Output tokens: ~ {est.n_output_tokens:,} (1/word)<br>"
-                    f"Rates (last updated {est.rates_last_updated}): "
-                    f"${est.usd_input/max(est.n_input_tokens,1)*1e6:.2f}/1M input, "
-                    f"${est.usd_output/max(est.n_output_tokens,1)*1e6:.2f}/1M output<br>"
-                    f"<b>Estimated: ≈ ${est.usd_total:.3f}</b><br>"
-                    "⚠ OpenAI pricing changes — verify at openai.com/api/pricing"
-                )
-            else:
-                self.cost_detail.setText("Pick a transcripts folder to compute cost.")
-        else:
-            self.cost_panel.setVisible(False)
+        # Cost panel — dead: predictability offers local HuggingFace models
+        # only (see extractors/predictability.py; OpenAI backend removed),
+        # so there is no paid usage to estimate. Kept hidden rather than
+        # deleted so a future paid backend can be wired back in without
+        # rebuilding this panel.
+        self.cost_panel.setVisible(False)
 
     def _on_progress_main(self, i: int, total: int, name: str) -> None:
         """Main-thread slot for worker-thread progress updates."""
