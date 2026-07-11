@@ -52,8 +52,9 @@ ERP-amplitude modelling and `LLM_Cloze` only when you specifically
 need the cloze metric.
 
 ## Implementation in SensiExtractor
-Source: `extractors/llm_cloze.py:add_llm_cloze`. Backends:
-`_HuggingFaceBackend` (local) and `_OpenAIBackend` (API).
+Source: `extractors/llm_cloze.py:add_llm_cloze`. Backend:
+`_HuggingFaceBackend` (local Hugging Face causal LM). OpenAI is not a
+supported backend — see [LLM access & credentials](llm_credentials.md).
 
 See [`LLM_Surprisal` § Implementation](pred_surprisal_llm.md#implementation-in-sensiextractor)
 — `LLM_Cloze` is computed in the same scoring call as
@@ -90,9 +91,8 @@ PUNCT rows are masked to `NaN`. The probability is stored rounded to
 
 ## Getting access & credentials
 
-Both backends need credentials before they run (OpenAI API key, or a
-HuggingFace token + license approval for gated Llama). This is shared with
-`LLM_Surprisal` and `LLM_TopMatch` — see
+The local Llama backend needs a HuggingFace token + license approval before
+it runs. This is shared with `LLM_Surprisal` and `LLM_TopMatch` — see
 **[LLM access & credentials](llm_credentials.md)** for the full step-by-step.
 
 ## Datasets

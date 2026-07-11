@@ -2,7 +2,7 @@
 key: llm_credentials
 name: LLM access & credentials
 levels: [word]
-libraries: [transformers, torch, openai, huggingface_hub]
+libraries: [transformers, torch, huggingface_hub]
 status: reference
 depth: shallow
 ---
@@ -12,30 +12,18 @@ depth: shallow
 The LLM predictability columns — [`LLM_Cloze`](pred_cloze.md),
 [`LLM_Surprisal`](pred_surprisal_llm.md), and
 [`LLM_TopMatch`](pred_topmatch.md) — all come from a single forward pass of
-one language model. Whichever backend that model uses needs credentials, and
-neither is bundled; set one up before running. What you do here applies to all
-three columns at once.
+one **local** language model. The weights are not bundled; set access up once
+before running. What you do here applies to all three columns at once.
 
-Pick **one** backend:
-
-- **OpenAI** (`gpt-4o`, `gpt-4o-mini`) — zero download, paid API, needs an API key.
-- **Local Llama** (`meta-llama/*`) — free, runs on your machine/GPU, but the
-  weights are *gated* and need a HuggingFace token plus one-time license
-  approval.
-
-### OpenAI backend — API key
-
-1. Create an API key at <https://platform.openai.com/api-keys> (requires an
-   account with billing enabled — these calls are paid; see *Cost / runtime*
-   in [`LLM_Surprisal`](pred_surprisal_llm.md#cost--runtime-notes-from-llm_options)).
-2. Make it available to the run in one of two ways:
-   - Paste it into the **API key** box in the GUI's Predictability card
-     (session-only, never written to disk), **or**
-   - Set the `OPENAI_API_KEY` environment variable before launching, e.g.
-     `export OPENAI_API_KEY=sk-…` (bash) or `$env:OPENAI_API_KEY="sk-…"`
-     (PowerShell).
-
-When `OPENAI_API_KEY` is set, `gpt-4o-mini` is auto-selected. No download.
+> **Why local-only (no OpenAI).** Scoring an *existing* string for per-token
+> log-probabilities needs the legacy OpenAI `/v1/completions` `echo=True,
+> logprobs` primitive, which OpenAI has retired and never served for the
+> `gpt-4o` family. There is no current OpenAI endpoint that returns the
+> probabilities these columns require, so SensiExtractor uses local
+> Hugging Face causal LMs only. (Selecting a `gpt-*` model raises an
+> explanatory error rather than failing mid-run.) The GUI still has a latent
+> API-key box for a possible future paid backend, but it is never shown while
+> only local models are offered.
 
 ### Local Llama backend — gated, free, one-time setup
 

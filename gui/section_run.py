@@ -219,10 +219,10 @@ class RunSection(QWidget):
             self.readiness_label.setText("✓  Ready to run.")
         self.warnings_label.setText("\n".join(lines))
 
-        # Cost panel — only when planner schedules llm_predict AND the model is an OpenAI one.
-        # llm_model defaults to "" (never persisted when user keeps the combo's default);
-        # treat "" as LLM_OPTIONS[0][0] (gpt-4o-mini) — what the combo shows and what
-        # select_model() would pick at runtime when the key is unset.
+        # Cost panel — only for paid (OpenAI, gpt-*) models. LLM cloze now
+        # offers local HF models only, which are free, so the panel is
+        # effectively always hidden; the gpt-* guard is retained so the panel
+        # would reappear automatically if a paid backend is ever restored.
         model = prefs["predictability"].get("llm_model", "") or LLM_OPTIONS[0][0]
         if "llm_predict" in plan.stages_to_run and model.startswith("gpt-"):
             self.cost_panel.setVisible(True)

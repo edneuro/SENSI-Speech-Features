@@ -9,8 +9,9 @@ status: implemented
 depth: shallow
 ---
 
-> The OpenAI and gated-Llama backends both need credentials before they run —
-> see **[LLM access & credentials](llm_credentials.md)**.
+> The (gated) local Llama backend needs a HuggingFace token before it runs —
+> see **[LLM access & credentials](llm_credentials.md)**. OpenAI is not a
+> supported backend.
 
 ## Meaning
 Binary flag (`0` or `1`) indicating whether the LLM's **most likely
@@ -56,13 +57,14 @@ position to the actual id at that position:
 top_match = 1 if sub_top1[first_sub] == ids[first_sub] else 0
 ```
 
-The OpenAI backend uses `top_logprobs=5` and compares the stripped
-top-1 token string against the stripped actual subword string —
-necessary because the OpenAI endpoint returns text rather than ids.
+The comparison is done at the token's first subword, in vocabulary-id
+space (`argmax` id vs. the actual next-token id) from the local model's
+logits.
 
-`upos == "PUNCT"` → `NaN`. The output is stored as `int` for `0` / `1`
-and remains `NaN` (so a `Nullable Int64` view in pandas) for
-punctuation.
+`upos == "PUNCT"` → `NaN`, and the document's first word is `NaN` too
+(no preceding context, so no prediction to match). The output is stored
+as `int` for `0` / `1` and remains `NaN` (a `Nullable Int64` view in
+pandas) for those rows.
 
 ## Library
 See `extractors/llm_cloze.py:add_llm_cloze`. Both backends emit

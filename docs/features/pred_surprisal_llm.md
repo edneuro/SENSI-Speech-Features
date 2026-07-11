@@ -4,13 +4,14 @@ name: LLM surprisal
 levels: [word]
 gui_toggle: pred_surprisal_llm
 output_columns: [LLM_Surprisal]
-libraries: [transformers, torch, openai]
+libraries: [transformers, torch]
 status: implemented
 depth: deep
 ---
 
-> The OpenAI and gated-Llama backends both need credentials before they run —
-> see **[LLM access & credentials](llm_credentials.md)**.
+> The (gated) local Llama backend needs a HuggingFace token before it runs —
+> see **[LLM access & credentials](llm_credentials.md)**. OpenAI is not a
+> supported backend (see *Why local-only* there).
 
 ## Meaning
 Same metric as [`Surprisal`](pred_surprisal_gpt2.md) — negative log₂
@@ -19,9 +20,9 @@ computed with a modern LLM instead of GPT-2:
 
     LLM_Surprisal(wᵢ) = -log₂ P_{LLM}(wᵢ | w₁ … wᵢ₋₁)
 
-The active LLM is configurable from the GUI's Predictability card
-(default `gpt-4o-mini` if `OPENAI_API_KEY` is set, otherwise the
-largest Llama-3 that fits the GPU). Better LMs produce surprisal
+The active LLM is a **local** Hugging Face causal LM, configurable from
+the GUI's Predictability card (default: the largest Llama-3 that fits
+the available GPU, or the 3B model on CPU). Better LMs produce surprisal
 estimates that predict **reading time** more tightly
 ([Goodkind 2018], [Wilcox 2020]) and predict more variance in
 fMRI / ECoG responses to language ([Schrimpf 2021], [Goldstein 2022])
@@ -43,24 +44,18 @@ the same file.
 
 **What the code does:**
 
-1. Selects a backend based on `model_id` (or via `select_model()` —
-   prefer OpenAI if `OPENAI_API_KEY` set, otherwise a Llama-3 sized to
-   available VRAM).
-2. Scores the transcript:
-   - Local backend (`_HuggingFaceBackend`): autoregressive LM forward
-     pass. Device placement cascades **4-bit GPU → fp16 GPU → CPU**
-     (`_load_tiers`): 4-bit via `BitsAndBytesConfig` when bitsandbytes
-     works, fp16 on the GPU when it doesn't, CPU only when no CUDA GPU
-     is present — and it logs a warning if a GPU exists but both GPU
-     loads failed (so a silent CPU landing is visible). **Single
-     forward pass when the tokenised transcript fits the model's
-     context window; chunked sliding window otherwise** — see
-     *Long-text handling* below.
-   - OpenAI backend (`_OpenAIBackend`): calls `/v1/completions` with
-     `echo=True, max_tokens=0, logprobs=5` to score the prompt itself.
-     Tokenises locally with `tiktoken` and **raises** `ValueError`
-     before the API call if the prompt exceeds the model's context
-     limit — see *Long-text handling*.
+1. Selects a local backend based on `model_id` (or via `select_model()`,
+   which sizes a Llama-3 to the available VRAM). A `gpt-*` id raises an
+   actionable error — OpenAI has no working per-token scoring endpoint
+   (see [LLM access & credentials](llm_credentials.md)).
+2. Scores the transcript with `_HuggingFaceBackend`: an autoregressive
+   LM forward pass. Device placement cascades **4-bit GPU → fp16 GPU →
+   CPU** (`_load_tiers`): 4-bit via `BitsAndBytesConfig` when
+   bitsandbytes works, fp16 on the GPU when it doesn't, CPU only when no
+   CUDA GPU is present — and it logs a warning if a GPU exists but both
+   GPU loads failed (so a silent CPU landing is visible). **Single
+   forward pass when the tokenised transcript fits the model's context
+   window; chunked sliding window otherwise** — see *Long-text handling*.
 3. Per spaCy token, assigns each LLM subword to exactly ONE token —
    the first whose character span it overlaps (shared bookkeeping with
    [GPT-2 surprisal](pred_surprisal_gpt2.md); a subword straddling a
@@ -82,11 +77,12 @@ below applies to all three columns simultaneously.
 
 - *Three columns from one forward pass* — cloze probability,
   surprisal, and top-match are all cheap byproducts of the same scoring
-  call. Computing them separately would triple cost and runtime for no
-  benefit.
-- *Auto-selection prefers OpenAI when API key is set* — ⚠️ assumption
-  is that a user who set the key intends to use it (otherwise why
-  paste it?). Local Llama is the free / private fallback.
+  call. Computing them separately would triple runtime for no benefit.
+- *Local models only* — scoring an existing string for per-token
+  log-probabilities needs OpenAI's retired `/v1/completions` echo+logprobs
+  primitive, which was never served for the gpt-4o family; there is no
+  current OpenAI endpoint that returns these probabilities, so the
+  extractor uses local Hugging Face causal LMs exclusively.
 - *4-bit quantization via bitsandbytes on the local backend* —
   Llama-3-8B fits in ~6 GB VRAM at 4-bit (vs ~16 GB at fp16), so most
   researcher-grade GPUs can run it. When bitsandbytes is missing/broken
@@ -98,12 +94,10 @@ below applies to all three columns simultaneously.
 
 ### Long-text handling
 
-Each backend in `LLM_OPTIONS` has its own context-window limit:
+Each model in `LLM_OPTIONS` has its own context-window limit:
 
 | Model | Context window | Behaviour past the limit |
 |---|---|---|
-| gpt-4o-mini             | 128K subwords | `ValueError` before API call (`tiktoken`-counted) |
-| gpt-4o                  | 128K subwords | `ValueError` before API call |
 | meta-llama/Llama-3.2-3B | 128K subwords | Chunked sliding window (`_chunk_slices`) |
 | meta-llama/Meta-Llama-3-8B   | 8K  subwords  | Chunked sliding window |
 | meta-llama/Meta-Llama-3-70B  | 8K  subwords  | Chunked sliding window |
@@ -119,23 +113,14 @@ integration. *Within each chunk* the scoring is exact; *across chunks*
 the earliest subwords drop out of the model's view — the same
 approximation cost discussed in the GPT-2 doc.
 
-**The OpenAI backend cannot chunk via the public API** (no way to score
-"these tokens conditioned on a separate prefix"), so it pre-tokenises
-with `tiktoken` and raises `ValueError` if the stimulus exceeds the
-model's context limit. In practice this only fires for transcripts of
-~100K+ words — well beyond any realistic SENSI stimulus. If you do hit
-it, split the transcript or switch to a local Llama backend.
-
-⚠️ **Adding a new OpenAI model to `LLM_OPTIONS` requires also adding
-its context limit to `_OPENAI_CONTEXT_LIMITS`** in `extractors/llm_cloze.py`.
-A guardrail test (`test_openai_context_limit_table_covers_listed_models`)
-fails CI if you forget.
+(The `_check_context_limit` / `_OPENAI_CONTEXT_LIMITS` helpers are
+retained, currently unused, as the home for a possible future paid
+backend that cannot chunk via its API; no OpenAI model is selectable
+today.)
 
 ## Cost / runtime notes (from `LLM_OPTIONS`)
 | Model | Cost / stim | r vs human cloze | Requirement |
 |---|---|---|---|
-| gpt-4o-mini | $0.10–0.30 | ~0.83 | `OPENAI_API_KEY` |
-| gpt-4o      | $1–3       | ~0.85 | `OPENAI_API_KEY` |
 | Llama-3-70B | free       | ~0.84 | ≥ 48 GB VRAM |
 | Llama-3-8B  | free       | ~0.79 | ≥ 12 GB VRAM |
 | Llama-3.2-3B | free      | ~0.76 | ≥ 8 GB VRAM (or CPU) |
@@ -147,8 +132,8 @@ benchmarks.
 
 ## Library
 See `extractors/llm_cloze.py:_HuggingFaceBackend.score` for the local
-path and `_OpenAIBackend.score` for the API path. Both return one
-dict per spaCy token with keys `{p, surprisal, top_match}`.
+scoring path. It returns one dict per spaCy token with keys
+`{p, surprisal, top_match}`.
 
 ## Papers
 

@@ -5,15 +5,23 @@ Produces three columns from a single forward pass per token:
     LLM_Surprisal = -log2 P(target | preceding context)   (bits)
     LLM_TopMatch  = 1 if argmax-next-token == target else 0
 
-Model selection (auto):
-    OPENAI_API_KEY set            → gpt-4o-mini
-    GPU VRAM ≥ 48 GB              → meta-llama/Meta-Llama-3-70B
-    GPU VRAM ≥ 12 GB              → meta-llama/Meta-Llama-3-8B
-    GPU VRAM ≥  8 GB              → meta-llama/Llama-3.2-3B
-    otherwise                     → meta-llama/Llama-3.2-3B (CPU)
+Backends are LOCAL Hugging Face causal LMs only. OpenAI is intentionally
+not offered: scoring an existing string for per-token log-probabilities
+requires the legacy /v1/completions `echo=True, logprobs` primitive,
+which OpenAI has retired and never served for the gpt-4o family. A gpt-*
+model id therefore raises an actionable error instead of failing mid-run
+against the API (see _make_default_backend). If OpenAI ever ships a
+scoring endpoint again, restore an OpenAI backend and re-add its entries
+to LLM_OPTIONS.
 
-Override with `--llm-model <id>`. The backend interface is pluggable so
-tests can inject mock backends (see _FakeBackend in the unit tests).
+Model selection (auto):
+    GPU VRAM ≥ 48 GB → meta-llama/Meta-Llama-3-70B
+    GPU VRAM ≥ 12 GB → meta-llama/Meta-Llama-3-8B
+    otherwise        → meta-llama/Llama-3.2-3B (GPU if ≥8 GB, else CPU)
+
+Override with `--llm-model <id>` (a local HF causal-LM id). The backend
+interface is pluggable so tests can inject mock backends (see
+_FakeBackend in the unit tests).
 """
 
 import logging
@@ -29,22 +37,20 @@ logger = logging.getLogger(__name__)
 
 EXPECTED_COLUMNS = ['LLM_Cloze', 'LLM_Surprisal', 'LLM_TopMatch']
 
-# Shared by GUI dropdown (gui.py) and the run dispatch (gui_run.py).
-# Kept here to avoid circular imports between gui.py and gui_run.py.
+# Shared by the GUI dropdown and the run dispatch. Kept here to avoid
+# circular imports. LOCAL models only — see the module docstring for why
+# OpenAI is excluded.
 LLM_OPTIONS = [
-    ('gpt-4o-mini',                 'gpt-4o-mini   ($0.10–0.30/stim, r≈0.83, requires OPENAI_API_KEY)'),
-    ('gpt-4o',                      'gpt-4o        ($1–3/stim, r≈0.85, requires OPENAI_API_KEY)'),
     ('meta-llama/Meta-Llama-3-70B', 'Llama-3-70B   (free, r≈0.84, needs ≥48GB VRAM)'),
     ('meta-llama/Meta-Llama-3-8B',  'Llama-3-8B    (free, r≈0.79, needs ≥12GB VRAM)'),
-    ('meta-llama/Llama-3.2-3B',     'Llama-3.2-3B  (free, r≈0.76, needs ≥8GB VRAM)'),
+    ('meta-llama/Llama-3.2-3B',     'Llama-3.2-3B  (free, r≈0.76, needs ≥8GB VRAM, CPU-capable)'),
 ]
 
-# Maximum input subwords each OpenAI model accepts. HuggingFace models are
-# checked against `model.config.max_position_embeddings` directly.
-_OPENAI_CONTEXT_LIMITS = {
-    'gpt-4o-mini': 128_000,
-    'gpt-4o':      128_000,
-}
+# Retained so a future OpenAI scoring backend (and the generic
+# _check_context_limit guard) has a home; no OpenAI model is currently
+# selectable. HuggingFace models are checked against
+# `model.config.max_position_embeddings` directly.
+_OPENAI_CONTEXT_LIMITS: dict[str, int] = {}
 
 
 def _check_context_limit(n_subwords: int, limit: int | None, model_id: str) -> None:
@@ -88,9 +94,12 @@ class _Backend(Protocol):
 
 
 def select_model() -> str:
-    """Pick the best LLM model id given the current environment."""
-    if os.environ.get('OPENAI_API_KEY'):
-        return 'gpt-4o-mini'
+    """Pick the best LOCAL LLM model id given the current environment.
+
+    OpenAI is never selected — even with OPENAI_API_KEY set — because there
+    is no working OpenAI per-token scoring endpoint (see the module
+    docstring). Selection is by available GPU VRAM.
+    """
     vram = _available_vram_gb()
     if vram >= 48:
         return 'meta-llama/Meta-Llama-3-70B'
@@ -225,7 +234,15 @@ def _scores_from_subwords(
 
 def _make_default_backend(model_id: str) -> _Backend:
     if model_id.startswith('gpt-'):
-        return _OpenAIBackend(model_id)
+        raise RuntimeError(
+            f"OpenAI model {model_id!r} is not supported for cloze scoring. "
+            "Per-token scoring of an existing string needs the legacy "
+            "/v1/completions echo+logprobs primitive, which OpenAI has "
+            "retired and never served for the gpt-4o family — a run would "
+            "only fail at the API. Use a local model instead "
+            "(e.g. --llm-model meta-llama/Llama-3.2-3B, which runs on CPU), "
+            "or omit --llm-model to auto-select one by GPU VRAM."
+        )
     return _HuggingFaceBackend(model_id)
 
 
@@ -361,74 +378,3 @@ class _HuggingFaceBackend:
 
         return _scores_from_subwords(text, tokens, offsets,
                                      sub_log_p, sub_top1, ids)
-
-
-class _OpenAIBackend:
-    """OpenAI Chat Completions logprobs-based scorer."""
-
-    def __init__(self, model_id: str):
-        from openai import OpenAI
-        self._client = OpenAI()
-        self._model_id = model_id
-        self._context_limit = _OPENAI_CONTEXT_LIMITS.get(model_id)
-
-    def score(self, text: str, tokens: list[str]) -> list[dict]:
-        if self._context_limit is not None:
-            import tiktoken
-            try:
-                enc = tiktoken.encoding_for_model(self._model_id)
-            except KeyError:
-                enc = tiktoken.get_encoding('o200k_base')
-            _check_context_limit(len(enc.encode(text)), self._context_limit, self._model_id)
-        # NOTE: For per-token logprobs over a fixed continuation, OpenAI's
-        # Completions endpoint with `logprobs` is the right primitive.
-        # Newer Chat Completions support `logprobs` and `top_logprobs` for
-        # generated text but not for arbitrary scoring of an existing string.
-        # We use the legacy /completions endpoint via the Responses API:
-        responses = self._client.completions.create(
-            model=self._model_id,
-            prompt=text,
-            max_tokens=0,
-            logprobs=5,
-            echo=True,
-        )
-        choice = responses.choices[0]
-        token_logprobs = choice.logprobs.token_logprobs
-        offsets = choice.logprobs.text_offset
-        sub_tokens = choice.logprobs.tokens
-        top_choices = choice.logprobs.top_logprobs
-
-        results = []
-        char_pos = 0
-        for tok in tokens:
-            idx = text.find(tok, char_pos)
-            if idx == -1:
-                results.append({'p': float('nan'), 'surprisal': float('nan'), 'top_match': 0})
-                continue
-            tok_start, tok_end = idx, idx + len(tok)
-            char_pos = tok_end
-            total_lp = 0.0
-            first_sub = None
-            found = False
-            for sub_idx, (off, sub) in enumerate(zip(offsets, sub_tokens)):
-                if off + len(sub) <= tok_start:
-                    continue
-                if off >= tok_end:
-                    break
-                lp = token_logprobs[sub_idx] or 0.0
-                total_lp += lp
-                if first_sub is None:
-                    first_sub = sub_idx
-                found = True
-            if not found:
-                results.append({'p': float('nan'), 'surprisal': float('nan'), 'top_match': 0})
-                continue
-            p = math.exp(total_lp)
-            surprisal = -total_lp / math.log(2)
-            top_match = 0
-            if first_sub is not None and top_choices[first_sub]:
-                argmax_token = max(top_choices[first_sub], key=top_choices[first_sub].get)
-                if argmax_token.strip() == sub_tokens[first_sub].strip():
-                    top_match = 1
-            results.append({'p': p, 'surprisal': surprisal, 'top_match': top_match})
-        return results

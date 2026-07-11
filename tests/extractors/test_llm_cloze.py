@@ -54,12 +54,17 @@ def test_metric_values():
     assert out['LLM_TopMatch'].iloc[1] == 0
 
 
-def test_select_model_uses_openai_key(monkeypatch):
+def test_select_model_never_returns_openai_even_with_key(monkeypatch):
+    # OpenAI has no per-token scoring endpoint anymore (the legacy
+    # /v1/completions echo+logprobs path is gone and chat models were never
+    # served there). select_model must not route to a backend that can only
+    # fail at run time, even if a key is present.
     monkeypatch.setenv('OPENAI_API_KEY', 'sk-test')
-    assert select_model() == 'gpt-4o-mini'
+    with patch('extractors.llm_cloze._available_vram_gb', return_value=0.0):
+        assert select_model() == 'meta-llama/Llama-3.2-3B'
 
 
-def test_select_model_picks_local_when_no_api_key(monkeypatch):
+def test_select_model_picks_local_by_vram(monkeypatch):
     monkeypatch.delenv('OPENAI_API_KEY', raising=False)
     with patch('extractors.llm_cloze._available_vram_gb', return_value=8.0):
         assert select_model() == 'meta-llama/Llama-3.2-3B'
@@ -67,6 +72,22 @@ def test_select_model_picks_local_when_no_api_key(monkeypatch):
         assert select_model() == 'meta-llama/Meta-Llama-3-8B'
     with patch('extractors.llm_cloze._available_vram_gb', return_value=50.0):
         assert select_model() == 'meta-llama/Meta-Llama-3-70B'
+
+
+def test_llm_options_has_no_openai_entries():
+    from extractors.llm_cloze import LLM_OPTIONS
+    assert LLM_OPTIONS, "options list must not be empty"
+    assert not any(mid.startswith('gpt-') for mid, _ in LLM_OPTIONS)
+
+
+def test_make_default_backend_rejects_openai_with_actionable_error():
+    from extractors.llm_cloze import _make_default_backend
+    with pytest.raises(RuntimeError) as ei:
+        _make_default_backend('gpt-4o-mini')
+    msg = str(ei.value).lower()
+    assert 'openai' in msg
+    assert 'local' in msg          # points the user at the working path
+    assert 'meta-llama' in str(ei.value) or 'llama' in msg
 
 
 def test_context_limit_passes_when_under():

@@ -35,31 +35,20 @@ def test_preflight_warns_on_missing_ewfg(prefs_tmp):
     assert any(k is not None and k.startswith("freq_ewfg_") for k in keys)
 
 
-def test_preflight_warns_on_openai_without_key(prefs_tmp):
+def test_preflight_no_openai_key_warning_for_gpt_model(prefs_tmp):
+    # OpenAI cloze is no longer offered, so preflight must NOT emit an
+    # "OpenAI key missing" warning — even if a stale gpt-* id somehow sits
+    # in prefs, that path is gone (the run would raise an actionable error).
     from utils.preferences import save_preferences
     from gui.preflight import compute_warnings
-    # Need llm_predict in plan: word_level_csv + a predictability toggle on.
     save_preferences({
         "output": {"word_level_csv": True},
         "features": {"pred_cloze": True},
         "predictability": {"llm_model": "gpt-4o-mini"},
     })
     warnings = compute_warnings(session_api_key="")
-    keys = {w.toggle_key for w in warnings}
-    assert "pred_surprisal_llm" in keys or "pred_cloze" in keys
-
-
-def test_preflight_no_warning_on_openai_with_key(prefs_tmp):
-    from utils.preferences import save_preferences
-    from gui.preflight import compute_warnings
-    save_preferences({
-        "output": {"word_level_csv": True},
-        "features": {"pred_cloze": True},
-        "predictability": {"llm_model": "gpt-4o-mini"},
-    })
-    warnings = compute_warnings(session_api_key="sk-fake")
-    keys = {w.toggle_key for w in warnings}
-    assert not any(k is not None and k.startswith("pred_") for k in keys)
+    assert not any("API key" in w.message or "OpenAI" in w.message
+                   for w in warnings)
 
 
 def test_preflight_warns_on_gated_local_without_token(prefs_tmp, monkeypatch):

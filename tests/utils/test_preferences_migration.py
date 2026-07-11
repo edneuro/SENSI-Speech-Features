@@ -65,7 +65,7 @@ def test_load_v1_flat_schema_migrates_to_v4(tmp_path, monkeypatch):
     old = {
         'analyzer_name': 'Alice',
         'last_transcripts_folder': '/x/y',
-        'llm_model': 'gpt-4o-mini',
+        'llm_model': 'meta-llama/Meta-Llama-3-8B',
         'dictionary_backend': 'liwc',
         'semantic_categories': ['social', 'cognition'],
         'feature_toggles': {'spacy_parse': True, 'zipf_freq': False},
@@ -79,7 +79,9 @@ def test_load_v1_flat_schema_migrates_to_v4(tmp_path, monkeypatch):
     # LIWC is disabled (EULA): the v11 finalize coerces a stored "liwc"
     # backend to "empath".
     assert prefs['semantic']['backend'] == 'empath'
-    assert prefs['predictability']['llm_model'] == 'gpt-4o-mini'
+    # A local (non-gpt) llm_model survives migration untouched; the gpt-* →
+    # "" coercion is covered by test_v16_stored_openai_llm_model_coerced_*.
+    assert prefs['predictability']['llm_model'] == 'meta-llama/Meta-Llama-3-8B'
     assert prefs['features']['freq_subtlex'] is False   # zipf_freq was False
     # spacy_parse was True → all per-column structural toggles True
     assert prefs['features']['feat_struct_doc_id'] is True
@@ -143,7 +145,7 @@ def v2_prefs_file(tmp_path, monkeypatch):
                 "alignment": True,
             },
             "semantic_categories": ["social", "cognition"],
-            "llm_model": "gpt-4o-mini",
+            "llm_model": "meta-llama/Meta-Llama-3-8B",
         },
         "document_level": {
             "feature_toggles": {
@@ -163,7 +165,7 @@ def v2_prefs_file(tmp_path, monkeypatch):
                 "liwc_clout": True,
             },
             "semantic_categories": ["social"],
-            "llm_model": "gpt-4o-mini",
+            "llm_model": "meta-llama/Meta-Llama-3-8B",
         },
     }), encoding="utf-8")
     monkeypatch.setenv("SENSI_PREFS_PATH", str(p))
@@ -259,7 +261,7 @@ def test_v2_migration_categories_unified_in_v7(v2_prefs_file):
 def test_v2_migration_carries_llm_model(v2_prefs_file):
     from utils.preferences import load_preferences
     prefs = load_preferences()
-    assert prefs["predictability"]["llm_model"] == "gpt-4o-mini"
+    assert prefs["predictability"]["llm_model"] == "meta-llama/Meta-Llama-3-8B"
 
 
 def test_v2_migration_coerces_disabled_liwc_backend_to_empath(v2_prefs_file):
@@ -330,7 +332,7 @@ def v3_prefs_file(tmp_path, monkeypatch):
             "sem_composite_psych": True,
             "acoustic_boundaries": True,
         },
-        "predictability": {"llm_model": "gpt-4o-mini"},
+        "predictability": {"llm_model": "meta-llama/Meta-Llama-3-8B"},
         "semantic": {
             "backend": "liwc",
             "categories_liwc": ["affect", "cogproc"],
@@ -402,7 +404,7 @@ def test_v3_migration_preserves_unchanged_keys(v3_prefs_file):
     prefs = load_preferences()
     assert prefs["features"]["lexling_morph"] is False
     assert prefs["features"]["pred_surprisal_gpt2"] is True
-    assert prefs["predictability"]["llm_model"] == "gpt-4o-mini"
+    assert prefs["predictability"]["llm_model"] == "meta-llama/Meta-Llama-3-8B"
     # LIWC disabled (EULA): stored "liwc" backend is coerced to "empath".
     assert prefs["semantic"]["backend"] == "empath"
 
@@ -951,3 +953,29 @@ def test_v17_deliberate_030_not_coerced(tmp_path, monkeypatch):
     monkeypatch.setenv("SENSI_PREFS_PATH", str(p))
     prefs = P.load_preferences()
     assert prefs["acoustic_ts"]["env_comp"] == 0.3
+
+
+def test_v16_stored_openai_llm_model_coerced_to_auto(tmp_path, monkeypatch):
+    """OpenAI cloze scoring no longer works; a saved gpt-* model would only
+    fail at run time, so migration clears it to "" (auto -> local pick)."""
+    import json
+    from utils import preferences as P
+    p = tmp_path / "prefs.json"
+    p.write_text(json.dumps({"schema_version": 16,
+                             "predictability": {"llm_model": "gpt-4o-mini"}}),
+                 encoding="utf-8")
+    monkeypatch.setenv("SENSI_PREFS_PATH", str(p))
+    prefs = P.load_preferences()
+    assert prefs["predictability"]["llm_model"] == ""
+
+
+def test_v16_stored_local_llm_model_preserved(tmp_path, monkeypatch):
+    import json
+    from utils import preferences as P
+    p = tmp_path / "prefs.json"
+    p.write_text(json.dumps({"schema_version": 16,
+                             "predictability": {"llm_model": "meta-llama/Meta-Llama-3-8B"}}),
+                 encoding="utf-8")
+    monkeypatch.setenv("SENSI_PREFS_PATH", str(p))
+    prefs = P.load_preferences()
+    assert prefs["predictability"]["llm_model"] == "meta-llama/Meta-Llama-3-8B"

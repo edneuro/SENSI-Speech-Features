@@ -971,11 +971,17 @@ def load_preferences() -> dict[str, Any]:
         f["feat_struct_token_in_sentence_id"] = f.get("feat_struct_token_id", True)
         f["feat_struct_token_id"] = f.pop("feat_struct_term_id")
     # v17 finalize (pre-v17 sources only — post-v17 values are the user's):
-    # upgrade the old rounded env_comp default to the exact mTRF constant.
+    #  (1) upgrade the old rounded env_comp default to the exact mTRF constant;
+    #  (2) clear a stored OpenAI (gpt-*) llm_model — OpenAI cloze scoring no
+    #      longer works, so an auto ("") selection picks a working local model
+    #      instead of failing at run time.
     if isinstance(version, int) and version < SCHEMA_VERSION_V17:
         ac = merged.get("acoustic_ts")
         if isinstance(ac, dict) and ac.get("env_comp") == 0.3:
             ac["env_comp"] = MTRF_ENV_COMP
+        pred = merged.get("predictability")
+        if isinstance(pred, dict) and str(pred.get("llm_model", "")).startswith("gpt-"):
+            pred["llm_model"] = ""
     if merged.get("schema_version") != SCHEMA_VERSION:
         merged["schema_version"] = SCHEMA_VERSION
         _write(path, merged)

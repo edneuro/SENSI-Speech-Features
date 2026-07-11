@@ -58,7 +58,8 @@ def test_llm_credentials_doc_exists_and_is_loadable():
     from gui.feature_docs import load_feature_doc
     doc = load_feature_doc("llm_credentials")
     assert doc is not None
-    assert "OPENAI_API_KEY" in doc.body and "HF_TOKEN" in doc.body
+    # Local HF backend only; the doc must cover the HF token setup.
+    assert "HF_TOKEN" in doc.body
 
 
 def test_word_section_has_configure_categories_button(qtbot):
@@ -125,13 +126,16 @@ def _label_for(model_id):
     return next(lab for mid, lab in LLM_OPTIONS if mid == model_id)
 
 
-def test_openai_model_shows_api_key_hides_hf(qtbot, monkeypatch):
+def test_no_openai_option_in_model_combo(qtbot):
+    # OpenAI is no longer a selectable backend, so the API-key row can never
+    # be shown by picking a model. The combo must offer local models only.
     from gui.section_word_features import WordFeaturesSection
+    from extractors.llm_cloze import LLM_OPTIONS
     w = WordFeaturesSection(); qtbot.addWidget(w)
-    w.show()  # isVisible() requires a shown top-level ancestor (Qt semantics)
-    w.llm_model_combo.setCurrentText(_label_for('gpt-4o-mini'))
-    assert w.api_key_row.isVisible() is True
-    assert w.hf_token_row.isVisible() is False
+    labels = [w.llm_model_combo.itemText(i)
+              for i in range(w.llm_model_combo.count())]
+    assert labels == [lab for _mid, lab in LLM_OPTIONS]
+    assert not any(mid.startswith('gpt-') for mid, _ in LLM_OPTIONS)
 
 
 def test_gated_model_no_token_shows_hf_box(qtbot, monkeypatch):
@@ -166,5 +170,7 @@ def test_session_hf_token_returns_text_only_when_visible(qtbot, monkeypatch):
     w.llm_model_combo.setCurrentText(_label_for('meta-llama/Meta-Llama-3-8B'))
     w.hf_token_line.setText('hf_secret')
     assert w.session_hf_token() == 'hf_secret'
-    w.llm_model_combo.setCurrentText(_label_for('gpt-4o-mini'))
+    # When a token is already detected, the input row hides → session empty.
+    monkeypatch.setattr(m, 'has_hf_token', lambda: True)
+    w.llm_model_combo.setCurrentText(_label_for('meta-llama/Llama-3.2-3B'))
     assert w.session_hf_token() == ''   # hidden → empty

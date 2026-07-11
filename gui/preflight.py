@@ -93,17 +93,12 @@ def compute_warnings(session_api_key: str = "", session_hf_token: str = "") -> l
                     message="EWFG parquet not found at dictionaries/edu_zipf.parquet "
                             "— columns will be NaN. See README for acquisition."))
 
-    # OpenAI without API key
+    # Gated local model without a HuggingFace token. (LLM cloze uses local
+    # HF models only — OpenAI is no longer offered, so there is no
+    # API-key warning here.)
     if "llm_predict" in in_plan:
         llm_model = prefs["predictability"].get("llm_model", "") or llm_cloze.LLM_OPTIONS[0][0]
-        if llm_model.startswith("gpt-") and not session_api_key:
-            for k in ("pred_surprisal_llm", "pred_cloze", "pred_topmatch"):
-                if prefs["features"].get(k, False):
-                    out.append(Warning(
-                        toggle_key=k, severity="amber",
-                        message=f"OpenAI model '{llm_model}' selected but no API key "
-                                "pasted — paste your key in Predictability."))
-        elif (llm_cloze.is_gated_local_model(llm_model) and not session_hf_token
+        if (llm_cloze.is_gated_local_model(llm_model) and not session_hf_token
                 and not llm_cloze.has_hf_token()):
             for k in ("pred_surprisal_llm", "pred_cloze", "pred_topmatch"):
                 if prefs["features"].get(k, False):
