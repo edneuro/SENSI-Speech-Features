@@ -40,8 +40,7 @@ def test_default_prefs_features_has_v4_keys(tmp_path, monkeypatch):
     for k in ('lexling_tokens', 'lexling_pos', 'lexling_morph', 'lexling_dep',
               'freq_subtlex', 'freq_ewfg_k2', 'freq_ewfg_3to5',
               'freq_ewfg_6to8', 'freq_ewfg_9to12', 'freq_ewfg_overall',
-              'pred_surprisal_gpt2', 'pred_surprisal_llm',
-              'pred_cloze', 'pred_topmatch', 'sem_indicators'):
+              'sem_indicators'):
         assert k in keys, k
     # Per-column expansions (batch 3)
     for k in ('feat_struct_doc_id', 'feat_struct_paragraph_id',
@@ -56,6 +55,11 @@ def test_default_prefs_features_has_v4_keys(tmp_path, monkeypatch):
     # Collapsed parents and the pre-v14 struct-id key names are gone
     for k in ('structural', 'acoustic_boundaries', 'sem_composite_psych',
               'feat_struct_term_id'):
+        assert k not in keys, k
+    # v18: model/metric selection moved out of these four feature toggles
+    # into predictability.models/metrics
+    for k in ('pred_surprisal_gpt2', 'pred_surprisal_llm',
+              'pred_cloze', 'pred_topmatch'):
         assert k not in keys, k
 
 
@@ -79,9 +83,15 @@ def test_load_v1_flat_schema_migrates_to_v4(tmp_path, monkeypatch):
     # LIWC is disabled (EULA): the v11 finalize coerces a stored "liwc"
     # backend to "empath".
     assert prefs['semantic']['backend'] == 'empath'
-    # A local (non-gpt) llm_model survives migration untouched; the gpt-* →
-    # "" coercion is covered by test_v16_stored_openai_llm_model_coerced_*.
-    assert prefs['predictability']['llm_model'] == 'meta-llama/Meta-Llama-3-8B'
+    # v18: the four pred_* toggles were all on (defaults), so the stored
+    # llm_model's slug is mapped into predictability.models alongside "gpt2";
+    # the old llm_model field itself is dropped.
+    assert set(prefs['predictability']['models']) == {'gpt2', 'llama3_8b'}
+    assert prefs['predictability']['metrics']['surprisal'] is True
+    assert prefs['predictability']['metrics']['cloze'] is True
+    assert prefs['predictability']['metrics']['topmatch'] is True
+    assert 'llm_model' not in prefs['predictability']
+    assert 'pred_surprisal_gpt2' not in prefs['features']
     assert prefs['features']['freq_subtlex'] is False   # zipf_freq was False
     # spacy_parse was True → all per-column structural toggles True
     assert prefs['features']['feat_struct_doc_id'] is True
@@ -211,13 +221,19 @@ def test_v2_migration_splits_edu_freq_into_five_bands(v2_prefs_file):
         assert f[band] is False, band
 
 
-def test_v2_migration_splits_llm_cloze_into_three(v2_prefs_file):
+def test_v2_migration_llm_cloze_becomes_llama3_8b_model_and_metrics(v2_prefs_file):
+    """v2 llm_cloze=True (gpt2_surprisal=False) migrates through the old
+    pred_surprisal_llm/pred_cloze/pred_topmatch=True intermediate shape, then
+    the v18 finalize maps that + the stored llm_model onto predictability.
+    models/metrics (gpt2 stays off since gpt2_surprisal was False)."""
     from utils.preferences import load_preferences
     prefs = load_preferences()
-    f = prefs["features"]
-    assert f["pred_surprisal_llm"] is True
-    assert f["pred_cloze"] is True
-    assert f["pred_topmatch"] is True
+    assert prefs["predictability"]["models"] == ["llama3_8b"]
+    metrics = prefs["predictability"]["metrics"]
+    assert metrics["surprisal"] is True
+    assert metrics["cloze"] is True
+    assert metrics["topmatch"] is True
+    assert "pred_surprisal_llm" not in prefs["features"]
 
 
 def test_v2_migration_maps_doc_toggles_through_to_v4(v2_prefs_file):
@@ -258,10 +274,14 @@ def test_v2_migration_categories_unified_in_v7(v2_prefs_file):
     assert "doc_categories_liwc" not in s
 
 
-def test_v2_migration_carries_llm_model(v2_prefs_file):
+def test_v2_migration_llm_model_maps_to_model_slug(v2_prefs_file):
+    """The v2 file's stored llm_model no longer survives as
+    predictability.llm_model (v18 removes that field) — since a pred_*
+    toggle was on (llm_cloze=True), its slug lands in predictability.models."""
     from utils.preferences import load_preferences
     prefs = load_preferences()
-    assert prefs["predictability"]["llm_model"] == "meta-llama/Meta-Llama-3-8B"
+    assert prefs["predictability"]["models"] == ["llama3_8b"]
+    assert "llm_model" not in prefs["predictability"]
 
 
 def test_v2_migration_coerces_disabled_liwc_backend_to_empath(v2_prefs_file):
@@ -403,8 +423,13 @@ def test_v3_migration_categories_unified_in_v7(v3_prefs_file):
 def test_v3_migration_preserves_unchanged_keys(v3_prefs_file):
     prefs = load_preferences()
     assert prefs["features"]["lexling_morph"] is False
-    assert prefs["features"]["pred_surprisal_gpt2"] is True
-    assert prefs["predictability"]["llm_model"] == "meta-llama/Meta-Llama-3-8B"
+    # v18: pred_surprisal_gpt2=True (only pred_* toggle on in this fixture)
+    # maps to the "gpt2" model slug + metrics.surprisal; the other three
+    # toggles were False so llm_model is dropped without producing a model.
+    assert prefs["predictability"]["models"] == ["gpt2"]
+    assert prefs["predictability"]["metrics"]["surprisal"] is True
+    assert "llm_model" not in prefs["predictability"]
+    assert "pred_surprisal_gpt2" not in prefs["features"]
     # LIWC disabled (EULA): stored "liwc" backend is coerced to "empath".
     assert prefs["semantic"]["backend"] == "empath"
 
@@ -955,9 +980,12 @@ def test_v17_deliberate_030_not_coerced(tmp_path, monkeypatch):
     assert prefs["acoustic_ts"]["env_comp"] == 0.3
 
 
-def test_v16_stored_openai_llm_model_coerced_to_auto(tmp_path, monkeypatch):
-    """OpenAI cloze scoring no longer works; a saved gpt-* model would only
-    fail at run time, so migration clears it to "" (auto -> local pick)."""
+def test_v16_stored_openai_llm_model_dropped_by_v18_migration(tmp_path, monkeypatch):
+    """v16's gpt-* llm_model was historically coerced to "" by the v17
+    finalize (OpenAI cloze scoring no longer works). v18 goes further and
+    removes predictability.llm_model outright — with no pred_* toggle
+    enabled in this source file, the stored (now-defunct OpenAI) selection
+    is simply discarded rather than mapped onto a model slug."""
     import json
     from utils import preferences as P
     p = tmp_path / "prefs.json"
@@ -966,10 +994,15 @@ def test_v16_stored_openai_llm_model_coerced_to_auto(tmp_path, monkeypatch):
                  encoding="utf-8")
     monkeypatch.setenv("SENSI_PREFS_PATH", str(p))
     prefs = P.load_preferences()
-    assert prefs["predictability"]["llm_model"] == ""
+    assert "llm_model" not in prefs["predictability"]
+    assert prefs["predictability"]["models"] == []
 
 
-def test_v16_stored_local_llm_model_preserved(tmp_path, monkeypatch):
+def test_v16_stored_local_llm_model_dropped_when_no_predictability_toggle_on(tmp_path, monkeypatch):
+    """Without any pred_* toggle enabled, a stored llm_model (even a valid
+    local model id) is discarded by the v18 migration — model selection is
+    now tied to which toggles/metrics were on, not merely to whether
+    llm_model was ever set."""
     import json
     from utils import preferences as P
     p = tmp_path / "prefs.json"
@@ -978,4 +1011,63 @@ def test_v16_stored_local_llm_model_preserved(tmp_path, monkeypatch):
                  encoding="utf-8")
     monkeypatch.setenv("SENSI_PREFS_PATH", str(p))
     prefs = P.load_preferences()
-    assert prefs["predictability"]["llm_model"] == "meta-llama/Meta-Llama-3-8B"
+    assert "llm_model" not in prefs["predictability"]
+    assert prefs["predictability"]["models"] == []
+
+
+# ---------------------------------------------------------------------------
+# v18 — predictability models/metrics unification (replaces the four pred_*
+# feature toggles + predictability.llm_model)
+# ---------------------------------------------------------------------------
+
+def test_v17_gpt2_surprisal_toggle_becomes_gpt2_model(tmp_path, monkeypatch):
+    import json
+    from utils import preferences as P
+    p = tmp_path / "prefs.json"
+    p.write_text(json.dumps({"schema_version": 17,
+        "features": {"pred_surprisal_gpt2": True},
+        "predictability": {"llm_model": ""}}), encoding="utf-8")
+    monkeypatch.setenv("SENSI_PREFS_PATH", str(p))
+    prefs = P.load_preferences()
+    assert prefs["schema_version"] == P.SCHEMA_VERSION
+    assert "gpt2" in prefs["predictability"]["models"]
+    assert prefs["predictability"]["metrics"]["surprisal"] is True
+    assert "pred_surprisal_gpt2" not in prefs["features"]
+
+
+def test_v17_llm_toggles_become_stored_model_and_metrics(tmp_path, monkeypatch):
+    import json
+    from utils import preferences as P
+    p = tmp_path / "prefs.json"
+    p.write_text(json.dumps({"schema_version": 17,
+        "features": {"pred_surprisal_llm": True, "pred_cloze": True,
+                     "pred_topmatch": False},
+        "predictability": {"llm_model": "meta-llama/Meta-Llama-3-8B"}}),
+        encoding="utf-8")
+    monkeypatch.setenv("SENSI_PREFS_PATH", str(p))
+    prefs = P.load_preferences()
+    assert prefs["predictability"]["models"] == ["llama3_8b"]
+    assert prefs["predictability"]["metrics"]["surprisal"] is True
+    assert prefs["predictability"]["metrics"]["cloze"] is True
+    assert prefs["predictability"]["metrics"]["topmatch"] is False
+    assert "llm_model" not in prefs["predictability"]
+
+
+def test_v17_llm_toggle_unknown_model_defaults_llama32_3b(tmp_path, monkeypatch):
+    import json
+    from utils import preferences as P
+    p = tmp_path / "prefs.json"
+    p.write_text(json.dumps({"schema_version": 17,
+        "features": {"pred_cloze": True},
+        "predictability": {"llm_model": ""}}), encoding="utf-8")
+    monkeypatch.setenv("SENSI_PREFS_PATH", str(p))
+    prefs = P.load_preferences()
+    assert prefs["predictability"]["models"] == ["llama32_3b"]
+    assert prefs["predictability"]["metrics"]["cloze"] is True
+
+
+def test_v18_fresh_default_predictability_off(tmp_path, monkeypatch):
+    from utils import preferences as P
+    monkeypatch.setenv("SENSI_PREFS_PATH", str(tmp_path / "none.json"))
+    prefs = P.load_preferences()
+    assert prefs["predictability"]["models"] == []

@@ -796,11 +796,51 @@ DEFAULT_PREFS_V17: dict[str, Any] = {
 }
 
 # ---------------------------------------------------------------------------
+# v18 constants
+#
+# Predictability model/metric unification (2026-07-11): model selection moves
+# out of the four pred_* feature toggles (pred_surprisal_gpt2, pred_surprisal_llm,
+# pred_cloze, pred_topmatch) and predictability.llm_model into a single
+# `predictability` settings section: {"models": [<slug>, ...], "metrics":
+# {"surprisal": bool, "cloze": bool, "topmatch": bool}}. Model slugs come from
+# extractors.predictability_models (the roster module — pure, no torch).
+#
+# Not additive — the migration (in the finalize block below) removes the four
+# old feature keys and predictability.llm_model, mapping their old on/off
+# state forward onto model slugs + metrics (precedent: the v14 struct-id
+# rename, also a removal-migration handled in a finalize block rather than a
+# per-version step).
+#
+# Fresh-install default (v15 opt-in policy): predictability.models == [] —
+# predictability is off until the user opts in. metrics.surprisal defaults
+# True (matches the historical pred_surprisal_gpt2 default) while cloze/
+# topmatch default False.
+# ---------------------------------------------------------------------------
+
+SCHEMA_VERSION_V18 = 18
+
+_FEATURES_DEFAULT_V18 = {
+    k: v for k, v in DEFAULT_PREFS_V17["features"].items()
+    if k not in ("pred_surprisal_gpt2", "pred_surprisal_llm",
+                 "pred_cloze", "pred_topmatch")
+}
+
+DEFAULT_PREFS_V18: dict[str, Any] = {
+    **DEFAULT_PREFS_V17,
+    "schema_version": SCHEMA_VERSION_V18,
+    "features": dict(_FEATURES_DEFAULT_V18),
+    "predictability": {
+        "models": [],
+        "metrics": {"surprisal": True, "cloze": False, "topmatch": False},
+    },
+}
+
+# ---------------------------------------------------------------------------
 # Active schema aliases
 # ---------------------------------------------------------------------------
 
-SCHEMA_VERSION = SCHEMA_VERSION_V17  # active version
-DEFAULT_PREFS: dict[str, Any] = DEFAULT_PREFS_V17  # active defaults
+SCHEMA_VERSION = SCHEMA_VERSION_V18  # active version
+DEFAULT_PREFS: dict[str, Any] = DEFAULT_PREFS_V18  # active defaults
 
 
 # ---------------------------------------------------------------------------
@@ -848,7 +888,8 @@ def load_preferences() -> dict[str, Any]:
                 user_sem[right_key] = user_sem.pop(wrong_key)
     if version in (SCHEMA_VERSION_V10, SCHEMA_VERSION_V11,
                    SCHEMA_VERSION_V12, SCHEMA_VERSION_V13, SCHEMA_VERSION_V14,
-                   SCHEMA_VERSION_V15, SCHEMA_VERSION_V16, SCHEMA_VERSION_V17):
+                   SCHEMA_VERSION_V15, SCHEMA_VERSION_V16, SCHEMA_VERSION_V17,
+                   SCHEMA_VERSION_V18):
         # v10–v15 are additive: missing keys are filled from the current
         # defaults (merged starts as DEFAULT_PREFS). v11's backend coercion and
         # the version stamp are applied in the finalize step below, which
@@ -982,6 +1023,39 @@ def load_preferences() -> dict[str, Any]:
         pred = merged.get("predictability")
         if isinstance(pred, dict) and str(pred.get("llm_model", "")).startswith("gpt-"):
             pred["llm_model"] = ""
+    # v18 finalize (pre-v18 sources only — post-v18 values are the user's):
+    # predictability model/metric unification. The four pred_* feature
+    # toggles and predictability.llm_model are replaced by
+    # predictability.models (a list of model slugs) and predictability.metrics
+    # ({surprisal, cloze, topmatch}). Map the old on/off state forward:
+    #   - pred_surprisal_gpt2 on -> add "gpt2" to models, metrics.surprisal=True
+    #   - any of pred_surprisal_llm/pred_cloze/pred_topmatch on -> add the
+    #     stored llm_model's slug (default "llama32_3b" if unset/unknown) to
+    #     models, and set the matching metric(s).
+    # Not additive — the four feature keys and llm_model are removed, not
+    # merely filled from defaults (precedent: the v14 struct-id rename).
+    if isinstance(version, int) and version < SCHEMA_VERSION_V18:
+        from extractors.predictability_models import slug_for_hf_id
+        f = merged.get("features", {})
+        pred = merged.setdefault("predictability", {})
+        models = list(pred.get("models") or [])
+        metrics = pred.setdefault("metrics", {"surprisal": False, "cloze": False, "topmatch": False})
+        if f.pop("pred_surprisal_gpt2", False):
+            if "gpt2" not in models:
+                models.append("gpt2")
+            metrics["surprisal"] = True
+        llm_on = f.pop("pred_surprisal_llm", False)
+        cloze_on = f.pop("pred_cloze", False)
+        top_on = f.pop("pred_topmatch", False)
+        if llm_on or cloze_on or top_on:
+            slug = slug_for_hf_id(pred.get("llm_model", "")) or "llama32_3b"
+            if slug not in models:
+                models.append(slug)
+            metrics["surprisal"] = metrics.get("surprisal", False) or llm_on
+            metrics["cloze"] = cloze_on
+            metrics["topmatch"] = top_on
+        pred["models"] = models
+        pred.pop("llm_model", None)
     if merged.get("schema_version") != SCHEMA_VERSION:
         merged["schema_version"] = SCHEMA_VERSION
         _write(path, merged)
