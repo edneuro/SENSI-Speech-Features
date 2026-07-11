@@ -810,10 +810,12 @@ DEFAULT_PREFS_V17: dict[str, Any] = {
 # rename, also a removal-migration handled in a finalize block rather than a
 # per-version step).
 #
-# Fresh-install default (v15 opt-in policy): predictability.models == [] —
-# predictability is off until the user opts in. metrics.surprisal defaults
-# True (matches the historical pred_surprisal_gpt2 default) while cloze/
-# topmatch default False.
+# Fresh-install default (v15 opt-in policy): predictability.models == [] AND
+# all metrics off — predictability is fully off until the user opts in. A
+# pre-checked metric with no model is contradictory (can never produce a
+# column) and would fire a day-one "metric on, no model" preflight warning on
+# an untouched install; the "models selected but no metric" warning guides the
+# natural pick-a-model-then-a-metric workflow instead.
 # ---------------------------------------------------------------------------
 
 SCHEMA_VERSION_V18 = 18
@@ -830,7 +832,7 @@ DEFAULT_PREFS_V18: dict[str, Any] = {
     "features": dict(_FEATURES_DEFAULT_V18),
     "predictability": {
         "models": [],
-        "metrics": {"surprisal": True, "cloze": False, "topmatch": False},
+        "metrics": {"surprisal": False, "cloze": False, "topmatch": False},
     },
 }
 

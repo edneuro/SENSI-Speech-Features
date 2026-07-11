@@ -327,7 +327,7 @@ def test_doc_args_skip_freq_when_word_freq_off_and_no_aggregate(prefs_tmp):
             "freq_ewfg_overall": False,
         },
         "output": {"doc_agg_zipf_freq": False, "doc_agg_edu_zipf": False,
-                   "doc_agg_surprisal": False, "doc_agg_llm": False},  # no mean_* needed
+                   "doc_agg_predictability": False},  # no mean_* needed
     })
     args = build_args_doc_level()
     assert args.no_freq is True

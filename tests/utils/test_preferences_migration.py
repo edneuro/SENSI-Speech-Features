@@ -1078,7 +1078,11 @@ def test_v18_fresh_default_predictability_off(tmp_path, monkeypatch):
     from utils import preferences as P
     monkeypatch.setenv("SENSI_PREFS_PATH", str(tmp_path / "none.json"))
     prefs = P.load_preferences()
+    # Fully off on a fresh install: no models AND no metric pre-checked, so no
+    # spurious day-one "metric on, no model" preflight warning.
     assert prefs["predictability"]["models"] == []
+    assert prefs["predictability"]["metrics"] == {
+        "surprisal": False, "cloze": False, "topmatch": False}
 
 
 def test_v17_doc_agg_surprisal_or_llm_unifies_to_doc_agg_predictability(tmp_path, monkeypatch):
