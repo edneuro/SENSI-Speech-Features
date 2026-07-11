@@ -52,3 +52,15 @@ def test_unknown_slug_rejected():
     with pytest.raises(KeyError):
         add_predictability(_df(), "x", models=["nope"], metrics=["surprisal"],
                            backends={"nope": _Fake()})
+
+
+def test_gpt2_via_auto_matches_legacy_surprisal():
+    # AutoModelForCausalLM("gpt2") is GPT2LMHeadModel — identical logits.
+    # Pin: the document-first token is NaN (no context); the first content
+    # word's surprisal is finite/positive. Guards against load-path drift.
+    df = pd.DataFrame({"token": ["The", "cat", "sat"],
+                       "upos": ["DET", "NOUN", "VERB"]})
+    out = add_predictability(df, "The cat sat", models=["gpt2"],
+                             metrics=["surprisal"])
+    assert math.isnan(out["gpt2_Surprisal"].iloc[0])
+    assert out["gpt2_Surprisal"].iloc[1] > 0
