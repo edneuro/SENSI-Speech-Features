@@ -325,3 +325,31 @@ def test_phoneme_surprisal_mat_write_survives_savemat(tmp_path, monkeypatch):
     # main.py fetches it via get_cohort_trie(...).cap for honest provenance.
     assert np.isfinite(float(cfg["cap"]))
     assert float(cfg["cap"]) == pytest.approx(trie.cap)
+
+
+def test_batch_emits_namespaced_predictability_columns(tmp_path):
+    """End-to-end: a text-only batch with gpt2 + surprisal & cloze writes the
+    namespaced <slug>_<Metric> columns and NONE of the retired names. Runs the
+    real GPT-2 forward pass (weights cached in hf_cache/)."""
+    import pandas as pd
+    args = _args_for_batch(tmp_path)
+    # Predictability is roster-driven (no CLI flags): configure it on the
+    # namespace directly, exactly as gui/planner/emit.py does.
+    args.predictability = {
+        "models": ["gpt2"],
+        "metrics": {"surprisal": True, "cloze": True, "topmatch": False},
+    }
+    args.no_sem_domain = True   # keep the run lean
+    run_word_level_batch(args)
+
+    df = pd.read_csv(tmp_path / 'out' / 'word' / 'story1_features.csv')
+    # Namespaced columns present for the selected model x on-metrics.
+    assert 'gpt2_Surprisal' in df.columns
+    assert 'gpt2_Cloze' in df.columns
+    # Not the un-selected metric, and not any retired legacy name.
+    assert 'gpt2_TopMatch' not in df.columns
+    for retired in ('Surprisal', 'LLM_Surprisal', 'LLM_Cloze', 'LLM_TopMatch'):
+        assert retired not in df.columns
+    # Document-first token has no context → NaN; a later content word is scored.
+    assert pd.isna(df['gpt2_Surprisal'].iloc[0])
+    assert df['gpt2_Surprisal'].notna().any()
