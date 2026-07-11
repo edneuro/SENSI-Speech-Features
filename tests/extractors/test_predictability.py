@@ -1,4 +1,6 @@
 import math
+import types
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -64,3 +66,43 @@ def test_gpt2_via_auto_matches_legacy_surprisal():
                              metrics=["surprisal"])
     assert math.isnan(out["gpt2_Surprisal"].iloc[0])
     assert out["gpt2_Surprisal"].iloc[1] > 0
+
+
+# ---- GPT-2 must stay fp32/CPU even when CUDA is available (legacy parity) ----
+
+
+class _DummyParam:
+    def __init__(self, device):
+        self.device = device
+
+
+class _DummyModel:
+    def __init__(self, device='cpu'):
+        self.config = types.SimpleNamespace(max_position_embeddings=1024)
+        self._device = device
+
+    def eval(self):
+        return self
+
+    def parameters(self):
+        yield _DummyParam(self._device)
+
+
+def _patch_transformers(monkeypatch, fake_model):
+    monkeypatch.setattr('transformers.AutoTokenizer.from_pretrained',
+                        lambda *a, **k: object())
+    monkeypatch.setattr('transformers.AutoModelForCausalLM.from_pretrained', fake_model)
+    monkeypatch.setattr('transformers.BitsAndBytesConfig', lambda **k: object())
+
+
+def test_gpt2_backend_stays_cpu_even_when_cuda_available(monkeypatch):
+    # Legacy extractors/surprisal.py hardcoded USE_GPU=False, always loading
+    # GPT-2 in full fp32 precision on CPU. The shared _HuggingFaceBackend
+    # must preserve that — quantized/fp16 GPT-2 would emit different
+    # surprisal values than previously-computed CSVs, even though the GPU
+    # tiers are correct for the Llama models.
+    from extractors.predictability import _HuggingFaceBackend
+    monkeypatch.setattr('torch.cuda.is_available', lambda: True)
+    _patch_transformers(monkeypatch, lambda model_id, **kw: _DummyModel('cuda:0'))
+    b = _HuggingFaceBackend('gpt2')
+    assert b._load_tier == 'CPU'

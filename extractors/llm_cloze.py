@@ -44,6 +44,7 @@ from extractors.predictability import (          # noqa: F401
     _cached_backend,
     _BACKEND_CACHE,
     _available_vram_gb,
+    _model_id_for_vram,
     is_gated_local_model,
     has_hf_token,
     _scores_from_subwords,
@@ -67,15 +68,12 @@ def select_model() -> str:
     Thin wrapper kept here (rather than a bare re-export) so that unit tests
     patching extractors.llm_cloze._available_vram_gb take effect — this
     function does a plain-name lookup within this module's own namespace.
-    The underlying VRAM probe and OpenAI-exclusion rationale live in
-    extractors.predictability (single implementation, imported above).
+    The VRAM-threshold decision itself (_model_id_for_vram) and the
+    OpenAI-exclusion rationale live in extractors.predictability (single
+    implementation, imported above) — this function has no logic of its own
+    beyond that lookup.
     """
-    vram = _available_vram_gb()
-    if vram >= 48:
-        return 'meta-llama/Meta-Llama-3-70B'
-    if vram >= 12:
-        return 'meta-llama/Meta-Llama-3-8B'
-    return 'meta-llama/Llama-3.2-3B'
+    return _model_id_for_vram(_available_vram_gb())
 
 
 def add_llm_cloze(

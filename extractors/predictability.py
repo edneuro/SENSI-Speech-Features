@@ -245,14 +245,13 @@ class _Backend(Protocol):
         """Return one dict per token with keys: p, surprisal, top_match."""
 
 
-def select_model() -> str:
-    """Pick the best LOCAL LLM model id given the current environment.
+def _model_id_for_vram(vram: float) -> str:
+    """Pure VRAM-threshold decision, shared by every select_model caller.
 
-    OpenAI is never selected — even with OPENAI_API_KEY set — because there
-    is no working OpenAI per-token scoring endpoint (see LLM_OPTIONS above).
-    Selection is by available GPU VRAM.
+    Kept side-effect-free (no VRAM probing here) so it needs no monkeypatch
+    target of its own — extractors.llm_cloze.select_model calls this after
+    probing VRAM itself, via its own locally-named _available_vram_gb.
     """
-    vram = _available_vram_gb()
     if vram >= 48:
         return 'meta-llama/Meta-Llama-3-70B'
     if vram >= 12:
@@ -299,6 +298,18 @@ def _load_tiers(cuda: bool) -> list[str]:
     return ['4-bit GPU', 'fp16 GPU', 'CPU'] if cuda else ['CPU']
 
 
+# HF ids that must always load full-precision on CPU, never quantized/fp16
+# on GPU — this preserves the legacy extractors/surprisal.py behavior
+# (hardcoded USE_GPU=False), so previously-computed GPT-2 surprisal values
+# never drift due to a precision change. Only GPT-2 has this constraint;
+# the Llama models keep the normal GPU-tier cascade.
+_FULL_PRECISION_CPU_HF_IDS = {"gpt2"}
+
+
+def _is_full_precision_cpu(hf_id: str) -> bool:
+    return hf_id in _FULL_PRECISION_CPU_HF_IDS
+
+
 def _model_load_hint(model_id: str, exc: Exception) -> str:
     return (
         f"Could not load local LLM {model_id!r}: {type(exc).__name__}: {exc}\n"
@@ -324,7 +335,7 @@ class _HuggingFaceBackend:
 
         self._torch = torch
         self._model_id = model_id
-        cuda = bool(torch.cuda.is_available())
+        cuda = bool(torch.cuda.is_available()) and not _is_full_precision_cpu(model_id)
 
         def _load(tier: str):
             if tier == '4-bit GPU':
