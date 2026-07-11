@@ -1031,7 +1031,9 @@ def test_v17_gpt2_surprisal_toggle_becomes_gpt2_model(tmp_path, monkeypatch):
     prefs = P.load_preferences()
     assert prefs["schema_version"] == P.SCHEMA_VERSION
     assert "gpt2" in prefs["predictability"]["models"]
-    assert prefs["predictability"]["metrics"]["surprisal"] is True
+    # Full dict: only surprisal is on (no cloze/topmatch were enabled).
+    assert prefs["predictability"]["metrics"] == {
+        "surprisal": True, "cloze": False, "topmatch": False}
     assert "pred_surprisal_gpt2" not in prefs["features"]
 
 
@@ -1063,7 +1065,11 @@ def test_v17_llm_toggle_unknown_model_defaults_llama32_3b(tmp_path, monkeypatch)
     monkeypatch.setenv("SENSI_PREFS_PATH", str(p))
     prefs = P.load_preferences()
     assert prefs["predictability"]["models"] == ["llama32_3b"]
-    assert prefs["predictability"]["metrics"]["cloze"] is True
+    # Regression guard: a cloze-only user must NOT be silently given
+    # surprisal (the v18 default has surprisal=True; migration must override
+    # it from the old toggles). Assert the full dict, not just cloze.
+    assert prefs["predictability"]["metrics"] == {
+        "surprisal": False, "cloze": True, "topmatch": False}
 
 
 def test_v18_fresh_default_predictability_off(tmp_path, monkeypatch):

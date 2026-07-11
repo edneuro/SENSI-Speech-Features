@@ -1040,20 +1040,22 @@ def load_preferences() -> dict[str, Any]:
         pred = merged.setdefault("predictability", {})
         models = list(pred.get("models") or [])
         metrics = pred.setdefault("metrics", {"surprisal": False, "cloze": False, "topmatch": False})
-        if f.pop("pred_surprisal_gpt2", False):
-            if "gpt2" not in models:
-                models.append("gpt2")
-            metrics["surprisal"] = True
+        gpt2_on = f.pop("pred_surprisal_gpt2", False)
         llm_on = f.pop("pred_surprisal_llm", False)
         cloze_on = f.pop("pred_cloze", False)
         top_on = f.pop("pred_topmatch", False)
+        if gpt2_on and "gpt2" not in models:
+            models.append("gpt2")
         if llm_on or cloze_on or top_on:
             slug = slug_for_hf_id(pred.get("llm_model", "")) or "llama32_3b"
             if slug not in models:
                 models.append(slug)
-            metrics["surprisal"] = metrics.get("surprisal", False) or llm_on
-            metrics["cloze"] = cloze_on
-            metrics["topmatch"] = top_on
+        # Metrics reflect ONLY the old toggles — hard-assigned over the v18
+        # defaults (whose surprisal defaults True), so e.g. a cloze-only user
+        # is not silently given surprisal. surprisal = gpt2 OR llm surprisal.
+        metrics["surprisal"] = gpt2_on or llm_on
+        metrics["cloze"] = cloze_on
+        metrics["topmatch"] = top_on
         pred["models"] = models
         pred.pop("llm_model", None)
     if merged.get("schema_version") != SCHEMA_VERSION:
