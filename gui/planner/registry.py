@@ -545,19 +545,23 @@ CLUSTERS: list[FeatureCluster] = [
                        "mean_edu_zipf_6to8", "mean_edu_zipf_9to12",
                        "mean_edu_zipf_overall"),
     ),
+    # Doc-level predictability aggregates (v18) — single toggle mirroring the
+    # word-level Predictability cluster's roster-driven shape. Unlike that
+    # cluster, this one's *activation* is a plain boolean toggle
+    # (doc_agg_predictability), so it does not need the _active_clusters
+    # skip-and-compute treatment — only its emitted columns are dynamic
+    # (mean_<slug>_<metric>, one per active roster model x metric, computed
+    # by utils.doc_summary.build_doc_summary from whatever word-level
+    # <slug>_<Metric> columns the run produced). Registered here with
+    # emits_columns=() (static-but-considered, spec §12 fallback) so
+    # test_schema_drift can still validate the toggle's shape; there is no
+    # fixed column list to declare.
     FeatureCluster(
-        name="doc agg surprisal",
-        toggle_keys=("doc_agg_surprisal",),
+        name="doc agg predictability",
+        toggle_keys=("doc_agg_predictability",),
         output_csv="documents_summary",
         requires_stages=("spacy_parse", "doc_aggregates"),
-        emits_columns=("mean_surprisal",),
-    ),
-    FeatureCluster(
-        name="doc agg llm",
-        toggle_keys=("doc_agg_llm",),
-        output_csv="documents_summary",
-        requires_stages=("spacy_parse", "doc_aggregates"),
-        emits_columns=("mean_llm_surprisal", "mean_llm_cloze", "mean_llm_top_match_prop"),
+        emits_columns=(),
     ),
 
     # §4.3 Lex diversity

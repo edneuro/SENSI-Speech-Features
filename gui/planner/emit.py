@@ -254,8 +254,7 @@ def to_namespace(plan: Plan, prefs: dict, level: str) -> argparse.Namespace:
         # does not re-run — it aggregates whatever columns word_df already has.
         ns.no_doc_mean_zipf       = not output.get("doc_agg_zipf_freq", False)
         ns.no_doc_mean_edu_zipf   = not output.get("doc_agg_edu_zipf", False) or ns.edu_bands is None
-        ns.no_doc_mean_surprisal  = not output.get("doc_agg_surprisal", False)
-        ns.no_doc_mean_llm_cloze  = not output.get("doc_agg_llm", False)
+        ns.no_doc_predictability  = not output.get("doc_agg_predictability", False)
         ns.no_doc_ttr             = "doc_lex_diversity" not in in_plan
         ns.no_doc_mtld            = "doc_lex_diversity" not in in_plan
         ns.no_doc_flesch_ease     = "doc_readability"   not in in_plan

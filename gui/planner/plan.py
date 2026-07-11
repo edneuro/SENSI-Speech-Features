@@ -32,7 +32,7 @@ OUTPUT_KEYED_TOGGLES = frozenset({
     "out_count_tokens", "out_count_content_tokens",
     "out_count_sentences", "out_count_paragraphs",
     # Individual aggregate toggles (replaced single doc_aggregates in v7)
-    "doc_agg_zipf_freq", "doc_agg_edu_zipf", "doc_agg_surprisal", "doc_agg_llm",
+    "doc_agg_zipf_freq", "doc_agg_edu_zipf", "doc_agg_predictability",
     "doc_agg_lexical_norms",
     "doc_lex_diversity", "doc_readability",
     "doc_category_proportions",

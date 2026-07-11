@@ -30,8 +30,7 @@ _MASTER_DEFAULTS_OUTPUT = {
     "master_doc_counts":            True,
     "doc_agg_zipf_freq":            True,
     "doc_agg_edu_zipf":             True,
-    "doc_agg_surprisal":            True,
-    "doc_agg_llm":                  True,
+    "doc_agg_predictability":       True,
 }
 
 
@@ -132,7 +131,7 @@ def test_doc_namespace_separate_no_flags():
         output={"word_level_csv": False, "syllables_csv": False,
                 "phonemes_csv": False, "document_summary": True,
                 "doc_agg_zipf_freq": True, "doc_agg_edu_zipf": False,
-                "doc_agg_surprisal": False, "doc_agg_llm": False,
+                "doc_agg_predictability": False,
                 "doc_lex_diversity": True, "doc_readability": False,
                 "doc_category_proportions": False,
                 "out_count_tokens": True, "out_count_content_tokens": False,
@@ -143,7 +142,7 @@ def test_doc_namespace_separate_no_flags():
     ns = to_namespace(plan, prefs, level="doc")
     assert ns.no_doc_counts is False
     assert ns.no_doc_mean_zipf is False     # doc_agg_zipf_freq True
-    assert ns.no_doc_mean_surprisal is True  # doc_agg_surprisal False
+    assert ns.no_doc_predictability is True  # doc_agg_predictability False
     assert ns.no_doc_ttr is False
     assert ns.no_doc_flesch_ease is True
     assert ns.no_doc_category_proportions is True
@@ -212,15 +211,13 @@ def test_individual_agg_toggles_control_no_doc_mean_flags():
                 "syllables_csv": False, "phonemes_csv": False,
                 "doc_agg_zipf_freq": True,
                 "doc_agg_edu_zipf": False,
-                "doc_agg_surprisal": False,
-                "doc_agg_llm": True},
+                "doc_agg_predictability": True},
         features={"freq_subtlex": True},
     )
     plan = plan_from_prefs(prefs)
     ns = to_namespace(plan, prefs, level="doc")
     assert ns.no_doc_mean_zipf is False       # doc_agg_zipf_freq is True
-    assert ns.no_doc_mean_surprisal is True   # doc_agg_surprisal is False
-    assert ns.no_doc_mean_llm_cloze is False  # doc_agg_llm is True
+    assert ns.no_doc_predictability is False  # doc_agg_predictability is True
 
 
 def test_sem_categories_unified_key_used_for_both_levels():

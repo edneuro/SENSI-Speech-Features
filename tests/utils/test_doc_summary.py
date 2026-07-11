@@ -171,10 +171,9 @@ def test_independence_doc_mean_zipf_when_word_freq_disabled(tmp_path):
         '--analyzer', 'IndependenceTest',
         '--level', 'document',
         '--no-align',
-        '--no-doc-mean-llm-cloze',  # doc-level LLM OFF (avoids force-enabling LLM)
+        '--no-doc-predictability',  # doc-level predictability OFF (avoids force-enabling models)
         '--no-edu-freq',
         '--no-doc-mean-edu-zipf',
-        '--no-doc-mean-surprisal',  # doc-level surprisal OFF
         '--no-sem-domain',      # word-level sem-domain OFF
         '--no-doc-category-proportions',
         '--no-doc-psych-authentic', '--no-doc-psych-analytic',
@@ -207,21 +206,54 @@ def test_independence_doc_mean_zipf_when_word_freq_disabled(tmp_path):
     )
 
 
-@pytest.mark.xfail(
-    reason="Predictability unification residue: mean_surprisal in "
-           "utils/doc_summary.py still reads the legacy 'Surprisal' column, "
-           "which add_predictability (extractors/predictability.py) no "
-           "longer writes (roster columns are '<slug>_<Metric>' now). There "
-           "is also no more word-level --no-surprisal toggle to test "
-           "independence against — predictability is driven by "
-           "prefs['predictability'] (or ns.predictability), not a per-CSV "
-           "flag. Fixing this is doc-aggregate registry work, not part of "
-           "the CLI-wiring task that retired the old flags.",
-    strict=False,
-)
-def test_independence_doc_mean_surprisal_when_word_surprisal_disabled(tmp_path):
-    """Doc-level mean_surprisal must be computed even when word-level GPT-2
-    surprisal columns are absent."""
+def test_doc_predictability_means():
+    """mean_<slug>_<metric> aggregates are computed by scanning the token
+    df for '<slug>_<Metric>' columns (extractors.predictability's unified
+    output shape) — no fixed 'Surprisal'/'LLM_Cloze' column names anymore."""
+    import math
+    df = pd.DataFrame({
+        'token': ['a', 'b'], 'upos': ['NOUN', 'NOUN'],
+        'gpt2_Surprisal': [2.0, 4.0], 'gpt2_Cloze': [0.5, 0.1],
+    })
+    s = build_doc_summary(df, stimulus_id='x', dictionary_used='Empath',
+                          text='a b', toggles={'predictability_means': True})
+    assert s['mean_gpt2_surprisal'] == 3.0
+    assert math.isclose(s['mean_gpt2_cloze'], 0.3)
+
+
+def test_doc_predictability_means_off_by_default_toggle():
+    """When predictability_means is False, no mean_<slug>_<metric> keys appear."""
+    df = pd.DataFrame({
+        'token': ['a', 'b'], 'upos': ['NOUN', 'NOUN'],
+        'gpt2_Surprisal': [2.0, 4.0],
+    })
+    s = build_doc_summary(df, stimulus_id='x', dictionary_used='Empath',
+                          text='a b', toggles={'predictability_means': False})
+    assert 'mean_gpt2_surprisal' not in s
+
+
+def test_doc_predictability_means_multi_model_multi_metric():
+    """Multiple roster models x metrics each get their own mean_<slug>_<metric>
+    column; unrelated columns are ignored."""
+    df = pd.DataFrame({
+        'token': ['a', 'b'], 'upos': ['NOUN', 'NOUN'],
+        'gpt2_Surprisal': [1.0, 3.0],
+        'llama3_8b_Surprisal': [2.0, 6.0],
+        'llama3_8b_TopMatch': [1.0, 0.0],
+        'Zipf_Freq': [5.0, 4.0],  # unrelated column — must not be picked up
+    })
+    s = build_doc_summary(df, stimulus_id='x', dictionary_used='Empath',
+                          text='a b', toggles={'predictability_means': True})
+    assert s['mean_gpt2_surprisal'] == 2.0
+    assert s['mean_llama3_8b_surprisal'] == 4.0
+    assert s['mean_llama3_8b_topmatch'] == 0.5
+    assert 'mean_zipf_freq' not in s
+
+
+def test_independence_doc_mean_predictability_when_word_predictability_disabled(tmp_path):
+    """Doc-level predictability means are computed for whatever roster models
+    the run actually configured; run_doc_level_batch wires doc_agg_predictability
+    -> the single 'predictability_means' toggle end to end."""
     from pathlib import Path
     from main import run_doc_level_batch, build_parser
     import csv
@@ -237,7 +269,6 @@ def test_independence_doc_mean_surprisal_when_word_surprisal_disabled(tmp_path):
         '--analyzer', 'IndependenceTest2',
         '--level', 'document',
         '--no-align',
-        '--no-doc-mean-llm-cloze',  # doc-level LLM OFF
         '--no-edu-freq',
         '--no-doc-mean-edu-zipf',
         '--no-freq',                # word-level Zipf OFF
@@ -246,9 +277,9 @@ def test_independence_doc_mean_surprisal_when_word_surprisal_disabled(tmp_path):
         '--no-doc-category-proportions',
         '--no-doc-psych-authentic', '--no-doc-psych-analytic',
         '--no-doc-psych-tone', '--no-doc-psych-clout',
-        # doc-level mean_surprisal is ON (no --no-doc-mean-surprisal)
+        # doc-level predictability means is ON (no --no-doc-predictability)
     ])
-    args.predictability = {'models': [], 'metrics': {}}
+    args.predictability = {'models': ['gpt2'], 'metrics': {'surprisal': True}}
 
     run_doc_level_batch(args)
 
@@ -264,12 +295,12 @@ def test_independence_doc_mean_surprisal_when_word_surprisal_disabled(tmp_path):
     assert len(rows) >= 1
     row = rows[0]
 
-    assert 'mean_surprisal' in row, (
-        'mean_surprisal missing from doc summary — doc-level pipeline depended '
-        'on word-level --no-surprisal toggle and silently skipped it'
+    assert 'mean_gpt2_surprisal' in row, (
+        'mean_gpt2_surprisal missing from doc summary — doc-level pipeline '
+        'did not aggregate the word-level gpt2_Surprisal column'
     )
-    assert row['mean_surprisal'] not in ('', 'None', 'nan'), (
-        f'mean_surprisal is blank/NaN: {row["mean_surprisal"]!r}'
+    assert row['mean_gpt2_surprisal'] not in ('', 'None', 'nan'), (
+        f'mean_gpt2_surprisal is blank/NaN: {row["mean_gpt2_surprisal"]!r}'
     )
 
 
@@ -294,7 +325,7 @@ def test_build_doc_summary_includes_prosody_when_contours_supplied():
         df, stimulus_id='s1', dictionary_used='LIWC', text='cat',
         toggles={
             'counts': False, 'mean_zipf_freq': False, 'mean_edu_zipf': False,
-            'mean_surprisal': False, 'mean_llm_cloze': False, 'ttr': False,
+            'predictability_means': False, 'ttr': False,
             'mtld': False, 'flesch_reading_ease': False,
             'flesch_kincaid_grade': False, 'category_proportions': False,
             'psych_authentic': False, 'psych_analytic': False,

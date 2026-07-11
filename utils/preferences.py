@@ -413,8 +413,7 @@ _MASTERS_V7_OUTPUT = {
 _AGG_KEYS_V7 = {
     "doc_agg_zipf_freq": True,
     "doc_agg_edu_zipf":  True,
-    "doc_agg_surprisal": True,
-    "doc_agg_llm":       True,
+    "doc_agg_predictability": True,
 }
 
 _FEATURES_DEFAULT_V7 = {**_FEATURES_DEFAULT_V6, **_MASTERS_V7_FEATURES}
@@ -1034,6 +1033,22 @@ def load_preferences() -> dict[str, Any]:
     #     models, and set the matching metric(s).
     # Not additive — the four feature keys and llm_model are removed, not
     # merely filled from defaults (precedent: the v14 struct-id rename).
+    #
+    # Same version gate also folds in the doc-aggregate residue: the v7-era
+    # doc_agg_surprisal / doc_agg_llm output toggles are unified into a
+    # single doc_agg_predictability toggle (see utils/doc_summary.py's
+    # predictability_means / gui/planner/registry.py's "doc agg
+    # predictability" cluster). Only acts when a pre-v18 source file literally
+    # has one of the old keys (sentinel None below) — pre-v10 chains never
+    # carry these names forward as real user data (only as v7-template
+    # defaults already reconciled by the additive merge), so this must not
+    # clobber that already-correct value with a spurious False.
+    if isinstance(version, int) and version < SCHEMA_VERSION_V18:
+        out = merged.get("output", {})
+        surp_on = out.pop("doc_agg_surprisal", None)
+        llm_on = out.pop("doc_agg_llm", None)
+        if surp_on is not None or llm_on is not None:
+            out["doc_agg_predictability"] = bool(surp_on) or bool(llm_on)
     if isinstance(version, int) and version < SCHEMA_VERSION_V18:
         from extractors.predictability_models import slug_for_hf_id
         f = merged.get("features", {})

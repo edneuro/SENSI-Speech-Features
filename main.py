@@ -172,8 +172,8 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument('--no-doc-counts',                action='store_true')
     p.add_argument('--no-doc-mean-zipf',             action='store_true')
     p.add_argument('--no-doc-mean-edu-zipf',         action='store_true')
-    p.add_argument('--no-doc-mean-surprisal',        action='store_true')
-    p.add_argument('--no-doc-mean-llm-cloze',        action='store_true')
+    p.add_argument('--no-doc-predictability',        action='store_true',
+                   help='Skip mean_<slug>_<metric> doc-level predictability aggregates.')
     p.add_argument('--no-doc-ttr',                   action='store_true')
     p.add_argument('--no-doc-mtld',                  action='store_true')
     p.add_argument('--no-doc-flesch-ease',           action='store_true')
@@ -1024,8 +1024,7 @@ def run_doc_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None:
         'counts':                not args.no_doc_counts,
         'mean_zipf_freq':        not args.no_doc_mean_zipf,
         'mean_edu_zipf':         not args.no_doc_mean_edu_zipf,
-        'mean_surprisal':        not args.no_doc_mean_surprisal,
-        'mean_llm_cloze':        not args.no_doc_mean_llm_cloze,
+        'predictability_means':  not getattr(args, 'no_doc_predictability', False),
         'ttr':                   not args.no_doc_ttr,
         'mtld':                  not args.no_doc_mtld,
         'flesch_reading_ease':   not args.no_doc_flesch_ease,
@@ -1079,19 +1078,16 @@ def run_doc_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None:
         extract_args.no_freq = False
     if doc_toggles.get('mean_edu_zipf'):
         extract_args.no_edu_freq = False
-    # NOTE (residue — doc-aggregate toggle/registry unification, not this
-    # task's scope): the old no_surprisal=False / no_llm_cloze=False forcing
-    # has no v18 equivalent. Predictability is now driven entirely by
-    # extract_args.predictability (copied from args above, itself either
-    # ns.predictability set by the GUI or — for CLI runs — resolved from
-    # preferences.json inside run()); it is a models x metrics roster with no
-    # per-word-CSV-toggle gate, so there is nothing to force on here.
-    # utils/doc_summary.py's mean_surprisal / mean_llm_cloze aggregates still
-    # read the legacy 'Surprisal' / 'LLM_Cloze' / 'LLM_Surprisal' /
-    # 'LLM_TopMatch' column names, which add_predictability no longer writes
-    # (it writes '<slug>_<Metric>' instead) — those two doc_toggles will
-    # silently produce no aggregate value until a future doc-aggregate
-    # registry pass maps a specific roster model/metric to each one.
+    # Predictability (v18): unlike mean_zipf_freq/mean_edu_zipf above, there
+    # is no no_surprisal=False-style flag to force on — predictability is a
+    # models x metrics roster carried verbatim on extract_args.predictability
+    # (copied from args above: either ns.predictability set by the GUI or,
+    # for CLI runs, resolved from preferences.json inside run()). When
+    # doc_toggles['predictability_means'] is on, build_doc_summary scans
+    # whatever '<slug>_<Metric>' columns that roster actually produced and
+    # means them (utils/doc_summary.py's predictability_means branch) — if
+    # the roster is empty, there is simply nothing to aggregate, same as any
+    # other doc-agg toggle whose source columns are absent.
     if doc_toggles.get('lexical_norms_agg'):
         # Doc aggregates read the word-level norm columns; force the
         # word-level extractor on regardless of the word-CSV toggle.

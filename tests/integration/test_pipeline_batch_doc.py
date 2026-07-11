@@ -17,7 +17,7 @@ def _args(tmp_path):
         '--analyzer', 'DocTest',
         '--level', 'document',
         '--no-align',
-        '--no-doc-mean-llm-cloze',  # disable doc-level LLM aggregate (model not available in CI)
+        '--no-doc-predictability',  # disable doc-level predictability aggregate (model not available in CI)
         '--no-edu-freq',
         '--no-doc-mean-edu-zipf',   # disable doc-level edu aggregate (lookup not in fixtures)
     ])

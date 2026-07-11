@@ -41,7 +41,7 @@ def _doc_args(tmp_path):
         '--analyzer', 'TestRunner',
         '--level', 'document',
         '--no-align',
-        '--no-doc-mean-llm-cloze',
+        '--no-doc-predictability',
         '--no-edu-freq',
         '--no-doc-mean-edu-zipf',
     ])

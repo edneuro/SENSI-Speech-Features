@@ -245,8 +245,10 @@ def test_v2_migration_maps_doc_toggles_through_to_v4(v2_prefs_file):
               "out_count_sentences", "out_count_paragraphs"):
         assert o[k] is True, k
     for k in ("doc_agg_zipf_freq", "doc_agg_edu_zipf",
-              "doc_agg_surprisal", "doc_agg_llm"):
+              "doc_agg_predictability"):
         assert o[k] is True, k
+    assert "doc_agg_surprisal" not in o
+    assert "doc_agg_llm" not in o
     assert o["doc_lex_diversity"] is True
     assert o["doc_readability"] is True
     assert o["doc_category_proportions"] is True
@@ -1077,3 +1079,34 @@ def test_v18_fresh_default_predictability_off(tmp_path, monkeypatch):
     monkeypatch.setenv("SENSI_PREFS_PATH", str(tmp_path / "none.json"))
     prefs = P.load_preferences()
     assert prefs["predictability"]["models"] == []
+
+
+def test_v17_doc_agg_surprisal_or_llm_unifies_to_doc_agg_predictability(tmp_path, monkeypatch):
+    """A real pre-v18 saved file has the literal doc_agg_surprisal /
+    doc_agg_llm output keys (shipped v7-v17). Migration ORs them into the
+    single doc_agg_predictability toggle and drops both old keys."""
+    import json
+    from utils import preferences as P
+    p = tmp_path / "prefs.json"
+    p.write_text(json.dumps({"schema_version": 17,
+        "output": {"doc_agg_surprisal": False, "doc_agg_llm": True}}),
+        encoding="utf-8")
+    monkeypatch.setenv("SENSI_PREFS_PATH", str(p))
+    prefs = P.load_preferences()
+    assert prefs["output"]["doc_agg_predictability"] is True
+    assert "doc_agg_surprisal" not in prefs["output"]
+    assert "doc_agg_llm" not in prefs["output"]
+
+
+def test_v17_doc_agg_both_off_stays_off(tmp_path, monkeypatch):
+    """Both old toggles off must migrate to doc_agg_predictability=False, not
+    fall back to whatever the v18 default happens to be."""
+    import json
+    from utils import preferences as P
+    p = tmp_path / "prefs.json"
+    p.write_text(json.dumps({"schema_version": 17,
+        "output": {"doc_agg_surprisal": False, "doc_agg_llm": False}}),
+        encoding="utf-8")
+    monkeypatch.setenv("SENSI_PREFS_PATH", str(p))
+    prefs = P.load_preferences()
+    assert prefs["output"]["doc_agg_predictability"] is False

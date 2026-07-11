@@ -16,6 +16,7 @@ valence from VADER (no LIWC dictionary). The old LIWC `.dic`-based path
 (`extractors.liwc_summary`) is retired due to the LIWC-22 EULA.
 """
 
+import re
 from pathlib import Path
 
 import pandas as pd
@@ -25,12 +26,18 @@ from extractors.readability import compute_readability
 
 CONTENT_POS = {'NOUN', 'VERB', 'ADJ', 'ADV', 'PROPN'}
 
+# Matches unified predictability word-level columns, e.g. "gpt2_Surprisal",
+# "llama3_8b_Cloze" — produced by extractors.predictability.add_predictability
+# for every roster model x metric the run has active. There is no fixed list
+# of these column names (it depends on prefs["predictability"]), so the doc
+# aggregate scans for them dynamically rather than naming them individually.
+_PREDICTABILITY_COL_RE = re.compile(r'^(?P<slug>[a-z0-9_]+)_(?P<metric>Surprisal|Cloze|TopMatch)$')
+
 DOC_FEATURE_KEYS = (
     'counts',
     'mean_zipf_freq',
     'mean_edu_zipf',
-    'mean_surprisal',
-    'mean_llm_cloze',
+    'predictability_means',
     'ttr',
     'mtld',
     'flesch_reading_ease',
@@ -106,17 +113,12 @@ def build_doc_summary(
             if src in df.columns:
                 summary[dst] = _mean(df[src])
 
-    if toggles.get('mean_surprisal') and 'Surprisal' in df.columns:
-        summary['mean_surprisal'] = _mean(df['Surprisal'])
-
-    if toggles.get('mean_llm_cloze'):
-        for src, dst in [
-            ('LLM_Cloze', 'mean_llm_cloze'),
-            ('LLM_Surprisal', 'mean_llm_surprisal'),
-            ('LLM_TopMatch', 'mean_llm_top_match_prop'),
-        ]:
-            if src in df.columns:
-                summary[dst] = _mean(df[src])
+    if toggles.get('predictability_means'):
+        for col in df.columns:
+            m = _PREDICTABILITY_COL_RE.match(col)
+            if m:
+                dst = f"mean_{m.group('slug')}_{m.group('metric').lower()}"
+                summary[dst] = _mean(df[col])
 
     content_tokens = []
     if 'upos' in df.columns and 'token' in df.columns:
