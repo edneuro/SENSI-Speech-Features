@@ -26,8 +26,8 @@ one word remains:
 Both are **context-independent**: they depend only on a static,
 frequency-weighted prior over the lexicon (no sentence context, no
 language model). This is a deliberate design choice (§ Implementation)
-that keeps `phoneme_surprisal` decorrelated from the GPT-2/LLM
-word-level [`Surprisal`](pred_surprisal_gpt2.md) column, which *is*
+that keeps `phoneme_surprisal` decorrelated from the model-driven
+word-level [`Surprisal`](pred_surprisal.md) column, which *is*
 sentence-context-driven — the two features are meant to enter a TRF
 model as separate, complementary predictors.
 

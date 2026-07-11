@@ -2,8 +2,8 @@
 key: doc_aggregates
 name: Word-level feature aggregates
 levels: [document]
-gui_toggles: [output_doc_agg_zipf_freq, output_doc_agg_edu_zipf, output_doc_agg_surprisal, output_doc_agg_llm]
-output_columns: [mean_zipf_freq, mean_edu_zipf_K2, mean_edu_zipf_3to5, mean_edu_zipf_6to8, mean_edu_zipf_9to12, mean_edu_zipf_Overall, mean_surprisal, mean_llm_cloze, mean_llm_surprisal, mean_llm_top_match_prop]
+gui_toggles: [output_doc_agg_zipf_freq, output_doc_agg_edu_zipf, output_doc_agg_predictability]
+output_columns: [mean_zipf_freq, mean_edu_zipf_K2, mean_edu_zipf_3to5, mean_edu_zipf_6to8, mean_edu_zipf_9to12, mean_edu_zipf_Overall, "mean_<slug>_<metric>"]
 libraries: []
 status: implemented
 depth: stub
@@ -16,9 +16,16 @@ controls a family of `mean_*` columns in the document summary CSV:
 | Toggle | Columns emitted | Sourced from word-level |
 |---|---|---|
 | `output_doc_agg_zipf_freq` | `mean_zipf_freq` | [`Zipf_Freq`](freq_subtlex.md) |
-| `output_doc_agg_edu_zipf`  | `mean_edu_zipf_{K2,3to5,6to8,9to12,Overall}` | [`Edu_Zipf_*`](edu_zipf.md) |
-| `output_doc_agg_surprisal` | `mean_surprisal` | [`Surprisal`](pred_surprisal_gpt2.md) |
-| `output_doc_agg_llm`       | `mean_llm_cloze`, `mean_llm_surprisal`, `mean_llm_top_match_prop` | [`LLM_Cloze`](pred_cloze.md), [`LLM_Surprisal`](pred_surprisal_llm.md), [`LLM_TopMatch`](pred_topmatch.md) |
+| `output_doc_agg_edu_zipf`  | `mean_edu_zipf_{k2,3to5,6to8,9to12,overall}` | [`Edu_Zipf_*`](edu_zipf.md) |
+| `output_doc_agg_predictability` | one `mean_<slug>_<metric>` column per `<slug>_<Metric>` word-level column currently selected (e.g. `mean_gpt2_surprisal`, `mean_llama3_8b_cloze`) | [`Surprisal`](pred_surprisal.md), [`Cloze`](pred_cloze.md), [`TopMatch`](pred_topmatch.md) |
+
+Unlike the other two rows, `output_doc_agg_predictability` doesn't name
+a fixed column set — it scans the word-level DataFrame for every
+column matching `<slug>_Surprisal` / `<slug>_Cloze` / `<slug>_TopMatch`
+(one per model x metric selected in the Predictability card) and
+aggregates each one found. Enabling more models/metrics on the
+Word-level features page grows this column family automatically; no
+separate doc-level toggle per model.
 
 Aggregates are computed **only over rows where the underlying value is
 not NaN** — so PUNCT rows are excluded automatically.
@@ -30,13 +37,19 @@ not NaN** — so PUNCT rows are excluded automatically.
 
 ## Usage
 Stimulus-level descriptors for cross-stimulus comparisons or for
-matching stimuli on average difficulty. The `mean_llm_top_match_prop`
-column is the **proportion** of content words that the LLM nailed
-exactly — a single-number "predictability score" for the document.
+matching stimuli on average difficulty. A `mean_<slug>_topmatch`
+column is the **proportion** of content words that model `<slug>`
+nailed exactly — a single-number "predictability score" for the
+document, per model.
 
 ## Implementation in SensiExtractor
-Computed in `main.py`'s document-batch finishing step. Each `mean_*`
-column is `np.nanmean(word_df[<source_column>])`. The doc-level
+Computed in `utils/doc_summary.py:build_doc_summary`. The
+`mean_zipf_freq` / `mean_edu_zipf_*` columns are each
+`np.nanmean(word_df[<fixed source column>])`. The predictability
+family is dynamic: `_PREDICTABILITY_COL_RE` (`^(?P<slug>[a-z0-9_]+)_
+(?P<metric>Surprisal|Cloze|TopMatch)$`) matches every `<slug>_<Metric>`
+column actually present in the word-level frame, and each match is
+aggregated to `mean_<slug>_<metric-lowercased>`. The doc-level
 preflight in `gui/section_doc_features.py:_refresh_agg_warnings`
 checks the planner's `stages_to_run` and warns when an aggregate is
-enabled but its source stage is absent.
+enabled but its source stage (`predictability`) is absent.

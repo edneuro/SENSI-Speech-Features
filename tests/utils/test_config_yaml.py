@@ -17,7 +17,10 @@ def test_prefs_to_config_shape_and_omits_secrets_and_paths():
     # run block has empty placeholders + token-file paths, no real shared values
     assert cfg["run"]["transcripts_folder"] == ""
     assert cfg["run"]["analyzer"] == ""
-    assert "hf_token_file" in cfg["run"] and "openai_api_key_file" in cfg["run"]
+    assert "hf_token_file" in cfg["run"]
+    # OpenAI backend was retired (extractors/predictability.py is local-HF-only);
+    # the run block no longer carries an openai_api_key_file placeholder.
+    assert "openai_api_key_file" not in cfg["run"]
     assert "hf_token" not in cfg["run"]  # never a raw secret
 
 

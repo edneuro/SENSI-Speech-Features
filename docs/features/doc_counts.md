@@ -33,5 +33,5 @@ Derived in `main.py`'s document-batch finishing step from the
 word-level DataFrame: simple counts over the appropriate row filters
 (`upos != "PUNCT"` for content tokens, unique `sentence_id` for
 sentence count, etc.). PUNCT-aware definitions match the conventions
-used by [`Zipf_Freq`](freq_subtlex.md), [`Surprisal`](pred_surprisal_gpt2.md),
+used by [`Zipf_Freq`](freq_subtlex.md), [`Surprisal`](pred_surprisal.md),
 and the semantic indicators.

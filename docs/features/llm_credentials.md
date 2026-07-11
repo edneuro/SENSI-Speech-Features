@@ -9,23 +9,28 @@ depth: shallow
 
 ## Getting access & credentials
 
-The LLM predictability columns — [`LLM_Cloze`](pred_cloze.md),
-[`LLM_Surprisal`](pred_surprisal_llm.md), and
-[`LLM_TopMatch`](pred_topmatch.md) — all come from a single forward pass of
-one **local** language model. The weights are not bundled; set access up once
-before running. What you do here applies to all three columns at once.
+The predictability metrics — [`Cloze`](pred_cloze.md),
+[`Surprisal`](pred_surprisal.md), and
+[`TopMatch`](pred_topmatch.md) — come from a single forward pass of
+each **local** model you select in the GUI's Predictability card
+(roster: GPT-2 + three Llama-3 variants; see
+[Models](pred_surprisal.md#models)). Weights are not bundled; set
+access up once per gated model before running. **GPT-2 needs no
+credentials at all** — it's free, ungated, and downloads automatically
+on first use. Everything below applies only to the three gated
+Llama-3 models.
 
 > **Why local-only (no OpenAI).** Scoring an *existing* string for per-token
 > log-probabilities needs the legacy OpenAI `/v1/completions` `echo=True,
 > logprobs` primitive, which OpenAI has retired and never served for the
 > `gpt-4o` family. There is no current OpenAI endpoint that returns the
 > probabilities these columns require, so SensiExtractor uses local
-> Hugging Face causal LMs only. (Selecting a `gpt-*` model raises an
-> explanatory error rather than failing mid-run.) The GUI still has a latent
-> API-key box for a possible future paid backend, but it is never shown while
-> only local models are offered.
+> Hugging Face causal LMs only. (Selecting a `gpt-*` model id raises an
+> explanatory error rather than failing mid-run.) There is no API-key
+> input anywhere in the GUI for this feature — only local models are ever
+> offered.
 
-### Local Llama backend — gated, free, one-time setup
+### Local Llama backends — gated, free, one-time setup
 
 The Meta-Llama weights are free but **gated**: HuggingFace releases them only
 after you accept Meta's license *and* Meta approves your request.

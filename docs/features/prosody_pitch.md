@@ -48,7 +48,7 @@ naturalistic-EEG analyses:
   high-pitched voices.
 
 Pitch features are also standard nuisance regressors in
-[surprisal](pred_surprisal_gpt2.md)-locked EEG analyses, because
+[surprisal](pred_surprisal.md)-locked EEG analyses, because
 prominent words tend to be both higher-pitched **and** more
 informative — confounded if pitch isn't controlled ([Wagner 2010];
 see also [Heilbron 2022], who model EEG/MEG responses to GPT-2

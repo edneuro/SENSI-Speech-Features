@@ -68,14 +68,10 @@ _SHARED_DOC_MAP: dict[str, str] = {
     # no explicit entry — the toggle keys used for the info-icon lookup are
     # "pred_cloze"/"pred_topmatch", which already resolve to the identically
     # named docs/features/pred_cloze.md / pred_topmatch.md via the default
-    # f"{toggle_key}.md" fallback in _doc_path(). "surprisal" has no merged
-    # doc yet (pred_surprisal_gpt2.md and pred_surprisal_llm.md are still
-    # separate, model-specific docs from the pre-unification design), so it
-    # is routed to the GPT-2 doc as a placeholder.
-    # TODO(T8): route "pred_surprisal" to the merged pred_surprisal.md once
-    # that file is written (T8 merges pred_surprisal_gpt2.md +
-    # pred_surprisal_llm.md into one model-agnostic doc).
-    "pred_surprisal": "pred_surprisal_gpt2.md",
+    # f"{toggle_key}.md" fallback in _doc_path(). "surprisal" routes to the
+    # merged, model-agnostic pred_surprisal.md (the metric is identical
+    # across every roster model; see its "Models" section for the roster).
+    "pred_surprisal": "pred_surprisal.md",
     # Lexical norms — all eight word toggles + the doc aggregate share one doc
     "feat_norm_aoa_mean":     "lexical_norms.md",
     "feat_norm_aoa_sd":       "lexical_norms.md",

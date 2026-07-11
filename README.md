@@ -31,7 +31,7 @@ All optional; grouped by level.
 - **Word-level**
   - *Structural / linguistic* (spaCy): sentence & token indices, lemma, POS, morphology, dependency parse
   - *Frequency*: `Zipf_Freq` (wordfreq combined English list — SUBTLEX subtitles + Wikipedia/books/news/web); optional grade-band frequencies (EWFG)
-  - *Predictability*: `Surprisal` (GPT-2); LLM-cloze (`LLM_Cloze`, `LLM_Surprisal`, `LLM_TopMatch`)
+  - *Predictability*: context-conditional word probability from a multi-select roster of **local** language models — GPT-2 (free, no token, CPU-capable) plus three gated Llama-3 variants (3.2-3B / 8B / 70B, need a free HuggingFace token + accepted license). Pick any combination of models and metrics (surprisal, cloze probability, top-1 match); each selected model×metric pair writes a namespaced `<slug>_<Metric>` column, e.g. `gpt2_Surprisal`, `llama3_8b_Cloze` — see [`docs/features/pred_surprisal.md`](docs/features/pred_surprisal.md)
   - *Semantics*: semantic-domain category flags (Empath/LIWC); Word2Vec & BERT embeddings
   - *Lexical norms* (opt-in, bring-your-own data): age-of-acquisition, concreteness, imageability, familiarity, valence/arousal/dominance
   - *Acoustic timing* (MFA forced alignment): `Onset`, `End`, `Word_Duration`, `Word_Gap`
@@ -145,8 +145,9 @@ python gui.py
 The window has a sidebar — **Inputs, Word-level, Document-level, Sub-word,
 Sentence, Acoustic, Run, Logs**. Pick your input files/folders, toggle the
 features you want on each page, then go to **Run** to choose which output files
-to write and start the job. The Run page shows readiness warnings and (for the
-LLM features) a cost estimate; the **Logs** page live-tails the run.
+to write and start the job. The Run page shows readiness warnings (e.g. a
+missing HuggingFace token for a selected gated Llama model); the **Logs** page
+live-tails the run.
 
 ### Command line
 
@@ -181,13 +182,18 @@ are many per-feature toggles):
 | Flag | Effect |
 |------|--------|
 | `--no-align` | Skip MFA forced alignment (`Onset`/`End`) |
-| `--no-surprisal` | Skip GPT-2 surprisal |
-| `--no-llm-cloze` | Skip LLM-cloze metrics |
 | `--no-prosody` / `--no-doc-prosody` | Skip word- / document-level prosody |
 | `--pitch-units hz\|semitones` | Pitch unit (default `semitones`) |
 | `--sem-dict liwc\|empath\|auto\|<path>` | Semantic-domain backend (default `auto`) |
 | `--level word\|document\|acoustic` | Batch runner: word CSV, document summary, or audio-only TRF `.mat` |
 | `--analyzer NAME` | **Required for batch mode**; recorded in the run manifest |
+
+Predictability (surprisal / cloze / top-match) is **not** a CLI flag — it's
+configured via `config/preferences.json`'s `predictability` section (a
+`models` list + `metrics` on/off dict) or, for GUI-driven runs, set directly
+by the GUI. Use the GUI's Predictability card, or hand-edit the
+`predictability` block in your preferences file, to pick models and metrics
+before a CLI run.
 
 ### Outputs
 

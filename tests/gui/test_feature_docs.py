@@ -195,3 +195,18 @@ def test_acoustic_ts_toggles_route_to_docs():
     assert _doc_path("feat_acoustic_ts_onset_env").name == "acoustic_onset_envelope.md"
     assert _doc_path("feat_acoustic_ts_logmel").name == "acoustic_logmel.md"
     assert _doc_path("feat_acoustic_ts_mfcc").name == "acoustic_mfcc.md"
+
+
+def test_predictability_toggles_route_to_merged_docs():
+    """Post-unification: "pred_surprisal" routes to the merged, model-agnostic
+    pred_surprisal.md (replacing the old per-model pred_surprisal_gpt2.md /
+    pred_surprisal_llm.md docs); "pred_cloze"/"pred_topmatch" resolve via the
+    default f"{toggle_key}.md" fallback to their existing docs."""
+    from gui.feature_docs import _doc_path
+    assert _doc_path("pred_surprisal").name == "pred_surprisal.md"
+    assert _doc_path("pred_cloze").name == "pred_cloze.md"
+    assert _doc_path("pred_topmatch").name == "pred_topmatch.md"
+    doc = feature_docs.load_feature_doc("pred_surprisal")
+    assert doc is not None
+    assert doc.frontmatter["key"] == "pred_surprisal"
+    assert "Models" in doc.body

@@ -29,7 +29,7 @@ Sentence-level embeddings are the right granularity for:
 - **Cross-sentence prediction** — predicting the next sentence's
   embedding given the current one's is the standard "discourse-level
   surprisal" measure, complementary to word-level
-  [`LLM_Surprisal`](pred_surprisal_llm.md).
+  [`Surprisal`](pred_surprisal.md).
 
 All 12 layers are shipped intact for the same reason as the
 [word-level column](master_bert_word.md): optimal-layer choice for

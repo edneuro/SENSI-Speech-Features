@@ -41,7 +41,6 @@ def prefs_to_config(prefs: dict) -> dict:
             "output_folder": "",
             "analyzer": "",
             "hf_token_file": "~/hf_token.txt",
-            "openai_api_key_file": "~/openai_key.txt",
         },
         "features": features,
         "settings": settings,
