@@ -737,9 +737,12 @@ def _prealign_batch(run_args, work_items, output_dir) -> None:
 def run_word_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None:
     """Process all matched (transcript, audio) pairs in the configured folders."""
     transcripts_dir = Path(args.transcripts_folder)
-    audio_dir = Path(args.audio_folder)
     output_dir = Path(args.output_folder)
     output_dir.mkdir(parents=True, exist_ok=True)
+    # audio-folder is optional (text-only batch): a non-existent sentinel path
+    # makes find_pairs pair no audio, so every transcript runs text-only.
+    audio_dir = (Path(args.audio_folder) if args.audio_folder
+                 else output_dir / '__no_audio__')
 
     if not args.analyzer:
         raise SystemExit('--analyzer is required for batch mode')
@@ -999,9 +1002,11 @@ def run_doc_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None:
     from utils.doc_summary import build_doc_summary
 
     transcripts_dir = Path(args.transcripts_folder)
-    audio_dir = Path(args.audio_folder)
     output_dir = Path(args.output_folder)
     output_dir.mkdir(parents=True, exist_ok=True)
+    # audio-folder optional (text-only doc batch) — see run_word_level_batch.
+    audio_dir = (Path(args.audio_folder) if args.audio_folder
+                 else output_dir / '__no_audio__')
 
     if not args.analyzer:
         raise SystemExit('--analyzer is required for batch mode')
@@ -1238,7 +1243,18 @@ def run_acoustic_level_batch(args, *, on_pair_done=None, should_cancel=None) -> 
                 output_summary_path=None,
             )
         except Exception as exc:   # noqa: BLE001 — record and continue batch
-            logger.add_warning(f'{audio_path.name}: {exc}')
+            import traceback
+            tb = ''.join(traceback.format_exception_only(type(exc), exc)).strip()
+            # Record as a pair error (consistent with the word/doc batches) so
+            # a failed stimulus shows up in the manifest's per-pair results,
+            # not only as free-text run warnings.
+            logger.record_pair_error(
+                stimulus_id=audio_path.stem,
+                transcript_path=audio_path,
+                audio_path=audio_path,
+                runtime_seconds=time.time() - start,
+                error_message=tb,
+            )
         if on_pair_done:
             on_pair_done(i + 1, len(audio_files), audio_path.stem)
 
@@ -1282,10 +1298,13 @@ def main():
 
     is_batch = bool(args.transcripts_folder or args.audio_folder or args.output_folder)
     if is_batch:
-        if not (args.transcripts_folder and args.audio_folder and args.output_folder):
+        # --audio-folder is optional: a text-only batch (transcripts + output)
+        # runs every transcript for its non-audio features. When omitted, no
+        # audio is paired (alignment / prosody / sub-word simply no-op).
+        if not (args.transcripts_folder and args.output_folder):
             raise SystemExit(
-                'Batch mode requires --transcripts-folder, --audio-folder, '
-                'and --output-folder'
+                'Batch mode requires --transcripts-folder and --output-folder '
+                '(and --audio-folder for any audio-based features).'
             )
         if args.level == 'document':
             run_doc_level_batch(args)
@@ -1293,7 +1312,16 @@ def main():
             run_word_level_batch(args)
         return
 
-    if not args.no_align and args.audio is None:
+    # Single-run mode: a transcript is the text source and is required. Guard
+    # here so a missing --transcript gives a clear message instead of an
+    # opaque FileNotFoundError on the empty default path.
+    if not args.transcript:
+        raise SystemExit(
+            'No input given. Provide --transcript path/to/text.txt (with '
+            '--audio path/to/audio.wav for alignment), or run a batch with '
+            '--transcripts-folder / --output-folder.'
+        )
+    if not args.no_align and not args.audio:
         print('Warning: --audio not provided; alignment will be skipped.')
     try:
         df = run(args)

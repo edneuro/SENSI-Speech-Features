@@ -23,3 +23,84 @@ def test_pitch_units_default_is_semitones():
     from main import build_parser
     args = build_parser().parse_args(['--audio', 'a.wav', '--transcript', 't.txt'])
     assert args.pitch_units == 'semitones'
+
+
+# --- single-run guard: missing transcript ----------------------------------
+
+def test_single_run_without_transcript_errors_cleanly(monkeypatch, capsys):
+    """`python main.py` with no --transcript used to die with
+    FileNotFoundError: '' — an opaque stack trace. It must exit(1) with a
+    message that names the missing flag."""
+    import main
+    monkeypatch.setattr('sys.argv', ['main.py', '--no-align'])
+    with __import__('pytest').raises(SystemExit) as ei:
+        main.main()
+    # SystemExit carries the human-readable message; it must name the missing
+    # --transcript rather than surfacing FileNotFoundError on the empty path.
+    assert 'transcript' in str(ei.value).lower()
+
+
+# --- batch: audio-folder optional for text-only runs ------------------------
+
+def test_batch_allows_missing_audio_folder(monkeypatch, tmp_path):
+    """A text-only batch (transcripts + output, no audio) must not be rejected
+    by the batch-arg validation."""
+    import main
+    called = {}
+    monkeypatch.setattr(main, 'run_word_level_batch',
+                        lambda args, **k: called.setdefault('ran', args))
+    monkeypatch.setattr('sys.argv', [
+        'main.py',
+        '--transcripts-folder', str(tmp_path / 'tx'),
+        '--output-folder', str(tmp_path / 'out'),
+        '--analyzer', 'tester',
+    ])
+    main.main()
+    assert 'ran' in called
+    # audio_folder defaulted to empty/None → no audio paired.
+    assert not called['ran'].audio_folder
+
+
+def test_batch_still_requires_transcripts_and_output(monkeypatch, tmp_path):
+    import main
+    import pytest
+    monkeypatch.setattr('sys.argv', [
+        'main.py', '--audio-folder', str(tmp_path / 'a'),
+    ])
+    with pytest.raises(SystemExit):
+        main.main()
+
+
+# --- acoustic batch: per-file failure is a recorded pair error --------------
+
+def test_acoustic_batch_records_pair_error_on_failure(monkeypatch, tmp_path):
+    """A file that fails to process in the acoustic level must be recorded as
+    a pair error in the manifest (like word/doc batches), not only as a
+    free-text warning."""
+    import json
+    import main
+    audio_dir = tmp_path / 'audio'
+    audio_dir.mkdir()
+    (audio_dir / 'bad.wav').write_bytes(b'not really a wav')
+    out_dir = tmp_path / 'out'
+
+    monkeypatch.setattr('extractors.acoustic_ts.extract_acoustic',
+                        lambda *a, **k: (_ for _ in ()).throw(RuntimeError('boom')))
+
+    import argparse
+    args = argparse.Namespace(
+        audio_folder=str(audio_dir), output_folder=str(out_dir),
+        audio_extensions='wav', analyzer='tester', run_ts=None,
+        acoustic_ts={'analysis_rate': 128, 'envelope': True, 'onset_env': False,
+                     'logmel': False, 'mfcc': False, 'env_method': 'rms',
+                     'env_comp': 0.3, 'env_window': 1.0, 'n_mels': 16,
+                     'n_mfcc': 13, 'mel_preset': 'speech'},
+    )
+    main.run_acoustic_level_batch(args)
+
+    manifests = list((out_dir / 'logs').glob('acoustic_run_*_manifest.json'))
+    assert manifests, 'no manifest written'
+    manifest = json.loads(manifests[0].read_text(encoding='utf-8'))
+    pairs = manifest.get('pairs', manifest.get('results', []))
+    assert any(p.get('status') == 'error' and p.get('stimulus_id') == 'bad'
+               for p in pairs), f'no error pair recorded: {pairs}'
