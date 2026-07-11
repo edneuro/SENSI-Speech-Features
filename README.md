@@ -170,6 +170,11 @@ python main.py \
   --level word          # word (default) | document | acoustic
 ```
 
+`--audio-folder` is optional for `word`/`document` levels: omit it for a
+**text-only** batch (every transcript is processed for its non-audio
+features; alignment, prosody, and sub-word tiers simply no-op). The
+`acoustic` level is audio-only and always needs `--audio-folder`.
+
 Commonly used flags (run `python main.py --help` for the complete list — there
 are many per-feature toggles):
 
