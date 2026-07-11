@@ -1,15 +1,14 @@
 """Unified multi-model predictability extractor (surprisal / cloze / top-match).
 
-Replaces extractors/surprisal.py and the old extractors/llm_cloze.py. Each
-selected roster model is scored once; only the requested metrics are written,
-prefixed by the model slug. See the design spec §4.
+Replaces the retired extractors/surprisal.py and extractors/llm_cloze.py
+(both deleted once every consumer moved onto this module). Each selected
+roster model is scored once; only the requested metrics are written, prefixed
+by the model slug. See the design spec §4.
 
-This module is also the single home for the shared local-HuggingFace backend
+This module is the single home for the shared local-HuggingFace backend
 (_HuggingFaceBackend, loaded via AutoModelForCausalLM) and its supporting
-helpers. extractors/surprisal.py and extractors/llm_cloze.py are now thin
-compatibility shims over this module — see their docstrings — so there is
-exactly one backend implementation, used by add_predictability (this module),
-add_surprisal (surprisal shim) and add_llm_cloze (llm_cloze shim) alike.
+helpers, so there is exactly one backend implementation behind
+add_predictability.
 """
 from __future__ import annotations
 
@@ -449,9 +448,9 @@ def _make_default_backend(model_id: str) -> _Backend:
 
 
 # Process-wide backend cache, keyed by literal HuggingFace repo id (the same
-# string space as roster hf_ids, e.g. "gpt2", and legacy free-form model_ids,
-# e.g. "meta-llama/Meta-Llama-3-8B") — so a roster-driven load and a legacy
-# add_llm_cloze load of the same model share one instance. Loading a local 8B
+# string space as roster hf_ids, e.g. "gpt2", and free-form model_ids, e.g.
+# "meta-llama/Meta-Llama-3-8B" as select_model() returns) — so loads of the
+# same model from different call sites share one instance. Loading a local 8B
 # model costs minutes; we load once per id and reuse it across every document
 # (and the word/doc passes) in a run — the same "load once" intent that
 # _align_cache gives MFA. Callers that pass an explicit `backend=` bypass
@@ -468,7 +467,7 @@ def _cached_backend(model_id: str) -> _Backend:
 
 
 # ---------------------------------------------------------------------------
-# score cache: shared by add_predictability, add_llm_cloze (llm_cloze shim)
+# score cache: (model, text/tokens digest) → scores, reused across passes
 # ---------------------------------------------------------------------------
 
 # (hf_id/model_id, text/tokens digest) → scores. Sized to hold one GUI
