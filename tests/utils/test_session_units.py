@@ -15,6 +15,43 @@ def _mk_plan(stages: tuple[str, ...] = (),
     )
 
 
+def test_predictability_unit_rows_from_dynamic_columns():
+    # The <slug>_<Metric> columns are dynamic (depend on the selected model
+    # roster), so their unit rows come from plan.predictability_columns, not a
+    # static table. One row per column, unit keyed off the metric suffix.
+    plan = Plan(
+        stages_to_run=("predictability",),
+        output_csvs=frozenset({"features"}),
+        column_drops={"features": frozenset()},
+        stage_configs={},
+        predictability_columns=("gpt2_Surprisal", "gpt2_Cloze",
+                                "llama3_8b_TopMatch"),
+    )
+    rows = build_session_units(plan)
+    by_col = {r["column"]: r["unit"] for r in rows
+              if r["column"] in {"gpt2_Surprisal", "gpt2_Cloze",
+                                 "llama3_8b_TopMatch"}}
+    assert by_col == {
+        "gpt2_Surprisal": "bits",
+        "gpt2_Cloze": "probability (0-1)",
+        "llama3_8b_TopMatch": "boolean",
+    }
+    assert all(r["output_csv"] == "features" for r in rows
+               if r["column"] in by_col)
+
+
+def test_predictability_unit_rows_suppressed_without_features_csv():
+    plan = Plan(
+        stages_to_run=("predictability",),
+        output_csvs=frozenset({"documents_summary"}),
+        column_drops={"documents_summary": frozenset()},
+        stage_configs={},
+        predictability_columns=("gpt2_Surprisal",),
+    )
+    rows = build_session_units(plan)
+    assert not any(r["column"] == "gpt2_Surprisal" for r in rows)
+
+
 def test_no_rows_for_inactive_csv():
     plan = _mk_plan(csvs=frozenset({"features"}))
     rows = build_session_units(plan)
