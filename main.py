@@ -5,18 +5,22 @@ Usage:
     python main.py --audio path/to/audio.wav --transcript path/to/text.txt
     python main.py --audio audio.wav --transcript text.txt --output features.csv
     python main.py --audio audio.wav --transcript text.txt \\
-                   --no-align --no-freq --no-surprisal
+                   --no-align --no-freq
 
 Feature flags (all enabled by default):
     --no-align       Skip MFA forced alignment (Onset / End columns)
     --no-parse       Skip spaCy linguistic annotation
     --no-freq        Skip word frequency (Zipf_Freq)
-    --no-surprisal   Skip GPT-2 surprisal
+
+Predictability (surprisal / cloze / top-match) is no longer a CLI flag: it
+is configured via preferences.json's "predictability" section (roster of
+models x metrics) or, for GUI-driven runs, via ns.predictability set by
+gui/planner/emit.py. See extractors/predictability.py.
 
 Output:
     One CSV file with one row per word token. Punctuation tokens are
     included (they carry spaCy annotations) but have NaN for numeric
-    features (Zipf_Freq, Surprisal, Onset, End).
+    features (Zipf_Freq, Onset, End).
 
 Column order in output CSV:
     --- spaCy structural ---
@@ -82,7 +86,6 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument('--no-align',     action='store_true', help='Skip MFA alignment.')
     p.add_argument('--no-parse',     action='store_true', help='Skip spaCy annotation.')
     p.add_argument('--no-freq',      action='store_true', help='Skip word frequency.')
-    p.add_argument('--no-surprisal', action='store_true', help='Skip GPT-2 surprisal.')
 
     # New batch 1 feature flags
     # EWFG is opt-in: its source (Zeno et al. 1995) is print-only / not
@@ -120,9 +123,6 @@ def build_parser() -> argparse.ArgumentParser:
                    help='Comma-separated category names. Default = SOP 15-category set.')
     p.add_argument('--save-prefs',      action='store_true',
                    help='Persist current --sem-categories selection to preferences.json.')
-
-    p.add_argument('--no-llm-cloze',    action='store_true', help='Skip LLM-cloze metrics.')
-    p.add_argument('--llm-model',       default=None, help='Override LLM model id (auto-detected by default).')
 
     # Prosody (Task 5) — group-level CLI flags only.
     # Per-column granularity is GUI-only and flows through args.feature_toggles
@@ -333,16 +333,21 @@ def run(args) -> pd.DataFrame:
         df = add_semantic_domain(df, backend=backend, categories=sem_categories,
                                  dictionary_path=dict_path)
 
-    if not args.no_surprisal and df is not None:
-        from extractors.surprisal import add_surprisal
-        print('[gpt2] Computing GPT-2 surprisal (legacy)…')
-        df = add_surprisal(df, text)
-
-    if not args.no_llm_cloze and df is not None:
-        from extractors.llm_cloze import add_llm_cloze, select_model
-        model_id = args.llm_model or select_model()
-        print(f'[llm] Computing LLM-cloze with {model_id}…')
-        df = add_llm_cloze(df, text=text, model_id=model_id)
+    # Predictability (surprisal / cloze / top-match) — unified, roster-driven
+    # extractor (replaces the old separate add_surprisal / add_llm_cloze
+    # blocks). Config comes from ns.predictability when a caller (GUI batch
+    # dispatch) set it explicitly; the CLI leaves args.predictability unset,
+    # so a plain `python main.py` run falls back to preferences.json (mirrors
+    # how sem_categories falls back to prefs above).
+    pconf = getattr(args, 'predictability', None)
+    if pconf is None:
+        pconf = prefs.get('predictability', {})
+    pred_models = list(pconf.get('models') or [])
+    pred_metrics = [m for m, on in (pconf.get('metrics') or {}).items() if on]
+    if pred_models and pred_metrics and df is not None:
+        from extractors.predictability import add_predictability
+        print(f'[predict] {len(pred_models)} model(s) x {len(pred_metrics)} metric(s)…')
+        df = add_predictability(df, text, models=pred_models, metrics=pred_metrics)
 
     args._phones_df = None  # reset each run; populated below when alignment runs
     if not args.no_align and args.audio:
@@ -754,10 +759,9 @@ def run_word_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None
 
     config_snapshot = {
         'no_parse': args.no_parse, 'no_freq': args.no_freq, 'no_edu_freq': args.no_edu_freq,
-        'no_sem_domain': args.no_sem_domain, 'no_surprisal': args.no_surprisal,
-        'no_llm_cloze': args.no_llm_cloze, 'no_align': args.no_align,
+        'no_sem_domain': args.no_sem_domain, 'no_align': args.no_align,
         'sem_dict': args.sem_dict, 'sem_categories': args.sem_categories,
-        'llm_model': args.llm_model,
+        'predictability': getattr(args, 'predictability', None),
         'edu_freq_lookup': args.edu_freq_lookup,
         'edu_bands': getattr(args, 'edu_bands', None),
     }
@@ -1039,7 +1043,8 @@ def run_doc_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None:
     }
 
     config_snapshot = {'level': 'document', 'doc_toggles': doc_toggles,
-                       'sem_dict': args.sem_dict, 'llm_model': args.llm_model}
+                       'sem_dict': args.sem_dict,
+                       'predictability': getattr(args, 'predictability', None)}
 
     logger = RunLogger(
         output_folder=output_dir,
@@ -1074,10 +1079,19 @@ def run_doc_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None:
         extract_args.no_freq = False
     if doc_toggles.get('mean_edu_zipf'):
         extract_args.no_edu_freq = False
-    if doc_toggles.get('mean_surprisal'):
-        extract_args.no_surprisal = False
-    if doc_toggles.get('mean_llm_cloze'):
-        extract_args.no_llm_cloze = False
+    # NOTE (residue — doc-aggregate toggle/registry unification, not this
+    # task's scope): the old no_surprisal=False / no_llm_cloze=False forcing
+    # has no v18 equivalent. Predictability is now driven entirely by
+    # extract_args.predictability (copied from args above, itself either
+    # ns.predictability set by the GUI or — for CLI runs — resolved from
+    # preferences.json inside run()); it is a models x metrics roster with no
+    # per-word-CSV-toggle gate, so there is nothing to force on here.
+    # utils/doc_summary.py's mean_surprisal / mean_llm_cloze aggregates still
+    # read the legacy 'Surprisal' / 'LLM_Cloze' / 'LLM_Surprisal' /
+    # 'LLM_TopMatch' column names, which add_predictability no longer writes
+    # (it writes '<slug>_<Metric>' instead) — those two doc_toggles will
+    # silently produce no aggregate value until a future doc-aggregate
+    # registry pass maps a specific roster model/metric to each one.
     if doc_toggles.get('lexical_norms_agg'):
         # Doc aggregates read the word-level norm columns; force the
         # word-level extractor on regardless of the word-CSV toggle.

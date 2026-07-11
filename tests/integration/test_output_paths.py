@@ -28,7 +28,6 @@ def _word_args(tmp_path):
         '--output-folder', str(tmp_path / 'out'),
         '--analyzer', 'TestRunner',
         '--no-align',
-        '--no-llm-cloze',
         '--no-edu-freq',
     ])
 
@@ -42,7 +41,6 @@ def _doc_args(tmp_path):
         '--analyzer', 'TestRunner',
         '--level', 'document',
         '--no-align',
-        '--no-llm-cloze',
         '--no-doc-mean-llm-cloze',
         '--no-edu-freq',
         '--no-doc-mean-edu-zipf',
@@ -102,7 +100,7 @@ def test_sidecars_land_in_subfolders(tmp_path, monkeypatch):
         '--audio-folder', str(audio_dir),
         '--output-folder', str(out_dir),
         '--analyzer', 'tester',
-        '--no-align', '--no-llm-cloze', '--no-edu-freq',
+        '--no-align', '--no-edu-freq',
     ])
     args.no_syllables = False
     args.no_phonemes = False

@@ -30,11 +30,10 @@ _STATIC_UNITS: dict[tuple[str, str], str] = {
     ("features", "Edu_Zipf_6to8"):    "Zipf (log10 per-billion + 3)",
     ("features", "Edu_Zipf_9to12"):   "Zipf (log10 per-billion + 3)",
     ("features", "Edu_Zipf_Overall"): "Zipf (log10 per-billion + 3)",
-    # Predictability
-    ("features", "Surprisal"):        "bits",
-    ("features", "LLM_Surprisal"):    "bits",
-    ("features", "LLM_Cloze"):        "probability (0-1)",
-    ("features", "LLM_TopMatch"):     "boolean",
+    # Predictability: dynamic, roster-driven '<slug>_<Metric>' columns — see
+    # _predictability_unit_rows below, resolved from plan.predictability_columns
+    # rather than hard-coded here (the old fixed Surprisal/LLM_* column names
+    # no longer exist post-unification; extractors/predictability.py).
     # Syllable sidecar
     ("syllables", "Onset"):           "seconds",
     ("syllables", "End"):             "seconds",
@@ -74,6 +73,34 @@ _PITCH_COLUMNS: dict[str, tuple[str, ...]] = {
 }
 
 
+# Predictability metric suffix -> unit. Roster columns are named
+# '<slug>_<Metric>' (extractors/predictability.py's _METRIC_COLS caps); the
+# slug prefix varies per selected model so only the suffix is matched.
+_PREDICTABILITY_METRIC_UNITS: dict[str, str] = {
+    "Surprisal": "bits",
+    "Cloze":     "probability (0-1)",
+    "TopMatch":  "boolean",
+}
+
+
+def _predictability_unit_rows(plan: Plan) -> list[dict]:
+    """One row per active '<slug>_<Metric>' predictability column.
+
+    Resolved dynamically from plan.predictability_columns (rather than a
+    static table) because the column set depends on the user's selected
+    model roster — see gui/planner/plan.py:_predictability_columns.
+    """
+    if "features" not in plan.output_csvs:
+        return []
+    rows: list[dict] = []
+    for col in plan.predictability_columns:
+        for suffix, unit in _PREDICTABILITY_METRIC_UNITS.items():
+            if col.endswith(f"_{suffix}"):
+                rows.append({"output_csv": "features", "column": col, "unit": unit})
+                break
+    return rows
+
+
 def _resolve_pitch_units(plan: Plan) -> str:
     """Return the active pitch_units string ("Hz" or "semitones").
 
@@ -103,5 +130,7 @@ def build_session_units(plan: Plan) -> list[dict]:
             continue
         for col in cols:
             rows.append({"output_csv": csv, "column": col, "unit": pitch_units})
+
+    rows.extend(_predictability_unit_rows(plan))
 
     return rows

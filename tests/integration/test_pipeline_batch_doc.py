@@ -17,7 +17,6 @@ def _args(tmp_path):
         '--analyzer', 'DocTest',
         '--level', 'document',
         '--no-align',
-        '--no-llm-cloze',
         '--no-doc-mean-llm-cloze',  # disable doc-level LLM aggregate (model not available in CI)
         '--no-edu-freq',
         '--no-doc-mean-edu-zipf',   # disable doc-level edu aggregate (lookup not in fixtures)
@@ -74,6 +73,6 @@ def test_main_dispatches_level_word_by_default(tmp_path):
         '--audio-folder', str(FIXTURES / 'audio'),
         '--output-folder', str(tmp_path / 'out'),
         '--analyzer', 'Default',
-        '--no-align', '--no-llm-cloze', '--no-edu-freq',
+        '--no-align', '--no-edu-freq',
     ])
     assert args.level == 'word'

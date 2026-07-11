@@ -18,7 +18,6 @@ def _args_for_batch(tmp_path):
         '--output-folder', str(tmp_path / 'out'),
         '--analyzer', 'TestRunner',
         '--no-align',  # skip MFA in tests
-        '--no-llm-cloze',  # skip LLM in tests
         '--no-edu-freq',  # skip — no lookup file in fixtures
     ])
     return args
@@ -101,7 +100,6 @@ def test_word_level_batch_emits_prosody_columns(tmp_path):
         '--audio-folder', str(audio_dir),
         '--output-folder', str(out_dir),
         '--analyzer', 'tester',
-        '--no-llm-cloze',
         '--no-edu-freq',
     ])
     run_word_level_batch(args)
@@ -190,7 +188,7 @@ def test_sidecars_emit_when_struct_and_acoustic_per_column_toggles_off(
         '--audio-folder', str(audio_dir),
         '--output-folder', str(out_dir),
         '--analyzer', 'tester',
-        '--no-align', '--no-llm-cloze', '--no-edu-freq',
+        '--no-align', '--no-edu-freq',
     ])
     args.feature_toggles = feature_toggles
     args.no_syllables = False
@@ -282,7 +280,7 @@ def test_phoneme_surprisal_mat_write_survives_savemat(tmp_path, monkeypatch):
         '--audio-folder', str(audio_dir),
         '--output-folder', str(out_dir),
         '--analyzer', 'tester',
-        '--no-align', '--no-llm-cloze', '--no-edu-freq',
+        '--no-align', '--no-edu-freq',
     ])
     # Scope the run to just the phoneme-surprisal .mat sidecar.
     args.no_syllables = True

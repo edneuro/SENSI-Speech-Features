@@ -1,4 +1,5 @@
 """CLI smoke tests for prosody flags added in Task 5."""
+import pytest
 
 
 def test_build_parser_accepts_prosody_flags():
@@ -104,3 +105,49 @@ def test_acoustic_batch_records_pair_error_on_failure(monkeypatch, tmp_path):
     pairs = manifest.get('pairs', manifest.get('results', []))
     assert any(p.get('status') == 'error' and p.get('stimulus_id') == 'bad'
                for p in pairs), f'no error pair recorded: {pairs}'
+
+
+# --- predictability: unified extractor replaces --no-surprisal/--no-llm-cloze ---
+
+def test_removed_predictability_flags_are_gone():
+    """The old separate surprisal/LLM-cloze CLI flags are retired in favor of
+    a single ns.predictability config (models x metrics) consumed by
+    extractors.predictability.add_predictability."""
+    from main import build_parser
+    p = build_parser()
+    for flag in ('--no-surprisal', '--no-llm-cloze', '--llm-model'):
+        with pytest.raises(SystemExit):
+            p.parse_args(['--transcript', 't.txt', flag, 'x'])
+
+
+def test_run_reads_predictability_from_namespace(monkeypatch, tmp_path):
+    """A namespace carrying predictability config drives add_predictability
+    with the models/metrics it specifies, regardless of preferences.json."""
+    import main
+    from main import build_parser
+
+    called = {}
+
+    def fake_add_predictability(df, text, **kwargs):
+        called['k'] = kwargs
+        return df
+
+    monkeypatch.setattr('extractors.predictability.add_predictability',
+                        fake_add_predictability)
+
+    transcript = tmp_path / 't.txt'
+    transcript.write_text('Hello world.', encoding='utf-8')
+
+    args = build_parser().parse_args([
+        '--transcript', str(transcript),
+        '--no-align', '--no-freq', '--no-edu-freq', '--no-sem-domain',
+    ])
+    args.predictability = {
+        'models': ['fake_slug'],
+        'metrics': {'surprisal': True, 'cloze': False, 'topmatch': False},
+    }
+
+    main.run(args)
+
+    assert called['k']['models'] == ['fake_slug']
+    assert called['k']['metrics'] == ['surprisal']
