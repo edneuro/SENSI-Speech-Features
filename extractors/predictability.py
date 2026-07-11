@@ -249,14 +249,27 @@ def _model_id_for_vram(vram: float) -> str:
     """Pure VRAM-threshold decision, shared by every select_model caller.
 
     Kept side-effect-free (no VRAM probing here) so it needs no monkeypatch
-    target of its own — extractors.llm_cloze.select_model calls this after
-    probing VRAM itself, via its own locally-named _available_vram_gb.
+    target of its own — select_model() below calls this after probing VRAM
+    itself, via the module-level _available_vram_gb.
     """
     if vram >= 48:
         return 'meta-llama/Meta-Llama-3-70B'
     if vram >= 12:
         return 'meta-llama/Meta-Llama-3-8B'
     return 'meta-llama/Llama-3.2-3B'
+
+
+def select_model() -> str:
+    """Pick the best LOCAL LLM model id (a HuggingFace repo id, not a roster
+    slug) given the current environment.
+
+    Legacy entry point kept for callers that still want a free-form model id
+    (e.g. utils/validate_cloze.py) rather than driving add_predictability via
+    the roster directly. A plain-name lookup within this module's own
+    namespace, so unit tests can monkeypatch
+    extractors.predictability._available_vram_gb to exercise each VRAM tier.
+    """
+    return _model_id_for_vram(_available_vram_gb())
 
 
 def is_gated_local_model(model_id: str) -> bool:

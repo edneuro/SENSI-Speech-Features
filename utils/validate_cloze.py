@@ -25,7 +25,8 @@ _ROOT = Path(__file__).resolve().parent.parent
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
-from extractors.llm_cloze import add_llm_cloze, select_model
+from extractors.predictability import add_predictability, select_model
+from extractors.predictability_models import slug_for_hf_id
 
 PROVO_CSV_URL = 'https://osf.io/download/eyfxq/'  # Provo Corpus item-level cloze data
 PROVO_DIR = _ROOT / 'data' / 'provo'
@@ -68,7 +69,15 @@ def main():
     grouped = df.groupby('Text_ID')
 
     model_id = args.llm_model or select_model()
-    print(f'Validation model: {model_id}')
+    slug = slug_for_hf_id(model_id)
+    if slug is None:
+        default_id = select_model()
+        default_slug = slug_for_hf_id(default_id)
+        print(f'Model {model_id!r} is not in the local roster (extractors/'
+              f'predictability_models.py); falling back to the auto-selected '
+              f'default {default_id!r}.')
+        model_id, slug = default_id, default_slug
+    print(f'Validation model: {model_id} (roster slug: {slug})')
 
     all_human, all_model = [], []
     for text_id, group in grouped:
@@ -78,8 +87,8 @@ def main():
             'token': words,
             'upos': ['NOUN'] * len(words),  # treat all as content for validation
         })
-        scored = add_llm_cloze(token_df, text=text, model_id=model_id)
-        all_model.extend(scored['LLM_Cloze'].tolist())
+        scored = add_predictability(token_df, text, models=[slug], metrics=['cloze'])
+        all_model.extend(scored[f'{slug}_Cloze'].tolist())
         all_human.extend(group['Word_Cloze'].tolist())
 
     pairs = [(h, m) for h, m in zip(all_human, all_model) if h is not None and m is not None and not (pd.isna(h) or pd.isna(m))]
