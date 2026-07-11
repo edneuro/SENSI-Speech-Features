@@ -29,7 +29,8 @@ Column order in output CSV:
     --- token-level linguistic (spaCy) ---
     token, lemma, upos, xpos, feats, dep_rel, head_token_id
     --- computed features ---
-    Zipf_Freq, Surprisal
+    Zipf_Freq, then predictability columns <slug>_<Metric> (one per selected
+    model x metric, e.g. gpt2_Surprisal / gpt2_Cloze / llama3_8b_Surprisal)
     --- MFA alignment ---
     Transcript, Onset, End
 
@@ -44,6 +45,7 @@ Merge strategy (alignment + parse):
 
 import argparse
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -250,8 +252,10 @@ _COLUMN_ORDER = [
     'Edu_Zipf_K2', 'Edu_Zipf_3to5', 'Edu_Zipf_6to8', 'Edu_Zipf_9to12', 'Edu_Zipf_Overall',
     # Sem_<Dict>_<cat> columns get appended dynamically by _reorder
     'Sem_Categories',
-    'Surprisal',
-    'LLM_Surprisal', 'LLM_Cloze', 'LLM_TopMatch',
+    # Predictability <slug>_<Metric> columns (dynamic; one per selected model x
+    # metric) are inserted here by _reorder, in the slot the old Surprisal /
+    # LLM_* columns used to occupy.
+    '_PREDICTABILITY_',
     'Transcript', 'Onset', 'End',
     'Word_Duration', 'Word_Gap',
     # Prosody (Task 5)
@@ -261,13 +265,21 @@ _COLUMN_ORDER = [
 ]
 
 
+_PREDICTABILITY_COL_RE = re.compile(r'^[a-z0-9_]+_(Surprisal|Cloze|TopMatch)$')
+
+
 def _reorder(df: pd.DataFrame) -> pd.DataFrame:
     sem_cols = sorted([c for c in df.columns if c.startswith('Sem_') and c != 'Sem_Categories'])
+    # Predictability columns are named <slug>_<Metric> (one per selected model x
+    # metric); sort for a deterministic, model-grouped order.
+    pred_cols = sorted(c for c in df.columns if _PREDICTABILITY_COL_RE.match(c))
     canonical: list[str] = []
     for c in _COLUMN_ORDER:
         if c == 'Sem_Categories':
             canonical.extend(sem_cols)
             canonical.append('Sem_Categories')
+        elif c == '_PREDICTABILITY_':
+            canonical.extend(pred_cols)
         else:
             canonical.append(c)
     present = [c for c in canonical if c in df.columns]

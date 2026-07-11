@@ -187,10 +187,13 @@ def _scores_from_subwords(
 # model selection / gating (moved from extractors/llm_cloze.py)
 # ---------------------------------------------------------------------------
 
-# Shared by the GUI dropdown and the run dispatch. LOCAL models only — OpenAI
-# is intentionally not offered: scoring an existing string for per-token
-# log-probabilities requires the legacy /v1/completions `echo=True, logprobs`
-# primitive, which OpenAI has retired and never served for the gpt-4o family.
+# Legacy model list — the GUI now reads the roster
+# (extractors/predictability_models.all_specs) directly, so this constant is no
+# longer consulted by production code. Retained (with tests asserting it holds
+# no OpenAI entries) as the documented home for the local-model roster labels
+# and a guardrail against an OpenAI backend silently reappearing. LOCAL models
+# only — OpenAI can't score an existing string for per-token log-probabilities
+# (the legacy /v1/completions echo+logprobs primitive is retired).
 LLM_OPTIONS = [
     ('meta-llama/Meta-Llama-3-70B', 'Llama-3-70B   (free, r≈0.84, needs ≥48GB VRAM)'),
     ('meta-llama/Meta-Llama-3-8B',  'Llama-3-8B    (free, r≈0.79, needs ≥12GB VRAM)'),
