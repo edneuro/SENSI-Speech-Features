@@ -51,7 +51,7 @@ def _prefs(output: dict, features: dict, *, semantic=None, prosody=None,
         "semantic": semantic or {"backend": "empath", "categories_empath": []},
         "prosody":  prosody or {"pitch_units": "semitones", "pitch_floor_hz": 75.0,
                                  "pitch_ceiling_hz": 500.0, "pause_threshold_s": 0.25},
-        "predictability": predictability or {"llm_model": ""},
+        "predictability": predictability or {"models": [], "metrics": {}},
         "shared":   shared or {},
     }
 
@@ -202,15 +202,18 @@ def test_stage_configs_carries_prosody_params():
     assert "doc_prosody" not in p.stage_configs
 
 
-def test_stage_configs_carries_llm_model():
+def test_stage_configs_carries_predictability_models_and_metrics():
     p = plan_from_prefs(_prefs(
         output={"word_level_csv": True, "syllables_csv": False, "phonemes_csv": False,
                 "document_summary": False},
-        features={"pred_cloze": True},
-        predictability={"llm_model": "gpt-4o-mini"},
+        features={},
+        predictability={"models": ["gpt2"],
+                        "metrics": {"surprisal": True, "cloze": True, "topmatch": False}},
     ))
-    assert "llm_predict" in p.stages_to_run
-    assert p.stage_configs.get("llm_predict", {}).get("llm_model") == "gpt-4o-mini"
+    assert "predictability" in p.stages_to_run
+    cfg = p.stage_configs.get("predictability", {})
+    assert cfg.get("models") == ["gpt2"]
+    assert cfg.get("metrics") == ["surprisal", "cloze"]
 
 
 # ---------------------------------------------------------------------------
@@ -341,3 +344,36 @@ def test_phoneme_surprisal_off_by_default():
     plan = plan_from_prefs(DEFAULT_PREFS)
     assert "phoneme_surprisal" not in plan.stages_to_run
     assert "phoneme_surprisal_mat" not in plan.output_csvs
+
+
+# ---------------------------------------------------------------------------
+# Predictability (v18 dynamic stage/cluster) — Task 4
+# ---------------------------------------------------------------------------
+
+def test_predictability_stage_active_and_columns(monkeypatch):
+    from gui.planner import plan_from_prefs
+    from utils.preferences import DEFAULT_PREFS
+    import copy
+    prefs = copy.deepcopy(DEFAULT_PREFS)
+    prefs["features"]["master_predictability"] = True
+    prefs["output"]["word_level_csv"] = True
+    prefs["predictability"] = {"models": ["gpt2", "llama3_8b"],
+                               "metrics": {"surprisal": True, "cloze": True,
+                                           "topmatch": False}}
+    p = plan_from_prefs(prefs)
+    assert "predictability" in p.stages_to_run
+    cols = set(p.emitted_columns_for("predictability"))  # helper or plan field
+    assert cols == {"gpt2_Surprisal", "gpt2_Cloze",
+                    "llama3_8b_Surprisal", "llama3_8b_Cloze"}
+
+def test_predictability_inactive_when_no_metric(monkeypatch):
+    from gui.planner import plan_from_prefs
+    from utils.preferences import DEFAULT_PREFS
+    import copy
+    prefs = copy.deepcopy(DEFAULT_PREFS)
+    prefs["features"]["master_predictability"] = True
+    prefs["output"]["word_level_csv"] = True
+    prefs["predictability"] = {"models": ["gpt2"],
+                               "metrics": {"surprisal": False, "cloze": False,
+                                           "topmatch": False}}
+    assert "predictability" not in plan_from_prefs(prefs).stages_to_run

@@ -33,8 +33,6 @@ _WORD_STAGE_FLAGS = {
     "praat_contours": None,    # implicit; no flag in main.py
     "word_freq":      "no_freq",
     "ewfg_freq":      "no_edu_freq",
-    "gpt2_surprisal": "no_surprisal",
-    "llm_predict":    "no_llm_cloze",
     "sem_domain":     "no_sem_domain",
     "lexical_norms":  "no_lexical_norms",
     "word_prosody":   "no_prosody",
@@ -224,7 +222,11 @@ def to_namespace(plan: Plan, prefs: dict, level: str) -> argparse.Namespace:
     ns.edu_bands       = _enabled_ewfg_bands(features)
     ns.sem_dict        = prefs.get("semantic", {}).get("backend", "auto")
     ns.sem_categories  = _categories_for_level(prefs, level)
-    ns.llm_model       = prefs.get("predictability", {}).get("llm_model", "") or None
+    _p = prefs.get("predictability", {})
+    ns.predictability = {
+        "models": list(_p.get("models") or []),
+        "metrics": dict(_p.get("metrics") or {}),
+    }
     ns.edu_freq_lookup = None
     _norms = prefs.get("lexical_norms", {})
     ns.lexical_norms_paths = _norms.get("paths") or None

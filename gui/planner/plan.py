@@ -79,9 +79,52 @@ def _toggle_value(prefs: dict, key: str) -> bool:
     return bool(prefs.get("features", {}).get(key, False))
 
 
+def _predictability_config(prefs: dict) -> tuple[list[str], list[str]]:
+    """(models, metrics) from prefs["predictability"], metrics filtered to
+    the ones switched on, in a stable (surprisal, cloze, topmatch) order."""
+    pred = prefs.get("predictability", {}) or {}
+    models = list(pred.get("models") or [])
+    metrics_on = pred.get("metrics", {}) or {}
+    metrics = [m for m in ("surprisal", "cloze", "topmatch") if metrics_on.get(m)]
+    return models, metrics
+
+
+_PREDICTABILITY_METRIC_CAP = {
+    "surprisal": "Surprisal", "cloze": "Cloze", "topmatch": "TopMatch",
+}
+
+
+def _predictability_columns(models: list[str], metrics: list[str]) -> tuple[str, ...]:
+    return tuple(
+        f"{slug}_{_PREDICTABILITY_METRIC_CAP[m]}"
+        for slug in models for m in metrics
+    )
+
+
+def _predictability_active(prefs: dict, active_csvs: frozenset[str]) -> bool:
+    """The predictability stage/cluster's true activation predicate (spec §12
+    fallback — see the "Predictability" FeatureCluster's docstring in
+    registry.py). Not expressible via toggle_keys because it depends on two
+    dynamic prefs['predictability'] fields (models list, metrics dict), not a
+    fixed set of boolean feature-toggle keys."""
+    if "features" not in active_csvs:
+        return False
+    if not _toggle_value(prefs, "master_predictability"):
+        return False
+    models, metrics = _predictability_config(prefs)
+    return bool(models) and bool(metrics)
+
+
 def _active_clusters(prefs: dict, active_csvs: frozenset[str]) -> list[FeatureCluster]:
     actives = []
     for c in CLUSTERS:
+        # The "Predictability" cluster's activation is dynamic (models list x
+        # metrics dict) and is computed separately in plan_from_prefs via
+        # _predictability_active/_predictability_columns — see its docstring
+        # in registry.py. Skip it here so it never gets falsely marked active
+        # just because master_predictability is on and "features" is wanted.
+        if c.name == "Predictability":
+            continue
         # 1. available_when: hard env gate
         if c.available_when is not None:
             path, expected = c.available_when
@@ -214,10 +257,9 @@ def _stage_configs(prefs: dict, stages_to_run: tuple[str, ...]) -> dict[str, dic
             "pitch_units":     pitch_units,
             "pause_threshold": float(pros.get("pause_threshold_s", 0.25)),
         }
-    if "llm_predict" in in_plan:
-        configs["llm_predict"] = {
-            "llm_model": prefs.get("predictability", {}).get("llm_model", "") or None,
-        }
+    if "predictability" in in_plan:
+        models, metrics = _predictability_config(prefs)
+        configs["predictability"] = {"models": models, "metrics": metrics}
     return configs
 
 
@@ -232,9 +274,22 @@ def plan_from_prefs(prefs: dict) -> Plan:
     required: set[str] = set()
     for c in active:
         required.update(c.requires_stages)
+
+    # Predictability: dynamic activation, handled outside the declarative
+    # cluster loop above (see _predictability_active's docstring).
+    pred_active = _predictability_active(prefs, active_csvs)
+    pred_models, pred_metrics = (
+        _predictability_config(prefs) if pred_active else ([], [])
+    )
+    pred_columns = _predictability_columns(pred_models, pred_metrics) if pred_active else ()
+    if pred_active:
+        required.update({"spacy_parse", "predictability"})
+        live_csvs = live_csvs | {"features"}
+
     closed = _close_under_consumes(required)
     ordered = _topo_sort(closed)
     drops = _column_drops(active, live_csvs)
     configs = _stage_configs(prefs, ordered)
     return Plan(stages_to_run=ordered, output_csvs=live_csvs,
-                column_drops=drops, stage_configs=configs)
+                column_drops=drops, stage_configs=configs,
+                predictability_columns=pred_columns)

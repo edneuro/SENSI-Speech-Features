@@ -47,7 +47,7 @@ def _prefs(output: dict, features: dict, **kw) -> dict:
                                         "pitch_floor_hz": 75.0,
                                         "pitch_ceiling_hz": 500.0,
                                         "pause_threshold_s": 0.25}),
-        "predictability": kw.get("predictability", {"llm_model": ""}),
+        "predictability": kw.get("predictability", {"models": [], "metrics": {}}),
         "shared":   kw.get("shared", {"last_transcripts_folder": "",
                                        "last_audio_folder": "",
                                        "last_output_folder": "",
@@ -66,12 +66,34 @@ def test_word_level_namespace_basic():
     assert ns.no_parse is False
     assert ns.no_freq is False
     assert ns.no_align is True
-    assert ns.no_surprisal is True
-    assert ns.no_llm_cloze is True
+    assert ns.predictability == {"models": [], "metrics": {}}  # off by default
     assert ns.no_sem_domain is True
     assert ns.no_word_csv is False  # word CSV wanted
     assert ns.no_syllables is True
     assert ns.no_phonemes is True
+
+
+def test_predictability_namespace_reflects_prefs():
+    """ns.predictability carries prefs["predictability"] verbatim (models list
+    + metrics dict) so main.py can drive add_predictability without the old
+    no_surprisal/no_llm_cloze/llm_model flags."""
+    prefs = _prefs(
+        output={"word_level_csv": True, "syllables_csv": False,
+                "phonemes_csv": False, "document_summary": False},
+        features={},
+        predictability={"models": ["gpt2", "llama3_8b"],
+                        "metrics": {"surprisal": True, "cloze": False, "topmatch": True}},
+    )
+    plan = plan_from_prefs(prefs)
+    ns = to_namespace(plan, prefs, level="word")
+    assert ns.predictability == {
+        "models": ["gpt2", "llama3_8b"],
+        "metrics": {"surprisal": True, "cloze": False, "topmatch": True},
+    }
+    assert "predictability" in plan.stages_to_run
+    assert set(plan.emitted_columns_for("predictability")) == {
+        "gpt2_Surprisal", "gpt2_TopMatch", "llama3_8b_Surprisal", "llama3_8b_TopMatch",
+    }
 
 
 def test_sidecars_only_namespace():
@@ -115,7 +137,7 @@ def test_doc_namespace_separate_no_flags():
                 "doc_category_proportions": False,
                 "out_count_tokens": True, "out_count_content_tokens": False,
                 "out_count_sentences": False, "out_count_paragraphs": False},
-        features={"freq_subtlex": True, "pred_surprisal_gpt2": False},
+        features={"freq_subtlex": True},
     )
     plan = plan_from_prefs(prefs)
     ns = to_namespace(plan, prefs, level="doc")
@@ -192,7 +214,7 @@ def test_individual_agg_toggles_control_no_doc_mean_flags():
                 "doc_agg_edu_zipf": False,
                 "doc_agg_surprisal": False,
                 "doc_agg_llm": True},
-        features={"freq_subtlex": True, "pred_surprisal_gpt2": True},
+        features={"freq_subtlex": True},
     )
     plan = plan_from_prefs(prefs)
     ns = to_namespace(plan, prefs, level="doc")

@@ -53,8 +53,7 @@ _mfa_align             = _lazy("extractors.aligner", "align_with_phones")
 _praat_extract         = _lazy("extractors.audio_features", "extract")
 add_word_freq          = _lazy("extractors.word_freq", "add_word_freq")
 add_edu_freq           = _lazy("extractors.educator_freq", "add_edu_freq")
-add_surprisal          = _lazy("extractors.surprisal", "add_surprisal")
-add_llm_cloze          = _lazy("extractors.llm_cloze", "add_llm_cloze")
+add_predictability     = _lazy("extractors.predictability", "add_predictability")
 add_semantic_domain    = _lazy("extractors.semantic_domain", "add_semantic_domain")
 _add_lexical_norms     = _lazy("extractors.lexical_norms", "add_lexical_norms")
 add_word_prosody       = _lazy("extractors.prosody", "add_word_prosody")
@@ -96,15 +95,14 @@ STAGES: list[Stage] = [
           produces=("word_df.Edu_Zipf",),
           run=add_edu_freq),
 
-    Stage(name="gpt2_surprisal",
+    # v18: unified dynamic predictability stage — replaces the old
+    # gpt2_surprisal/llm_predict pair. One call to add_predictability scores
+    # every selected roster model and writes only the requested metric
+    # columns, namespaced <slug>_<Metric>. See extractors/predictability.py.
+    Stage(name="predictability",
           consumes=("word_df",),
-          produces=("word_df.Surprisal",),
-          run=add_surprisal),
-
-    Stage(name="llm_predict",
-          consumes=("word_df",),
-          produces=("word_df.LLM",),
-          run=add_llm_cloze),
+          produces=("word_df.predictability",),
+          run=add_predictability),
 
     Stage(name="sem_domain",
           consumes=("word_df",),
@@ -271,23 +269,29 @@ CLUSTERS: list[FeatureCluster] = [
         master_toggle="master_frequency",
     ),
 
-    # §1.5 GPT-2 surprisal
+    # §1.5/1.6 Predictability (v18) — unified dynamic stage/cluster replacing
+    # the old "GPT-2 surprisal" + "LLM predictability" clusters. Columns are
+    # <slug>_<Metric> (e.g. "gpt2_Surprisal", "llama3_8b_Cloze") for every
+    # roster model in prefs["predictability"]["models"] crossed with every
+    # metric switched on in prefs["predictability"]["metrics"] — a set not
+    # knowable at registry-definition time, so toggle_keys/emits_columns
+    # can't carry it declaratively (there is no fixed list of feature-toggle
+    # keys, one per column, the way every other cluster works).
+    #
+    # This cluster is therefore "static but considered" (spec §12 fallback):
+    # it exists so the stage/CSV/master wiring is documented here and
+    # test_registry.py can validate its shape, but gui/planner/plan.py's
+    # _active_clusters skips it by name and computes its true activation
+    # (master_predictability AND models non-empty AND >=1 metric on) plus its
+    # dynamic column list directly from prefs["predictability"]
+    # (_predictability_active / _predictability_columns). Do not add
+    # toggle_keys here expecting them to gate anything — they won't be read.
     FeatureCluster(
-        name="GPT-2 surprisal",
-        toggle_keys=("pred_surprisal_gpt2",),
+        name="Predictability",
+        toggle_keys=(),
         output_csv="features",
-        requires_stages=("spacy_parse", "gpt2_surprisal"),
-        emits_columns=("Surprisal",),
-        master_toggle="master_predictability",
-    ),
-
-    # §1.6 LLM predictability — three columns, three toggles, one stage
-    FeatureCluster(
-        name="LLM predictability",
-        toggle_keys=("pred_surprisal_llm", "pred_cloze", "pred_topmatch"),
-        output_csv="features",
-        requires_stages=("spacy_parse", "llm_predict"),
-        emits_columns=("LLM_Surprisal", "LLM_Cloze", "LLM_TopMatch"),
+        requires_stages=("spacy_parse", "predictability"),
+        emits_columns=(),
         master_toggle="master_predictability",
     ),
 

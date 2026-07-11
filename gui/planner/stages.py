@@ -48,3 +48,17 @@ class Plan:
     output_csvs: frozenset[str]
     column_drops: dict[str, frozenset[str]]
     stage_configs: dict[str, dict[str, Any]]
+    # Dynamic columns not representable by any FeatureCluster.emits_columns
+    # (fixed at registry-definition time). Currently just the predictability
+    # <slug>_<Metric> columns — see gui/planner/plan.py's
+    # _predictability_columns / _predictability_active and the "Predictability"
+    # cluster's docstring in gui/planner/registry.py.
+    predictability_columns: tuple[str, ...] = ()
+
+    def emitted_columns_for(self, name: str) -> tuple[str, ...]:
+        """Look up a dynamic-column group by name. Only 'predictability' is
+        registered today; unknown names return an empty tuple rather than
+        raising, so callers can probe without a membership check first."""
+        if name == "predictability":
+            return self.predictability_columns
+        return ()
