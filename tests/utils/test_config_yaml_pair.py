@@ -1,0 +1,112 @@
+import pytest
+import yaml
+from copy import deepcopy
+from utils.preferences import DEFAULT_PREFS
+from utils.config_yaml import (
+    FEATURES_YAML, RUN_YAML, split_prefs, join_yaml_pair, read_yaml,
+    write_features_yaml, write_run_yaml,
+    validate_features_yaml, validate_run_yaml,
+)
+
+
+def test_split_prefs_routes_shared_to_run_and_rest_to_features():
+    features, run = split_prefs(DEFAULT_PREFS)
+    assert set(run) == {"shared"}
+    assert run["shared"] == DEFAULT_PREFS["shared"]
+    assert "shared" not in features
+    assert features["schema_version"] == DEFAULT_PREFS["schema_version"]
+    # every non-shared section lands in features.yaml
+    assert set(features) == set(DEFAULT_PREFS) - {"shared"}
+
+
+def test_split_prefs_returns_copies():
+    features, run = split_prefs(DEFAULT_PREFS)
+    run["shared"]["analyzer_name"] = "mutated"
+    features["features"]["master_structural"] = "mutated"
+    assert DEFAULT_PREFS["shared"]["analyzer_name"] != "mutated"
+    assert DEFAULT_PREFS["features"]["master_structural"] != "mutated"
+
+
+def test_join_yaml_pair_round_trips_defaults():
+    features, run = split_prefs(DEFAULT_PREFS)
+    assert join_yaml_pair(features, run) == DEFAULT_PREFS
+
+
+def test_join_yaml_pair_tolerates_missing_parts():
+    features, run = split_prefs(DEFAULT_PREFS)
+    assert "shared" not in join_yaml_pair(features, {})
+    only_run = join_yaml_pair({}, run)
+    assert only_run == {"shared": DEFAULT_PREFS["shared"]}
+
+
+def test_write_read_round_trip(tmp_path):
+    features, run = split_prefs(DEFAULT_PREFS)
+    fp, rp = tmp_path / FEATURES_YAML, tmp_path / RUN_YAML
+    write_features_yaml(fp, features)
+    write_run_yaml(rp, run)
+    assert read_yaml(fp) == features
+    assert read_yaml(rp) == run
+
+
+def test_written_files_have_regenerated_comments(tmp_path):
+    features, run = split_prefs(DEFAULT_PREFS)
+    fp, rp = tmp_path / FEATURES_YAML, tmp_path / RUN_YAML
+    write_features_yaml(fp, features)
+    write_run_yaml(rp, run)
+    ftext = fp.read_text(encoding="utf-8")
+    rtext = rp.read_text(encoding="utf-8")
+    assert ftext.startswith("#") and rtext.startswith("#")
+    # a per-section comment precedes each top-level section
+    assert "\n# " in ftext and "predictability" in ftext
+    assert "Reset settings" in ftext  # reset-able is documented in the header
+    assert "Never touched" in rtext
+
+
+def test_write_creates_parent_dirs(tmp_path):
+    nested = tmp_path / "a" / "b" / FEATURES_YAML
+    features, _ = split_prefs(DEFAULT_PREFS)
+    write_features_yaml(nested, features)
+    assert read_yaml(nested) == features
+
+
+def test_read_yaml_missing_or_empty_returns_empty_dict(tmp_path):
+    assert read_yaml(tmp_path / "nope.yaml") == {}
+    p = tmp_path / "empty.yaml"
+    p.write_text("", encoding="utf-8")
+    assert read_yaml(p) == {}
+
+
+def test_read_yaml_malformed_raises(tmp_path):
+    p = tmp_path / "bad.yaml"
+    p.write_text("features: [unclosed", encoding="utf-8")
+    with pytest.raises(yaml.YAMLError):
+        read_yaml(p)
+
+
+def test_validate_features_yaml_accepts_default_split():
+    features, _ = split_prefs(DEFAULT_PREFS)
+    assert validate_features_yaml(features) == []
+
+
+def test_validate_features_yaml_flags_unknown_and_bad_type():
+    features, _ = split_prefs(DEFAULT_PREFS)
+    features["features"]["not_a_real_toggle"] = True
+    key = next(iter(DEFAULT_PREFS["features"]))
+    features["output"]["word_level_csv"] = "yes"          # not a bool
+    features["prosody"]["not_a_setting"] = 1
+    features["bogus_section"] = {}
+    errs = validate_features_yaml(features)
+    assert any("not_a_real_toggle" in e for e in errs)
+    assert any("word_level_csv" in e and "true/false" in e for e in errs)
+    assert any("prosody.not_a_setting" in e for e in errs)
+    assert any("bogus_section" in e for e in errs)
+
+
+def test_validate_run_yaml_accepts_default_and_flags_unknown():
+    _, run = split_prefs(DEFAULT_PREFS)
+    assert validate_run_yaml(run) == []
+    run["shared"]["bogus_key"] = "x"
+    run["not_shared"] = {}
+    errs = validate_run_yaml(run)
+    assert any("bogus_key" in e for e in errs)
+    assert any("not_shared" in e for e in errs)
