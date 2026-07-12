@@ -173,8 +173,10 @@ class WordFeaturesSection(QWidget):
             self.model_checkboxes[spec.slug] = cb
             row.addWidget(cb, 1)
             # Per-model context cap (Project B). Range [FLOOR, native]; the
-            # value defaults to native (= uncapped, stored as absence). Only
-            # meaningful when the model is selected, so it greys out otherwise.
+            # value defaults to native (= uncapped, stored as absence).
+            # Always editable — greying it until the model is checked read as
+            # "broken" (same discoverability lesson as the HF-token box); a
+            # value set here simply takes effect whenever the model runs.
             row.addWidget(QLabel("context:"))
             spin = QSpinBox()
             spin.setRange(FLOOR_CONTEXT, spec.native_ctx)
@@ -185,8 +187,8 @@ class WordFeaturesSection(QWidget):
                 "Max context (subwords) fed to this model per forward pass. "
                 "Lower = faster / less memory on long stimuli, but each word "
                 "sees less preceding context. Default is the model's full "
-                f"window ({spec.native_ctx}).")
-            spin.setEnabled(cb.isChecked())
+                f"window ({spec.native_ctx}). Takes effect when this model "
+                "is selected.")
             spin.valueChanged.connect(
                 lambda v, s=spec.slug: self._on_context_changed(s, v))
             self.context_spins[spec.slug] = spin
@@ -495,9 +497,6 @@ class WordFeaturesSection(QWidget):
     def _on_model_toggled(self, slug: str, checked: bool) -> None:
         selected = [s for s, cb in self.model_checkboxes.items() if cb.isChecked()]
         save_preferences({"predictability": {"models": selected}})
-        # The per-model context cap only matters when the model is selected.
-        if slug in self.context_spins:
-            self.context_spins[slug].setEnabled(checked)
         self._refresh_llm_credential_visibility()
         self.settings_changed.emit()
 
