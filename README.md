@@ -189,10 +189,10 @@ are many per-feature toggles):
 | `--analyzer NAME` | **Required for batch mode**; recorded in the run manifest |
 
 Predictability (surprisal / cloze / top-match) is **not** a CLI flag — it's
-configured via `config/preferences.json`'s `predictability` section (a
+configured via `config/features.yaml`'s `predictability` section (a
 `models` list + `metrics` on/off dict) or, for GUI-driven runs, set directly
 by the GUI. Use the GUI's Predictability card, or hand-edit the
-`predictability` block in your preferences file, to pick models and metrics
+`predictability` block in `config/features.yaml`, to pick models and metrics
 before a CLI run.
 
 ### Outputs

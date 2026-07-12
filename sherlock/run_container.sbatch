@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # SLURM GPU job: run the SensiExtractor pipeline on Sherlock INSIDE the Apptainer
-# container (sensiextractor.sif), driven by sherlock/config.yaml. The environment
-# comes from the .sif, so there is no $HOME/quota/module friction.
+# container (sensiextractor.sif), driven by the two-file YAML config in
+# config/ (features.yaml + run.yaml), via the top-level run.py. The
+# environment comes from the .sif, so there is no $HOME/quota/module friction.
 # Submit from a login node:   sbatch sherlock/run_container.sbatch
 #
 # --- SLURM directives (placeholders — verify against `sh_part` / Sherlock docs) ---
@@ -34,28 +35,30 @@ ulimit -n "$(ulimit -Hn)" 2>/dev/null || true
 # Durable base ($OAK if present, else $GROUP_HOME).
 STORAGE_BASE="${STORAGE_BASE:-${OAK:-$GROUP_HOME}}"
 # App code — bind-mounted, NOT baked into the .sif, so a re-rsync updates the
-# code (and config.yaml) without rebuilding the container.
+# code (and config/features.yaml) without rebuilding the container.
 REPO="${REPO:-$GROUP_HOME/SensiExtractor}"
 # The built container (one file), rsync'd into the repo's sherlock/ folder.
 SIF="${SIF:-$REPO/sherlock/sensiextractor.sif}"
 # HF weights on personal $SCRATCH — MUST match download_models.sh's HF_HOME.
 export HF_HOME="${HF_HOME:-${SCRATCH:-$STORAGE_BASE}/sensi/hf_cache}"
 
-# The run is driven by a YAML config (see export_config.py). Input/output
-# folders, analyzer name, model, and toggles all live in the config's `run:` and
-# `features:`/`settings:` sections — not here.
-CONFIG="${CONFIG:-$REPO/sherlock/config.yaml}"
+# The run is driven by the two-file YAML config in config/ (see RUNBOOK.md
+# step 2). features.yaml says WHAT to extract (the GUI's live config, rsync'd
+# from your machine); run.yaml says WHERE on Sherlock (folders, analyzer name,
+# token-file paths) — filled in directly on Sherlock, never rsync'd.
+CONFIG_DIR="${CONFIG_DIR:-$REPO/config}"
 # -----------------------------------------------------------------------
 
 echo "[job] node=$(hostname)  gpu=${CUDA_VISIBLE_DEVICES:-none}  jobid=${SLURM_JOB_ID:-?}"
 nvidia-smi || echo "[job] WARNING: nvidia-smi failed — is this a GPU node?"
 
 # Fail fast with the exact wrong path + how to point it right (override REPO/SIF/
-# HF_HOME/CONFIG via `sbatch --export=ALL,VAR=...`; see the CONFIG note above).
+# HF_HOME/CONFIG_DIR via `sbatch --export=ALL,VAR=...`; see the CONFIG_DIR note above).
 _hint="If this path is wrong, pass the right one, e.g. sbatch --export=ALL,REPO=/your/path ..."
 [ -f "$SIF" ]    || { echo "[job] ERROR: container not found at $SIF"; echo "  $_hint"; exit 1; }
 [ -d "$REPO" ]   || { echo "[job] ERROR: repo not found at $REPO"; echo "  $_hint"; exit 1; }
-[ -f "$CONFIG" ] || { echo "[job] ERROR: config not found at $CONFIG (run export_config.py + rsync it over)"; echo "  $_hint"; exit 1; }
+[ -f "$CONFIG_DIR/features.yaml" ] || { echo "[job] ERROR: features.yaml not found in $CONFIG_DIR (rsync the repo's config/ over, or edit one here)"; echo "  $_hint"; exit 1; }
+[ -f "$CONFIG_DIR/run.yaml" ] || { echo "[job] ERROR: run.yaml not found in $CONFIG_DIR (create it on Sherlock — machine-specific folders/token paths)"; echo "  $_hint"; exit 1; }
 [ -d "$HF_HOME" ] || echo "[job] WARNING: HF_HOME $HF_HOME not found — weights may be missing (see step 5). $_hint"
 
 # Bind host paths INTO the container. Everything the job touches at run time —
@@ -74,6 +77,6 @@ apptainer exec --nv \
   --env  TRANSFORMERS_OFFLINE=1 \
   --env  HF_HOME="$HF_HOME" \
   "$SIF" \
-  python "$REPO/sherlock/run_extract.py" "$CONFIG"
+  python "$REPO/run.py" --config-dir "$CONFIG_DIR"
 
 echo "[job] DONE. Check the output_folder from your config for *_features.csv."

@@ -8,9 +8,10 @@ into a single portable Linux **container image**, `sensiextractor.sif`, built wi
 **Apptainer** (the container runtime HPC clusters allow). That one file runs
 unchanged on Sherlock's compute nodes, including a GPU for the Llama LLM‑cloze.
 
-The flow: **build the container** and **configure the run** on your own computer →
-**ship** the container + code + a `config.yaml` to Sherlock → **run** the pipeline
-there, inside the container, via `run_extract.py`.
+The flow: **build the container** on your own computer → **ship** the container +
+code (which carries your GUI's live `config/features.yaml`) to Sherlock → **fill in**
+a machine-specific `config/run.yaml` there → **run** the pipeline inside the
+container, via the top-level `run.py`.
 
 ## Fill in your own identifiers
 - `<sunetid>` — your Stanford SUNet ID (used for `ssh` and in `$SCRATCH`).
@@ -22,7 +23,7 @@ there, inside the container, via `run_extract.py`.
 ## Two folders on Sherlock (fixed names — used everywhere below)
 | Purpose | Folder | Holds |
 |---|---|---|
-| **Durable** (code + container) | `$GROUP_HOME/SensiExtractor` | the repo, incl. `sherlock/sensiextractor.sif` and `sherlock/config.yaml` |
+| **Durable** (code + container) | `$GROUP_HOME/SensiExtractor` | the repo, incl. `sherlock/sensiextractor.sif`, `config/features.yaml` (rsync'd from your machine), and `config/run.yaml` (created on Sherlock) |
 | **Working** (data + weights) | `$SCRATCH/sensi` | `transcripts/`, `audio/`, `output/`, `hf_cache/` |
 
 `$GROUP_HOME` is shared with your whole group — if a labmate also uses a folder
@@ -31,14 +32,14 @@ and adjust the paths. Step 3 creates both folders.
 
 ## Which terminal runs what
 Each step's heading names the terminal. Don't mix them.
-- **[local]** — your computer, in the project's conda env (`conda activate ./env`). Runs the GUI + `export_config.py`. *(Linux/macOS: your terminal. Windows: Anaconda Prompt.)*
+- **[local]** — your computer, in the project's conda env (`conda activate ./env`). Runs the GUI, which saves your feature choices straight to `config/features.yaml`. *(Linux/macOS: your terminal. Windows: Anaconda Prompt.)*
 - **[linux]** — a Linux shell with Apptainer, for building the container and rsync/ssh. *(Linux: your terminal. Windows: WSL. macOS: a Linux VM — Apptainer is Linux-only.)*
 - **[Sherlock-login]** — inside `ssh <sunetid>@login.sherlock.stanford.edu`. Setup / transfer / submit only.
 - **[Sherlock-compute]** — a node from `sh_dev` (or the batch job). Everything that actually runs the pipeline.
 
 Commands use forward-slash paths and `./env`, which work on every OS. The only 3
-things to edit are marked **✎**: the GPU partition, the HF token, and the `run:`
-block of `config.yaml`.
+things to edit are marked **✎**: the GPU partition, the HF token, and the `shared:`
+block of `config/run.yaml`.
 
 ---
 
@@ -55,29 +56,18 @@ export APPTAINER_TMPDIR=/var/tmp/apptmp APPTAINER_CACHEDIR=/var/tmp/apptmp/cache
 apptainer build sherlock/sensiextractor.sif sherlock/Apptainer.def
 ```
 
-## 2 · Configure the run — [local]
-From the repo root: set features/model in the GUI, then close it:
+## 2 · Configure the extraction — [local]
+From the repo root: set your feature toggles / model choices in the GUI, then close
+it. The GUI saves them straight to `config/features.yaml` — that file **is** the
+shareable config now, no export step needed:
 ```bash
 conda activate ./env
 python gui.py
 ```
-Export those choices to `sherlock/config.yaml`:
-```bash
-python sherlock/export_config.py
-```
-Then open `sherlock/config.yaml` and fill the **`run:`** block ✎ (`$SCRATCH`/`~` are
-expanded on Sherlock, so these point at the working folder from the table):
-```yaml
-run:
-  transcripts_folder: $SCRATCH/sensi/transcripts
-  audio_folder:       $SCRATCH/sensi/audio
-  output_folder:      $SCRATCH/sensi/output
-  analyzer:           sherlock-run
-  hf_token_file:      ~/hf_token.txt          # local Llama; you create this file in step 5
-  # openai_api_key_file: ~/openai_key.txt     # only for gpt-* models on an internet-connected machine
-```
-`hf_token_file` / `openai_api_key_file` are just **paths** — you create those files
-on Sherlock (step 5), so no secret ever goes into this config. Leave the paths as-is.
+`config/features.yaml` is gitignored (machine-local like the old `preferences.json`
+was), but it rsyncs to Sherlock in step 4 like any other file. It carries WHAT to
+extract (feature toggles, predictability models, semantic categories, …) — nothing
+machine-specific lives in it.
 
 ## 3 · Connect, note your paths, make the folders — [Sherlock-login], once
 ```bash
@@ -91,14 +81,36 @@ Create both folders (these expand automatically here):
 ```bash
 mkdir -p $GROUP_HOME/SensiExtractor $SCRATCH/sensi/{transcripts,audio,output,hf_cache}
 ```
+Create `config/run.yaml` in the repo folder — this is **machine-specific** (folders,
+analyzer name, token-file path) and is never rsync'd from your machine, so you write
+it once, directly here ✎:
+```bash
+mkdir -p $GROUP_HOME/SensiExtractor/config
+cat > $GROUP_HOME/SensiExtractor/config/run.yaml <<'YAML'
+shared:
+  analyzer_name: sherlock-run
+  last_transcripts_folder: $SCRATCH/sensi/transcripts
+  last_audio_folder: $SCRATCH/sensi/audio
+  last_output_folder: $SCRATCH/sensi/output
+  theme: system
+  hf_token_file: ~/hf_token.txt
+YAML
+```
+`$SCRATCH`/`~` are expanded by `run.py` at run time, so these literal strings are
+fine as written. `hf_token_file` is just a **path** — you create that file in step 5,
+so no secret ever goes into this config.
 
 ## 4 · Upload code, container, data — [linux]
 Use the **literal** `<GROUP_HOME>`/`<SCRATCH>` from step 3 (rsync won't expand them).
-Code first (small; carries `sherlock/config.yaml`; `*.sif` excluded so the container isn't sent here):
+Code first (small; carries `config/features.yaml` — your GUI's live feature choices;
+`*.sif` excluded so the container isn't sent here; `config/run.yaml` and
+`config/preferences.json*` excluded so your local machine's folders/legacy prefs
+never clobber the `run.yaml` you wrote on Sherlock in step 3):
 ```bash
 cd path/to/SensiExtractor
 rsync -avP --exclude env --exclude hf_cache --exclude mfa_data --exclude .git \
   --exclude '*.sif' --exclude '__pycache__' \
+  --exclude 'config/run.yaml' --exclude 'config/preferences.json*' \
   ./ <sunetid>@login.sherlock.stanford.edu:<GROUP_HOME>/SensiExtractor/
 ```
 Container into the repo's `sherlock/` folder (a few GB):
@@ -132,9 +144,10 @@ HF website, saved once on Sherlock:**
 1. On huggingface.co (in a browser): sign in → open `meta-llama/Meta-Llama-3-8B` →
    accept the license (wait for "access granted") → Settings → Access Tokens →
    create a **Read** token, and copy it.
-2. On Sherlock, save that token into the file your `config.yaml` points at
-   (`hf_token_file: ~/hf_token.txt`, i.e. your home dir), readable only by you —
-   replace `hf_xxx…` with the token you just copied ✎:
+2. On Sherlock, save that token into the file your `config/run.yaml` points at
+   (`shared.hf_token_file: ~/hf_token.txt`, i.e. your home dir — see the example in
+   step 3), readable only by you — replace `hf_xxx…` with the token you just
+   copied ✎:
 ```bash
 umask 077; printf 'hf_xxxYOURTOKEN\n' > ~/hf_token.txt; chmod 600 ~/hf_token.txt
 ```
@@ -149,18 +162,13 @@ apptainer exec --bind $SCRATCH:$SCRATCH --env HF_HOME=$HF_HOME \
   bash -c 'hf download gpt2 && hf download meta-llama/Meta-Llama-3-8B'
 ```
 
-> **Using an OpenAI (`gpt-*`) model instead of Llama?** Save your OpenAI API key the
-> same way — into `~/openai_key.txt` (the config's `openai_api_key_file`), `chmod
-> 600`. But OpenAI needs internet, so it won't run on Sherlock's offline compute
-> nodes; use it only when running `run_extract.py` on an internet-connected machine.
-> With a `gpt-*` model you can skip the Llama download above.
-
 ## 6 · (Optional) dry-run — [Sherlock-compute]
 Validate the config + plumbing before spending a GPU allocation. Get a node:
 ```bash
 sh_dev -c 4 -m 16GB -t 01:00:00
 ```
-Run (reads `sherlock/config.yaml`; keep it text-only here for speed — GPU Llama is slow on a CPU node):
+Run (reads `config/features.yaml` + `config/run.yaml`, default `--config-dir`;
+keep the model selection text-only here for speed — GPU Llama is slow on a CPU node):
 ```bash
 ulimit -n "$(ulimit -Hn)"
 export HF_HOME=$SCRATCH/sensi/hf_cache
@@ -169,7 +177,7 @@ apptainer exec \
   --bind $GROUP_HOME/SensiExtractor:$GROUP_HOME/SensiExtractor \
   --env HF_HOME=$HF_HOME --env HF_HUB_OFFLINE=1 --env TRANSFORMERS_OFFLINE=1 \
   $GROUP_HOME/SensiExtractor/sherlock/sensiextractor.sif \
-  python $GROUP_HOME/SensiExtractor/sherlock/run_extract.py
+  python $GROUP_HOME/SensiExtractor/run.py
 ```
 
 ## 7 · Build & submit the GPU job — [Sherlock-login]
@@ -232,4 +240,4 @@ The output CSVs are in `$SCRATCH/sensi/output`. Grab them either way:
 ## Gotchas
 - Anything that runs the pipeline must be on a **compute node** (`sh_dev`), never the login node (256 open-file cap → `Too many open files`). The sbatch raises the limit itself.
 - HuggingFace: use `hf download` (not the removed `huggingface-cli`) with `HF_HUB_DISABLE_XET=1`. A `401` means the Llama-3 license isn't accepted/approved yet (`hf auth whoami` checks the token).
-- A bad `config.yaml` makes `run_extract.py` print the errors and exit before running — fix the flagged keys/types, or re-run `export_config.py`.
+- A bad `features.yaml`/`run.yaml` makes `run.py` print the errors and exit before running — fix the flagged keys/types (schema validation runs before anything else).

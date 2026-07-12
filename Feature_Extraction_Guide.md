@@ -316,11 +316,14 @@ Files are paired by base filename (case-insensitive). Unmatched files are
 listed in `run_<ts>_no-match.csv`. Errors on individual files are recorded in
 the manifest and don't halt the batch.
 
-### Persistence — `config/preferences.json`
+### Persistence — `config/features.yaml` + `config/run.yaml`
 
 The GUI persists the analyzer name, last folder paths, model choice, dictionary
-backend, semantic categories, and feature toggle states between sessions.
-The file is gitignored. Override its path via `SENSI_PREFS_PATH` env var.
+backend, semantic categories, and feature toggle states between sessions, split
+across two gitignored YAML files: `features.yaml` (global "what to extract" —
+"Reset settings" rewrites exactly this file) and `run.yaml` (machine-specific
+folders/analyzer/token paths). Override the directory holding both via the
+`SENSI_CONFIG_DIR` env var.
 
 ### Run log artifacts (batch mode)
 
