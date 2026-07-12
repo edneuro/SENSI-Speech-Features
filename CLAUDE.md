@@ -24,12 +24,7 @@ SensiExtractor/
 ├── environment.yml        # conda deps (source; Python, Kaldi/MFA, compiled sci stack + platforms: key)
 ├── conda-lock.yml         # GENERATED lock (all 3 platforms, exact+hashed) — never hand-edit; regenerate via scripts/relock.py
 ├── setup.bat / setup.sh   # One-time setup scripts (install from conda-lock.yml)
-├── config/                # GITIGNORED — features.yaml (global "what to extract";
-│                           GUI "Reset settings" rewrites exactly this file) +
-│                           run.yaml (machine-specific: shared.analyzer_name /
-│                           last_*_folder / theme / hf_token_file). A legacy
-│                           config/preferences.json is auto-imported once into
-│                           this pair, then renamed preferences.json.bak.
+├── config/                # GITIGNORED — features.yaml (global "what to extract"; GUI "Reset settings" rewrites exactly this file) + run.yaml (machine-specific: shared.analyzer_name / last_*_folder / theme / hf_token_file); a legacy preferences.json is auto-imported once into the pair, then renamed preferences.json.bak
 ├── gui/
 │   ├── __init__.py
 │   ├── main_window.py        # Main QMainWindow + 7-item sidebar (Inputs, Word/Doc/Sub-word/Sentence features, Run, Logs) + status strip
