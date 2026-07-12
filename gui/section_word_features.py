@@ -198,7 +198,16 @@ class WordFeaturesSection(QWidget):
         cred_help_w = QWidget(); cred_help_w.setLayout(cred_help)
         pred_card.add_widget(cred_help_w)
 
-        # HF token row (only for gated local models, shown when no token detected)
+        # HF token row. Shown whenever no token is already detected (from the
+        # environment or a prior `hf auth login`), regardless of which models
+        # are checked — so there is always a discoverable place to paste it.
+        # The gated Llama models can't run without it; GPT-2 ignores it.
+        hf_hint = QLabel("HuggingFace token — required for the gated Llama "
+                         "models (GPT-2 is free and needs none):")
+        hf_hint.setObjectName("Subtitle")
+        hf_hint.setWordWrap(True)
+        self.hf_token_hint = hf_hint
+        pred_card.add_widget(hf_hint)
         self.hf_token_row = QWidget()
         ht = QHBoxLayout(self.hf_token_row); ht.setContentsMargins(0, 0, 0, 0)
         ht.addWidget(QLabel("HF token:"))
@@ -474,10 +483,13 @@ class WordFeaturesSection(QWidget):
         self.settings_changed.emit()
 
     def _refresh_llm_credential_visibility(self):
-        checked = [s for s, cb in self.model_checkboxes.items() if cb.isChecked()]
-        gated_selected = any(is_gated(s) for s in checked)
-        token_present = gated_selected and _predictability_mod.has_hf_token()
-        self.hf_token_row.setVisible(gated_selected and not token_present)
+        # If a token is already available (env var / `hf auth login`), show the
+        # "detected" confirmation and hide the input. Otherwise always offer the
+        # input — independent of which models are checked — so the user can find
+        # where to paste a token without having to select a gated model first.
+        token_present = _predictability_mod.has_hf_token()
+        self.hf_token_hint.setVisible(not token_present)
+        self.hf_token_row.setVisible(not token_present)
         self.hf_token_detected_label.setVisible(token_present)
 
     def _on_backend_change(self, backend):

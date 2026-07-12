@@ -173,17 +173,24 @@ def test_no_openai_widgets_anymore(qtbot):
     assert not hasattr(w, "api_key_line")
 
 
-def test_hf_box_shown_when_gated_model_selected_without_token(qtbot, prefs_tmp, monkeypatch):
+def test_hf_box_always_shown_when_no_token_detected(qtbot, prefs_tmp, monkeypatch):
+    # Discoverability: with no token auto-detected, the input is always
+    # present (so the user can find where to paste it) regardless of model
+    # selection — including nothing selected or only the free GPT-2.
     import extractors.predictability as m
     monkeypatch.setattr(m, "has_hf_token", lambda: False)
     from gui.section_word_features import WordFeaturesSection
     w = WordFeaturesSection(); qtbot.addWidget(w); w.show()
-    w.model_checkboxes["llama3_8b"].setChecked(True)
+    # Nothing selected → still visible.
     assert w.hf_token_row.isVisible() is True
     assert w.hf_token_detected_label.isVisible() is False
+    # A gated model selected → still visible.
+    w.model_checkboxes["llama3_8b"].setChecked(True)
+    assert w.hf_token_row.isVisible() is True
+    # Only the free GPT-2 selected → still visible (no longer hidden).
     w.model_checkboxes["llama3_8b"].setChecked(False)
-    w.model_checkboxes["gpt2"].setChecked(True)   # free model
-    assert w.hf_token_row.isVisible() is False
+    w.model_checkboxes["gpt2"].setChecked(True)
+    assert w.hf_token_row.isVisible() is True
 
 
 def test_gated_model_with_token_shows_detected_label(qtbot, monkeypatch):
