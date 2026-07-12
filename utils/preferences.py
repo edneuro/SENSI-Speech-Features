@@ -1157,8 +1157,30 @@ def load_preferences() -> dict[str, Any]:
 
 
 def _load_legacy_json() -> dict[str, Any]:
-    # Task 4 replaces this stub with the one-time json import.
-    return deepcopy(DEFAULT_PREFS)
+    """One-time import: legacy preferences.json → migration chain → YAML pair.
+
+    The original json is renamed to preferences.json.bak (pristine — the
+    migration runs in memory), so the user can inspect what was imported.
+    A corrupted json is left in place and defaults are returned, matching the
+    old loader's tolerance.
+    """
+    path = get_preferences_path()
+    if not path.exists():
+        return deepcopy(DEFAULT_PREFS)
+    try:
+        with path.open('r', encoding='utf-8') as f:
+            user = json.load(f)
+    except (json.JSONDecodeError, OSError):
+        return deepcopy(DEFAULT_PREFS)
+    if not isinstance(user, dict):
+        return deepcopy(DEFAULT_PREFS)
+    merged, _ = _merged_from_user(user)
+    _write_yaml_pair(merged)
+    try:
+        os.replace(path, path.with_name(path.name + '.bak'))
+    except OSError:
+        pass  # YAML pair now exists and takes priority; a stuck json is inert
+    return merged
 
 
 def save_preferences(updates: dict[str, Any]) -> None:

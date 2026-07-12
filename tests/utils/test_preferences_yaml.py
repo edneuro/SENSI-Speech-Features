@@ -1,6 +1,7 @@
 """Two-file YAML store behavior: paths/env precedence, save routing,
 round-trips, tolerance. Legacy-json import is covered in
 test_preferences_migration.py; reset in test_preferences.py."""
+import json
 import yaml
 from copy import deepcopy
 from pathlib import Path
@@ -130,3 +131,55 @@ def test_unknown_keys_survive_save_load(tmp_path, monkeypatch):
     write_run_yaml(tmp_path / RUN_YAML, run)
     save_preferences({"features": {"master_structural": False}})
     assert read_yaml(tmp_path / FEATURES_YAML)["future_section"] == {"x": 1}
+
+
+def test_legacy_json_imports_once_and_renames_to_bak(tmp_path, monkeypatch):
+    monkeypatch.delenv("SENSI_CONFIG_DIR", raising=False)
+    p = tmp_path / "preferences.json"
+    monkeypatch.setenv("SENSI_PREFS_PATH", str(p))
+    legacy = deepcopy(DEFAULT_PREFS)
+    legacy["shared"]["analyzer_name"] = "Legacy"
+    legacy["features"]["master_structural"] = False
+    p.write_text(json.dumps(legacy), encoding="utf-8")
+
+    prefs = load_preferences()
+    assert prefs["shared"]["analyzer_name"] == "Legacy"
+    assert prefs["features"]["master_structural"] is False
+    assert not p.exists()
+    assert (tmp_path / "preferences.json.bak").exists()
+    assert (tmp_path / FEATURES_YAML).exists() and (tmp_path / RUN_YAML).exists()
+
+    # second load reads the YAMLs, not the .bak: mutate features.yaml, reload
+    fdata = read_yaml(tmp_path / FEATURES_YAML)
+    fdata["features"]["master_structural"] = True
+    write_features_yaml(tmp_path / FEATURES_YAML, fdata)
+    assert load_preferences()["features"]["master_structural"] is True
+
+
+def test_legacy_v2_json_runs_full_migration_chain(tmp_path, monkeypatch):
+    monkeypatch.delenv("SENSI_CONFIG_DIR", raising=False)
+    p = tmp_path / "preferences.json"
+    monkeypatch.setenv("SENSI_PREFS_PATH", str(p))
+    v2 = {"schema_version": 2,
+          "shared": {"analyzer_name": "OldTimer", "dictionary_backend": "liwc"},
+          "word_level": {"feature_toggles": {"zipf_freq": False}}}
+    p.write_text(json.dumps(v2), encoding="utf-8")
+    prefs = load_preferences()
+    assert prefs["schema_version"] == SCHEMA_VERSION
+    assert prefs["shared"]["analyzer_name"] == "OldTimer"
+    assert prefs["semantic"]["backend"] == "empath"      # v11 liwc coercion
+    assert prefs["features"]["freq_subtlex"] is False    # v2→v3 toggle mapping
+    assert (tmp_path / "preferences.json.bak").exists()
+    on_disk = read_yaml(tmp_path / FEATURES_YAML)
+    assert on_disk["schema_version"] == SCHEMA_VERSION
+
+
+def test_corrupted_legacy_json_returns_defaults_without_bak(tmp_path, monkeypatch):
+    monkeypatch.delenv("SENSI_CONFIG_DIR", raising=False)
+    p = tmp_path / "preferences.json"
+    monkeypatch.setenv("SENSI_PREFS_PATH", str(p))
+    p.write_text("{not json", encoding="utf-8")
+    assert load_preferences() == DEFAULT_PREFS
+    assert p.exists()                                   # left in place for inspection
+    assert not (tmp_path / "preferences.json.bak").exists()
+    assert not (tmp_path / FEATURES_YAML).exists()
