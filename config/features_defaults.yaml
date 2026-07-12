@@ -1,0 +1,229 @@
+# ============================ TEMPLATE ============================
+# Copy this file to config/features.yaml and edit — it is the shipped
+# defaults for "what to extract". Regenerate after a schema change:
+#     python scripts/export_default_config.py
+# ==================================================================
+# SensiExtractor feature config (features.yaml) — what to extract.
+# Global/shareable: the GUI's "Reset settings" rewrites this file, and a
+# headless run (run.py) consumes it as-is.
+# Comments are regenerated on every save; hand-added comments do not survive.
+
+# Config schema version — managed by the app; do not edit.
+schema_version: 19
+
+# Per-feature toggles (feat_* / master_* / freq_* / sem_* / lexling_*).
+features:
+  lexling_tokens: false
+  lexling_pos: false
+  lexling_morph: false
+  lexling_dep: false
+  freq_subtlex: false
+  freq_ewfg_k2: false
+  freq_ewfg_3to5: false
+  freq_ewfg_6to8: false
+  freq_ewfg_9to12: false
+  freq_ewfg_overall: false
+  sem_indicators: false
+  feat_struct_doc_id: true
+  feat_struct_paragraph_id: true
+  feat_struct_sentence_id: true
+  feat_struct_sentence_text: true
+  feat_struct_char_start: true
+  feat_struct_char_end: true
+  feat_acoustic_onset: false
+  feat_acoustic_end: false
+  feat_acoustic_word_duration: false
+  feat_acoustic_word_gap: false
+  feat_psych_authentic: false
+  feat_psych_analytic: false
+  feat_psych_tone: false
+  feat_psych_clout: false
+  feat_prosody_pitch_mean: false
+  feat_prosody_pitch_min: false
+  feat_prosody_pitch_max: false
+  feat_prosody_pitch_std: false
+  feat_prosody_pitch_delta: false
+  feat_prosody_volume_mean: false
+  feat_prosody_volume_min: false
+  feat_prosody_volume_max: false
+  feat_prosody_volume_std: false
+  feat_prosody_volume_delta: false
+  feat_doc_prosody_pitch_mean: false
+  feat_doc_prosody_pitch_min: false
+  feat_doc_prosody_pitch_max: false
+  feat_doc_prosody_pitch_std: false
+  feat_doc_prosody_volume_mean: false
+  feat_doc_prosody_volume_min: false
+  feat_doc_prosody_volume_max: false
+  feat_doc_prosody_volume_std: false
+  feat_doc_prosody_pitch_delta_mean: false
+  feat_doc_prosody_volume_delta_mean: false
+  feat_doc_prosody_hnr: false
+  feat_doc_prosody_articulation_rate: false
+  feat_doc_prosody_pause_count: false
+  feat_doc_prosody_pause_mean_duration: false
+  feat_doc_prosody_pause_total_duration: false
+  feat_doc_prosody_pause_pct_silence: false
+  feat_syllable_onset: false
+  feat_syllable_end: false
+  feat_syllable_duration: false
+  feat_syllable_label: false
+  feat_syllable_arpabet: false
+  feat_syllable_pitch_mean: false
+  feat_syllable_volume_mean: false
+  feat_syllable_pitch_delta: false
+  feat_syllable_volume_delta: false
+  feat_phoneme_label: false
+  feat_phoneme_onset: false
+  feat_phoneme_end: false
+  feat_phoneme_duration: false
+  master_word_prosody: true
+  master_psych_composite: true
+  master_syllable_intervals: true
+  master_syllable_labels: true
+  master_syllable_prosody: true
+  master_phoneme_intervals: true
+  master_structural: true
+  master_lexling: true
+  master_frequency: true
+  master_predictability: true
+  master_acoustic: true
+  feat_syllable_pcenter: false
+  master_syllable_pcenter: true
+  feat_sentence_text: false
+  feat_sentence_onset: false
+  feat_sentence_end: false
+  feat_sentence_pitch_mean: false
+  feat_sentence_pitch_min: false
+  feat_sentence_pitch_max: false
+  feat_sentence_pitch_std: false
+  feat_sentence_pitch_delta: false
+  feat_sentence_volume_mean: false
+  feat_sentence_volume_min: false
+  feat_sentence_volume_max: false
+  feat_sentence_volume_std: false
+  feat_sentence_volume_delta: false
+  feat_sentence_hnr: false
+  master_sentence_timing: true
+  master_sentence_prosody: true
+  master_word2vec: false
+  master_bert_word: false
+  master_bert_sentence: false
+  master_lexical_norms: true
+  feat_norm_aoa_mean: false
+  feat_norm_aoa_sd: false
+  feat_norm_concreteness: false
+  feat_norm_imageability: false
+  feat_norm_familiarity: false
+  feat_norm_valence: false
+  feat_norm_arousal: false
+  feat_norm_dominance: false
+  master_acoustic_ts: false
+  feat_acoustic_ts_envelope: false
+  feat_acoustic_ts_onset_env: false
+  feat_acoustic_ts_logmel: false
+  feat_acoustic_ts_mfcc: false
+  feat_struct_token_id: true
+  feat_struct_token_in_sentence_id: true
+  master_phoneme_surprisal: true
+  feat_phoneme_surprisal: false
+  feat_phoneme_cohort_entropy: false
+
+# Predictability roster: models (slugs), metrics, per-model context caps.
+predictability:
+  models: []
+  metrics:
+    surprisal: false
+    cloze: false
+    topmatch: false
+  context: {}
+
+# Semantic-indicator backend + category multi-selects.
+semantic:
+  backend: empath
+  categories_liwc:
+  - affect
+  - cogproc
+  - emo_pos
+  - emo_neg
+  - body
+  - motion
+  - percept
+  - time
+  - space
+  - work
+  - family
+  - money
+  - relig
+  - focuspresent
+  - social
+  categories_empath:
+  - friends
+  - philosophy
+  - positive_emotion
+  - negative_emotion
+  - body
+  - movement
+  - hearing
+  - anticipation
+  - science
+  - work
+  - family
+  - communication
+  - money
+
+# Output artifacts: per-level CSV/.mat toggles + doc-level column groups.
+output:
+  word_level_csv: true
+  document_summary: false
+  out_count_tokens: false
+  out_count_content_tokens: false
+  out_count_sentences: false
+  out_count_paragraphs: false
+  doc_lex_diversity: false
+  doc_readability: false
+  doc_category_proportions: false
+  syllables_csv: false
+  phonemes_csv: false
+  doc_agg_zipf_freq: false
+  doc_agg_edu_zipf: false
+  doc_agg_predictability: false
+  master_doc_prosody: true
+  master_doc_articulation_rate: true
+  master_doc_counts: true
+  sentences_csv: false
+  word2vec_mat: false
+  bert_word_mat: false
+  bert_sentence_mat: false
+  doc_agg_lexical_norms: false
+  acoustic_ts_mat: false
+  phoneme_surprisal_mat: false
+
+# Praat pitch/pause parameters + p-center k.
+prosody:
+  pitch_units: semitones
+  pitch_floor_hz: 75
+  pitch_ceiling_hz: 500
+  pause_threshold_s: 0.25
+  pcenter_k: 0.3
+
+# Lexical-norm table paths + late-AoA threshold.
+lexical_norms:
+  paths: {}
+  late_acquired_threshold: 10
+
+# Acoustic time-series (TRF) parameters.
+acoustic_ts:
+  analysis_rate: 128
+  env_method: rms
+  env_comp: 0.3010299956639812
+  env_window: 1.0
+  n_mels: 16
+  n_mfcc: 13
+  mel_preset: speech
+
+# Phoneme surprisal / cohort entropy parameters.
+phoneme_surprisal:
+  analysis_sr: 128
+  strip_stress: true
+  primary_only: true

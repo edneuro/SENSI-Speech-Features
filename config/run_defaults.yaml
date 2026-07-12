@@ -1,0 +1,18 @@
+# ============================ TEMPLATE ============================
+# Copy this file to config/run.yaml and edit — machine-specific run
+# settings (folders, analyzer name, token-file path). Regenerate:
+#     python scripts/export_default_config.py
+# ==================================================================
+# SensiExtractor run config (run.yaml) — machine/run-specific.
+# Folders, analyzer name, theme, token-file paths. Never touched by the
+# GUI's "Reset settings".
+# Comments are regenerated on every save; hand-added comments do not survive.
+
+# Machine-specific: folders, analyzer name, theme, token-file paths.
+shared:
+  analyzer_name: ''
+  last_transcripts_folder: ''
+  last_audio_folder: ''
+  last_output_folder: ''
+  theme: system
+  hf_token_file: hf_token.txt

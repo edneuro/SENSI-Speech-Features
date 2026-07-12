@@ -101,8 +101,9 @@ def main() -> None:
 
     if not get_features_yaml_path().exists():
         print(f"[warn] features.yaml not found in {get_features_yaml_path().parent} "
-              f"— running with shipped defaults (minimal feature set).",
-              file=sys.stderr)
+              f"— running with shipped defaults (minimal feature set). To start "
+              f"from the documented defaults: copy config/features_defaults.yaml "
+              f"to config/features.yaml and edit.", file=sys.stderr)
 
     prefs = load_preferences()
     shared = prefs["shared"]
