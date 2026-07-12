@@ -9,6 +9,7 @@ is correct on every machine; absolute paths and ~/$VARS also work.
 from __future__ import annotations
 
 import os
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -34,8 +35,9 @@ def read_hf_token(shared: dict[str, Any]) -> str:
     if path is None or not path.is_file():
         return ""
     try:
-        return path.read_text(encoding="utf-8").strip()
-    except OSError:
+        return path.read_text(encoding="utf-8-sig").strip()
+    except OSError as exc:
+        print(f"[warn] could not read hf_token_file {path}: {exc}", file=sys.stderr)
         return ""
 
 

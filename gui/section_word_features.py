@@ -27,6 +27,7 @@ class WordFeaturesSection(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self._toggles: dict[str, ToggleRow] = {}
+        self._force_show_token_row = False
         prefs = load_preferences()
         f = prefs["features"]
 
@@ -288,8 +289,18 @@ class WordFeaturesSection(QWidget):
         self.hf_token_save_btn.clicked.connect(self._save_hf_token)
         ht.addWidget(self.hf_token_save_btn)
         pred_card.add_widget(self.hf_token_row)
+        self.hf_token_detected_row = QWidget()
+        hd = QHBoxLayout(self.hf_token_detected_row); hd.setContentsMargins(0, 0, 0, 0)
         self.hf_token_detected_label = QLabel("✓ HuggingFace token detected")
-        pred_card.add_widget(self.hf_token_detected_label)
+        hd.addWidget(self.hf_token_detected_label)
+        self.hf_token_replace_btn = QPushButton("Replace…")
+        self.hf_token_replace_btn.setToolTip(
+            "A saved token can go stale (mistyped or revoked) — this reveals "
+            "the input again so you can paste and save a new one.")
+        self.hf_token_replace_btn.clicked.connect(self._on_hf_token_replace_clicked)
+        hd.addWidget(self.hf_token_replace_btn)
+        hd.addStretch(1)
+        pred_card.add_widget(self.hf_token_detected_row)
         self._refresh_llm_credential_visibility()
         layout.addWidget(pred_card)
 
@@ -506,6 +517,7 @@ class WordFeaturesSection(QWidget):
         from utils.credentials import save_hf_token
         save_hf_token(token)
         self.hf_token_line.clear()
+        self._force_show_token_row = False
         self._refresh_llm_credential_visibility()
         self.refresh_warnings()
 
@@ -580,15 +592,23 @@ class WordFeaturesSection(QWidget):
         save_preferences({"prosody": {"pitch_units": value}})
         self.settings_changed.emit()
 
+    def _on_hf_token_replace_clicked(self) -> None:
+        self._force_show_token_row = True
+        self._refresh_llm_credential_visibility()
+
     def _refresh_llm_credential_visibility(self):
-        # If a token is already available (env var / `hf auth login`), show the
-        # "detected" confirmation and hide the input. Otherwise always offer the
-        # input — independent of which models are checked — so the user can find
-        # where to paste a token without having to select a gated model first.
+        # A token can come from the env (HF_TOKEN / HUGGING_FACE_HUB_TOKEN), a
+        # prior `hf auth login`, or the token file saved by this batch's Save
+        # button (config/hf_token.txt). When one is present, show the
+        # "detected" confirmation with a Replace… button; otherwise (or after
+        # Replace… is clicked) show the hint + input so the user can paste a
+        # new one — independent of which models are checked, so there is
+        # always a discoverable place to paste it.
         token_present = _predictability_mod.has_hf_token()
-        self.hf_token_hint.setVisible(not token_present)
-        self.hf_token_row.setVisible(not token_present)
-        self.hf_token_detected_label.setVisible(token_present)
+        show_row = (not token_present) or self._force_show_token_row
+        self.hf_token_hint.setVisible(show_row)
+        self.hf_token_row.setVisible(show_row)
+        self.hf_token_detected_row.setVisible(token_present)
 
     def _on_backend_change(self, backend):
         save_preferences({"semantic": {"backend": backend}})

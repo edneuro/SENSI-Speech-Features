@@ -36,6 +36,17 @@ def test_read_hf_token_missing_unreadable_empty(tmp_path, monkeypatch):
     assert read_hf_token(shared) == "hf_secret"
 
 
+def test_read_hf_token_strips_bom(tmp_path, monkeypatch):
+    # A Windows editor can prepend a UTF-8 BOM; utf-8 (not utf-8-sig) decoding
+    # would otherwise leave it glued to the first character, past strip(),
+    # silently corrupting the token.
+    monkeypatch.setenv("SENSI_CONFIG_DIR", str(tmp_path))
+    shared = {"hf_token_file": "hf_token.txt"}
+    path = tmp_path / "hf_token.txt"
+    path.write_text("hf_bom\n", encoding="utf-8-sig")
+    assert read_hf_token(shared) == "hf_bom"
+
+
 def test_export_hf_token_sets_env_and_never_clobbers(tmp_path, monkeypatch):
     monkeypatch.setenv("SENSI_CONFIG_DIR", str(tmp_path))
     monkeypatch.delenv("HF_TOKEN", raising=False)

@@ -320,6 +320,33 @@ def test_save_hf_token_button_persists_and_hides_row(qtbot, monkeypatch, tmp_pat
     assert w.hf_token_detected_label.isVisible() is True
 
 
+def test_replace_button_reveals_row_to_swap_a_saved_token(qtbot, monkeypatch, tmp_path):
+    # A saved-but-mistyped/revoked token must not strand the user behind the
+    # permanent "✓ detected" state — Replace… reopens the input so they can
+    # paste and save a new one.
+    monkeypatch.setenv("SENSI_CONFIG_DIR", str(tmp_path))
+    monkeypatch.setattr("huggingface_hub.get_token", lambda: None)
+    monkeypatch.delenv("HF_TOKEN", raising=False)
+    (tmp_path / "hf_token.txt").write_text("hf_stale_token\n", encoding="utf-8")
+    from utils.preferences import save_preferences, load_preferences
+    save_preferences({"shared": {"hf_token_file": "hf_token.txt"}})
+
+    from gui.section_word_features import WordFeaturesSection
+    w = WordFeaturesSection(); qtbot.addWidget(w); w.show()
+    assert w.hf_token_row.isVisible() is False
+    assert w.hf_token_detected_label.isVisible() is True
+
+    w.hf_token_replace_btn.click()
+    assert w.hf_token_row.isVisible() is True
+
+    w.hf_token_line.setText("hf_new_token")
+    w.hf_token_save_btn.click()
+    assert (tmp_path / "hf_token.txt").read_text(encoding="utf-8") == "hf_new_token\n"
+    assert load_preferences()["shared"]["hf_token_file"] == "hf_token.txt"
+    assert w.hf_token_row.isVisible() is False
+    assert w.hf_token_detected_label.isVisible() is True
+
+
 def test_save_hf_token_button_ignores_empty(qtbot, monkeypatch, tmp_path):
     import extractors.predictability as m
     monkeypatch.setenv("SENSI_CONFIG_DIR", str(tmp_path))
