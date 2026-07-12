@@ -480,6 +480,13 @@ def _cached_backend(model_id: str, max_context: int | None = None) -> _Backend:
     key = (model_id, max_context)
     backend = _BACKEND_CACHE.get(key)
     if backend is None:
+        # Keep at most one loaded instance per model_id: a run uses a single
+        # context cap per model, so an other-cap instance of the same model is
+        # dead weight (each holds GBs of weights). Evict them before loading —
+        # this keeps the cache bounded to the roster size even when the user
+        # tries several caps for the same model across successive runs.
+        for stale in [k for k in _BACKEND_CACHE if k[0] == model_id]:
+            del _BACKEND_CACHE[stale]
         backend = _make_default_backend(model_id, max_context)
         _BACKEND_CACHE[key] = backend
     return backend

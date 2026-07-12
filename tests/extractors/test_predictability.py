@@ -512,15 +512,31 @@ def test_backend_cap_above_native_clamps(monkeypatch):
     assert b._context_limit == 1024   # min(native 1024, 5000)
 
 
-def test_get_backend_cache_distinguishes_context(monkeypatch):
+def test_get_backend_reuses_same_cap_but_evicts_other_caps(monkeypatch):
+    # Within a run the same cap is reused (cached); a DIFFERENT cap for the
+    # same model evicts the old instance so at most one loaded model per
+    # model_id is retained (each holds GBs of weights).
     import extractors.predictability as m
     m._BACKEND_CACHE.clear()
     monkeypatch.setattr('torch.cuda.is_available', lambda: False)
     _patch_transformers(monkeypatch, lambda model_id, **kw: _DummyModel('cpu'))
     b1 = m._get_backend('gpt2', max_context=256)
-    b2 = m._get_backend('gpt2', max_context=512)
-    b3 = m._get_backend('gpt2', max_context=256)
-    assert b1 is b3 and b1 is not b2
+    assert m._get_backend('gpt2', max_context=256) is b1   # reused
+    b2 = m._get_backend('gpt2', max_context=512)            # re-cap → new
+    assert b2 is not b1
+    # Only the newest cap for gpt2 is retained; the 256 entry is gone.
+    assert list(m._BACKEND_CACHE.keys()) == [('gpt2', 512)]
+
+
+def test_get_backend_keeps_distinct_models(monkeypatch):
+    import extractors.predictability as m
+    m._BACKEND_CACHE.clear()
+    monkeypatch.setattr('torch.cuda.is_available', lambda: False)
+    _patch_transformers(monkeypatch, lambda model_id, **kw: _DummyModel('cpu'))
+    m._get_backend('gpt2', max_context=256)
+    m._get_backend('llama3_8b', max_context=256)
+    # Different models coexist; eviction is per-model_id only.
+    assert {k[0] for k in m._BACKEND_CACHE} == {'gpt2', 'meta-llama/Meta-Llama-3-8B'}
 
 
 def test_add_predictability_threads_effective_context(monkeypatch):
