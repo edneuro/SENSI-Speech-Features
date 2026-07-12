@@ -1,5 +1,3 @@
-import json
-
 import pytest
 
 from utils.preferences import (

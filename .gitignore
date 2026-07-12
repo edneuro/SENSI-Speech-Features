@@ -18,6 +18,9 @@ htmlcov/
 
 # Runtime config (license-bound or user-specific)
 config/preferences.json
+config/preferences.json.bak
+config/features.yaml
+config/run.yaml
 dictionaries/*.dic
 dictionaries/*.parquet
 dictionaries/*.csv
@@ -55,5 +58,3 @@ sherlock/*.sif
 # Apptainer build scratch (writable sandbox dirs + interrupted-build leftovers)
 sherlock/build-temp-*/
 sherlock/*_sandbox/
-# Generated run config (machine-specific paths; regenerate with export_config.py)
-sherlock/config.yaml

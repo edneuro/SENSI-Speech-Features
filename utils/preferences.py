@@ -55,6 +55,10 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
+from utils.config_yaml import (FEATURES_YAML, RUN_YAML, read_yaml,
+                               split_prefs, join_yaml_pair,
+                               write_features_yaml, write_run_yaml)
+
 # ---------------------------------------------------------------------------
 # v2 constants (preserved so v1→v2 intermediate step still works)
 # ---------------------------------------------------------------------------
@@ -905,12 +909,10 @@ def get_config_dir() -> Path:
 
 
 def get_features_yaml_path() -> Path:
-    from utils.config_yaml import FEATURES_YAML
     return get_config_dir() / FEATURES_YAML
 
 
 def get_run_yaml_path() -> Path:
-    from utils.config_yaml import RUN_YAML
     return get_config_dir() / RUN_YAML
 
 
@@ -1126,7 +1128,6 @@ def _merged_from_user(user: dict[str, Any]) -> tuple[dict[str, Any], bool]:
 
 def _read_yaml_tolerant(path: Path) -> dict[str, Any]:
     import yaml as _yaml
-    from utils.config_yaml import read_yaml
     try:
         return read_yaml(path)
     except (_yaml.YAMLError, OSError):
@@ -1134,7 +1135,6 @@ def _read_yaml_tolerant(path: Path) -> dict[str, Any]:
 
 
 def _write_yaml_pair(merged: dict[str, Any]) -> None:
-    from utils.config_yaml import split_prefs, write_features_yaml, write_run_yaml
     features_data, run_data = split_prefs(merged)
     write_features_yaml(get_features_yaml_path(), features_data)
     write_run_yaml(get_run_yaml_path(), run_data)
@@ -1142,7 +1142,6 @@ def _write_yaml_pair(merged: dict[str, Any]) -> None:
 
 def load_preferences() -> dict[str, Any]:
     """Load preferences from the YAML pair; one-time import from legacy json."""
-    from utils.config_yaml import join_yaml_pair
     f_path, r_path = get_features_yaml_path(), get_run_yaml_path()
     if f_path.exists() or r_path.exists():
         user = join_yaml_pair(_read_yaml_tolerant(f_path), _read_yaml_tolerant(r_path))
@@ -1185,7 +1184,6 @@ def _load_legacy_json() -> dict[str, Any]:
 
 def save_preferences(updates: dict[str, Any]) -> None:
     """Merge `updates` into current prefs; write only the touched YAML file(s)."""
-    from utils.config_yaml import split_prefs, write_features_yaml, write_run_yaml
     current = load_preferences()
     _deep_merge_current(current, updates)
     current['schema_version'] = SCHEMA_VERSION
@@ -1206,7 +1204,6 @@ def reset_to_defaults(*, keep_shared: bool = True) -> dict[str, Any]:
     default reset — pass keep_shared=False to reset it too. Files are local
     (gitignored), so this only affects this machine. Returns the fresh prefs.
     """
-    from utils.config_yaml import split_prefs, write_features_yaml, write_run_yaml
     current = load_preferences()          # also triggers the legacy-json import
     fresh = deepcopy(DEFAULT_PREFS)
     if keep_shared and isinstance(current.get('shared'), dict):
@@ -1221,12 +1218,6 @@ def reset_to_defaults(*, keep_shared: bool = True) -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 # Internal helpers
 # ---------------------------------------------------------------------------
-
-def _write(path: Path, data: dict[str, Any]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open('w', encoding='utf-8') as f:
-        json.dump(data, f, indent=2)
-
 
 def _deep_merge_v3(into: dict, src: dict) -> None:
     """Merge `src` into `into` using v3 top-level shape.
