@@ -31,3 +31,34 @@ def test_slug_for_hf_id_maps_stored_model():
 def test_spec_for_unknown_raises():
     with pytest.raises(KeyError):
         spec_for("nope")
+
+
+# --- effective_context: per-model cap clamped to [FLOOR, native_ctx] ---------
+
+def test_effective_context_absent_slug_is_native():
+    from extractors.predictability_models import effective_context, spec_for
+    # No entry for the slug → uncapped → the model's native ceiling.
+    assert effective_context("gpt2", {}) == spec_for("gpt2").native_ctx
+    assert effective_context("llama3_8b", {}) == 8192
+
+
+def test_effective_context_cap_below_native_is_honored():
+    from extractors.predictability_models import effective_context
+    assert effective_context("llama3_8b", {"llama3_8b": 2048}) == 2048
+
+
+def test_effective_context_above_native_clamps_down():
+    from extractors.predictability_models import effective_context
+    # gpt2 native is 1024; asking for more clamps to native.
+    assert effective_context("gpt2", {"gpt2": 999999}) == 1024
+
+
+def test_effective_context_below_floor_clamps_to_floor():
+    from extractors.predictability_models import effective_context, FLOOR_CONTEXT
+    assert FLOOR_CONTEXT == 128
+    assert effective_context("llama3_8b", {"llama3_8b": 1}) == 128
+
+
+def test_effective_context_exactly_native():
+    from extractors.predictability_models import effective_context
+    assert effective_context("gpt2", {"gpt2": 1024}) == 1024

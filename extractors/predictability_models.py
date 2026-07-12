@@ -48,3 +48,23 @@ def is_gated(slug: str) -> bool:
 
 def slug_for_hf_id(hf_id: str) -> str | None:
     return _BY_HF_ID.get(hf_id)
+
+
+# Minimum sensible context window (subwords). Below this a chunked window gives
+# each word almost no preceding context, so a user cap is clamped up to it.
+FLOOR_CONTEXT = 128
+
+
+def effective_context(slug: str, context_map: dict) -> int:
+    """Resolve a model's effective max context (subwords) from a user cap.
+
+    The single source of truth for context clamping — the GUI, the extractor,
+    and any validation call this so they never disagree. A slug ABSENT from
+    `context_map` is uncapped (the model's native ceiling). A present value is
+    clamped to [FLOOR_CONTEXT, native_ctx].
+    """
+    native = _BY_SLUG[slug].native_ctx
+    raw = context_map.get(slug)
+    if raw is None:
+        return native
+    return max(FLOOR_CONTEXT, min(int(raw), native))
