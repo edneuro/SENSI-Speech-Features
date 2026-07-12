@@ -267,3 +267,35 @@ def test_context_spin_always_enabled(qtbot, prefs_tmp):
     assert w.context_spins["gpt2"].isEnabled() is True    # even unchecked
     w.model_checkboxes["gpt2"].setChecked(True)
     assert w.context_spins["gpt2"].isEnabled() is True
+
+
+def test_metric_rows_have_info_icons_routing_to_docs(qtbot, prefs_tmp):
+    """Regression (user report): the metric checkboxes lost the ⓘ doc links
+    the old per-column ToggleRows auto-rendered. Each metric row must carry
+    an InfoIcon targeting its feature doc, and the doc must resolve."""
+    from gui.section_word_features import WordFeaturesSection
+    from gui.info_popup import InfoIcon
+    from gui.feature_docs import load_feature_doc
+    w = WordFeaturesSection(); qtbot.addWidget(w)
+    expected = {"surprisal": "pred_surprisal", "cloze": "pred_cloze",
+                "topmatch": "pred_topmatch"}
+    for metric, doc_key in expected.items():
+        icon = w.metric_info_icons[metric]
+        assert isinstance(icon, InfoIcon)
+        assert icon._toggle_key == doc_key
+        assert load_feature_doc(doc_key) is not None, doc_key
+
+
+def test_context_spin_uses_adaptive_steps(qtbot, prefs_tmp):
+    """Regression (user report): a fixed 128 step against a 131072 range made
+    arrow clicks look like the box 'does nothing'. Steps must be adaptive."""
+    from PySide6.QtWidgets import QSpinBox
+    from gui.section_word_features import WordFeaturesSection
+    w = WordFeaturesSection(); qtbot.addWidget(w)
+    for slug, spin in w.context_spins.items():
+        assert spin.stepType() == QSpinBox.StepType.AdaptiveDecimalStepType, slug
+    # One arrow click from the 131072 default moves the value visibly.
+    spin = w.context_spins["llama32_3b"]
+    before = spin.value()
+    spin.stepDown()
+    assert before - spin.value() >= 1000  # ~10%, not a 0.1% nudge

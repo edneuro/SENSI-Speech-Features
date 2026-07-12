@@ -180,7 +180,12 @@ class WordFeaturesSection(QWidget):
             row.addWidget(QLabel("context:"))
             spin = QSpinBox()
             spin.setRange(FLOOR_CONTEXT, spec.native_ctx)
-            spin.setSingleStep(min(128, spec.native_ctx))
+            # Adaptive stepping: a fixed 128 step was invisible against a
+            # 131072-token range (one arrow click changed the value by 0.1%,
+            # which read as "the box does nothing"). Adaptive steps scale
+            # with the current value (~10%), so clicks move it meaningfully
+            # at any magnitude; exact values can still be typed.
+            spin.setStepType(QSpinBox.StepType.AdaptiveDecimalStepType)
             spin.setValue(int(saved_context.get(spec.slug, spec.native_ctx)))
             spin.setSuffix(f" / {spec.native_ctx} tok")
             spin.setToolTip(
@@ -199,18 +204,32 @@ class WordFeaturesSection(QWidget):
         metrics_label = QLabel("Metrics:")
         metrics_label.setObjectName("Subtitle")
         pred_card.add_widget(metrics_label)
+        from gui.info_popup import InfoIcon
         self.metric_checkboxes: dict[str, QCheckBox] = {}
-        for key, label in [
-            ("surprisal", "Surprisal — -log₂ P(word | preceding context), in bits"),
-            ("cloze", "Cloze — P(word | preceding context)"),
-            ("topmatch", "Top-match — 1 if the model's top predicted next "
-                         "token equals the actual word"),
+        self.metric_info_icons: dict[str, InfoIcon] = {}
+        for key, doc_key, label in [
+            ("surprisal", "pred_surprisal",
+             "Surprisal — -log₂ P(word | preceding context), in bits"),
+            ("cloze", "pred_cloze", "Cloze — P(word | preceding context)"),
+            ("topmatch", "pred_topmatch",
+             "Top-match — 1 if the model's top predicted next "
+             "token equals the actual word"),
         ]:
+            mrow = QHBoxLayout(); mrow.setContentsMargins(0, 0, 0, 0)
             cb = QCheckBox(label)
             cb.setChecked(bool(saved_metrics.get(key, False)))
             cb.toggled.connect(lambda _v, k=key: self._on_metric_toggled(k, _v))
             self.metric_checkboxes[key] = cb
-            pred_card.add_widget(cb)
+            mrow.addWidget(cb)
+            # Same blue ⓘ the old per-column ToggleRows auto-rendered — the
+            # per-metric docs (theory, EEG rationale, citations) must stay
+            # reachable from the GUI.
+            icon = InfoIcon(doc_key, self)
+            self.metric_info_icons[key] = icon
+            mrow.addWidget(icon)
+            mrow.addStretch(1)
+            mrow_w = QWidget(); mrow_w.setLayout(mrow)
+            pred_card.add_widget(mrow_w)
 
         # Credentials help — text + the same blue ⓘ info-icon used by feature
         # toggles, opening the shared setup doc (gated Llama license + HF
