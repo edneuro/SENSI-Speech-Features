@@ -359,7 +359,8 @@ def run(args) -> pd.DataFrame:
     if pred_models and pred_metrics and df is not None:
         from extractors.predictability import add_predictability
         print(f'[predict] {len(pred_models)} model(s) x {len(pred_metrics)} metric(s)…')
-        df = add_predictability(df, text, models=pred_models, metrics=pred_metrics)
+        df = add_predictability(df, text, models=pred_models, metrics=pred_metrics,
+                                context=pconf.get('context'))
 
     args._phones_df = None  # reset each run; populated below when alignment runs
     if not args.no_align and args.audio:

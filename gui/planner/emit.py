@@ -226,6 +226,7 @@ def to_namespace(plan: Plan, prefs: dict, level: str) -> argparse.Namespace:
     ns.predictability = {
         "models": list(_p.get("models") or []),
         "metrics": dict(_p.get("metrics") or {}),
+        "context": dict(_p.get("context") or {}),
     }
     ns.edu_freq_lookup = None
     _norms = prefs.get("lexical_norms", {})
