@@ -65,7 +65,7 @@ def test_word_level_namespace_basic():
     assert ns.no_parse is False
     assert ns.no_freq is False
     assert ns.no_align is True
-    assert ns.predictability == {"models": [], "metrics": {}}  # off by default
+    assert ns.predictability == {"models": [], "metrics": {}, "context": {}}  # off by default
     assert ns.no_sem_domain is True
     assert ns.no_word_csv is False  # word CSV wanted
     assert ns.no_syllables is True
@@ -88,8 +88,23 @@ def test_predictability_namespace_reflects_prefs():
     assert ns.predictability == {
         "models": ["gpt2", "llama3_8b"],
         "metrics": {"surprisal": True, "cloze": False, "topmatch": True},
+        "context": {},
     }
     assert "predictability" in plan.stages_to_run
+
+
+def test_predictability_namespace_carries_context_map():
+    """Per-model context caps (Project B) flow verbatim into ns.predictability."""
+    prefs = _prefs(
+        output={"word_level_csv": True, "syllables_csv": False,
+                "phonemes_csv": False, "document_summary": False},
+        features={},
+        predictability={"models": ["llama3_8b"],
+                        "metrics": {"surprisal": True, "cloze": False, "topmatch": False},
+                        "context": {"llama3_8b": 2048}},
+    )
+    ns = to_namespace(plan_from_prefs(prefs), prefs, level="word")
+    assert ns.predictability["context"] == {"llama3_8b": 2048}
     assert set(plan.emitted_columns_for("predictability")) == {
         "gpt2_Surprisal", "gpt2_TopMatch", "llama3_8b_Surprisal", "llama3_8b_TopMatch",
     }
