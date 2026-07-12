@@ -5,12 +5,14 @@ from PySide6.QtCore import Signal
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QLabel,
     QButtonGroup, QRadioButton, QComboBox, QLineEdit, QPushButton,
-    QDoubleSpinBox, QCheckBox,
+    QDoubleSpinBox, QSpinBox, QCheckBox,
 )
 
 from gui.widgets import Card, ClusterCard, ToggleRow
 from utils.preferences import load_preferences, save_preferences
-from extractors.predictability_models import all_specs, is_gated
+from extractors.predictability_models import (
+    all_specs, is_gated, spec_for, FLOOR_CONTEXT,
+)
 # Imported as a module (not `from ... import has_hf_token`) so that tests can
 # monkeypatch `extractors.predictability.has_hf_token` and have it take
 # effect here — a direct-name import would bind a stale reference at
@@ -160,13 +162,37 @@ class WordFeaturesSection(QWidget):
         models_label = QLabel("Models:")
         models_label.setObjectName("Subtitle")
         pred_card.add_widget(models_label)
+        saved_context = pred_prefs.get("context") or {}
         self.model_checkboxes: dict[str, QCheckBox] = {}
+        self.context_spins: dict[str, QSpinBox] = {}
         for spec in all_specs():
+            row = QHBoxLayout(); row.setContentsMargins(0, 0, 0, 0)
             cb = QCheckBox(f"{spec.label} — {spec.note}")
             cb.setChecked(spec.slug in saved_models)
             cb.toggled.connect(lambda _v, s=spec.slug: self._on_model_toggled(s, _v))
             self.model_checkboxes[spec.slug] = cb
-            pred_card.add_widget(cb)
+            row.addWidget(cb, 1)
+            # Per-model context cap (Project B). Range [FLOOR, native]; the
+            # value defaults to native (= uncapped, stored as absence). Only
+            # meaningful when the model is selected, so it greys out otherwise.
+            row.addWidget(QLabel("context:"))
+            spin = QSpinBox()
+            spin.setRange(FLOOR_CONTEXT, spec.native_ctx)
+            spin.setSingleStep(min(128, spec.native_ctx))
+            spin.setValue(int(saved_context.get(spec.slug, spec.native_ctx)))
+            spin.setSuffix(f" / {spec.native_ctx} tok")
+            spin.setToolTip(
+                "Max context (subwords) fed to this model per forward pass. "
+                "Lower = faster / less memory on long stimuli, but each word "
+                "sees less preceding context. Default is the model's full "
+                f"window ({spec.native_ctx}).")
+            spin.setEnabled(cb.isChecked())
+            spin.valueChanged.connect(
+                lambda v, s=spec.slug: self._on_context_changed(s, v))
+            self.context_spins[spec.slug] = spin
+            row.addWidget(spin)
+            row_w = QWidget(); row_w.setLayout(row)
+            pred_card.add_widget(row_w)
 
         metrics_label = QLabel("Metrics:")
         metrics_label.setObjectName("Subtitle")
@@ -466,10 +492,26 @@ class WordFeaturesSection(QWidget):
             if row is not None:
                 row.set_warning(w.message)
 
-    def _on_model_toggled(self, slug: str, _checked: bool) -> None:
+    def _on_model_toggled(self, slug: str, checked: bool) -> None:
         selected = [s for s, cb in self.model_checkboxes.items() if cb.isChecked()]
         save_preferences({"predictability": {"models": selected}})
+        # The per-model context cap only matters when the model is selected.
+        if slug in self.context_spins:
+            self.context_spins[slug].setEnabled(checked)
         self._refresh_llm_credential_visibility()
+        self.settings_changed.emit()
+
+    def _on_context_changed(self, slug: str, value: int) -> None:
+        # Store the cap only when it's below the model's native window; a value
+        # at (or above) native means "uncapped", represented as the slug's
+        # ABSENCE from the context map (so the default stays native).
+        context = dict(load_preferences()["predictability"].get("context") or {})
+        native = spec_for(slug).native_ctx
+        if int(value) >= native:
+            context.pop(slug, None)
+        else:
+            context[slug] = int(value)
+        save_preferences({"predictability": {"context": context}})
         self.settings_changed.emit()
 
     def _on_metric_toggled(self, _key: str, _checked: bool) -> None:

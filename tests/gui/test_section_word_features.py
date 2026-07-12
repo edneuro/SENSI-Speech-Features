@@ -226,3 +226,41 @@ def test_session_api_key_is_inert(qtbot):
     from gui.section_word_features import WordFeaturesSection
     w = WordFeaturesSection(); qtbot.addWidget(w)
     assert w.session_api_key() == ""
+
+
+# --- Project B: per-model context spinner ------------------------------------
+
+def test_context_spin_persists_cap_below_native(qtbot, prefs_tmp):
+    from gui.section_word_features import WordFeaturesSection
+    from utils.preferences import load_preferences
+    w = WordFeaturesSection(); qtbot.addWidget(w)
+    w.context_spins["llama3_8b"].setValue(2048)
+    assert load_preferences()["predictability"]["context"]["llama3_8b"] == 2048
+
+
+def test_context_spin_at_native_is_stored_as_absence(qtbot, prefs_tmp):
+    from gui.section_word_features import WordFeaturesSection
+    from utils.preferences import load_preferences
+    from extractors.predictability_models import spec_for
+    w = WordFeaturesSection(); qtbot.addWidget(w)
+    # Lower it, then raise back to native → the key is removed (default).
+    w.context_spins["llama3_8b"].setValue(2048)
+    w.context_spins["llama3_8b"].setValue(spec_for("llama3_8b").native_ctx)
+    assert "llama3_8b" not in load_preferences()["predictability"]["context"]
+
+
+def test_context_spin_range_capped_at_native(qtbot, prefs_tmp):
+    from gui.section_word_features import WordFeaturesSection
+    from extractors.predictability_models import spec_for, FLOOR_CONTEXT
+    w = WordFeaturesSection(); qtbot.addWidget(w)
+    spin = w.context_spins["gpt2"]
+    assert spin.maximum() == spec_for("gpt2").native_ctx
+    assert spin.minimum() == FLOOR_CONTEXT
+
+
+def test_context_spin_greyed_until_model_checked(qtbot, prefs_tmp):
+    from gui.section_word_features import WordFeaturesSection
+    w = WordFeaturesSection(); qtbot.addWidget(w)
+    assert w.context_spins["gpt2"].isEnabled() is False   # unchecked by default
+    w.model_checkboxes["gpt2"].setChecked(True)
+    assert w.context_spins["gpt2"].isEnabled() is True
