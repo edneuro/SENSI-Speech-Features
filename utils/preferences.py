@@ -1145,13 +1145,17 @@ def load_preferences() -> dict[str, Any]:
     f_path, r_path = get_features_yaml_path(), get_run_yaml_path()
     if f_path.exists() or r_path.exists():
         user = join_yaml_pair(_read_yaml_tolerant(f_path), _read_yaml_tolerant(r_path))
-        if not user and get_preferences_path().exists():
+        if get_preferences_path().exists() and (
+                not user or not (f_path.exists() and r_path.exists())):
             # Half-import window: a crash (or torn write) between writing
-            # features.yaml and run.yaml can leave one file missing/empty/
-            # unparseable while a legacy preferences.json still sits on disk.
-            # Both tolerant reads came back with nothing usable — rather than
-            # silently loading defaults and orphaning the json forever, fall
-            # through and (re)run the import so the pair gets completed.
+            # features.yaml and run.yaml can leave the pair incomplete — one
+            # file missing, empty, or unparseable — while a legacy
+            # preferences.json still sits on disk. A COMPLETED import always
+            # renames the json to .bak, so "json present + incomplete pair"
+            # can only mean an interrupted import (or hand-tampering): rather
+            # than silently loading defaults for the missing half and
+            # orphaning the json forever, fall through and (re)run the import
+            # so the pair gets completed.
             return _load_legacy_json()
         # The YAML store began at v19; a missing/hand-stripped schema_version
         # must not fall into the v1 flat-json migration.

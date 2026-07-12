@@ -253,6 +253,32 @@ def test_corrupted_features_yaml_with_legacy_json_falls_through_to_import(tmp_pa
     assert not (tmp_path / "preferences.json").exists()
 
 
+def test_complete_features_yaml_missing_run_yaml_with_legacy_json_reimports(tmp_path, monkeypatch):
+    # The primary half-import variant: the crash lands BETWEEN the two
+    # _write_yaml_pair writes, so features.yaml is complete and parseable but
+    # run.yaml was never written, and preferences.json is still on disk. The
+    # joined user dict is non-empty here, so the "both reads empty" guard
+    # alone would miss it — an incomplete pair alongside a surviving json
+    # must also fall through to the import (a completed import always
+    # renames the json, so this state can only mean an interrupted one).
+    monkeypatch.setenv("SENSI_CONFIG_DIR", str(tmp_path))
+    monkeypatch.setenv("SENSI_PREFS_PATH", str(tmp_path / "preferences.json"))
+    legacy = deepcopy(DEFAULT_PREFS)
+    legacy["shared"]["analyzer_name"] = "SurvivedCrash"
+    legacy["features"]["master_structural"] = False
+    (tmp_path / "preferences.json").write_text(json.dumps(legacy), encoding="utf-8")
+    features, _run = split_prefs(deepcopy(legacy))
+    write_features_yaml(tmp_path / FEATURES_YAML, features)   # complete; no run.yaml
+
+    prefs = load_preferences()
+    assert prefs["shared"]["analyzer_name"] == "SurvivedCrash"
+    assert prefs["features"]["master_structural"] is False
+    # import completed: pair now whole, legacy json renamed to .bak
+    assert (tmp_path / RUN_YAML).exists()
+    assert not (tmp_path / "preferences.json").exists()
+    assert (tmp_path / "preferences.json.bak").exists()
+
+
 def test_readonly_config_dir_does_not_crash_first_launch(tmp_path, monkeypatch):
     # An unwritable config dir must not crash startup: settings still load
     # for the session (from the legacy json), persistence just doesn't
