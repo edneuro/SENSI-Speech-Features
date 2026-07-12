@@ -7,7 +7,7 @@ mirrors extract_acoustic() in extractors/acoustic_ts.py)."""
 
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import (
-    QWidget, QHBoxLayout, QVBoxLayout, QLabel, QFrame,
+    QWidget, QHBoxLayout, QVBoxLayout, QGridLayout, QLabel, QFrame,
     QComboBox, QDoubleSpinBox, QSpinBox,
 )
 
@@ -75,6 +75,9 @@ class AcousticFeaturesSection(QWidget):
         card.add_widget(self._make_toggle(
             "feat_acoustic_ts_envelope", "Amplitude envelope (broadband)",
             f["feat_acoustic_ts_envelope"]))
+        # Two rows (method; compression/window): one long row forced the page
+        # wider than the window (horizontal scrollbar).
+        env_grid = QGridLayout(); env_grid.setContentsMargins(0, 0, 0, 0)
         env_row = QHBoxLayout(); env_row.setContentsMargins(0, 0, 0, 0)
         env_row.addWidget(QLabel("Method:"))
         self._env_method_combo = QComboBox()
@@ -83,6 +86,9 @@ class AcousticFeaturesSection(QWidget):
         self._env_method_combo.currentTextChanged.connect(
             lambda v: self._save_param("env_method", v))
         env_row.addWidget(self._env_method_combo)
+        env_row.addStretch(1)
+        env_grid.addLayout(env_row, 0, 0)
+        env_row = QHBoxLayout(); env_row.setContentsMargins(0, 0, 0, 0)
         env_row.addWidget(QLabel("Compression:"))
         self._env_comp_spin = QDoubleSpinBox()
         self._env_comp_spin.setRange(0.0, 2.0)
@@ -106,7 +112,9 @@ class AcousticFeaturesSection(QWidget):
         self._env_window_spin.valueChanged.connect(
             lambda v: self._save_param("env_window", v))
         env_row.addWidget(self._env_window_spin)
-        _env_inner = QWidget(); _env_inner.setLayout(env_row)
+        env_row.addStretch(1)
+        env_grid.addLayout(env_row, 1, 0)
+        _env_inner = QWidget(); _env_inner.setLayout(env_grid)
         self._env_params_w = _indent(_env_inner)
         card.add_widget(self._env_params_w)
 
@@ -119,6 +127,7 @@ class AcousticFeaturesSection(QWidget):
         onset_caption = QLabel(
             "Derived from the amplitude envelope — uses its settings above.")
         onset_caption.setObjectName("Subtitle")
+        onset_caption.setWordWrap(True)
         card.add_widget(_indent(onset_caption))
 
         # --- Log-mel spectrogram + its params ---
@@ -157,6 +166,7 @@ class AcousticFeaturesSection(QWidget):
             lambda v: self._save_param("n_mfcc", v))
         mfcc_row.addWidget(self._n_mfcc_spin)
         mfcc_caption = QLabel("also uses mel bands / preset above")
+        mfcc_caption.setWordWrap(True)
         mfcc_caption.setObjectName("Subtitle")
         mfcc_row.addWidget(mfcc_caption)
         _mfcc_inner = QWidget(); _mfcc_inner.setLayout(mfcc_row)

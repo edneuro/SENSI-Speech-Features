@@ -167,6 +167,11 @@ class MainWindow(QMainWindow):
         for s in sections:
             area = QScrollArea()
             area.setWidgetResizable(True)
+            # Vertical scrolling only: pages are designed to fit the window's
+            # minimum width (labels wrap, wide rows split — a regression test
+            # pins each section's minimum width), so a horizontal scrollbar
+            # would only ever hide content.
+            area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
             area.setWidget(s)
             self.stack.addWidget(area)
 

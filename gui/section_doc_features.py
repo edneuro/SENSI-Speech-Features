@@ -153,6 +153,7 @@ class DocFeaturesSection(QWidget):
             "Compute count_<cat>, prop_<cat> for each active category",
             o["doc_category_proportions"], "output"))
         self.cats_count_label = QLabel(self._cats_count_text())
+        self.cats_count_label.setWordWrap(True)
         hint = QLabel("Edit categories on the Word-level features page — the selection is shared between levels.")
         hint.setObjectName("Subtitle")
         hint.setWordWrap(True)
@@ -221,9 +222,11 @@ class DocFeaturesSection(QWidget):
             ("feat_doc_prosody_pause_pct_silence",   "doc_pause_pct_silence"),
         ]
         for i, (key, label) in enumerate(pros_keys):
+            # 2 columns: 4 columns of long doc_* column names forced the page
+            # wider than the window (horizontal scrollbar); grow vertically.
             pros_grid.addWidget(
                 self._make_toggle(key, label, f[key], "features"),
-                i // 4, i % 4,
+                i // 2, i % 2,
             )
         pros_card.add_child_layout(pros_grid)
 

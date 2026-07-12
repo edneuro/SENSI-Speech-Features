@@ -109,6 +109,7 @@ class RunSection(QWidget):
         # Readiness
         layout.addWidget(SectionHeader("Readiness"))
         self.readiness_label = QLabel("…")
+        self.readiness_label.setWordWrap(True)
         layout.addWidget(self.readiness_label)
         self.warnings_label = QLabel("")
         self.warnings_label.setWordWrap(True)

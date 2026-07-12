@@ -20,6 +20,7 @@ class SectionHeader(QWidget):
         layout.addWidget(self.title_label)
         self.subtitle_label = QLabel(subtitle)
         self.subtitle_label.setObjectName("Subtitle")
+        self.subtitle_label.setWordWrap(True)
         if not subtitle:
             self.subtitle_label.hide()
         layout.addWidget(self.subtitle_label)
@@ -67,6 +68,20 @@ class FolderRow(QWidget):
             self.line.setText(path)
 
 
+class _ClickToToggleLabel(QLabel):
+    """Word-wrapping label that toggles its buddy checkbox on click, so the
+    checkbox-with-text click affordance survives the label being separate."""
+
+    def __init__(self, text: str, buddy_check: QCheckBox, parent=None):
+        super().__init__(text, parent)
+        self._buddy = buddy_check
+
+    def mousePressEvent(self, event) -> None:
+        if self._buddy.isEnabled():
+            self._buddy.click()
+        super().mousePressEvent(event)
+
+
 class ToggleRow(QWidget):
     toggled = Signal(bool)
 
@@ -74,9 +89,16 @@ class ToggleRow(QWidget):
         super().__init__(parent)
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        self.check = QCheckBox(label)
+        # The label lives on a word-wrapping QLabel, NOT on the QCheckBox:
+        # QCheckBox text cannot wrap, so long feature labels used to force
+        # every page's minimum width past the window (the source of the
+        # horizontal scrollbar). Clicking the label still toggles the box.
+        self.check = QCheckBox()
         self.check.toggled.connect(self.toggled)
         layout.addWidget(self.check)
+        self.label = _ClickToToggleLabel(label, self.check)
+        self.label.setWordWrap(True)
+        layout.addWidget(self.label, 1)
         # Info icon appears iff a docs/features/<info_key>.md exists. Cluster
         # master toggles pass info_key=None, so they remain icon-free.
         if info_key is not None:
@@ -84,7 +106,6 @@ class ToggleRow(QWidget):
             if has_feature_doc(info_key):
                 from gui.info_popup import InfoIcon
                 layout.addWidget(InfoIcon(info_key, self))
-        layout.addStretch(1)
         self.warning = None  # populated by set_warning
         self._perma_disabled = False
 
@@ -105,8 +126,10 @@ class ToggleRow(QWidget):
         self._perma_disabled = True
         self.check.setChecked(False)
         self.check.setEnabled(False)
+        self.label.setEnabled(False)
         if tooltip:
             self.check.setToolTip(tooltip)
+            self.label.setToolTip(tooltip)
 
     def set_warning(self, message: str | None) -> None:
         if self.warning is not None:

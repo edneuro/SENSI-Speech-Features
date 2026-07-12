@@ -151,16 +151,18 @@ def test_metric_toggles_persist(qtbot, prefs_tmp):
 
 def test_model_rows_cover_full_roster_with_gating_hint(qtbot):
     """One checkbox per extractors.predictability_models.all_specs() entry,
-    labeled with the spec's note (which carries the 'free, no token' vs
-    'gated' hint the brief asks for)."""
+    with the spec's label + note (the 'free, no token' vs 'gated' hint) on
+    the row's word-wrapping label (checkbox text can't wrap, so the text
+    lives on a companion label — see the horizontal-scrollbar fix)."""
     from gui.section_word_features import WordFeaturesSection
     from extractors.predictability_models import all_specs
     w = WordFeaturesSection(); qtbot.addWidget(w)
     for spec in all_specs():
         assert spec.slug in w.model_checkboxes
-        cb = w.model_checkboxes[spec.slug]
-        assert spec.label in cb.text()
-        assert spec.note in cb.text()
+        lbl = w.model_labels[spec.slug]
+        assert spec.label in lbl.text()
+        assert spec.note in lbl.text()
+        assert lbl.wordWrap() is True
 
 
 def test_no_openai_widgets_anymore(qtbot):

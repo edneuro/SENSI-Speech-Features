@@ -163,15 +163,23 @@ class WordFeaturesSection(QWidget):
         models_label.setObjectName("Subtitle")
         pred_card.add_widget(models_label)
         saved_context = pred_prefs.get("context") or {}
+        from gui.widgets import _ClickToToggleLabel
         self.model_checkboxes: dict[str, QCheckBox] = {}
+        self.model_labels: dict[str, QLabel] = {}
         self.context_spins: dict[str, QSpinBox] = {}
         for spec in all_specs():
             row = QHBoxLayout(); row.setContentsMargins(0, 0, 0, 0)
-            cb = QCheckBox(f"{spec.label} — {spec.note}")
+            # Text lives on a wrapping label, not the checkbox (QCheckBox
+            # text can't wrap and long labels forced a horizontal scrollbar).
+            cb = QCheckBox()
             cb.setChecked(spec.slug in saved_models)
             cb.toggled.connect(lambda _v, s=spec.slug: self._on_model_toggled(s, _v))
             self.model_checkboxes[spec.slug] = cb
-            row.addWidget(cb, 1)
+            row.addWidget(cb)
+            lbl = _ClickToToggleLabel(f"{spec.label} — {spec.note}", cb)
+            lbl.setWordWrap(True)
+            self.model_labels[spec.slug] = lbl
+            row.addWidget(lbl, 1)
             # Per-model context cap (Project B). Range [FLOOR, native]; the
             # value defaults to native (= uncapped, stored as absence).
             # Always editable — greying it until the model is checked read as
@@ -206,6 +214,7 @@ class WordFeaturesSection(QWidget):
         pred_card.add_widget(metrics_label)
         from gui.info_popup import InfoIcon
         self.metric_checkboxes: dict[str, QCheckBox] = {}
+        self.metric_labels: dict[str, QLabel] = {}
         self.metric_info_icons: dict[str, InfoIcon] = {}
         for key, doc_key, label in [
             ("surprisal", "pred_surprisal",
@@ -216,18 +225,21 @@ class WordFeaturesSection(QWidget):
              "token equals the actual word"),
         ]:
             mrow = QHBoxLayout(); mrow.setContentsMargins(0, 0, 0, 0)
-            cb = QCheckBox(label)
+            cb = QCheckBox()
             cb.setChecked(bool(saved_metrics.get(key, False)))
             cb.toggled.connect(lambda _v, k=key: self._on_metric_toggled(k, _v))
             self.metric_checkboxes[key] = cb
             mrow.addWidget(cb)
+            lbl = _ClickToToggleLabel(label, cb)
+            lbl.setWordWrap(True)
+            self.metric_labels[key] = lbl
+            mrow.addWidget(lbl, 1)
             # Same blue ⓘ the old per-column ToggleRows auto-rendered — the
             # per-metric docs (theory, EEG rationale, citations) must stay
             # reachable from the GUI.
             icon = InfoIcon(doc_key, self)
             self.metric_info_icons[key] = icon
             mrow.addWidget(icon)
-            mrow.addStretch(1)
             mrow_w = QWidget(); mrow_w.setLayout(mrow)
             pred_card.add_widget(mrow_w)
 
@@ -319,6 +331,7 @@ class WordFeaturesSection(QWidget):
         # Configure-categories button + count label
         cats_row = QHBoxLayout()
         self.cats_count_label = QLabel(self._cats_count_text())
+        self.cats_count_label.setWordWrap(True)
         self.configure_cats_button = QPushButton("Configure word-level categories…")
         self.configure_cats_button.clicked.connect(self._open_category_dialog)
         cats_row.addWidget(self.cats_count_label, 1)
@@ -421,22 +434,29 @@ class WordFeaturesSection(QWidget):
             ("feat_prosody_volume_delta", "Volume_Delta"),
         ]
         for i, (key, label) in enumerate(pros_keys):
+            # 5 rows x 2 columns (pitch column, volume column): a 5-column
+            # grid forced the page wider than the window (horizontal
+            # scrollbar); vertical growth is fine.
             pros_grid.addWidget(
                 self._make_toggle(key, label, f[key], "features"),
-                i // 5, i % 5,
+                i % 5, i // 5,
             )
         pros_card.add_child_layout(pros_grid)
 
-        # Pitch units combo + floor/ceiling spinboxes — config UI, greys with master
+        # Pitch config — two rows (units; floor/ceiling): a single long row
+        # forced the page wider than the window (horizontal scrollbar).
         prosody_prefs = prefs.get("prosody", {})
-        cfg_row = QHBoxLayout()
-        cfg_row.addWidget(QLabel("Pitch units:"))
+        units_row = QHBoxLayout()
+        units_row.addWidget(QLabel("Pitch units:"))
         self.pitch_units_combo = QComboBox()
         self.pitch_units_combo.addItems(["Semitones (rel speaker median)", "Hz"])
         if prosody_prefs.get("pitch_units", "semitones") == "hz":
             self.pitch_units_combo.setCurrentText("Hz")
         self.pitch_units_combo.currentTextChanged.connect(self._on_pitch_units_change)
-        cfg_row.addWidget(self.pitch_units_combo, 1)
+        units_row.addWidget(self.pitch_units_combo, 1)
+        units_w = QWidget(); units_w.setLayout(units_row)
+        pros_card.add_child(units_w)
+        cfg_row = QHBoxLayout()
         cfg_row.addWidget(QLabel("Pitch floor (Hz):"))
         self.pitch_floor_spin = QDoubleSpinBox()
         self.pitch_floor_spin.setRange(20.0, 400.0)
@@ -451,6 +471,7 @@ class WordFeaturesSection(QWidget):
         self.pitch_ceiling_spin.valueChanged.connect(
             lambda v: save_preferences({"prosody": {"pitch_ceiling_hz": v}}))
         cfg_row.addWidget(self.pitch_ceiling_spin)
+        cfg_row.addStretch(1)
         cfg_w = QWidget(); cfg_w.setLayout(cfg_row)
         pros_card.add_child(cfg_w)
         layout.addWidget(pros_card)
