@@ -36,8 +36,17 @@ Migration chain (all paths terminate at the current version):
     defaults, v16 phoneme surprisal, v17 above) only add keys / correct
     defaults; missing keys are filled from the current defaults.
 
-Default location: <project_root>/config/preferences.json
-Override via SENSI_PREFS_PATH environment variable.
+Default location: <project_root>/config/{features.yaml,run.yaml} — a two-file
+    YAML store (Project C). `features.yaml` holds schema_version/features/
+    output/predictability/semantic/prosody/... (global, reset-able);
+    `run.yaml` holds `shared` (machine-specific folders, analyzer name,
+    theme, token-file paths). A legacy `preferences.json` is imported once
+    if neither YAML file exists yet (see `_load_legacy_json`).
+Override the directory holding both files via SENSI_CONFIG_DIR, or (for
+    hermetic tests that only know the old single-file var) via
+    SENSI_PREFS_PATH's parent directory — SENSI_CONFIG_DIR wins if both are
+    set. SENSI_PREFS_PATH also independently overrides the legacy json path
+    read by `_load_legacy_json`.
 """
 
 import json
@@ -850,6 +859,9 @@ SCHEMA_VERSION_V19 = 19
 DEFAULT_PREFS_V19: dict[str, Any] = {
     **DEFAULT_PREFS_V18,
     "schema_version": SCHEMA_VERSION_V19,
+    # hf_token_file added 2026-07-12 (Project C, run.yaml): path to a file
+    # holding a HuggingFace token for headless runs. Additive — no bump.
+    "shared": {**DEFAULT_PREFS_V18["shared"], "hf_token_file": ""},
     "predictability": {
         **DEFAULT_PREFS_V18["predictability"],
         "context": {},
@@ -869,11 +881,37 @@ DEFAULT_PREFS: dict[str, Any] = DEFAULT_PREFS_V19  # active defaults
 # ---------------------------------------------------------------------------
 
 def get_preferences_path() -> Path:
+    """LEGACY json path — only read for the one-time import to the YAML pair."""
     override = os.environ.get('SENSI_PREFS_PATH')
     if override:
         return Path(override)
-    project_root = Path(__file__).resolve().parent.parent
-    return project_root / 'config' / 'preferences.json'
+    return get_config_dir() / 'preferences.json'
+
+
+def get_config_dir() -> Path:
+    """Directory holding features.yaml + run.yaml.
+
+    Precedence: SENSI_CONFIG_DIR > parent of SENSI_PREFS_PATH (so the many
+    existing test isolation sites that only set the legacy var stay hermetic)
+    > <project_root>/config.
+    """
+    override = os.environ.get('SENSI_CONFIG_DIR')
+    if override:
+        return Path(override)
+    legacy = os.environ.get('SENSI_PREFS_PATH')
+    if legacy:
+        return Path(legacy).parent
+    return Path(__file__).resolve().parent.parent / 'config'
+
+
+def get_features_yaml_path() -> Path:
+    from utils.config_yaml import FEATURES_YAML
+    return get_config_dir() / FEATURES_YAML
+
+
+def get_run_yaml_path() -> Path:
+    from utils.config_yaml import RUN_YAML
+    return get_config_dir() / RUN_YAML
 
 
 # ---------------------------------------------------------------------------
@@ -1086,32 +1124,57 @@ def _merged_from_user(user: dict[str, Any]) -> tuple[dict[str, Any], bool]:
     return merged, changed
 
 
-def load_preferences() -> dict[str, Any]:
-    """Load preferences; auto-migrate from any earlier schema version if needed."""
-    path = get_preferences_path()
-    if not path.exists():
-        return deepcopy(DEFAULT_PREFS)
+def _read_yaml_tolerant(path: Path) -> dict[str, Any]:
+    import yaml as _yaml
+    from utils.config_yaml import read_yaml
     try:
-        with path.open('r', encoding='utf-8') as f:
-            user = json.load(f)
-    except (json.JSONDecodeError, OSError):
-        return deepcopy(DEFAULT_PREFS)
-    if not isinstance(user, dict):
-        return deepcopy(DEFAULT_PREFS)
-    merged, changed = _merged_from_user(user)
-    if changed:
-        _write(path, merged)
-    return merged
+        return read_yaml(path)
+    except (_yaml.YAMLError, OSError):
+        return {}
+
+
+def _write_yaml_pair(merged: dict[str, Any]) -> None:
+    from utils.config_yaml import split_prefs, write_features_yaml, write_run_yaml
+    features_data, run_data = split_prefs(merged)
+    write_features_yaml(get_features_yaml_path(), features_data)
+    write_run_yaml(get_run_yaml_path(), run_data)
+
+
+def load_preferences() -> dict[str, Any]:
+    """Load preferences from the YAML pair; one-time import from legacy json."""
+    from utils.config_yaml import join_yaml_pair
+    f_path, r_path = get_features_yaml_path(), get_run_yaml_path()
+    if f_path.exists() or r_path.exists():
+        user = join_yaml_pair(_read_yaml_tolerant(f_path), _read_yaml_tolerant(r_path))
+        # The YAML store began at v19; a missing/hand-stripped schema_version
+        # must not fall into the v1 flat-json migration.
+        user.setdefault('schema_version', SCHEMA_VERSION)
+        merged, changed = _merged_from_user(user)
+        if changed:
+            _write_yaml_pair(merged)
+        return merged
+    return _load_legacy_json()
+
+
+def _load_legacy_json() -> dict[str, Any]:
+    # Task 4 replaces this stub with the one-time json import.
+    return deepcopy(DEFAULT_PREFS)
 
 
 def save_preferences(updates: dict[str, Any]) -> None:
-    """Merge `updates` into existing preferences and write to disk."""
-    path = get_preferences_path()
-    path.parent.mkdir(parents=True, exist_ok=True)
+    """Merge `updates` into current prefs; write only the touched YAML file(s)."""
+    from utils.config_yaml import split_prefs, write_features_yaml, write_run_yaml
     current = load_preferences()
     _deep_merge_current(current, updates)
     current['schema_version'] = SCHEMA_VERSION
-    _write(path, current)
+    features_data, run_data = split_prefs(current)
+    f_path, r_path = get_features_yaml_path(), get_run_yaml_path()
+    touched_run = 'shared' in updates
+    touched_features = any(k != 'shared' for k in updates)
+    if touched_features or not f_path.exists():
+        write_features_yaml(f_path, features_data)
+    if touched_run or not r_path.exists():
+        write_run_yaml(r_path, run_data)
 
 
 def reset_to_defaults(*, keep_shared: bool = True) -> dict[str, Any]:
