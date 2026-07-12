@@ -880,20 +880,14 @@ def get_preferences_path() -> Path:
 # Public API
 # ---------------------------------------------------------------------------
 
-def load_preferences() -> dict[str, Any]:
-    """Load preferences; auto-migrate from any earlier schema version if needed."""
-    path = get_preferences_path()
-    merged: dict[str, Any] = deepcopy(DEFAULT_PREFS)
+def _merged_from_user(user: dict[str, Any]) -> tuple[dict[str, Any], bool]:
+    """Run the full v1->v19 migration/merge/finalize chain on a parsed prefs dict.
 
-    if not path.exists():
-        return merged
-    try:
-        with path.open('r', encoding='utf-8') as f:
-            user = json.load(f)
-    except (json.JSONDecodeError, OSError):
-        return merged
-    if not isinstance(user, dict):
-        return merged
+    Pure: performs no disk I/O. Returns (merged, changed) where `changed` is
+    True iff the source `schema_version` differed from SCHEMA_VERSION (i.e.
+    the caller should persist the result).
+    """
+    merged: dict[str, Any] = deepcopy(DEFAULT_PREFS)
 
     version = user.get('schema_version', 1)
     # Repair leftover `document_categories_*` keys written by the
@@ -918,19 +912,16 @@ def load_preferences() -> dict[str, Any]:
         _deep_merge_current(merged, user)
     elif version == SCHEMA_VERSION_V9:
         _migrate_v9_into_v10(merged, user)
-        _write(path, merged)
     elif version == SCHEMA_VERSION_V8:
         v9_intermediate = deepcopy(DEFAULT_PREFS_V9)
         _migrate_v8_into_v9(v9_intermediate, user)
         _migrate_v9_into_v10(merged, v9_intermediate)
-        _write(path, merged)
     elif version == SCHEMA_VERSION_V7:
         v8_intermediate = deepcopy(DEFAULT_PREFS_V8)
         _migrate_v7_into_v8(v8_intermediate, user)
         v9_intermediate = deepcopy(DEFAULT_PREFS_V9)
         _migrate_v8_into_v9(v9_intermediate, v8_intermediate)
         _migrate_v9_into_v10(merged, v9_intermediate)
-        _write(path, merged)
     elif version == SCHEMA_VERSION_V6:
         v7_intermediate = deepcopy(DEFAULT_PREFS_V7)
         _migrate_v6_into_v7(v7_intermediate, user)
@@ -939,7 +930,6 @@ def load_preferences() -> dict[str, Any]:
         v9_intermediate = deepcopy(DEFAULT_PREFS_V9)
         _migrate_v8_into_v9(v9_intermediate, v8_intermediate)
         _migrate_v9_into_v10(merged, v9_intermediate)
-        _write(path, merged)
     elif version == SCHEMA_VERSION_V5:
         v6_intermediate = deepcopy(DEFAULT_PREFS_V6)
         _migrate_v5_into_v6(v6_intermediate, user)
@@ -950,7 +940,6 @@ def load_preferences() -> dict[str, Any]:
         v9_intermediate = deepcopy(DEFAULT_PREFS_V9)
         _migrate_v8_into_v9(v9_intermediate, v8_intermediate)
         _migrate_v9_into_v10(merged, v9_intermediate)
-        _write(path, merged)
     elif version == SCHEMA_VERSION_V4:
         v5_intermediate = deepcopy(DEFAULT_PREFS_V5)
         _migrate_v4_into_v5(v5_intermediate, user)
@@ -963,7 +952,6 @@ def load_preferences() -> dict[str, Any]:
         v9_intermediate = deepcopy(DEFAULT_PREFS_V9)
         _migrate_v8_into_v9(v9_intermediate, v8_intermediate)
         _migrate_v9_into_v10(merged, v9_intermediate)
-        _write(path, merged)
     elif version == 3:
         v4_intermediate = deepcopy(DEFAULT_PREFS_V4)
         _migrate_v3_into_v4(v4_intermediate, user)
@@ -978,7 +966,6 @@ def load_preferences() -> dict[str, Any]:
         v9_intermediate = deepcopy(DEFAULT_PREFS_V9)
         _migrate_v8_into_v9(v9_intermediate, v8_intermediate)
         _migrate_v9_into_v10(merged, v9_intermediate)
-        _write(path, merged)
     elif version == 2:
         v3_intermediate = deepcopy(DEFAULT_PREFS_V3)
         _migrate_v2_into_v3(v3_intermediate, user)
@@ -995,7 +982,6 @@ def load_preferences() -> dict[str, Any]:
         v9_intermediate = deepcopy(DEFAULT_PREFS_V9)
         _migrate_v8_into_v9(v9_intermediate, v8_intermediate)
         _migrate_v9_into_v10(merged, v9_intermediate)
-        _write(path, merged)
     else:
         # v1 flat → v2 → v3 → v4 → v5 → v6 → v7 → v8 → v9 → v10
         v2_intermediate = deepcopy(_DEFAULT_PREFS_V2)
@@ -1015,7 +1001,6 @@ def load_preferences() -> dict[str, Any]:
         v9_intermediate = deepcopy(DEFAULT_PREFS_V9)
         _migrate_v8_into_v9(v9_intermediate, v8_intermediate)
         _migrate_v9_into_v10(merged, v9_intermediate)
-        _write(path, merged)
 
     # v10 → v11 finalize (applies to every source version): LIWC is disabled
     # under its EULA, so coerce any stored "liwc" backend to "empath" and
@@ -1095,10 +1080,27 @@ def load_preferences() -> dict[str, Any]:
         metrics["topmatch"] = top_on
         pred["models"] = models
         pred.pop("llm_model", None)
-    if merged.get("schema_version") != SCHEMA_VERSION:
-        merged["schema_version"] = SCHEMA_VERSION
-        _write(path, merged)
 
+    changed = merged.get("schema_version") != SCHEMA_VERSION
+    merged["schema_version"] = SCHEMA_VERSION
+    return merged, changed
+
+
+def load_preferences() -> dict[str, Any]:
+    """Load preferences; auto-migrate from any earlier schema version if needed."""
+    path = get_preferences_path()
+    if not path.exists():
+        return deepcopy(DEFAULT_PREFS)
+    try:
+        with path.open('r', encoding='utf-8') as f:
+            user = json.load(f)
+    except (json.JSONDecodeError, OSError):
+        return deepcopy(DEFAULT_PREFS)
+    if not isinstance(user, dict):
+        return deepcopy(DEFAULT_PREFS)
+    merged, changed = _merged_from_user(user)
+    if changed:
+        _write(path, merged)
     return merged
 
 
