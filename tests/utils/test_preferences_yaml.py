@@ -183,3 +183,26 @@ def test_corrupted_legacy_json_returns_defaults_without_bak(tmp_path, monkeypatc
     assert p.exists()                                   # left in place for inspection
     assert not (tmp_path / "preferences.json.bak").exists()
     assert not (tmp_path / FEATURES_YAML).exists()
+
+
+def test_reset_rewrites_features_yaml_only(tmp_path, monkeypatch):
+    from utils.preferences import reset_to_defaults
+    monkeypatch.setenv("SENSI_CONFIG_DIR", str(tmp_path))
+    save_preferences({"features": {"master_structural": False},
+                      "shared": {"analyzer_name": "Keep Me"}})
+    run_before = (tmp_path / RUN_YAML).read_text(encoding="utf-8")
+    fresh = reset_to_defaults()                        # keep_shared=True default
+    assert fresh["features"]["master_structural"] is True
+    assert fresh["shared"]["analyzer_name"] == "Keep Me"
+    assert (tmp_path / RUN_YAML).read_text(encoding="utf-8") == run_before
+    fdata = read_yaml(tmp_path / FEATURES_YAML)
+    assert fdata["features"]["master_structural"] is True
+
+
+def test_reset_full_wipe_resets_run_yaml_too(tmp_path, monkeypatch):
+    from utils.preferences import reset_to_defaults
+    monkeypatch.setenv("SENSI_CONFIG_DIR", str(tmp_path))
+    save_preferences({"shared": {"analyzer_name": "Wipe Me"}})
+    fresh = reset_to_defaults(keep_shared=False)
+    assert fresh["shared"]["analyzer_name"] == ""
+    assert read_yaml(tmp_path / RUN_YAML)["shared"]["analyzer_name"] == ""

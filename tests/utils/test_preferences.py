@@ -13,21 +13,28 @@ from utils.preferences import (
 
 def test_reset_to_defaults_restores_feature_toggles(tmp_path, monkeypatch):
     monkeypatch.setenv('SENSI_PREFS_PATH', str(tmp_path / 'p.json'))
+    # Sanity: master_structural's shipped default is True, so flipping it off
+    # actually diverges from DEFAULT_PREFS (a vacuous key wouldn't catch a
+    # reset that silently no-ops).
+    assert DEFAULT_PREFS["features"]["master_structural"] is True
     # User flips a feature and sets an I/O folder.
     save_preferences({
-        "features": {"lexling_dep": False},
+        "features": {"master_structural": False},
         "shared": {"last_transcripts_folder": "/x/y", "analyzer_name": "Alice"},
     })
-    assert load_preferences()["features"]["lexling_dep"] is False
+    assert load_preferences()["features"]["master_structural"] is False
 
     fresh = reset_to_defaults()  # keep_shared=True by default
     # Feature toggles are back to shipped defaults...
-    assert fresh["features"]["lexling_dep"] == DEFAULT_PREFS["features"]["lexling_dep"]
-    assert load_preferences()["features"]["lexling_dep"] == \
-        DEFAULT_PREFS["features"]["lexling_dep"]
+    assert fresh["features"]["master_structural"] is True
+    # ...verified via a fresh load_preferences() call, not just the returned dict.
+    reloaded = load_preferences()
+    assert reloaded["features"]["master_structural"] is True
     # ...but the I/O folder + analyzer are preserved.
     assert fresh["shared"]["last_transcripts_folder"] == "/x/y"
     assert fresh["shared"]["analyzer_name"] == "Alice"
+    assert reloaded["shared"]["last_transcripts_folder"] == "/x/y"
+    assert reloaded["shared"]["analyzer_name"] == "Alice"
 
 
 def test_reset_to_defaults_full_wipe_clears_shared(tmp_path, monkeypatch):
@@ -35,6 +42,9 @@ def test_reset_to_defaults_full_wipe_clears_shared(tmp_path, monkeypatch):
     save_preferences({"shared": {"last_transcripts_folder": "/x/y"}})
     fresh = reset_to_defaults(keep_shared=False)
     assert fresh["shared"]["last_transcripts_folder"] == \
+        DEFAULT_PREFS["shared"]["last_transcripts_folder"]
+    # ...verified via a fresh load_preferences() call, not just the returned dict.
+    assert load_preferences()["shared"]["last_transcripts_folder"] == \
         DEFAULT_PREFS["shared"]["last_transcripts_folder"]
 
 
@@ -66,6 +76,10 @@ def test_get_preferences_path_respects_env_var(tmp_path, monkeypatch):
 
 
 def test_get_preferences_path_defaults_to_config_dir(monkeypatch):
+    # The autouse _isolated_config_dir fixture sets SENSI_CONFIG_DIR for every
+    # test; undo it here too so this test can see the true project default
+    # (same pattern as test_config_dir_env_precedence in test_preferences_yaml.py).
+    monkeypatch.delenv('SENSI_CONFIG_DIR', raising=False)
     monkeypatch.delenv('SENSI_PREFS_PATH', raising=False)
     p = get_preferences_path()
     assert p.name == 'preferences.json'

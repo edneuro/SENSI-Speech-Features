@@ -1,5 +1,5 @@
-"""GUI test configuration: redirect preferences writes to a temp file
-so tests do not pollute config/preferences.json."""
+"""GUI test configuration: redirect the two-YAML config store to a temp dir
+so tests do not pollute config/features.yaml + config/run.yaml."""
 
 import os
 import pytest
@@ -7,8 +7,9 @@ import pytest
 
 @pytest.fixture(autouse=True)
 def _isolated_prefs(tmp_path, monkeypatch):
-    """Redirect all save_preferences calls to a per-test temp file."""
+    """Redirect all save_preferences calls to a per-test temp dir."""
     prefs_file = tmp_path / "test_preferences.json"
+    monkeypatch.setenv("SENSI_CONFIG_DIR", str(tmp_path))
     monkeypatch.setenv("SENSI_PREFS_PATH", str(prefs_file))
     yield
 
@@ -17,10 +18,11 @@ def _isolated_prefs(tmp_path, monkeypatch):
 def prefs_tmp(tmp_path, monkeypatch):
     """Named alias used by tests that want an explicit handle on prefs isolation.
 
-    The autouse fixture above already redirects SENSI_PREFS_PATH for every
-    test, so this fixture is mostly a semantic marker — it returns the prefs
-    file path in case a test needs it.
+    The autouse fixture above already redirects the two-YAML config store for
+    every test, so this fixture is mostly a semantic marker — it returns the
+    legacy prefs.json path in case a test needs it as a scratch prefs location.
     """
     prefs_file = tmp_path / "test_preferences.json"
+    monkeypatch.setenv("SENSI_CONFIG_DIR", str(tmp_path))
     monkeypatch.setenv("SENSI_PREFS_PATH", str(prefs_file))
     return prefs_file

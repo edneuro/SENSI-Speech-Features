@@ -11,3 +11,15 @@ if str(_ROOT) not in sys.path:
 # floating-point BLAS calls (Windows, Ryzen). Force sequential threading so
 # matrix-multiply in librosa/numpy works without a fatal exception (0xc06d007f).
 os.environ.setdefault("MKL_THREADING_LAYER", "sequential")
+
+import pytest
+
+
+@pytest.fixture(autouse=True)
+def _isolated_config_dir(tmp_path, monkeypatch):
+    """Point the two-YAML config store at a per-test temp dir so no test can
+    read or migrate/rewrite the repo's real config/. Tests that exercise the
+    legacy-json path additionally set SENSI_PREFS_PATH (same tmp_path, so the
+    json and the YAMLs it migrates into share a directory)."""
+    monkeypatch.setenv("SENSI_CONFIG_DIR", str(tmp_path))
+    yield

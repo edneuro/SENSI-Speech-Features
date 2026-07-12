@@ -12,6 +12,15 @@ from utils.preferences import (
 )
 
 
+def _yaml_on_disk(json_path):
+    """The store the migrated prefs actually landed in (YAML pair next to the
+    legacy json path)."""
+    from pathlib import Path
+    from utils.config_yaml import read_yaml, join_yaml_pair, FEATURES_YAML, RUN_YAML
+    d = Path(json_path).parent
+    return join_yaml_pair(read_yaml(d / FEATURES_YAML), read_yaml(d / RUN_YAML))
+
+
 def test_default_prefs_has_v4_sections():
     """DEFAULT_PREFS is now v4-shaped (same top-level sections as v3)."""
     assert 'shared' in DEFAULT_PREFS
@@ -123,7 +132,7 @@ def test_unknown_top_level_keys_preserved(tmp_path, monkeypatch):
 def test_save_preferences_writes_schema_version(tmp_path, monkeypatch):
     monkeypatch.setenv('SENSI_PREFS_PATH', str(tmp_path / 'p.json'))
     save_preferences({'shared': {'analyzer_name': 'C'}})
-    data = json.loads((tmp_path / 'p.json').read_text())
+    data = _yaml_on_disk(tmp_path / 'p.json')
     assert data.get('schema_version') == SCHEMA_VERSION
 
 
@@ -297,7 +306,7 @@ def test_v2_migration_coerces_disabled_liwc_backend_to_empath(v2_prefs_file):
 def test_v2_migration_rewrites_file_as_v4(v2_prefs_file):
     from utils.preferences import load_preferences, SCHEMA_VERSION
     load_preferences()
-    on_disk = json.loads(Path(v2_prefs_file).read_text(encoding="utf-8"))
+    on_disk = _yaml_on_disk(v2_prefs_file)
     assert on_disk["schema_version"] == SCHEMA_VERSION
     assert "features" in on_disk
     assert "word_level" not in on_disk
@@ -438,7 +447,7 @@ def test_v3_migration_preserves_unchanged_keys(v3_prefs_file):
 
 def test_v3_migration_rewrites_file_as_v4(v3_prefs_file):
     load_preferences()
-    on_disk = json.loads(Path(v3_prefs_file).read_text(encoding="utf-8"))
+    on_disk = _yaml_on_disk(v3_prefs_file)
     assert on_disk["schema_version"] == SCHEMA_VERSION
 
 
@@ -700,7 +709,7 @@ def test_load_v7_prefs_file_migrates_to_current(tmp_path, monkeypatch):
     loaded = load_preferences()
     assert loaded['schema_version'] == SCHEMA_VERSION
     assert loaded['prosody']['pcenter_k'] == 0.3
-    on_disk = json.loads(prefs_path.read_text())
+    on_disk = _yaml_on_disk(prefs_path)
     assert on_disk['schema_version'] == SCHEMA_VERSION
 
 
@@ -749,7 +758,7 @@ def test_load_v8_prefs_file_migrates_to_current(tmp_path, monkeypatch):
     assert loaded['schema_version'] == SCHEMA_VERSION
     assert loaded['features']['feat_sentence_onset'] is True
     assert loaded['output']['sentences_csv'] is True
-    on_disk = json.loads(prefs_path.read_text())
+    on_disk = _yaml_on_disk(prefs_path)
     assert on_disk['schema_version'] == SCHEMA_VERSION
 
 
@@ -802,7 +811,7 @@ def test_load_v9_prefs_file_migrates_to_current(tmp_path, monkeypatch):
     # output and the embedding master (which is the feature on/off) default off.
     assert loaded['output']['word2vec_mat'] is False
     assert loaded['features']['master_word2vec'] is False
-    on_disk = json.loads(prefs_path.read_text())
+    on_disk = _yaml_on_disk(prefs_path)
     assert on_disk['schema_version'] == SCHEMA_VERSION
 
 
@@ -829,7 +838,7 @@ def test_v10_to_v11_coerces_liwc_backend_and_bumps_version(tmp_path, monkeypatch
     assert SCHEMA_VERSION >= SCHEMA_VERSION_V11
     assert loaded['schema_version'] == SCHEMA_VERSION
     assert loaded['semantic']['backend'] == 'empath'
-    on_disk = json.loads(prefs_path.read_text())
+    on_disk = _yaml_on_disk(prefs_path)
     assert on_disk['schema_version'] == SCHEMA_VERSION
     assert on_disk['semantic']['backend'] == 'empath'
 

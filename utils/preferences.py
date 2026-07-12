@@ -1200,23 +1200,21 @@ def save_preferences(updates: dict[str, Any]) -> None:
 
 
 def reset_to_defaults(*, keep_shared: bool = True) -> dict[str, Any]:
-    """Overwrite the preferences file with the shipped defaults.
+    """Rewrite features.yaml with the shipped defaults.
 
-    Every feature/output/config selection returns to DEFAULT_PREFS. By default
-    the `shared` section (I/O folder paths, analyzer name, theme) is preserved
-    so the user doesn't have to re-pick folders after a reset; pass
-    keep_shared=False for a full wipe.
-
-    The preferences file is local (gitignored), so this only affects this
-    machine. Returns the fresh prefs dict.
+    run.yaml (folders, analyzer, theme, token paths) is never touched by a
+    default reset — pass keep_shared=False to reset it too. Files are local
+    (gitignored), so this only affects this machine. Returns the fresh prefs.
     """
-    path = get_preferences_path()
+    from utils.config_yaml import split_prefs, write_features_yaml, write_run_yaml
+    current = load_preferences()          # also triggers the legacy-json import
     fresh = deepcopy(DEFAULT_PREFS)
-    if keep_shared:
-        current = load_preferences()
-        if isinstance(current.get("shared"), dict):
-            fresh["shared"] = deepcopy(current["shared"])
-    _write(path, fresh)
+    if keep_shared and isinstance(current.get('shared'), dict):
+        fresh['shared'] = deepcopy(current['shared'])
+    features_data, run_data = split_prefs(fresh)
+    write_features_yaml(get_features_yaml_path(), features_data)
+    if not keep_shared:
+        write_run_yaml(get_run_yaml_path(), run_data)
     return fresh
 
 
