@@ -69,6 +69,8 @@ def run(progress_cb: Callable[[int, int, str], None],
         if session_hf_token:
             os.environ["HF_TOKEN"] = session_hf_token
         prefs = load_preferences()
+        from utils.credentials import export_hf_token
+        exported_file_token = export_hf_token(prefs.get("shared", {}))
         plan = planner.plan_from_prefs(prefs)
         run_ts = _dt.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
         # Shared per-document alignment cache: the word and doc passes both
@@ -104,6 +106,8 @@ def run(progress_cb: Callable[[int, int, str], None],
             if session_api_key:
                 os.environ.pop("OPENAI_API_KEY", None)
             if session_hf_token:
+                os.environ.pop("HF_TOKEN", None)
+            elif exported_file_token:
                 os.environ.pop("HF_TOKEN", None)
 
     if in_thread:

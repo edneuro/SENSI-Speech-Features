@@ -301,3 +301,31 @@ def test_context_spin_uses_adaptive_steps(qtbot, prefs_tmp):
     before = spin.value()
     spin.stepDown()
     assert before - spin.value() >= 1000  # ~10%, not a 0.1% nudge
+
+
+def test_save_hf_token_button_persists_and_hides_row(qtbot, monkeypatch, tmp_path):
+    monkeypatch.setenv("SENSI_CONFIG_DIR", str(tmp_path))
+    monkeypatch.setattr("huggingface_hub.get_token", lambda: None)
+    monkeypatch.delenv("HF_TOKEN", raising=False)
+    from gui.section_word_features import WordFeaturesSection
+    w = WordFeaturesSection(); qtbot.addWidget(w); w.show()
+    assert w.hf_token_row.isVisible() is True
+    w.hf_token_line.setText("hf_gui_token")
+    w.hf_token_save_btn.click()
+    assert (tmp_path / "hf_token.txt").read_text(encoding="utf-8") == "hf_gui_token\n"
+    from utils.preferences import load_preferences
+    assert load_preferences()["shared"]["hf_token_file"] == "hf_token.txt"
+    assert w.hf_token_line.text() == ""              # field cleared after save
+    assert w.hf_token_row.isVisible() is False       # real has_hf_token now sees the file
+    assert w.hf_token_detected_label.isVisible() is True
+
+
+def test_save_hf_token_button_ignores_empty(qtbot, monkeypatch, tmp_path):
+    import extractors.predictability as m
+    monkeypatch.setenv("SENSI_CONFIG_DIR", str(tmp_path))
+    monkeypatch.setattr(m, "has_hf_token", lambda: False)
+    from gui.section_word_features import WordFeaturesSection
+    w = WordFeaturesSection(); qtbot.addWidget(w)
+    w.hf_token_line.setText("   ")
+    w.hf_token_save_btn.click()
+    assert not (tmp_path / "hf_token.txt").exists()

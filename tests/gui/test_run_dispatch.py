@@ -570,6 +570,22 @@ def test_dispatcher_sets_and_pops_hf_token(monkeypatch, tmp_path):
     assert os.environ.get("HF_TOKEN") is None       # popped afterward
 
 
+def test_dispatcher_exports_file_token_when_no_session_token(monkeypatch, tmp_path):
+    import os
+    import gui.run_dispatch as rd
+    monkeypatch.setenv("SENSI_CONFIG_DIR", str(tmp_path))
+    monkeypatch.setenv("SENSI_PREFS_PATH", str(tmp_path / "prefs.json"))
+    monkeypatch.delenv("HF_TOKEN", raising=False)
+    (tmp_path / "hf_token.txt").write_text("hf_from_file\n", encoding="utf-8")
+    seen = {}
+    def fake_word(args, **kwargs): seen["during"] = os.environ.get("HF_TOKEN")
+    monkeypatch.setattr("main.run_word_level_batch", fake_word, raising=False)
+    rd.run(progress_cb=lambda *a: None, done_cb=lambda s: None,
+           session_api_key="", session_hf_token="", in_thread=False)
+    assert seen["during"] == "hf_from_file"          # exported for the run
+    assert os.environ.get("HF_TOKEN") is None        # popped afterward
+
+
 def test_acoustic_namespace_carries_config():
     from gui.planner.emit import to_acoustic_namespace
     prefs = {

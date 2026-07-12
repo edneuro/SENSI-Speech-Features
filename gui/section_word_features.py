@@ -272,7 +272,8 @@ class WordFeaturesSection(QWidget):
         ht.addWidget(QLabel("HF token:"))
         self.hf_token_line = QLineEdit()
         self.hf_token_line.setEchoMode(QLineEdit.Password)
-        self.hf_token_line.setPlaceholderText("Paste HuggingFace token — never saved to disk")
+        self.hf_token_line.setPlaceholderText(
+            "Paste HuggingFace token — Save stores it in config/hf_token.txt")
         self.hf_token_line.textChanged.connect(
             lambda txt: self.refresh_warnings(session_hf_token=txt))
         ht.addWidget(self.hf_token_line, 1)
@@ -280,6 +281,12 @@ class WordFeaturesSection(QWidget):
         hf_show.toggled.connect(lambda v: self.hf_token_line.setEchoMode(
             QLineEdit.Normal if v else QLineEdit.Password))
         ht.addWidget(hf_show)
+        self.hf_token_save_btn = QPushButton("Save")
+        self.hf_token_save_btn.setToolTip(
+            "Store the token in config/hf_token.txt (gitignored) so future "
+            "runs — GUI or headless — find it automatically.")
+        self.hf_token_save_btn.clicked.connect(self._save_hf_token)
+        ht.addWidget(self.hf_token_save_btn)
         pred_card.add_widget(self.hf_token_row)
         self.hf_token_detected_label = QLabel("✓ HuggingFace token detected")
         pred_card.add_widget(self.hf_token_detected_label)
@@ -491,6 +498,16 @@ class WordFeaturesSection(QWidget):
 
     def session_hf_token(self) -> str:
         return self.hf_token_line.text() if self.hf_token_row.isVisible() else ""
+
+    def _save_hf_token(self) -> None:
+        token = self.hf_token_line.text().strip()
+        if not token:
+            return
+        from utils.credentials import save_hf_token
+        save_hf_token(token)
+        self.hf_token_line.clear()
+        self._refresh_llm_credential_visibility()
+        self.refresh_warnings()
 
     def _make_toggle(self, key, label, initial, section):
         row = ToggleRow(label=label, info_key=key)
