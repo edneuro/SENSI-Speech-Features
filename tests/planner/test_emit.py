@@ -91,6 +91,9 @@ def test_predictability_namespace_reflects_prefs():
         "context": {},
     }
     assert "predictability" in plan.stages_to_run
+    assert set(plan.emitted_columns_for("predictability")) == {
+        "gpt2_Surprisal", "gpt2_TopMatch", "llama3_8b_Surprisal", "llama3_8b_TopMatch",
+    }
 
 
 def test_predictability_namespace_carries_context_map():
@@ -105,9 +108,6 @@ def test_predictability_namespace_carries_context_map():
     )
     ns = to_namespace(plan_from_prefs(prefs), prefs, level="word")
     assert ns.predictability["context"] == {"llama3_8b": 2048}
-    assert set(plan.emitted_columns_for("predictability")) == {
-        "gpt2_Surprisal", "gpt2_TopMatch", "llama3_8b_Surprisal", "llama3_8b_TopMatch",
-    }
 
 
 def test_sidecars_only_namespace():
