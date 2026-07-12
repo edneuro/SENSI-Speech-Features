@@ -60,7 +60,7 @@ SensiExtractor/
 │   ├── text_parser.py     # spaCy annotation
 │   ├── aligner.py         # MFA forced alignment
 │   ├── word_freq.py       # wordfreq
-│   └── surprisal.py       # GPT-2 surprisal
+│   └── predictability.py  # GPT-2/Llama surprisal, cloze, top-match (roster in predictability_models.py)
 ├── utils/
 │   ├── transcript_prep.py # Number spelling (num2words), whitespace normalization
 │   ├── textgrid_parser.py # MFA TextGrid → DataFrame
