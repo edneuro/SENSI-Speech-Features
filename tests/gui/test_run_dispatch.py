@@ -187,7 +187,8 @@ def test_doc_args_predictability_dict_mirrors_prefs_regardless_of_level(prefs_tm
     })
     args = build_args_doc_level()
     assert args.predictability == {
-        "models": [], "metrics": {"surprisal": False, "cloze": False, "topmatch": False}}
+        "models": [], "metrics": {"surprisal": False, "cloze": False, "topmatch": False},
+        "context": {}}
     # The aggregate is still requested (doc_agg_predictability=True); it's
     # main.run_doc_level_batch's job (not the GUI namespace) to no-op
     # gracefully when no predictability columns exist to aggregate.
@@ -206,7 +207,8 @@ def test_doc_args_no_doc_predictability_off_when_aggregate_toggle_off(prefs_tmp)
     })
     args = build_args_doc_level()
     assert args.predictability == {
-        "models": ["gpt2"], "metrics": {"surprisal": True, "cloze": False, "topmatch": False}}
+        "models": ["gpt2"], "metrics": {"surprisal": True, "cloze": False, "topmatch": False},
+        "context": {}}
     assert args.no_doc_predictability is True
 
 

@@ -167,6 +167,24 @@ Scoring inside each chunk remains correct: causal attention guarantees
 each position's conditional distribution depends only on its own
 (possibly-truncated) left context.
 
+### Per-model context size (optional cap)
+Each model row in the Predictability card has a **context** spinner:
+the maximum context (subwords) fed per forward pass, defaulting to the
+model's full native window (`native_ctx`). Lowering it makes the
+chunking above kick in sooner — each word conditions on less preceding
+text, which is **faster and uses less memory on long stimuli**, and
+lets you fix a common context length across models for comparability.
+The cap is clamped to `[128, native_ctx]` (helper
+`predictability_models.effective_context`); the effective window is
+`min(cap, model's real max)`, so it never exceeds what the model can
+hold. Stored per model in `prefs["predictability"]["context"]` (a slug
+absent from the map = uncapped = the default).
+
+> ⚠️ Lowering a model's context **changes** the emitted `<slug>_Surprisal`
+> / `_Cloze` values for stimuli longer than the cap (each word sees less
+> history) — by design, and only when you opt in. Leave it at the
+> default to reproduce the full-context values.
+
 ### Why a `window // 2` stride
 The stride trades preceding-context budget against forward-pass count:
 
