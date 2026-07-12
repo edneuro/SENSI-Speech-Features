@@ -13,7 +13,7 @@ Feature flags (all enabled by default):
     --no-freq        Skip word frequency (Zipf_Freq)
 
 Predictability (surprisal / cloze / top-match) is no longer a CLI flag: it
-is configured via preferences.json's "predictability" section (roster of
+is configured via config/features.yaml's "predictability" section (roster of
 models x metrics) or, for GUI-driven runs, via ns.predictability set by
 gui/planner/emit.py. See extractors/predictability.py.
 
@@ -124,7 +124,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument('--sem-categories',  default=None,
                    help='Comma-separated category names. Default = SOP 15-category set.')
     p.add_argument('--save-prefs',      action='store_true',
-                   help='Persist current --sem-categories selection to preferences.json.')
+                   help='Persist current --sem-categories selection to config/features.yaml.')
 
     # Prosody (Task 5) — group-level CLI flags only.
     # Per-column granularity is GUI-only and flows through args.feature_toggles
@@ -349,7 +349,7 @@ def run(args) -> pd.DataFrame:
     # extractor (replaces the old separate add_surprisal / add_llm_cloze
     # blocks). Config comes from ns.predictability when a caller (GUI batch
     # dispatch) set it explicitly; the CLI leaves args.predictability unset,
-    # so a plain `python main.py` run falls back to preferences.json (mirrors
+    # so a plain `python main.py` run falls back to the config store (mirrors
     # how sem_categories falls back to prefs above).
     pconf = getattr(args, 'predictability', None)
     if pconf is None:
@@ -1095,7 +1095,7 @@ def run_doc_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None:
     # is no no_surprisal=False-style flag to force on — predictability is a
     # models x metrics roster carried verbatim on extract_args.predictability
     # (copied from args above: either ns.predictability set by the GUI or,
-    # for CLI runs, resolved from preferences.json inside run()). When
+    # for CLI runs, resolved from config/features.yaml inside run()). When
     # doc_toggles['predictability_means'] is on, build_doc_summary scans
     # whatever '<slug>_<Metric>' columns that roster actually produced and
     # means them (utils/doc_summary.py's predictability_means branch) — if

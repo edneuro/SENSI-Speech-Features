@@ -110,3 +110,38 @@ def test_validate_run_yaml_accepts_default_and_flags_unknown():
     errs = validate_run_yaml(run)
     assert any("bogus_key" in e for e in errs)
     assert any("not_shared" in e for e in errs)
+
+
+# ---------------------------------------------------------------------------
+# Final-review hardening (Fix 3): validators must not raise AttributeError on
+# a truthy non-mapping section — flag it as an error and skip iterating it.
+# ---------------------------------------------------------------------------
+
+def test_validate_features_yaml_non_mapping_features_section_reports_error():
+    errs = validate_features_yaml({"features": [1, 2, 3]})
+    assert any("features" in e and "must be a mapping" in e for e in errs)
+
+
+def test_validate_features_yaml_non_mapping_scalar_section_reports_error():
+    errs = validate_features_yaml({"features": 5})
+    assert any("features" in e and "must be a mapping" in e for e in errs)
+
+
+def test_validate_features_yaml_non_mapping_typed_section_reports_error():
+    errs = validate_features_yaml({"prosody": 5})
+    assert any("prosody" in e and "must be a mapping" in e for e in errs)
+
+
+def test_validate_features_yaml_non_mapping_semantic_section_reports_error():
+    errs = validate_features_yaml({"semantic": 5})
+    assert any("semantic" in e and "must be a mapping" in e for e in errs)
+
+
+def test_validate_features_yaml_non_mapping_output_section_reports_error():
+    errs = validate_features_yaml({"output": [1, 2]})
+    assert any("output" in e and "must be a mapping" in e for e in errs)
+
+
+def test_validate_run_yaml_non_mapping_shared_section_reports_error():
+    errs = validate_run_yaml({"shared": 5})
+    assert any("shared" in e and "must be a mapping" in e for e in errs)

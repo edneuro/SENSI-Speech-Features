@@ -1145,12 +1145,24 @@ def load_preferences() -> dict[str, Any]:
     f_path, r_path = get_features_yaml_path(), get_run_yaml_path()
     if f_path.exists() or r_path.exists():
         user = join_yaml_pair(_read_yaml_tolerant(f_path), _read_yaml_tolerant(r_path))
+        if not user and get_preferences_path().exists():
+            # Half-import window: a crash (or torn write) between writing
+            # features.yaml and run.yaml can leave one file missing/empty/
+            # unparseable while a legacy preferences.json still sits on disk.
+            # Both tolerant reads came back with nothing usable — rather than
+            # silently loading defaults and orphaning the json forever, fall
+            # through and (re)run the import so the pair gets completed.
+            return _load_legacy_json()
         # The YAML store began at v19; a missing/hand-stripped schema_version
         # must not fall into the v1 flat-json migration.
         user.setdefault('schema_version', SCHEMA_VERSION)
         merged, changed = _merged_from_user(user)
         if changed:
-            _write_yaml_pair(merged)
+            try:
+                _write_yaml_pair(merged)
+            except OSError:
+                pass  # read-only config dir: settings still load for the
+                      # session, persistence just doesn't happen
         return merged
     return _load_legacy_json()
 
@@ -1174,7 +1186,15 @@ def _load_legacy_json() -> dict[str, Any]:
     if not isinstance(user, dict):
         return deepcopy(DEFAULT_PREFS)
     merged, _ = _merged_from_user(user)
-    _write_yaml_pair(merged)
+    try:
+        _write_yaml_pair(merged)
+    except OSError:
+        # Config dir is read-only (or otherwise unwritable): the app must
+        # still start up and use the imported settings for this session. Do
+        # NOT rename the json to .bak here — the YAML pair write failed, so
+        # the json is the only surviving store; destroying it would lose the
+        # user's settings permanently.
+        return merged
     try:
         os.replace(path, path.with_name(path.name + '.bak'))
     except OSError:

@@ -76,3 +76,34 @@ def test_main_exits_on_invalid_features_yaml(tmp_path, monkeypatch, capsys):
         run.main()
     assert ei.value.code == 1
     assert "not_a_real_toggle" in capsys.readouterr().err
+
+
+def test_main_exits_on_non_mapping_features_yaml_root(tmp_path, monkeypatch, capsys):
+    # Fix 4: a YAML list (or other non-mapping) root must not silently
+    # validate clean and run with defaults — read_yaml's tolerant coercion
+    # to {} is bypassed for run.py's own validation pass.
+    import run
+    _write_pair(tmp_path, monkeypatch)
+    (tmp_path / FEATURES_YAML).write_text("- a\n- b\n", encoding="utf-8")
+    monkeypatch.setattr("sys.argv", ["run.py"])
+    with pytest.raises(SystemExit) as ei:
+        run.main()
+    assert ei.value.code == 1
+    err = capsys.readouterr().err
+    assert "must be a mapping" in err
+
+
+def test_main_warns_when_features_yaml_missing(tmp_path, monkeypatch, capsys):
+    # Fix 5: a present run.yaml + absent features.yaml must not run the
+    # minimal opt-in defaults silently — warn to stderr but still proceed.
+    import run
+    _write_pair(tmp_path, monkeypatch)
+    (tmp_path / FEATURES_YAML).unlink()
+    monkeypatch.setattr("main.run_word_level_batch",
+                        lambda *a, **k: None, raising=False)
+    monkeypatch.setattr("main.run_doc_level_batch",
+                        lambda *a, **k: None, raising=False)
+    monkeypatch.setattr("sys.argv", ["run.py"])
+    run.main()
+    err = capsys.readouterr().err
+    assert "features.yaml not found" in err

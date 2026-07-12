@@ -95,10 +95,27 @@ def _dump_with_sections(header: str, data: dict) -> str:
 
 
 def _write_text(path, text: str) -> None:
+    """Write `text` to `path` atomically (temp file in the same dir + os.replace).
+
+    Prevents a crash mid-write (or a torn write) from leaving `path` truncated
+    or unparseable — readers always see either the old content or the new
+    content, never a partial file.
+    """
     from pathlib import Path
+    import tempfile
     p = Path(os.path.expanduser(str(path)))
     p.parent.mkdir(parents=True, exist_ok=True)
-    p.write_text(text, encoding="utf-8")
+    fd, tmp_name = tempfile.mkstemp(prefix=p.name + ".", suffix=".tmp", dir=str(p.parent))
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            f.write(text)
+        os.replace(tmp_name, p)
+    except BaseException:
+        try:
+            os.remove(tmp_name)
+        except OSError:
+            pass
+        raise
 
 
 def write_features_yaml(path, data: dict) -> None:
@@ -121,8 +138,12 @@ def validate_features_yaml(data: dict) -> list[str]:
         if key not in known_sections:
             errors.append(f"unknown top-level section: {key!r}")
     for section in ("features", "output"):
+        raw = data.get(section)
+        if raw is not None and not isinstance(raw, dict):
+            errors.append(f"section {section!r} must be a mapping")
+            continue
         valid = set(_defaults[section])
-        for key, val in (data.get(section) or {}).items():
+        for key, val in (raw or {}).items():
             if key not in valid:
                 errors.append(f"unknown {section} toggle: {key!r}")
             elif not isinstance(val, bool):
@@ -131,6 +152,9 @@ def validate_features_yaml(data: dict) -> list[str]:
     for section in typed_sections:
         default_section = _defaults[section]
         values = data.get(section)
+        if values is not None and not isinstance(values, dict):
+            errors.append(f"section {section!r} must be a mapping")
+            continue
         if not (isinstance(default_section, dict) and isinstance(values, dict)):
             continue
         for k, v in values.items():
@@ -140,9 +164,13 @@ def validate_features_yaml(data: dict) -> list[str]:
                 errors.append(
                     f"setting {section}.{k} must be {type(default_section[k]).__name__}, "
                     f"got {type(v).__name__}")
-    for k in (data.get("semantic") or {}):
-        if k not in _defaults["semantic"]:
-            errors.append(f"unknown semantic key: {k!r}")
+    sem_raw = data.get("semantic")
+    if sem_raw is not None and not isinstance(sem_raw, dict):
+        errors.append("section 'semantic' must be a mapping")
+    else:
+        for k in (sem_raw or {}):
+            if k not in _defaults["semantic"]:
+                errors.append(f"unknown semantic key: {k!r}")
     return errors
 
 
@@ -154,11 +182,15 @@ def validate_run_yaml(data: dict) -> list[str]:
     for key in data:
         if key not in _RUN_SECTIONS:
             errors.append(f"unknown top-level section: {key!r} (expected 'shared')")
-    shared_defaults = _defaults["shared"]
-    for k, v in (data.get("shared") or {}).items():
-        if k not in shared_defaults:
-            errors.append(f"unknown shared key: {k!r}")
-        elif not _type_ok(shared_defaults[k], v):
-            errors.append(f"shared.{k} must be {type(shared_defaults[k]).__name__}, "
-                          f"got {type(v).__name__}")
+    shared_raw = data.get("shared")
+    if shared_raw is not None and not isinstance(shared_raw, dict):
+        errors.append("section 'shared' must be a mapping")
+    else:
+        shared_defaults = _defaults["shared"]
+        for k, v in (shared_raw or {}).items():
+            if k not in shared_defaults:
+                errors.append(f"unknown shared key: {k!r}")
+            elif not _type_ok(shared_defaults[k], v):
+                errors.append(f"shared.{k} must be {type(shared_defaults[k]).__name__}, "
+                              f"got {type(v).__name__}")
     return errors

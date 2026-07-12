@@ -87,23 +87,39 @@ def main() -> None:
     import yaml as _yaml
     from utils.preferences import (load_preferences, get_features_yaml_path,
                                    get_run_yaml_path)
-    from utils.config_yaml import (read_yaml, validate_features_yaml,
-                                   validate_run_yaml)
+    from utils.config_yaml import validate_features_yaml, validate_run_yaml
 
+    # Parse each file's raw content directly rather than via read_yaml: that
+    # helper coerces a non-mapping root (e.g. a YAML list) to {}, which would
+    # let a malformed features.yaml validate clean and silently run with
+    # defaults. read_yaml's tolerant coercion is left alone for
+    # load_preferences, which relies on it (half-import fallback).
     errors: list[str] = []
     for path, validate in ((get_features_yaml_path(), validate_features_yaml),
                            (get_run_yaml_path(), validate_run_yaml)):
-        try:
-            data = read_yaml(path)
-        except _yaml.YAMLError as exc:
-            errors.append(f"{path.name}: not valid YAML ({exc})")
+        if path.exists():
+            try:
+                with path.open("r", encoding="utf-8") as f:
+                    raw = _yaml.safe_load(f)
+            except _yaml.YAMLError as exc:
+                errors.append(f"{path.name}: not valid YAML ({exc})")
+                continue
+        else:
+            raw = None
+        if raw is not None and not isinstance(raw, dict):
+            errors.append(f"{path.name}: root must be a mapping")
             continue
-        errors.extend(f"{path.name}: {e}" for e in validate(data))
+        errors.extend(f"{path.name}: {e}" for e in validate(raw or {}))
     if errors:
         print("Invalid config:", file=sys.stderr)
         for e in errors:
             print(f"  - {e}", file=sys.stderr)
         sys.exit(1)
+
+    if not get_features_yaml_path().exists():
+        print(f"[warn] features.yaml not found in {get_features_yaml_path().parent} "
+              f"— running with shipped defaults (minimal feature set).",
+              file=sys.stderr)
 
     prefs = load_preferences()
     shared = prefs["shared"]

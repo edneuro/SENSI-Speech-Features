@@ -206,3 +206,71 @@ def test_reset_full_wipe_resets_run_yaml_too(tmp_path, monkeypatch):
     fresh = reset_to_defaults(keep_shared=False)
     assert fresh["shared"]["analyzer_name"] == ""
     assert read_yaml(tmp_path / RUN_YAML)["shared"]["analyzer_name"] == ""
+
+
+# ---------------------------------------------------------------------------
+# Final-review hardening: half-import window (Fix 1) + read-only tolerance
+# (Fix 2)
+# ---------------------------------------------------------------------------
+
+def test_empty_features_yaml_with_legacy_json_falls_through_to_import(tmp_path, monkeypatch):
+    # A crash between the two _write_yaml_pair writes (or a torn write) can
+    # leave features.yaml present-but-empty and run.yaml never written, while
+    # the original preferences.json is still on disk. Both tolerant YAML
+    # reads come back with nothing usable, so load_preferences must not
+    # silently hand back defaults and orphan the json — it should complete
+    # the import instead.
+    monkeypatch.setenv("SENSI_CONFIG_DIR", str(tmp_path))
+    monkeypatch.setenv("SENSI_PREFS_PATH", str(tmp_path / "preferences.json"))
+    legacy = deepcopy(DEFAULT_PREFS)
+    legacy["shared"]["analyzer_name"] = "HalfImport"
+    legacy["features"]["master_structural"] = False
+    (tmp_path / "preferences.json").write_text(json.dumps(legacy), encoding="utf-8")
+    (tmp_path / FEATURES_YAML).write_text("", encoding="utf-8")   # empty, no run.yaml
+
+    prefs = load_preferences()
+    assert prefs["shared"]["analyzer_name"] == "HalfImport"
+    assert prefs["features"]["master_structural"] is False
+    # import completed: pair written, legacy json renamed to .bak
+    assert (tmp_path / FEATURES_YAML).exists() and (tmp_path / RUN_YAML).exists()
+    assert not (tmp_path / "preferences.json").exists()
+    assert (tmp_path / "preferences.json.bak").exists()
+
+
+def test_corrupted_features_yaml_with_legacy_json_falls_through_to_import(tmp_path, monkeypatch):
+    # Same half-import recovery, but the surviving features.yaml is
+    # unparseable rather than empty (also tolerantly reads as {}).
+    monkeypatch.setenv("SENSI_CONFIG_DIR", str(tmp_path))
+    monkeypatch.setenv("SENSI_PREFS_PATH", str(tmp_path / "preferences.json"))
+    legacy = deepcopy(DEFAULT_PREFS)
+    legacy["shared"]["analyzer_name"] = "Recovered"
+    (tmp_path / "preferences.json").write_text(json.dumps(legacy), encoding="utf-8")
+    (tmp_path / FEATURES_YAML).write_text("features: [unclosed", encoding="utf-8")
+
+    prefs = load_preferences()
+    assert prefs["shared"]["analyzer_name"] == "Recovered"
+    assert (tmp_path / "preferences.json.bak").exists()
+    assert not (tmp_path / "preferences.json").exists()
+
+
+def test_readonly_config_dir_does_not_crash_first_launch(tmp_path, monkeypatch):
+    # An unwritable config dir must not crash startup: settings still load
+    # for the session (from the legacy json), persistence just doesn't
+    # happen, and the json is NOT renamed to .bak (it's the only surviving
+    # store — destroying it would lose the user's settings).
+    import utils.preferences as prefs_mod
+    monkeypatch.delenv("SENSI_CONFIG_DIR", raising=False)
+    p = tmp_path / "preferences.json"
+    monkeypatch.setenv("SENSI_PREFS_PATH", str(p))
+    legacy = deepcopy(DEFAULT_PREFS)
+    legacy["shared"]["analyzer_name"] = "ReadOnly"
+    p.write_text(json.dumps(legacy), encoding="utf-8")
+
+    def _raise(_merged):
+        raise OSError("read-only filesystem")
+    monkeypatch.setattr(prefs_mod, "_write_yaml_pair", _raise)
+
+    prefs = load_preferences()
+    assert prefs["shared"]["analyzer_name"] == "ReadOnly"
+    assert p.exists()
+    assert not (tmp_path / "preferences.json.bak").exists()
