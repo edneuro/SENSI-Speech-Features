@@ -90,6 +90,10 @@ Specs for each batch are linked from §3 (implementation plans were deleted as p
 | 2026-05-10 | **Batch 1 (feature additions)** | EWFG grade-band frequencies (`Edu_Zipf_*`), semantic-domain indicators (LIWC/Empath), LLM-cloze (`LLM_*`), derived timing (`Word_Duration`, `Word_Gap`), folder-pair batch mode + run-log artifacts + analyzer field, GUI overhaul. Spec: `superpowers/specs/2026-05-10-feature-batch-1-design.md`. |
 | Pre-history | **Original pipeline** | spaCy annotation, SUBTLEX Zipf via `wordfreq`, GPT-2 surprisal (sliding window for >1024 tokens), MFA forced alignment (replacing GENTLE). |
 
+### Next up: Unified YAML config (Project C) — spec approved, ready to implement
+
+Replace `config/preferences.json` with two YAML files (`config/features.yaml` global/reset-able + `config/run.yaml` machine-specific) consumed by GUI, CLI, and Sherlock alike; promote the headless runner to a top-level `run.py`; retire `sherlock/export_config.py`/`config.yaml`. All design decisions are user-approved — **start from the spec: [`docs/superpowers/specs/2026-07-12-unified-yaml-config-design.md`](superpowers/specs/2026-07-12-unified-yaml-config-design.md)** (next step: writing-plans → subagent-driven implementation).
+
 ## 4. Roadmap — future batches
 
 Ordered roughly by priority, not committed. Each item gets its own brainstorm → spec → plan → implement cycle.
