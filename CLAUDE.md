@@ -24,7 +24,9 @@ SensiExtractor/
 ├── environment.yml        # conda deps (source; Python, Kaldi/MFA, compiled sci stack + platforms: key)
 ├── conda-lock.yml         # GENERATED lock (all 3 platforms, exact+hashed) — never hand-edit; regenerate via scripts/relock.py
 ├── setup.bat / setup.sh   # One-time setup scripts (install from conda-lock.yml)
-├── config/                # GITIGNORED — features.yaml (global "what to extract"; GUI "Reset settings" rewrites exactly this file) + run.yaml (machine-specific: shared.analyzer_name / last_*_folder / theme / hf_token_file); a legacy preferences.json is auto-imported once into the pair, then renamed preferences.json.bak
+├── config/                # features.yaml (GITIGNORED, global "what to extract"; GUI "Reset settings" rewrites exactly this file) + run.yaml (GITIGNORED, machine-specific: shared.analyzer_name / last_*_folder / theme / hf_token_file); a legacy preferences.json is auto-imported once into the pair, then renamed preferences.json.bak
+│   ├── features_defaults.yaml / run_defaults.yaml  # COMMITTED templates generated from code defaults (scripts/export_default_config.py) — copy to features.yaml / run.yaml to skip the GUI for a headless setup
+│   └── hf_token.txt       # GITIGNORED — HuggingFace token file; shared.hf_token_file defaults to this name, resolved against config/
 ├── gui/
 │   ├── __init__.py
 │   ├── main_window.py        # Main QMainWindow + 7-item sidebar (Inputs, Word/Doc/Sub-word/Sentence features, Run, Logs) + status strip
@@ -66,7 +68,8 @@ SensiExtractor/
 │   ├── download_lexical_norms.py # Builds dictionaries/*.parquet lexical-norm tables
 │   └── validate_cloze.py  # LLM-cloze validation against Provo Corpus
 └── scripts/
-    └── relock.py          # Regenerates conda-lock.yml from environment.yml + requirements.txt
+    ├── relock.py          # Regenerates conda-lock.yml from environment.yml + requirements.txt
+    └── export_default_config.py  # Regenerates config/features_defaults.yaml + run_defaults.yaml from utils.preferences.DEFAULT_PREFS
 ```
 
 CI: `.github/workflows/env-verify.yml` installs from `conda-lock.yml` on all three platforms (install+import smoke; merge gate) — see `docs/reproducibility.md`.

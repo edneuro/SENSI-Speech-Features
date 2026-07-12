@@ -195,6 +195,30 @@ by the GUI. Use the GUI's Predictability card, or hand-edit the
 `predictability` block in `config/features.yaml`, to pick models and metrics
 before a CLI run.
 
+If a selected model is a gated Llama-3 variant, it needs a HuggingFace token.
+The GUI's Predictability card has a **Save** button that writes the pasted
+token to `config/hf_token.txt` (gitignored) and points `shared.hf_token_file`
+at it, so future headless/CLI runs pick it up automatically — see
+[`docs/features/llm_credentials.md`](docs/features/llm_credentials.md).
+
+### Headless quickstart (no GUI)
+
+`python run.py` reads `config/features.yaml` + `config/run.yaml`; if you'd
+rather not launch the GUI just to produce them, copy the committed templates
+and edit:
+
+```bash
+cp config/features_defaults.yaml config/features.yaml
+cp config/run_defaults.yaml config/run.yaml
+# edit config/run.yaml: analyzer_name, last_transcripts_folder, last_output_folder, ...
+python run.py
+```
+
+`run.py` also prints this hint whenever `config/features.yaml` is missing.
+Both templates are regenerated from the code defaults by
+`python scripts/export_default_config.py` and are pinned by a drift-guard
+test, so they never go stale relative to the shipped defaults.
+
 ### Outputs
 
 A batch run writes, under your output folder:

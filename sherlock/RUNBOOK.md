@@ -83,7 +83,9 @@ mkdir -p $GROUP_HOME/SensiExtractor $SCRATCH/sensi/{transcripts,audio,output,hf_
 ```
 Create `config/run.yaml` in the repo folder — this is **machine-specific** (folders,
 analyzer name, token-file path) and is never rsync'd from your machine, so you write
-it once, directly here ✎:
+it once, directly here. The repo's own `config/run_defaults.yaml` (a committed
+template, generated from the code defaults — it isn't on Sherlock yet, since the
+code lands in step 4) is the shape to copy; fill in your paths ✎:
 ```bash
 mkdir -p $GROUP_HOME/SensiExtractor/config
 cat > $GROUP_HOME/SensiExtractor/config/run.yaml <<'YAML'
@@ -93,12 +95,17 @@ shared:
   last_audio_folder: $SCRATCH/sensi/audio
   last_output_folder: $SCRATCH/sensi/output
   theme: system
-  hf_token_file: ~/hf_token.txt
+  hf_token_file: hf_token.txt
 YAML
 ```
-`$SCRATCH`/`~` are expanded by `run.py` at run time, so these literal strings are
-fine as written. `hf_token_file` is just a **path** — you create that file in step 5,
-so no secret ever goes into this config.
+`$SCRATCH` is expanded by `run.py` at run time, so that literal string is fine as
+written. `hf_token_file` is just a **path** — you create that file in step 5, so no
+secret ever goes into this config. The shipped default, `hf_token.txt`, is a
+*relative* path, which `run.py` resolves against `config/` itself (not your home
+dir) — so it means `$GROUP_HOME/SensiExtractor/config/hf_token.txt` here. Use an
+absolute path or `~/...` instead if you'd rather keep the token outside the repo
+folder. (Once the code arrives in step 4, `cp config/run_defaults.yaml config/run.yaml`
+on Sherlock is an equivalent way to start this file for any *future* re-run.)
 
 ## 4 · Upload code, container, data — [linux]
 Use the **literal** `<GROUP_HOME>`/`<SCRATCH>` from step 3 (rsync won't expand them).
@@ -144,20 +151,26 @@ HF website, saved once on Sherlock:**
 1. On huggingface.co (in a browser): sign in → open `meta-llama/Meta-Llama-3-8B` →
    accept the license (wait for "access granted") → Settings → Access Tokens →
    create a **Read** token, and copy it.
-2. On Sherlock, save that token into the file your `config/run.yaml` points at
-   (`shared.hf_token_file: ~/hf_token.txt`, i.e. your home dir — see the example in
-   step 3), readable only by you — replace `hf_xxx…` with the token you just
-   copied ✎:
+2. On Sherlock, save that token into the file your `config/run.yaml` points at —
+   the shipped default `hf_token_file: hf_token.txt` (see step 3) is a relative
+   path, so it resolves against the repo's own `config/` dir, i.e.
+   `$GROUP_HOME/SensiExtractor/config/hf_token.txt` — readable only by you.
+   Replace `hf_xxx…` with the token you just copied ✎:
 ```bash
-umask 077; printf 'hf_xxxYOURTOKEN\n' > ~/hf_token.txt; chmod 600 ~/hf_token.txt
+umask 077
+printf 'hf_xxxYOURTOKEN\n' > $GROUP_HOME/SensiExtractor/config/hf_token.txt
+chmod 600 $GROUP_HOME/SensiExtractor/config/hf_token.txt
 ```
+   (This file is gitignored, same as on your local machine, so it's never rsync'd
+   by the code-upload step or committed by accident.)
 3. Download the weights into the cache the job reads. This is the only step that
    uses the token (for the gated download) — the batch job runs offline and needs
    no token:
 ```bash
 export HF_HOME=$SCRATCH/sensi/hf_cache; mkdir -p $HF_HOME
 apptainer exec --bind $SCRATCH:$SCRATCH --env HF_HOME=$HF_HOME \
-  --env HF_TOKEN="$(cat ~/hf_token.txt)" --env HF_HUB_DISABLE_XET=1 \
+  --env HF_TOKEN="$(cat $GROUP_HOME/SensiExtractor/config/hf_token.txt)" \
+  --env HF_HUB_DISABLE_XET=1 \
   $GROUP_HOME/SensiExtractor/sherlock/sensiextractor.sif \
   bash -c 'hf download gpt2 && hf download meta-llama/Meta-Llama-3-8B'
 ```
