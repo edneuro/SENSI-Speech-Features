@@ -1114,3 +1114,42 @@ def test_v17_doc_agg_both_off_stays_off(tmp_path, monkeypatch):
     monkeypatch.setenv("SENSI_PREFS_PATH", str(p))
     prefs = P.load_preferences()
     assert prefs["output"]["doc_agg_predictability"] is False
+
+
+def test_v19_fresh_default_has_empty_context_map(tmp_path, monkeypatch):
+    from utils import preferences as P
+    monkeypatch.setenv("SENSI_PREFS_PATH", str(tmp_path / "none.json"))
+    prefs = P.load_preferences()
+    assert prefs["schema_version"] == P.SCHEMA_VERSION
+    assert prefs["predictability"]["context"] == {}
+
+
+def test_v18_file_gains_empty_context_map(tmp_path, monkeypatch):
+    """Additive v18→v19: a v18 file (no context key) loads with context={},
+    its models/metrics untouched."""
+    import json
+    from utils import preferences as P
+    p = tmp_path / "prefs.json"
+    p.write_text(json.dumps({"schema_version": 18,
+        "predictability": {"models": ["gpt2"],
+                           "metrics": {"surprisal": True, "cloze": False,
+                                       "topmatch": False}}}), encoding="utf-8")
+    monkeypatch.setenv("SENSI_PREFS_PATH", str(p))
+    prefs = P.load_preferences()
+    assert prefs["predictability"]["context"] == {}
+    assert prefs["predictability"]["models"] == ["gpt2"]
+    assert prefs["predictability"]["metrics"]["surprisal"] is True
+
+
+def test_v18_file_preserves_existing_context_values(tmp_path, monkeypatch):
+    import json
+    from utils import preferences as P
+    p = tmp_path / "prefs.json"
+    p.write_text(json.dumps({"schema_version": 18,
+        "predictability": {"models": ["llama3_8b"],
+                           "metrics": {"surprisal": True, "cloze": False,
+                                       "topmatch": False},
+                           "context": {"llama3_8b": 2048}}}), encoding="utf-8")
+    monkeypatch.setenv("SENSI_PREFS_PATH", str(p))
+    prefs = P.load_preferences()
+    assert prefs["predictability"]["context"] == {"llama3_8b": 2048}

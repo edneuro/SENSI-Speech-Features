@@ -837,11 +837,31 @@ DEFAULT_PREFS_V18: dict[str, Any] = {
 }
 
 # ---------------------------------------------------------------------------
+# v19 constants
+#
+# Per-model predictability context size (Project B). Additive: a `context`
+# map (slug → max context tokens) is added to the predictability section. An
+# absent slug means "use the model's native ceiling", so an empty map = every
+# model at its native window = identical to v18 behavior. No value transforms.
+# ---------------------------------------------------------------------------
+
+SCHEMA_VERSION_V19 = 19
+
+DEFAULT_PREFS_V19: dict[str, Any] = {
+    **DEFAULT_PREFS_V18,
+    "schema_version": SCHEMA_VERSION_V19,
+    "predictability": {
+        **DEFAULT_PREFS_V18["predictability"],
+        "context": {},
+    },
+}
+
+# ---------------------------------------------------------------------------
 # Active schema aliases
 # ---------------------------------------------------------------------------
 
-SCHEMA_VERSION = SCHEMA_VERSION_V18  # active version
-DEFAULT_PREFS: dict[str, Any] = DEFAULT_PREFS_V18  # active defaults
+SCHEMA_VERSION = SCHEMA_VERSION_V19  # active version
+DEFAULT_PREFS: dict[str, Any] = DEFAULT_PREFS_V19  # active defaults
 
 
 # ---------------------------------------------------------------------------
@@ -890,7 +910,7 @@ def load_preferences() -> dict[str, Any]:
     if version in (SCHEMA_VERSION_V10, SCHEMA_VERSION_V11,
                    SCHEMA_VERSION_V12, SCHEMA_VERSION_V13, SCHEMA_VERSION_V14,
                    SCHEMA_VERSION_V15, SCHEMA_VERSION_V16, SCHEMA_VERSION_V17,
-                   SCHEMA_VERSION_V18):
+                   SCHEMA_VERSION_V18, SCHEMA_VERSION_V19):
         # v10–v15 are additive: missing keys are filled from the current
         # defaults (merged starts as DEFAULT_PREFS). v11's backend coercion and
         # the version stamp are applied in the finalize step below, which
