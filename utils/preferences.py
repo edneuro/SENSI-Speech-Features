@@ -865,7 +865,9 @@ DEFAULT_PREFS_V19: dict[str, Any] = {
     "schema_version": SCHEMA_VERSION_V19,
     # hf_token_file added 2026-07-12 (Project C, run.yaml): path to a file
     # holding a HuggingFace token for headless runs. Additive — no bump.
-    "shared": {**DEFAULT_PREFS_V18["shared"], "hf_token_file": ""},
+    # Defaults to the conventional gitignored config/hf_token.txt (relative
+    # values resolve against get_config_dir(); see utils/credentials.py).
+    "shared": {**DEFAULT_PREFS_V18["shared"], "hf_token_file": "hf_token.txt"},
     "predictability": {
         **DEFAULT_PREFS_V18["predictability"],
         "context": {},

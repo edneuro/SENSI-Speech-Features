@@ -285,13 +285,21 @@ def is_gated_local_model(model_id: str) -> bool:
 
 def has_hf_token() -> bool:
     """True if a HuggingFace token is already available — HF_TOKEN /
-    HUGGING_FACE_HUB_TOKEN env, or a token saved by a prior `hf auth login`.
-    Lazy import so importing this module (and starting the GUI) stays cheap."""
+    HUGGING_FACE_HUB_TOKEN env, a token saved by a prior `hf auth login`,
+    or the token file named by prefs shared.hf_token_file (default
+    config/hf_token.txt). Lazy imports keep GUI startup cheap."""
     try:
         from huggingface_hub import get_token
     except Exception:
         return False
-    return bool(get_token())
+    if bool(get_token()):
+        return True
+    try:
+        from utils.credentials import read_hf_token
+        from utils.preferences import load_preferences
+        return bool(read_hf_token(load_preferences().get("shared", {})))
+    except Exception:
+        return False
 
 
 def _available_vram_gb() -> float:

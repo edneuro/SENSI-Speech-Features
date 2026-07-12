@@ -47,7 +47,7 @@ def test_load_returns_defaults_when_no_files(tmp_path, monkeypatch):
 
 
 def test_default_shared_has_hf_token_file():
-    assert DEFAULT_PREFS["shared"]["hf_token_file"] == ""
+    assert DEFAULT_PREFS["shared"]["hf_token_file"] == "hf_token.txt"
 
 
 def test_save_then_load_round_trip(tmp_path, monkeypatch):

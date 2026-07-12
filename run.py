@@ -21,23 +21,6 @@ if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
 
-def load_credentials(shared: dict) -> None:
-    """Set HF_TOKEN from shared.hf_token_file (gated-Llama downloads)."""
-    path = shared.get("hf_token_file")
-    if not path:
-        return
-    resolved = os.path.expanduser(os.path.expandvars(path))
-    if not os.path.isfile(resolved):
-        return
-    try:
-        token = open(resolved, encoding="utf-8").read().strip()
-    except OSError as exc:
-        print(f"[warn] could not read hf_token_file {resolved}: {exc}", file=sys.stderr)
-        return
-    if token:
-        os.environ["HF_TOKEN"] = token
-
-
 def _prepare(ns):
     # Mirror run_dispatch._prepare_runtime_args: edu_bands list -> comma string.
     if isinstance(getattr(ns, "edu_bands", None), list):
@@ -140,7 +123,8 @@ def main() -> None:
               file=sys.stderr)
         sys.exit(1)
 
-    load_credentials(shared)
+    from utils.credentials import export_hf_token
+    export_hf_token(shared)
     dispatch(prefs)
     print(f"Done. Outputs under {shared['last_output_folder']}.")
 

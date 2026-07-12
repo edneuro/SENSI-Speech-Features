@@ -1,4 +1,3 @@
-import os
 from copy import deepcopy
 import pytest
 
@@ -24,21 +23,6 @@ def _write_pair(tmp_path, monkeypatch, features_overrides=None, **shared_overrid
     write_features_yaml(tmp_path / FEATURES_YAML, features)
     write_run_yaml(tmp_path / RUN_YAML, run_data)
     return prefs
-
-
-def test_load_credentials_sets_hf_token_from_file(tmp_path, monkeypatch):
-    import run
-    monkeypatch.delenv("HF_TOKEN", raising=False)
-    hf = tmp_path / "hf.txt"; hf.write_text("hf_secret\n", encoding="utf-8")
-    run.load_credentials({"hf_token_file": str(hf)})
-    assert os.environ["HF_TOKEN"] == "hf_secret"
-
-
-def test_load_credentials_missing_file_is_noop(tmp_path, monkeypatch):
-    import run
-    monkeypatch.delenv("HF_TOKEN", raising=False)
-    run.load_credentials({"hf_token_file": str(tmp_path / "nope.txt")})
-    assert "HF_TOKEN" not in os.environ
 
 
 def test_dispatch_runs_word_level_from_output_toggle(tmp_path, monkeypatch):
