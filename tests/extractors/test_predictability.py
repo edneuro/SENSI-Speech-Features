@@ -236,7 +236,8 @@ def test_add_predictability_caches_scores_across_passes(monkeypatch):
             calls.append((self.tag, text))
             return [{"p": 0.5, "surprisal": 1.0, "top_match": 1} for _ in tokens]
 
-    monkeypatch.setattr(m, "_get_backend", lambda slug: _CountingBackend(slug))
+    monkeypatch.setattr(m, "_get_backend",
+                        lambda slug, max_context=None: _CountingBackend(slug))
     m._SCORE_CACHE.clear()
     df = pd.DataFrame({"token": ["a", "b"], "upos": ["DET", "NOUN"]})
     m.add_predictability(df, "a b", models=["gpt2"], metrics=["cloze"])          # word-level pass
@@ -482,3 +483,63 @@ def test_backend_cpu_only_when_no_cuda(monkeypatch, caplog):
     assert b._load_tier == 'CPU'
     assert calls == [{}]                                    # no GPU load attempted
     assert not any(r.levelno >= logging.WARNING for r in caplog.records)
+
+
+# --- Project B: per-model context cap threading ------------------------------
+
+def test_backend_caps_context_limit(monkeypatch):
+    import extractors.predictability as m
+    monkeypatch.setattr('torch.cuda.is_available', lambda: False)
+    _patch_transformers(monkeypatch, lambda model_id, **kw: _DummyModel('cpu'))
+    # _DummyModel.config.max_position_embeddings == 1024; a lower cap wins.
+    b = m._HuggingFaceBackend('gpt2', max_context=256)
+    assert b._context_limit == 256
+
+
+def test_backend_context_none_uses_native(monkeypatch):
+    import extractors.predictability as m
+    monkeypatch.setattr('torch.cuda.is_available', lambda: False)
+    _patch_transformers(monkeypatch, lambda model_id, **kw: _DummyModel('cpu'))
+    b = m._HuggingFaceBackend('gpt2')
+    assert b._context_limit == 1024
+
+
+def test_backend_cap_above_native_clamps(monkeypatch):
+    import extractors.predictability as m
+    monkeypatch.setattr('torch.cuda.is_available', lambda: False)
+    _patch_transformers(monkeypatch, lambda model_id, **kw: _DummyModel('cpu'))
+    b = m._HuggingFaceBackend('gpt2', max_context=5000)
+    assert b._context_limit == 1024   # min(native 1024, 5000)
+
+
+def test_get_backend_cache_distinguishes_context(monkeypatch):
+    import extractors.predictability as m
+    m._BACKEND_CACHE.clear()
+    monkeypatch.setattr('torch.cuda.is_available', lambda: False)
+    _patch_transformers(monkeypatch, lambda model_id, **kw: _DummyModel('cpu'))
+    b1 = m._get_backend('gpt2', max_context=256)
+    b2 = m._get_backend('gpt2', max_context=512)
+    b3 = m._get_backend('gpt2', max_context=256)
+    assert b1 is b3 and b1 is not b2
+
+
+def test_add_predictability_threads_effective_context(monkeypatch):
+    import extractors.predictability as m
+
+    calls = []
+
+    class _FakeB:
+        def score(self, text, tokens):
+            return [{"p": 0.5, "surprisal": 1.0, "top_match": 1} for _ in tokens]
+
+    def fake_get_backend(slug, max_context=None):
+        calls.append((slug, max_context))
+        return _FakeB()
+
+    monkeypatch.setattr(m, "_get_backend", fake_get_backend)
+    m._SCORE_CACHE.clear()
+    df = pd.DataFrame({"token": ["a", "b"], "upos": ["NOUN", "NOUN"]})
+    # llama3_8b native is 8192; cap 2048 is honored (above floor).
+    m.add_predictability(df, "a b", models=["llama3_8b"], metrics=["surprisal"],
+                         context={"llama3_8b": 2048})
+    assert calls == [("llama3_8b", 2048)]

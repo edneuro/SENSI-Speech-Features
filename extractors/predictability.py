@@ -21,7 +21,7 @@ from typing import Protocol
 import numpy as np
 import pandas as pd
 
-from extractors.predictability_models import spec_for
+from extractors.predictability_models import spec_for, effective_context
 
 logger = logging.getLogger(__name__)
 
@@ -32,12 +32,13 @@ _METRIC_COLS = {"surprisal": "Surprisal", "cloze": "Cloze", "topmatch": "TopMatc
 # add_predictability: roster-driven, namespaced columns
 # ---------------------------------------------------------------------------
 
-def add_predictability(df, text, *, models, metrics, backends=None):
+def add_predictability(df, text, *, models, metrics, context=None, backends=None):
     metrics = [m for m in metrics if m in _METRIC_COLS]
     if not models or not metrics:
         return df.copy()
     for slug in models:
         spec_for(slug)          # validate; KeyError on unknown
+    ctx_map = context or {}
     out = df.copy()
     upos = out["upos"].tolist()
     tokens = [str(t) for t in out["token"].tolist()]
@@ -46,21 +47,24 @@ def add_predictability(df, text, *, models, metrics, backends=None):
         if backend is not None:
             scores = backend.score(text, tokens)
         else:
-            scores = _scored_by_slug(slug, text, tokens)
+            eff = effective_context(slug, ctx_map)   # per-model cap (Project B)
+            scores = _scored_by_slug(slug, text, tokens, eff)
         _write_metric_columns(out, slug, metrics, upos, scores)
     return out
 
 
-def _scored_by_slug(slug: str, text: str, tokens: list[str]) -> list[dict]:
-    """Score via the cached backend, memoized per (hf_id, text/tokens digest)
-    so the word-level and document-level passes over the same stimulus never
-    re-run inference (mirrors the legacy add_llm_cloze caching, and shares
-    its cache — see _SCORE_CACHE below)."""
+def _scored_by_slug(slug: str, text: str, tokens: list[str],
+                    max_context: int | None = None) -> list[dict]:
+    """Score via the cached backend, memoized per (hf_id, max_context,
+    text/tokens digest) so the word-level and document-level passes over the
+    same stimulus never re-run inference. The cache key includes max_context
+    so re-capping a model re-scores rather than returning the old window's
+    values (see _SCORE_CACHE below)."""
     hf_id = spec_for(slug).hf_id
-    key = (hf_id, _text_tokens_digest(text, tokens))
+    key = (hf_id, max_context, _text_tokens_digest(text, tokens))
     scores = _SCORE_CACHE.get(key)
     if scores is None:
-        scores = _get_backend(slug).score(text, tokens)
+        scores = _get_backend(slug, max_context).score(text, tokens)
         _SCORE_CACHE[key] = scores
         while len(_SCORE_CACHE) > _SCORE_CACHE_MAX:
             _SCORE_CACHE.popitem(last=False)
@@ -86,8 +90,8 @@ def _write_metric_columns(out, slug, metrics, upos, scores):
         out[f"{slug}_{_METRIC_COLS[m]}"] = cols[m]
 
 
-def _get_backend(slug: str) -> "_HuggingFaceBackend":
-    return _cached_backend(spec_for(slug).hf_id)
+def _get_backend(slug: str, max_context: int | None = None) -> "_HuggingFaceBackend":
+    return _cached_backend(spec_for(slug).hf_id, max_context)
 
 
 # ---------------------------------------------------------------------------
@@ -344,12 +348,13 @@ class _HuggingFaceBackend:
     extractors/surprisal.py loaded directly.
     """
 
-    def __init__(self, model_id: str):
+    def __init__(self, model_id: str, max_context: int | None = None):
         import torch
         from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
 
         self._torch = torch
         self._model_id = model_id
+        self._max_context = max_context
         cuda = bool(torch.cuda.is_available()) and not _is_full_precision_cpu(model_id)
 
         def _load(tier: str):
@@ -384,7 +389,16 @@ class _HuggingFaceBackend:
             raise RuntimeError(_model_load_hint(model_id, exc)) from exc
 
         self._model.eval()
-        self._context_limit = getattr(self._model.config, 'max_position_embeddings', None)
+        # Native context window, optionally capped by the user's per-model
+        # max_context (Project B). A lower cap just makes score()'s chunking
+        # kick in sooner; it never exceeds the model's real ceiling.
+        native = getattr(self._model.config, 'max_position_embeddings', None)
+        if max_context is None:
+            self._context_limit = native
+        elif native is None:
+            self._context_limit = max_context
+        else:
+            self._context_limit = min(native, max_context)
         try:
             device = next(self._model.parameters()).device
         except Exception:
@@ -436,7 +450,7 @@ class _HuggingFaceBackend:
                                      sub_log_p, sub_top1, ids)
 
 
-def _make_default_backend(model_id: str) -> _Backend:
+def _make_default_backend(model_id: str, max_context: int | None = None) -> _Backend:
     if model_id.startswith('gpt-'):
         raise RuntimeError(
             f"OpenAI model {model_id!r} is not supported for cloze scoring. "
@@ -447,7 +461,7 @@ def _make_default_backend(model_id: str) -> _Backend:
             "(e.g. --llm-model meta-llama/Llama-3.2-3B, which runs on CPU), "
             "or omit --llm-model to auto-select one by GPU VRAM."
         )
-    return _HuggingFaceBackend(model_id)
+    return _HuggingFaceBackend(model_id, max_context)
 
 
 # Process-wide backend cache, keyed by literal HuggingFace repo id (the same
@@ -456,16 +470,18 @@ def _make_default_backend(model_id: str) -> _Backend:
 # same model from different call sites share one instance. Loading a local 8B
 # model costs minutes; we load once per id and reuse it across every document
 # (and the word/doc passes) in a run — the same "load once" intent that
-# _align_cache gives MFA. Callers that pass an explicit `backend=` bypass
-# this entirely.
-_BACKEND_CACHE: dict[str, _Backend] = {}
+# _align_cache gives MFA. Keyed by (model_id, max_context) so two different
+# per-model context caps for the same model don't share one instance. Callers
+# that pass an explicit `backend=` bypass this entirely.
+_BACKEND_CACHE: dict[tuple, _Backend] = {}
 
 
-def _cached_backend(model_id: str) -> _Backend:
-    backend = _BACKEND_CACHE.get(model_id)
+def _cached_backend(model_id: str, max_context: int | None = None) -> _Backend:
+    key = (model_id, max_context)
+    backend = _BACKEND_CACHE.get(key)
     if backend is None:
-        backend = _make_default_backend(model_id)
-        _BACKEND_CACHE[model_id] = backend
+        backend = _make_default_backend(model_id, max_context)
+        _BACKEND_CACHE[key] = backend
     return backend
 
 
