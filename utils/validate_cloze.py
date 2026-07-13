@@ -94,8 +94,10 @@ def main():
     pairs = [(h, m) for h, m in zip(all_human, all_model) if h is not None and m is not None and not (pd.isna(h) or pd.isna(m))]
     h_arr = [p[0] for p in pairs]
     m_arr = [p[1] for p in pairs]
-    r, _ = pearsonr(h_arr, m_arr)
-    r = float(r)  # scipy's stub types the correlation generically
+    # scipy's PearsonRResult carries .statistic at runtime (verified against
+    # the pinned scipy 1.15.2), but its stubs declare neither the attribute
+    # nor a concrete element type for the legacy tuple-unpack.
+    r = float(pearsonr(h_arr, m_arr).statistic)  # pyright: ignore[reportAttributeAccessIssue]
 
     lo, hi = EXPECTED_RANGES.get(model_id, (0.6, 0.95))
     status = 'PASS ✓' if lo <= r <= hi else 'FAIL ✗'
