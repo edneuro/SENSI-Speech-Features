@@ -51,4 +51,4 @@ def test_section_scroll_areas_disable_horizontal_scrollbar(qtbot, prefs_tmp):
     scroll_areas = [a for a in areas if isinstance(a, QScrollArea)]
     assert scroll_areas, "expected section pages wrapped in QScrollAreas"
     for a in scroll_areas:
-        assert a.horizontalScrollBarPolicy() == Qt.ScrollBarAlwaysOff
+        assert a.horizontalScrollBarPolicy() == Qt.ScrollBarPolicy.ScrollBarAlwaysOff

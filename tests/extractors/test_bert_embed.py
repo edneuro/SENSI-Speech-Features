@@ -12,7 +12,8 @@ transformers = pytest.importorskip("transformers")
 
 def _make_tiny_bert():
     """Return (tokenizer, model) for a 2-layer, 64-dim BERT with random weights."""
-    from transformers import BertConfig, BertModel, BertTokenizerFast
+    # transformers builds its namespace lazily; the symbol is real at runtime.
+    from transformers import BertConfig, BertModel, BertTokenizerFast  # pyright: ignore[reportAttributeAccessIssue]
 
     cfg = BertConfig(
         hidden_size=64,

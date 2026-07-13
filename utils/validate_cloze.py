@@ -95,6 +95,7 @@ def main():
     h_arr = [p[0] for p in pairs]
     m_arr = [p[1] for p in pairs]
     r, _ = pearsonr(h_arr, m_arr)
+    r = float(r)  # scipy's stub types the correlation generically
 
     lo, hi = EXPECTED_RANGES.get(model_id, (0.6, 0.95))
     status = 'PASS ✓' if lo <= r <= hi else 'FAIL ✗'

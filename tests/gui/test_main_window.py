@@ -52,7 +52,7 @@ def test_reset_settings_restores_defaults_and_rebuilds(qtbot, prefs_tmp, monkeyp
 
     # Auto-confirm the reset dialog.
     monkeypatch.setattr(QMessageBox, "question",
-                        staticmethod(lambda *a, **k: QMessageBox.Yes))
+                        staticmethod(lambda *a, **k: QMessageBox.StandardButton.Yes))
     w._on_reset_settings()
 
     prefs = load_preferences()
@@ -74,6 +74,6 @@ def test_reset_settings_cancel_leaves_prefs_untouched(qtbot, prefs_tmp, monkeypa
     w = MainWindow()
     qtbot.addWidget(w)
     monkeypatch.setattr(QMessageBox, "question",
-                        staticmethod(lambda *a, **k: QMessageBox.Cancel))
+                        staticmethod(lambda *a, **k: QMessageBox.StandardButton.Cancel))
     w._on_reset_settings()
     assert load_preferences()["features"]["lexling_dep"] is False

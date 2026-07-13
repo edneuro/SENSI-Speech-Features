@@ -140,11 +140,11 @@ def test_dialog_md_link_navigates_in_place(qtbot):
     assert dlg._back_btn.isHidden()        # no history yet
 
     dlg._on_anchor_clicked(QUrl("prosody_volume.md"))
-    assert dlg._doc.key == "prosody_volume"   # navigated to the linked doc
+    assert dlg._doc is not None and dlg._doc.key == "prosody_volume"   # navigated to the linked doc
     assert not dlg._back_btn.isHidden()       # back becomes available
 
     dlg._go_back()
-    assert dlg._doc.key == "feat_prosody_pitch_mean"   # original toggle's doc
+    assert dlg._doc is not None and dlg._doc.key == "feat_prosody_pitch_mean"   # original toggle's doc
     assert dlg._back_btn.isHidden()
 
 
@@ -161,7 +161,7 @@ def test_dialog_external_link_opens_in_system_browser(qtbot, monkeypatch):
     dlg._on_anchor_clicked(QUrl("https://example.com/page"))
     assert opened == ["https://example.com/page"]
     # external click must NOT replace the current doc
-    assert dlg._doc.key == "feat_prosody_pitch_mean"
+    assert dlg._doc is not None and dlg._doc.key == "feat_prosody_pitch_mean"
 
 
 def test_dialog_unresolvable_link_does_not_blank(qtbot):

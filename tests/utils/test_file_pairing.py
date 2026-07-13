@@ -66,7 +66,7 @@ def test_extension_priority_for_audio(tmp_path):
     _touch(aud / 'story1.mp3')
     result = find_pairs(txt, aud)
     assert len(result.pairs) == 1
-    assert result.pairs[0].audio_path.name == 'story1.wav'  # wav > mp3
+    assert Path(result.pairs[0].audio_path).name == 'story1.wav'  # wav > mp3
     assert any('ambiguous' in w.lower() for w in result.warnings)
 
 

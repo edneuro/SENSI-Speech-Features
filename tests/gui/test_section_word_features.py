@@ -101,7 +101,8 @@ def test_ewfg_toggles_are_disabled_unavailable(qtbot, prefs_tmp):
         assert not row.check.isEnabled(), key
         assert not row.is_checked(), key
     # SUBTLEX (same card) is unaffected
-    assert section.toggle("freq_subtlex")._perma_disabled is False
+    subtlex_row = section.toggle("freq_subtlex")
+    assert subtlex_row is not None and subtlex_row._perma_disabled is False
 
 
 def test_word_prosody_card_has_ten_toggles(qtbot, prefs_tmp):

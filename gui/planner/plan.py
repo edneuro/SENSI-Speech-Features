@@ -212,7 +212,7 @@ def _topo_sort(stage_names: set[str]) -> tuple[str, ...]:
     while remaining:
         ready = sorted(
             [n for n in remaining if not (deps[n] - set(ordered))],
-            key=lambda n: registry_order[n],
+            key=registry_order.__getitem__,
         )
         if not ready:
             raise ValueError(f"Cycle in stage dependencies among {remaining}")

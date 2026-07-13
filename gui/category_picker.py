@@ -168,6 +168,7 @@ class CategoryPicker(QWidget):
     def _refilter(self, q: str) -> None:
         ql = q.lower().strip()
         for cat, cb in self._checks.items():
-            container = cb.parent()
+            container = cb.parentWidget()
             visible = (not ql) or (ql in cat.lower())
-            container.setVisible(visible)
+            if container is not None:
+                container.setVisible(visible)

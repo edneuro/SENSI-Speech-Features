@@ -7,7 +7,7 @@ from gui.planner.stages import Stage, FeatureCluster, Plan
 def test_stage_is_frozen_dataclass():
     s = Stage(name="x", consumes=("a",), produces=("b",), run=lambda: None)
     with pytest.raises(FrozenInstanceError):
-        s.name = "y"
+        s.name = "y"  # pyright: ignore[reportAttributeAccessIssue]
 
 
 def test_stage_fields():
@@ -28,7 +28,7 @@ def test_feature_cluster_is_frozen():
         emits_columns=("Zipf_Freq",),
     )
     with pytest.raises(FrozenInstanceError):
-        c.name = "y"
+        c.name = "y"  # pyright: ignore[reportAttributeAccessIssue]
 
 
 def test_feature_cluster_fields():
@@ -51,14 +51,14 @@ def test_plan_is_frozen_dataclass():
         stage_configs={"a": {"k": "v"}},
     )
     with pytest.raises(FrozenInstanceError):
-        p.stages_to_run = ("c",)
+        p.stages_to_run = ("c",)  # pyright: ignore[reportAttributeAccessIssue]
 
 
 def test_plan_field_reassignment_blocked():
     p = Plan(stages_to_run=(), output_csvs=frozenset(),
              column_drops={}, stage_configs={})
     with pytest.raises(FrozenInstanceError):
-        p.column_drops = {}
+        p.column_drops = {}  # pyright: ignore[reportAttributeAccessIssue]
 
 
 def test_feature_cluster_accepts_master_toggle_field():
