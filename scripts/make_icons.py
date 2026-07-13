@@ -25,7 +25,7 @@ SVG = ROOT / "assets" / "icon.svg"
 def render_png(size: int) -> QImage:
     renderer = QSvgRenderer(str(SVG))
     img = QImage(size, size, QImage.Format.Format_ARGB32)
-    img.fill(Qt.transparent)
+    img.fill(Qt.GlobalColor.transparent)
     painter = QPainter(img)
     renderer.render(painter)
     painter.end()
@@ -36,9 +36,11 @@ def qimage_to_pil(img: QImage) -> Image.Image:
     ba = QByteArray()
     buf = QBuffer(ba)
     buf.open(QBuffer.OpenModeFlag.WriteOnly)
-    img.save(buf, "PNG")
+    # PySide6 6.9 stubs declare format: bytes, but the runtime accepts
+    # only str here (verified: passing b"PNG" raises ValueError).
+    img.save(buf, "PNG")  # pyright: ignore[reportCallIssue, reportArgumentType]
     buf.close()
-    return Image.open(io.BytesIO(bytes(ba))).convert("RGBA")
+    return Image.open(io.BytesIO(ba.data())).convert("RGBA")
 
 
 def main() -> int:

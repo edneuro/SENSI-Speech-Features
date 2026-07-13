@@ -23,7 +23,7 @@ def _pcenter_raw(group: pd.DataFrame, k: float) -> float:
         first_vowel = is_vowel.index(True)
     except ValueError:
         return float('nan')
-    nucleus_onset = float(group['Onset'].iat[first_vowel])
+    nucleus_onset = float(group['Onset'].to_numpy()[first_vowel])
     onset_dur = float(group['Duration'].iloc[:first_vowel].sum())
     return round(nucleus_onset - k * onset_dur, 4)
 

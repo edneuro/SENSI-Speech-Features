@@ -21,6 +21,7 @@ try:
     import parselmouth  # type: ignore
     _PARSELMOUTH_OK = True
 except ImportError:
+    parselmouth = None  # sentinel: extract() raises ProsodyUnavailable
     _PARSELMOUTH_OK = False
 
 
@@ -45,7 +46,7 @@ def extract(audio_path: str, *,
             pitch_ceiling_hz: float = 500.0,
             time_step_s: float = 0.01) -> Contours:
     """Single Parselmouth pass; returns Contours."""
-    if not _PARSELMOUTH_OK:
+    if parselmouth is None:
         raise ProsodyUnavailable(
             "praat-parselmouth is not installed. Run: pip install praat-parselmouth")
 

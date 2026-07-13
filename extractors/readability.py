@@ -21,8 +21,10 @@ def compute_readability(text: str) -> dict[str, float]:
 
     import textstat  # lazy import — heavy dependency
     try:
-        ease = float(textstat.flesch_reading_ease(text))
-        grade = float(textstat.flesch_kincaid_grade(text))
+        # textstat builds its API dynamically (module-level singleton), so
+        # its type stubs miss these attributes; runtime is suite-verified.
+        ease = float(textstat.flesch_reading_ease(text))  # pyright: ignore[reportAttributeAccessIssue]
+        grade = float(textstat.flesch_kincaid_grade(text))  # pyright: ignore[reportAttributeAccessIssue]
     except Exception:
         ease = math.nan
         grade = math.nan

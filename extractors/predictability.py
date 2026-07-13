@@ -90,7 +90,7 @@ def _write_metric_columns(out, slug, metrics, upos, scores):
         out[f"{slug}_{_METRIC_COLS[m]}"] = cols[m]
 
 
-def _get_backend(slug: str, max_context: int | None = None) -> "_HuggingFaceBackend":
+def _get_backend(slug: str, max_context: int | None = None) -> "_Backend":
     return _cached_backend(spec_for(slug).hf_id, max_context)
 
 
@@ -249,6 +249,7 @@ def _chunk_slices(n: int, window: int) -> list[tuple[int, int, int]]:
 class _Backend(Protocol):
     def score(self, text: str, tokens: list[str]) -> list[dict]:
         """Return one dict per token with keys: p, surprisal, top_match."""
+        ...
 
 
 def _model_id_for_vram(vram: float) -> str:

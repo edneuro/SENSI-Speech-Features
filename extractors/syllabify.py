@@ -5,6 +5,7 @@ Algorithm and rationale: see docs/superpowers/specs/2026-05-13-phoneme-syllable-
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import cast
 
 import pandas as pd
 
@@ -127,7 +128,7 @@ def assign_labels(word: str, syllables: list[Syllable]) -> LabelResult:
     """
     arpabet = tuple(_arpabet_for_syllable(s, stress=True) for s in syllables)
 
-    if _pyphen_unavailable or not word:
+    if _pyphen_dict is None or not word:
         return LabelResult(
             labels=tuple(_arpabet_for_syllable(s, stress=False) for s in syllables),
             arpabet=arpabet,
@@ -195,12 +196,12 @@ def syllabify_pairs(word_df: pd.DataFrame, phone_df: pd.DataFrame
     for w in word_df.itertuples(index=False):
         if pd.isna(getattr(w, 'Onset', None)) or pd.isna(getattr(w, 'End', None)):
             continue
-        word_phones = _phones_for_word(phone_df, w.Onset, w.End)
+        word_phones = _phones_for_word(phone_df, cast(float, w.Onset), cast(float, w.End))
         if not word_phones:
             continue
 
         syllables = syllabify_word(word_phones)
-        labels = assign_labels(w.token, syllables)
+        labels = assign_labels(cast(str, w.token), syllables)
 
         for syll_idx, (syl, label_str, arpabet_str) in enumerate(
                 zip(syllables, labels.labels, labels.arpabet), start=1):

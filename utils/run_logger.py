@@ -150,7 +150,7 @@ class RunLogger:
         self,
         stimulus_id: str,
         transcript_path: Path,
-        audio_path: Path,
+        audio_path: Path | str,
         runtime_seconds: float,
         output_csv_path: Path | None,
         output_summary_path: Path | None,
@@ -171,7 +171,7 @@ class RunLogger:
         self,
         stimulus_id: str,
         transcript_path: Path,
-        audio_path: Path,
+        audio_path: Path | str,
         runtime_seconds: float,
         error_message: str,
     ) -> None:

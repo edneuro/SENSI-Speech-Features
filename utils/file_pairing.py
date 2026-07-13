@@ -19,7 +19,7 @@ DEFAULT_AUDIO_EXTS = ['wav', 'flac', 'mp3']
 class Pair:
     stimulus_id: str  # transcript file's base name, original casing preserved
     transcript_path: Path
-    audio_path: Path
+    audio_path: Path | str  # '' = text-only item (no matched audio)
 
 
 @dataclass

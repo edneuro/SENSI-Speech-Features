@@ -91,18 +91,22 @@ def add_word_prosody(df: pd.DataFrame, contours: Contours,
     return df
 
 
+_syllable_dic = None  # lazily-built pyphen dictionary (module-level cache)
+
+
 def _count_syllables(token: str) -> int:
     """Surface-form syllable count via pyphen. Returns 1 on lookup failure
     or 0 for empty tokens. Returns -1 sentinel if pyphen is unavailable."""
+    global _syllable_dic
     try:
         import pyphen  # type: ignore
     except ImportError:
         return -1
-    if not hasattr(_count_syllables, "_dic"):
-        _count_syllables._dic = pyphen.Pyphen(lang="en_US")
+    if _syllable_dic is None:
+        _syllable_dic = pyphen.Pyphen(lang="en_US")
     if not token:
         return 0
-    return _count_syllables._dic.inserted(token).count("-") + 1
+    return _syllable_dic.inserted(token).count("-") + 1
 
 
 def compute_doc_prosody(df: pd.DataFrame, contours: Contours, *,

@@ -184,8 +184,8 @@ def add_phoneme_surprisal(phon_df, *, dict_path: str = DEFAULT_DICT_PATH,
         return df
 
     trie = get_cohort_trie(dict_path, strip_stress=strip_stress, primary_only=primary_only)
-    surp_col = [None] * len(df)
-    ent_col = [None] * len(df)
+    surp_col: list[float | None] = [None] * len(df)
+    ent_col: list[float | None] = [None] * len(df)
     # Drop the caller's index so group row labels are the positional 0..n-1
     # locations of surp_col/ent_col, regardless of how phon_df was indexed
     # (robust even if a caller passes a filtered/reindexed frame). The final

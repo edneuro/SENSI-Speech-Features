@@ -32,7 +32,7 @@ PROVO_CSV_URL = 'https://osf.io/download/eyfxq/'  # Provo Corpus item-level cloz
 PROVO_DIR = _ROOT / 'data' / 'provo'
 PROVO_CSV = PROVO_DIR / 'provo_predictability.csv'
 
-EXPECTED_RANGES = {
+EXPECTED_RANGES: dict[str, tuple[float, float]] = {
     'gpt-4o-mini':                (0.78, 0.86),
     'gpt-4o':                     (0.80, 0.88),
     'meta-llama/Meta-Llama-3-70B': (0.80, 0.88),

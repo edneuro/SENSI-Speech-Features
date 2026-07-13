@@ -79,7 +79,7 @@ def add_semantic_domain(
         raise BackendNotAvailable(f'Unknown backend: {backend}')
 
     # Score each token
-    matches_per_row: list[set[str]] = []
+    matches_per_row: list[set[str] | None] = []
     for _, row in df.iterrows():
         if row['upos'] not in CONTENT_POS:
             matches_per_row.append(None)  # sentinel for NaN

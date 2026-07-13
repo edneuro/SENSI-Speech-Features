@@ -67,7 +67,7 @@ def add_lexical_norms(
             their default ``dictionaries/<file>.parquet`` path.
     """
     df = token_df.copy()
-    paths = {k: Path(v) for k, v in (paths or {}).items()}
+    norm_paths = {k: Path(v) for k, v in (paths or {}).items()}
 
     upos = df['upos'] if 'upos' in df.columns else pd.Series([''] * len(df), index=df.index)
     is_word = upos.ne('PUNCT')
@@ -76,7 +76,7 @@ def add_lexical_norms(
     token_keys = token_col.astype(str).str.lower().where(is_word)
 
     for source, (default_name, colmap) in _SOURCES.items():
-        path = paths.get(source) or (_DICT_DIR / default_name)
+        path = norm_paths.get(source) or (_DICT_DIR / default_name)
         lookup = _load_lookup(path, source)
         for lookup_col, out_col in colmap.items():
             if lookup is None or lookup_col not in lookup.columns:

@@ -80,7 +80,7 @@ def amplitude_envelope(y: np.ndarray, sr: float, rate: float, *,
     elif method == "hilbert":
         from scipy.signal import hilbert, resample_poly
         from math import gcd
-        analytic = np.abs(hilbert(y))
+        analytic = np.abs(np.asarray(hilbert(y)))
         # Resample the magnitude envelope from sr to rate with the built-in
         # FIR anti-alias filter. Use integer up/down derived from the ratio.
         target = int(round(rate))
@@ -189,6 +189,7 @@ def extract_acoustic(audio_path: str, rate: float, cfg: dict) -> dict:
     if cfg.get("envelope", True):
         out["envelope"] = env
     if cfg.get("onset_env", True):
+        assert env is not None  # computed above whenever onset_env is on
         out["onset_envelope"] = onset_envelope(env)
     if cfg.get("logmel", True):
         logmel, freqs = log_mel_spectrogram(

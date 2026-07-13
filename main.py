@@ -924,9 +924,11 @@ def run_word_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None
             # Word2Vec embedding (.mat)
             # getattr default True → skip unless emit.py explicitly sets False.
             if not getattr(args, 'no_word2vec', True):
+                # Import OUTSIDE the try: `except Word2VecUnavailable` must not
+                # evaluate an unbound name if this import itself fails.
+                from extractors.word2vec_embed import embed_word2vec, Word2VecUnavailable
                 try:
                     import scipy.io
-                    from extractors.word2vec_embed import embed_word2vec, Word2VecUnavailable
                     w2v_mat, w2v_valid = embed_word2vec(df)
                     mat_path = _level_dir(output_dir, 'word') / f'{pair.stimulus_id}_word2vec.mat'
                     scipy.io.savemat(str(mat_path), _word_embedding_vars(w2v_mat, df, w2v_valid))
