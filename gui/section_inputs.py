@@ -55,7 +55,7 @@ class InputsSection(QWidget):
         self.pairing_summary = QLabel("No transcripts/audio selected yet.")
         layout.addWidget(self.pairing_summary)
         self.pairing_table = QTableView()
-        self.pairing_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.pairing_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         layout.addWidget(self.pairing_table, 1)
 
         # Initial validation pass

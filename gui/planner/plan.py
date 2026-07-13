@@ -18,6 +18,7 @@ from __future__ import annotations
 from typing import Any
 
 from gui.planner.registry import STAGES, CLUSTERS, PREDICTABILITY_CLUSTER_NAME
+from gui.planner.stages import Stage
 from gui.planner.stages import Plan, FeatureCluster
 
 
@@ -196,7 +197,7 @@ def _topo_sort(stage_names: set[str]) -> tuple[str, ...]:
         for a in s.produces:
             produced_by.setdefault(a, s.name)
 
-    in_set = set(stage_names)
+    in_set: set[str] = set(stage_names)
     deps: dict[str, set[str]] = {n: set() for n in in_set}
     for n in in_set:
         for art in by_name[n].consumes:

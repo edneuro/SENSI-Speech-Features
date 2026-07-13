@@ -24,7 +24,7 @@ SVG = ROOT / "assets" / "icon.svg"
 
 def render_png(size: int) -> QImage:
     renderer = QSvgRenderer(str(SVG))
-    img = QImage(size, size, QImage.Format_ARGB32)
+    img = QImage(size, size, QImage.Format.Format_ARGB32)
     img.fill(Qt.transparent)
     painter = QPainter(img)
     renderer.render(painter)
@@ -35,7 +35,7 @@ def render_png(size: int) -> QImage:
 def qimage_to_pil(img: QImage) -> Image.Image:
     ba = QByteArray()
     buf = QBuffer(ba)
-    buf.open(QBuffer.WriteOnly)
+    buf.open(QBuffer.OpenModeFlag.WriteOnly)
     img.save(buf, "PNG")
     buf.close()
     return Image.open(io.BytesIO(bytes(ba))).convert("RGBA")

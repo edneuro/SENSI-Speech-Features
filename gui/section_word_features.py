@@ -272,7 +272,7 @@ class WordFeaturesSection(QWidget):
         ht = QHBoxLayout(self.hf_token_row); ht.setContentsMargins(0, 0, 0, 0)
         ht.addWidget(QLabel("HF token:"))
         self.hf_token_line = QLineEdit()
-        self.hf_token_line.setEchoMode(QLineEdit.Password)
+        self.hf_token_line.setEchoMode(QLineEdit.EchoMode.Password)
         self.hf_token_line.setPlaceholderText(
             "Paste HuggingFace token — Save stores it in config/hf_token.txt")
         self.hf_token_line.textChanged.connect(
@@ -280,7 +280,7 @@ class WordFeaturesSection(QWidget):
         ht.addWidget(self.hf_token_line, 1)
         hf_show = QPushButton("Show"); hf_show.setCheckable(True)
         hf_show.toggled.connect(lambda v: self.hf_token_line.setEchoMode(
-            QLineEdit.Normal if v else QLineEdit.Password))
+            QLineEdit.EchoMode.Normal if v else QLineEdit.EchoMode.Password))
         ht.addWidget(hf_show)
         self.hf_token_save_btn = QPushButton("Save")
         self.hf_token_save_btn.setToolTip(
@@ -559,6 +559,8 @@ class WordFeaturesSection(QWidget):
         for row in self._toggles.values():
             row.set_warning(None)
         for w in warnings:
+            if not w.toggle_key:   # page-level warnings carry no toggle key
+                continue
             row = self._toggles.get(w.toggle_key)
             if row is not None:
                 row.set_warning(w.message)

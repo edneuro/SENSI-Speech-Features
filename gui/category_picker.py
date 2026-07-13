@@ -105,7 +105,7 @@ class CategoryPicker(QWidget):
         # Scroll area with grid of checkboxes
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
-        scroll.setFrameShape(QFrame.NoFrame)
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
         inner = QWidget()
         grid = QGridLayout(inner)
         grid.setContentsMargins(8, 8, 8, 8)

@@ -57,17 +57,17 @@ class MainWindow(QMainWindow):
         sb_layout = QVBoxLayout(sidebar_frame)
         sb_layout.setContentsMargins(8, 8, 8, 8)
         self.sidebar = QListWidget()
-        self.sidebar.setFrameShape(QFrame.NoFrame)
+        self.sidebar.setFrameShape(QFrame.Shape.NoFrame)
         # Gap between nav items. Use view spacing, not QSS `::item` margin —
         # Qt 6.9 renders item margins as overlap, so the selected pill bled
         # onto its neighbours ("tabs on top of each other").
         self.sidebar.setSpacing(4)
         # No scrollbars in the sidebar — items always fit at minimum window height.
-        self.sidebar.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.sidebar.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.sidebar.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.sidebar.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         # Match content size to items so the widget itself doesn't expand
         # past the items and create empty interior scrollable space.
-        self.sidebar.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
+        self.sidebar.setSizeAdjustPolicy(QAbstractScrollArea.SizeAdjustPolicy.AdjustToContents)
         for name in SECTIONS:
             self.sidebar.addItem(QListWidgetItem(name))
         self.sidebar.setCurrentRow(0)
@@ -171,7 +171,7 @@ class MainWindow(QMainWindow):
             # minimum width (labels wrap, wide rows split — a regression test
             # pins each section's minimum width), so a horizontal scrollbar
             # would only ever hide content.
-            area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+            area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
             area.setWidget(s)
             self.stack.addWidget(area)
 
@@ -183,8 +183,8 @@ class MainWindow(QMainWindow):
             "Reset all feature and output toggles to their defaults?\n\n"
             "Your input/output folders and analyzer name are kept. This only "
             "affects this computer (preferences are stored locally).",
-            QMessageBox.Yes | QMessageBox.Cancel, QMessageBox.Cancel)
-        if resp != QMessageBox.Yes:
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.Cancel, QMessageBox.StandardButton.Cancel)
+        if resp != QMessageBox.StandardButton.Yes:
             return
         reset_to_defaults(keep_shared=True)
         current_row = self.sidebar.currentRow()

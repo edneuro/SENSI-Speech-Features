@@ -37,7 +37,7 @@ class InfoIcon(QPushButton):
         super().__init__(parent)
         self._toggle_key = toggle_key
         self.setObjectName("InfoIcon")
-        self.setCursor(Qt.PointingHandCursor)
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.setFlat(True)
         self.setIcon(QIcon(str(_INFO_ICON_PATH)))
         self.setIconSize(QSize(16, 16))

@@ -226,7 +226,7 @@ class LogsSection(QWidget):
                 self.past_runs_list.addItem(QListWidgetItem(_GROUP_SEPARATOR))
             for path in group:
                 item = QListWidgetItem(str(path))
-                item.setData(0x100, str(path))  # Qt.UserRole = 0x100
+                item.setData(0x100, str(path))  # Qt.ItemDataRole.UserRole = 0x100
                 self.past_runs_list.addItem(item)
 
     def _load_past_run(self, item: QListWidgetItem) -> None:

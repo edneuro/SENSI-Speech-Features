@@ -108,6 +108,9 @@ class ToggleRow(QWidget):
                 layout.addWidget(InfoIcon(info_key, self))
         self.warning = None  # populated by set_warning
         self._perma_disabled = False
+        # Typed handle for set_warning: QWidget.layout() returns
+        # QLayout | None, which lacks insertWidget.
+        self._row_layout = layout
 
     def set_checked(self, v: bool) -> None:
         self.check.setChecked(v)
@@ -133,12 +136,12 @@ class ToggleRow(QWidget):
 
     def set_warning(self, message: str | None) -> None:
         if self.warning is not None:
-            self.layout().removeWidget(self.warning)
+            self._row_layout.removeWidget(self.warning)
             self.warning.deleteLater()
             self.warning = None
         if message:
             self.warning = AmberDotIndicator(message)
-            self.layout().insertWidget(1, self.warning)
+            self._row_layout.insertWidget(1, self.warning)
 
 
 class AmberDotIndicator(QLabel):
