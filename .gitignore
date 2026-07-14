@@ -50,8 +50,9 @@ SensiExtractor.desktop
 # Run outputs
 output/
 
-#unrelated
+#devOnly
 unrelated/
+validation/
 
 # Provo validation cache
 data/provo/

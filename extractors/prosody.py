@@ -85,9 +85,12 @@ def add_word_prosody(df: pd.DataFrame, contours: Contours,
     df["Volume_Max"]  = list(v_max)
     df["Volume_Std"]  = list(v_std)
 
-    # Word-to-word deltas (NaN for first word).
-    df["Pitch_Delta"] = df["Pitch_Mean"].diff()
-    df["Volume_Delta"] = df["Volume_Mean"].diff()
+    # Word-to-word deltas, measured back to the most recent ALIGNED word
+    # (ffill skips NaN-Mean rows — PUNCT and unaligned words — instead of
+    # poisoning the next aligned word's delta with NaN; mirrors the
+    # Word_Gap fix in extractors/timing.py). NaN for the first aligned word.
+    df["Pitch_Delta"] = df["Pitch_Mean"] - df["Pitch_Mean"].ffill().shift(1)
+    df["Volume_Delta"] = df["Volume_Mean"] - df["Volume_Mean"].ffill().shift(1)
     return df
 
 

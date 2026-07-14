@@ -103,6 +103,20 @@ def test_two_paragraphs_get_distinct_ids(spacy_available):
 
 
 # ---------------------------------------------------------------------------
+# feats — must never be the literal string 'NA' (collides with pandas'
+# default na_values on a standard pd.read_csv(), masking real missing data)
+# ---------------------------------------------------------------------------
+
+def test_feats_empty_morphology_is_empty_string_not_na_sentinel(spacy_available):
+    # "to" as an infinitive marker (PART) has no morphological features in
+    # en_core_web_sm.
+    df = parse("I want to go home.")
+    to_tok = df[df['token'] == 'to'].iloc[0]
+    assert to_tok['feats'] == ''
+    assert (df['feats'] != 'NA').all()
+
+
+# ---------------------------------------------------------------------------
 # head_token_id — global token_id reference (self-contained against token_id)
 # ---------------------------------------------------------------------------
 

@@ -4,7 +4,7 @@ echo  SensiExtractor - First-time setup
 echo ============================================================
 echo.
 echo Everything will be downloaded into this folder:
-echo   .\env\        Python environment (~2 GB)
+echo   .\env\        Python environment (~6 GB)
 echo   .\mfa_data\   MFA acoustic models (~1 GB)
 echo   .\hf_cache\   GPT-2 weights (~500 MB, on first run)
 echo.

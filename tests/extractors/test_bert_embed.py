@@ -97,6 +97,53 @@ def test_sliding_window_does_not_exceed_512_tokens():
     assert sent_emb.shape[0] == 40
 
 
+def test_sentence_mean_is_single_stage_over_subwords_not_word_vectors():
+    """sent_emb must be the mean over every content word's raw subword
+    positions directly, NOT the mean of each word's already-pooled vector.
+    The two are only equal when every word is a single WordPiece token, so
+    this uses "debtor" (tokenizes to 2 subwords under bert-base-uncased) to
+    tell them apart -- a regression guard for docs/features/master_bert_sentence.md's
+    documented (and independently verified) aggregation formula."""
+    from extractors.bert_embed import embed_bert_words_and_sentences
+
+    tokenizer, model = _make_tiny_bert()
+    df = make_word_df([
+        ("doc1", 0, "The debtor ran.", "The"),
+        ("doc1", 0, "The debtor ran.", "debtor"),
+        ("doc1", 0, "The debtor ran.", "ran"),
+    ])
+    word_emb, _, sent_emb, _ = embed_bert_words_and_sentences(
+        df, tokenizer=tokenizer, model=model
+    )
+
+    # Independently rebuild the same window and hidden states to compute
+    # both hypotheses ourselves, rather than trusting the extractor's own
+    # intermediate arithmetic.
+    import torch
+    window_words = ["The", "debtor", "ran"]
+    enc = tokenizer(window_words, is_split_into_words=True, return_tensors="pt",
+                     max_length=512, truncation=True)
+    word_ids = enc.word_ids()
+    with torch.no_grad():
+        out = model(**enc)
+    stacked = torch.stack(out.hidden_states[1:], dim=0).squeeze(1).permute(1, 0, 2).numpy()
+
+    all_positions = [p for p, wid in enumerate(word_ids) if wid is not None]
+    single_stage = stacked[all_positions].mean(axis=0)
+
+    per_word_vecs = []
+    for w_global in range(len(window_words)):
+        positions = [p for p, wid in enumerate(word_ids) if wid == w_global]
+        per_word_vecs.append(stacked[positions].mean(axis=0))
+    two_stage = np.mean(per_word_vecs, axis=0)
+
+    assert not np.allclose(single_stage, two_stage), (
+        "test fixture word must actually be multi-subword to distinguish the two formulas"
+    )
+    assert np.allclose(sent_emb[0], single_stage, atol=1e-6)
+    assert not np.allclose(sent_emb[0], two_stage, atol=1e-3)
+
+
 def test_punct_excluded_from_sentence_mean():
     from extractors.bert_embed import embed_bert_words_and_sentences
 

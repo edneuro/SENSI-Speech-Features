@@ -56,8 +56,8 @@ phonological syllabification. The MFA-derived per-syllable timing
 also active; otherwise pyphen-based counting is the fallback.
 
 ## Implementation in SensiExtractor
-Source: `extractors/prosody.py` — see the document-batch finishing
-step in `main.py` which calls `add_doc_prosody`.
+Source: `extractors/prosody.py:compute_doc_prosody` — see the
+document-batch finishing step in `main.py` which calls it.
 
 **What the code does:**
 

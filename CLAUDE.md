@@ -37,13 +37,12 @@ SensiExtractor/
 │   ├── section_doc_features.py      # Document-level features page (Counts × 4, Aggregates × 4, Lex diversity, Readability, Category proportions, Composite psych × 4, Doc prosody × 16)
 │   ├── section_subword_features.py  # Sub-word page (Syllable timing/labels/prosody, P-center, Phonemes)
 │   ├── section_sentence_features.py # Sentence-level page (timing, prosody × 11, BERT sentence similarity)
-│   ├── section_run.py        # Run page (output checkboxes, readiness, cost panel, Run button)
+│   ├── section_run.py        # Run page (output checkboxes, readiness, Run button)
 │   ├── section_logs.py       # Logs page (live viewer, past runs)
 │   ├── status_strip.py       # Persistent bottom status strip
 │   ├── category_picker.py    # Category picker widget (level-aware: word vs document)
 │   ├── category_dialog.py    # Modal dialog wrapping CategoryPicker (one per level)
 │   ├── preflight.py          # Continuous warning engine
-│   ├── cost_estimate.py      # OpenAI cost estimation via tiktoken
 │   ├── run_dispatch.py       # Background-thread orchestrator
 │   ├── feature_docs.py       # Per-feature docs loader + _SHARED_DOC_MAP (toggle key → docs/features/*.md)
 │   └── info_popup.py         # InfoIcon button + FeatureInfoDialog (renders the .md via QTextBrowser)

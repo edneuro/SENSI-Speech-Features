@@ -43,8 +43,8 @@ All optional; grouped by level.
 - **Document-level** (one row per stimulus): token/sentence counts, mean frequency/surprisal, lexical diversity (TTR, MTLD), readability (Flesch), category proportions, composite psycholinguistic scores, document prosody & pause statistics
 - **Acoustic level** (audio-only, no transcript): continuous TRF predictors — broadband & onset envelopes, log-mel spectrogram, MFCCs — written as `.mat` time series
 
-See **[`Feature_Extraction_Guide.md`](Feature_Extraction_Guide.md)** for exact
-column definitions.
+See **[`docs/features/`](docs/features/)** for exact column definitions,
+one file per feature.
 
 ---
 
@@ -53,7 +53,7 @@ column definitions.
 - **A supported platform:** Windows 11+, Linux, or Apple-Silicon macOS (M1/M2/M3/M4).
   - **Intel Macs are not supported** — PyTorch dropped Intel-macOS builds after 2.2.2, which is incompatible with this project's NumPy 2.x. 
 - **Miniconda** (a minimal conda installer). The whole environment is conda-based: forced alignment needs native Kaldi libraries, and the compiled scientific stack (NumPy, pandas, SciPy, librosa, …) comes from conda-forge. A plain pip `virtualenv` will **not** work.
-- **~10 GB free disk**: the environment (~2 GB) plus bundled models (~1.5 GB, already in the repo).
+- **~10 GB free disk**: the environment (~6 GB — full ML stack: PyTorch, transformers, spaCy, gensim, plus Kaldi/MFA and the PySide6 GUI) plus bundled models (~1.5 GB, already in the repo) plus the one-time Word2Vec download (~1.7 GB, on first use of the Word2Vec embedding feature).
 
 ---
 

@@ -68,7 +68,8 @@ emits nothing meaningful — the GUI surfaces a warning on the
 ## Papers
 See [`sem_indicators`](sem_indicators.md) — the per-category rationale
 and citations apply directly. The proportion-as-stimulus-descriptor
-framing follows [Tausczik 2010] and [Pennebaker 2015].
+framing follows [Tausczik 2010](sem_indicators.md#tausczik-2010) and
+[Pennebaker 2015](sem_indicators.md#pennebaker-2015).
 
 ## Datasets
 <!-- auto-populated from docs/datasets/*.md once the dataset registry exists -->

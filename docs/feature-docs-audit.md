@@ -73,7 +73,7 @@ flagged in the "Issue" column.
 | `sem_indicators.md`, `doc_psych_composite.md` *(second pass)* | `[Recio 2014]` | Year correct, but DOI `10.1016/j.bandl.2013.11.001` is wrong. | DOI corrected to `10.1016/j.bandl.2014.03.009`. |
 | `sem_indicators.md` *(second pass)* | `[Barber 2013]` | Year correct, but DOI `10.1016/j.bandl.2013.03.005` is wrong. | DOI corrected to `10.1016/j.bandl.2013.01.005`. |
 | `pred_cloze.md`, `pred_surprisal_gpt2.md` *(second pass)* | `[Wlotko 2012]` | DOI `10.1016/j.neuroimage.2012.05.054` is wrong by **one digit**. | Corrected to `10.1016/j.neuroimage.2012.04.054`. |
-| `output_doc_lex_diversity.md` *(second pass)* | `[Koizumi 2012]` | DOI `10.1016/j.system.2012.10.013` is wrong by **four digits**. | Corrected to `10.1016/j.system.2012.10.017`. |
+| `output_doc_lex_diversity.md` *(second pass)* | `[Koizumi 2012]` | DOI `10.1016/j.system.2012.10.013` is wrong by **four digits**. | Corrected to `10.1016/j.system.2012.10.012` (this log entry previously misstated the correction as ending `...10.017`; the live doc has always had the right value, verified against ScienceDirect PII S0346251X12000887). |
 | `feat_syllable_pcenter.md` *(second pass)* | `[Marcus 1981]` | DOI `10.3758/BF03204357` is wrong — actual is `10.3758/BF03214280`. | Corrected. |
 | `feat_syllable_pcenter.md` *(second pass)* | `[Scott 1998]` | DOI `10.1007/s004260050050` is wrong — actual is `10.1007/PL00008162`. | Corrected. |
 | `feat_syllable_pcenter.md` *(second pass)* | `[Villing 2010]` | Year wrong — paper is Atten Percept Psychophys **2011**; DOI `10.3758/APP.72.5.1389` is also wrong (that DOI format is the older sequence, paper uses the s13414 series). | Renamed to `[Villing 2011]`, DOI corrected to `10.3758/s13414-011-0110-1`. |

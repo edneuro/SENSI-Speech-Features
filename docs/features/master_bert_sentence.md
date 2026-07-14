@@ -48,18 +48,24 @@ PUNCT-handling details.
 
 For each sentence, after the forward pass:
 
-1. The per-word embeddings are computed (mean-pool of WordPiece
-   subwords) for every non-PUNCT word in the sentence.
-2. The sentence vector at each layer is the **mean** of those
-   per-word vectors:
+1. `content_positions` collects the WordPiece **subword** positions
+   (not pre-pooled word vectors) belonging to every non-PUNCT word in
+   the sentence.
+2. The sentence vector at each layer is a single-stage **mean over all
+   of those subword positions directly**:
 
 ```python
 sent_emb[s_pos] = stacked[content_positions].mean(axis=0)
 ```
 
 where `stacked` is the `(seq_len, n_layers, hidden)` array of BERT
-hidden states and `content_positions` are the subword positions
-belonging to non-PUNCT words in the current sentence.
+hidden states. ⚠️ This is *not* the same as averaging the
+already-pooled per-word vectors from
+[the word-level embeddings](master_bert_word.md): a word with more
+subwords contributes proportionally more terms to this mean, so it
+implicitly carries more weight than a single-subword word. The two
+formulations are only numerically identical when every content word
+in the sentence is a single WordPiece token.
 
 3. Sentences whose every content word failed alignment / tokenization
    (e.g. all-PUNCT sentences) produce a zero vector with `is_valid=False`.
@@ -76,8 +82,10 @@ so `embeddings` stays backward-compatible:
 
 **Why:**
 
-- *Mean-pool over content words rather than over all subwords* — the
-  spec is explicit: aggregation is over non-PUNCT word embeddings.
+- *Mean-pool over content words' subwords rather than over every
+  subword in the window* — the spec is explicit: aggregation excludes
+  PUNCT and any left-context subwords from prior sentences, keeping
+  only the current sentence's own non-PUNCT subword positions.
   ⚠️ This means punctuation is excluded from the sentence embedding
   even though it was already excluded from BERT input; both
   exclusions are consistent.

@@ -44,7 +44,7 @@ out as a covariate when isolating higher-order effects like surprisal
 or semantic similarity, or (b) study frequency effects directly.
 
 The Zipf scale was designed to be linear in psycholinguistic effects:
-because Zipf is `log₁₀(occurrences per billion) + 3`, the
+because Zipf is `log₁₀(occurrences per million) + 3`, the
 well-replicated **logarithmic** dependence of reading time and lexical
 decision time on raw frequency ([Brysbaert 2009]) becomes an
 approximately **linear** dependence on Zipf. The N400 amplitude is

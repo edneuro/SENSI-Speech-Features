@@ -1,8 +1,0 @@
-{
-  "last_updated": "2026-05-11",
-  "rates_per_million_tokens": {
-    "gpt-4o-mini":  { "input": 0.15, "output": 0.60 },
-    "gpt-4o":       { "input": 2.50, "output": 10.00 }
-  },
-  "notice": "OpenAI pricing changes. Verify current rates at openai.com/api/pricing"
-}

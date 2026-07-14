@@ -18,7 +18,7 @@ document-level summary CSV:
 | `n_tokens`         | Total token count, including PUNCT. |
 | `n_content_tokens` | Tokens with [`upos`](lexling_pos.md) in `{NOUN, VERB, ADJ, ADV, PROPN}`. |
 | `n_sentences`      | Sentence count from spaCy's `Doc.sents`. |
-| `n_paragraphs`     | Paragraph count. Currently always `1` — paragraph segmentation is not yet implemented; see [`structural_ids`](structural_ids.md). |
+| `n_paragraphs`     | Paragraph count, from blank-line-separated spans in the raw transcript; a transcript with no blank lines is a single paragraph. See [`structural_ids`](structural_ids.md). |
 
 ## Usage
 - Normalize stimulus-level summaries (`mean_*` aggregates) — most
@@ -29,8 +29,9 @@ document-level summary CSV:
   than raw token count when controlling for function-word density.
 
 ## Implementation in SensiExtractor
-Derived in `main.py`'s document-batch finishing step from the
-word-level DataFrame: simple counts over the appropriate row filters
+Derived in `utils/doc_summary.py:build_doc_summary` (called from
+`main.py`'s document-batch step) from the word-level DataFrame: simple
+counts over the appropriate row filters
 (`upos != "PUNCT"` for content tokens, unique `sentence_id` for
 sentence count, etc.). PUNCT-aware definitions match the conventions
 used by [`Zipf_Freq`](freq_subtlex.md), [`Surprisal`](pred_surprisal.md),

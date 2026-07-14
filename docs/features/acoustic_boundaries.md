@@ -68,6 +68,17 @@ Source: `extractors/aligner.py:align_with_phones`. TextGrid parsing:
    `Transcript / Onset / End`.
 5. The temp directory is cleaned up after the run.
 
+In batch mode (a folder of stimuli, via the GUI or `--transcripts-folder`
+CLI runs), alignments are **persisted and reused** rather than
+recomputed: `extractors/aligner.py:ensure_alignments` writes each
+stimulus's `.TextGrid` + a content-hash freshness sidecar to
+`<output_folder>/Montreal Forced Alignment/`, and a later run against
+unchanged transcript+audio content re-reads the cached TextGrid instead
+of re-invoking the MFA subprocess. This also means the whole batch's
+alignment runs in **one** MFA subprocess (one Kaldi model load) rather
+than once per document. A single-file CLI run (no `--output-folder`)
+has no persistence directory and always aligns fresh.
+
 This is also the **upstream step** for the syllable and phoneme
 sidecars and for the prosody extractors — they all consume the same
 `.TextGrid` (via `parse_phones` for the sub-word tier).

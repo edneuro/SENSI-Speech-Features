@@ -108,7 +108,10 @@ def parse(text: str, doc_id: int = 1) -> pd.DataFrame:
             char_start = token.idx - sent_start_char + 1
             char_end = char_start + len(token.text) - 1
 
-            feats = str(token.morph) if token.morph else 'NA'
+            # spaCy's MorphAnalysis already stringifies to '' when a token has
+            # no morphology; writing a literal 'NA' sentinel instead collides
+            # with pandas' default na_values on any standard pd.read_csv().
+            feats = str(token.morph)
 
             # head_token_id is the token_id (global, whole-document index) of
             # the syntactic head, so it is self-contained against the token_id

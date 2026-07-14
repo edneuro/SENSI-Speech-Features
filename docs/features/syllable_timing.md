@@ -40,12 +40,15 @@ alternative to word-locked analyses:
   alignment, `P_Center` for perceptual-rhythm alignment.
 
 ## Implementation in SensiExtractor
-Source: `extractors/syllable.py` (downstream of
+Source: `extractors/syllabify.py:syllabify_word` (downstream of
 [`acoustic_boundaries`](acoustic_boundaries.md)). Syllabification is
 performed on **MFA's phones tier** via the **Maximum Onset Principle**
-(MOP) — phones are grouped into syllables by maximizing the onset
-consonant cluster of each syllable subject to language-specific
-phonotactic rules ([Hayes 2009]).
+(MOP): vowels (phones with a stress digit) are nuclei, and all
+consonants between two nuclei are assigned to the *following*
+syllable's onset — maximizing onset length without a phonotactic
+legality check ([Hayes 2009] describes the general principle; this
+implementation does not enforce language-specific onset-cluster
+constraints beyond the maximal split).
 
 Per-syllable timing is then:
 

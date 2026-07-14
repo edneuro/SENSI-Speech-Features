@@ -87,6 +87,26 @@ def test_nan_onset_yields_all_nan_prosody():
         assert pd.isna(out.iloc[0][col]), f"{col} should be NaN for NaN-Onset row"
 
 
+def test_pitch_delta_skips_unaligned_row_not_just_first():
+    # w1 (aligned) -> punct (unaligned, NaN Onset/End) -> w2 (aligned).
+    # w2's delta must be measured back to w1, not NaN'd out by the
+    # intervening unaligned row (regression for the release-hardening-style
+    # fix mirroring Word_Gap's ffill behavior).
+    contours = make_contours(
+        np.concatenate([np.full(100, 200.0), np.full(100, 250.0)]),
+        np.full(200, 60.0),
+    )
+    df = pd.DataFrame([
+        {"token": "w1", "Onset": 0.0, "End": 1.0, "upos": "NOUN"},
+        {"token": ",", "Onset": np.nan, "End": np.nan, "upos": "PUNCT"},
+        {"token": "w2", "Onset": 1.0, "End": 2.0, "upos": "NOUN"},
+    ])
+    out = add_word_prosody(df, contours, pitch_units="hz")
+    assert pd.isna(out.iloc[0]["Pitch_Delta"])  # first word: no prior word
+    assert pd.isna(out.iloc[1]["Pitch_Delta"])  # unaligned row: no Mean of its own
+    assert out.iloc[2]["Pitch_Delta"] == pytest.approx(50.0)  # w2 vs w1, not NaN
+
+
 def test_unvoiced_word_pitch_nan_volume_valid():
     pitch = np.full(100, np.nan)  # entire stimulus unvoiced
     intensity = np.full(100, 50.0)

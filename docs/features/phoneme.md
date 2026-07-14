@@ -39,8 +39,8 @@ available; for naturalistic-EEG / MEG:
   syllable's nucleus.
 
 ## Implementation in SensiExtractor
-Source: `extractors/phoneme.py` (downstream of MFA alignment). Parses
-the phones tier of MFA's TextGrid via
+Source: `extractors/syllabify.py:syllabify_pairs` (downstream of MFA
+alignment). Parses the phones tier of MFA's TextGrid via
 `utils.textgrid_parser:parse_phones` and emits one row per non-silent
 phone.
 

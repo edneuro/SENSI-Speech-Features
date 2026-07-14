@@ -118,6 +118,27 @@ def test_nan_onset_yields_nan_prosody():
     assert pd.isna(result.iloc[0]["HNR"])
 
 
+def test_pitch_delta_skips_unaligned_sentence_not_just_first():
+    """Sentence B fails to align entirely; sentence C's delta must be
+    measured back to sentence A, not NaN'd out by B (regression for the
+    fix mirroring Word_Gap's ffill behavior)."""
+    from extractors.sentence_prosody import add_sentence_prosody
+
+    contours = make_contours(
+        np.concatenate([np.full(100, 200.0), np.full(100, 250.0)]),
+        np.full(200, 60.0),
+    )
+    df = make_word_df([
+        ("doc1", 0, "sent A", "A", 0.0, 1.0),
+        ("doc1", 1, "sent B", "b", float("nan"), float("nan")),
+        ("doc1", 2, "sent C", "C", 1.0, 2.0),
+    ])
+    result = add_sentence_prosody(df, contours, pitch_units="hz")
+    assert pd.isna(result.iloc[0]["Pitch_Delta"])   # first sentence
+    assert pd.isna(result.iloc[1]["Pitch_Delta"])   # unaligned sentence: no Mean of its own
+    assert result.iloc[2]["Pitch_Delta"] == pytest.approx(50.0)  # C vs A, not NaN
+
+
 def test_none_contours_yields_nan_prosody():
     """If contours is None (no audio), timing comes from word_df but prosody is NaN."""
     from extractors.sentence_prosody import add_sentence_prosody

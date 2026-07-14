@@ -3,7 +3,7 @@ key: sentence_timing
 name: Sentence timing
 levels: [sentence]
 gui_toggles: [feat_sentence_onset, feat_sentence_end, feat_sentence_text]
-output_columns: [Onset, End, Sentence]
+output_columns: [Onset, End, sentence]
 libraries: [montreal-forced-aligner, spaCy]
 status: implemented
 depth: stub
@@ -16,7 +16,7 @@ Per-sentence timing and text in the `<stim>_sentences.csv` sidecar:
 |---|---|
 | `Onset`    | First word's [`Onset`](acoustic_boundaries.md) in the sentence — start of the sentence in audio, in seconds. |
 | `End`      | Last word's [`End`](acoustic_boundaries.md) in the sentence — end of the sentence in audio, in seconds. |
-| `Sentence` | Verbatim sentence text from spaCy (matches the [`sentence`](feat_struct_sentence_text.md) column on the word-level CSV). |
+| `sentence` | Verbatim sentence text from spaCy (matches the [`sentence`](feat_struct_sentence_text.md) column on the word-level CSV). |
 
 Each row joins back to the word-level CSV via `sentence_id`. Sentences
 where no word aligned (very rare) → `NaN` for `Onset` / `End`.
@@ -42,6 +42,6 @@ timing columns). Implementation derives sentence timing as the
 **min `Onset` / max `End`** over the words of each sentence — so the
 sentence interval covers all aligned word audio for that sentence.
 
-`Sentence` is copied from the word-level
+`sentence` is copied from the word-level
 [`sentence`](feat_struct_sentence_text.md) column (all words in a
 sentence share the same value, so picking any row works).

@@ -226,12 +226,11 @@ Emits a single master `documents_summary_<timestamp>.csv` with one row per stimu
 - **Inputs:** raw transcript text (does its own tokenization internally)
 - **Master toggle:** `doc_readability`
 
-### 4.5 LIWC composite — `extractors/liwc_summary.py`
+### 4.5 Composite psych scores — `extractors/psych_composite.py`
 
 - **Features:** `psych_authentic, psych_analytic, psych_tone, psych_clout`
-- **Library:** `liwc` (requires licensed `.dic`)
-- **External asset:** `dictionaries/*.dic`
-- **Inputs:** raw transcript text + LIWC dictionary
+- **Library:** spaCy POS/morphology (grammatical categories) + VADER (Tone) — license-clean reimplementation; the LIWC-`.dic`-based `extractors/liwc_summary.py` is retired (LIWC-22 EULA)
+- **Inputs:** the spaCy-parsed word-level DataFrame (POS/morphology)
 - **Per-column toggles:** `feat_psych_authentic, feat_psych_analytic, feat_psych_tone, feat_psych_clout` (cluster fires if any on; per-column drop happens after compute)
 
 ### 4.6 Category proportions — `utils/doc_summary.py`
@@ -241,7 +240,7 @@ Emits a single master `documents_summary_<timestamp>.csv` with one row per stimu
 - **Inputs:** §1.7 semantic indicators must have run on the word df (`Sem_*` columns + selected `doc_categories_<backend>` from prefs)
 - **Master toggle:** `doc_category_proportions`
 
-### 4.7 Document prosody — `utils/doc_summary.py` (`compute_doc_prosody`)
+### 4.7 Document prosody — `extractors/prosody.py` (`compute_doc_prosody`)
 
 - **Features:** `doc_pitch_mean, doc_pitch_min, doc_pitch_max, doc_pitch_std, doc_volume_mean, doc_volume_min, doc_volume_max, doc_volume_std, doc_pitch_delta_mean, doc_volume_delta_mean, doc_hnr, doc_pause_count, doc_pause_mean_duration, doc_pause_total_duration, doc_pause_pct_silence`
 - **Library:** numpy + pandas (consumes Contours)

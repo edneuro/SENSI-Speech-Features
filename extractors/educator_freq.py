@@ -100,8 +100,8 @@ def _load_lookup(path: Path) -> pd.DataFrame | None:
     if not path.exists():
         logger.warning(
             'EWFG lookup not found at %s — Edu_Zipf_* columns will be NaN. '
-            'See Feature_Extraction_Guide.md (Educator Word Frequency Guide '
-            'section) for acquisition steps.',
+            'See docs/features/edu_zipf.md ("Data acquisition" section) '
+            'for acquisition steps.',
             path,
         )
         return None
