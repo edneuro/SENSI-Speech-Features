@@ -213,8 +213,12 @@ def add_phoneme_surprisal(phon_df, *, dict_path: str = DEFAULT_DICT_PATH,
         for pos, s, e in zip(grp.index, surp, ent):
             surp_col[pos] = round(s, 4)
             ent_col[pos] = round(e, 4)
-    df["phoneme_surprisal"] = surp_col
-    df["cohort_entropy"] = ent_col
+    # Explicit float dtype: an all-spn frame leaves every entry as None, which
+    # would otherwise land as an object-dtype column of None (inconsistent
+    # with the empty-frame branch above, and with pd.isna-based NaN checks
+    # downstream).
+    df["phoneme_surprisal"] = pd.Series(surp_col, dtype=float, index=df.index)
+    df["cohort_entropy"] = pd.Series(ent_col, dtype=float, index=df.index)
     return df
 
 

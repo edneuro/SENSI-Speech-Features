@@ -2,7 +2,7 @@ import math
 import pandas as pd
 import pytest
 from extractors.phoneme_surprisal import (
-    add_phoneme_surprisal, build_cohort_trie, phoneme_scores,
+    add_phoneme_surprisal, build_cohort_trie, get_cohort_trie, phoneme_scores,
 )
 
 # Lexicon {cat:3, cab:1, dog:2} with stress-stripped ARPABET pronunciations.
@@ -152,12 +152,21 @@ def test_spn_row_scores_nan_not_the_oov_cap():
 
 
 def test_strip_stress_false_recombines_arpabet_and_stress():
-    """The stress-sensitive trie needs the fused form back."""
+    """The stress-sensitive trie needs the fused form back.
+
+    Position 0 ('K') is never at the cap regardless of recombination (the
+    trie always has a 'K' child at the root), so it cannot distinguish a
+    working recombination from a no-op one. Position 1 ('AH' + Stress=1 ->
+    'AH1') does distinguish them: with correct recombination the walk
+    continues into a real 'K AH1 ...' cohort and stays below trie.cap; if
+    recombination is skipped and the bare code 'AH' is fed to this
+    stress-sensitive trie instead, the walk falls off the lexicon (no bare
+    'AH' child under 'K') and pins at trie.cap.
+    """
     df = pd.DataFrame([
         _row("K", None, 1), _row("AH", 1, 2), _row("P", None, 3),
     ]).astype({"Stress": "Int64"})
     out = add_phoneme_surprisal(df, strip_stress=False, primary_only=True)
-    # A stress-sensitive trie still finds 'K AH1 P', so the first phoneme is
-    # scored from the real cohort rather than pinned at the OOV cap.
-    assert out["phoneme_surprisal"].iloc[0] > 0
+    trie = get_cohort_trie(strip_stress=False, primary_only=True)
+    assert out["phoneme_surprisal"].iloc[1] < trie.cap
     assert out["phoneme_surprisal"].notna().all()

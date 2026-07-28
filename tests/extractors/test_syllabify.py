@@ -1,9 +1,26 @@
 """Unit tests for the Maximum Onset Principle syllabification."""
 import pandas as pd
 import pytest
+from extractors import syllabify
 from extractors.syllabify import (
     LabelResult, Phone, Syllable, assign_labels, syllabify_word, syllabify_pairs,
 )
+
+# Explicit fixture lexicon for Pron_Source tests, so they never depend on the
+# real (git-ignored) MFA dictionary at tests/../mfa_data/. On a fresh clone
+# without mfa_data/, _lexicon_words() would return an empty set and
+# _pron_source's no-lexicon branch always returns "dictionary" — which would
+# make these tests pass vacuously, including the '48'/'forty eight' regression
+# guard. Must contain the dictionary-side fixtures and exclude 'zorblax'/'48'.
+_FIXTURE_LEXICON = {"cup", "forty", "eight", "debtor", "was", "wasn't"}
+
+
+def _patch_lexicon(monkeypatch):
+    """Force _pron_source to consult _FIXTURE_LEXICON instead of the real
+    MFA dictionary, regardless of test order (clears the memoization cache
+    too, since _lexicon_words() only recomputes when the cache is None)."""
+    monkeypatch.setattr(syllabify, "_LEXICON_CACHE", None)
+    monkeypatch.setattr(syllabify, "_lexicon_words", lambda: _FIXTURE_LEXICON)
 
 
 def _phones(labels: list[str], step: float = 0.05) -> list[Phone]:
@@ -366,7 +383,8 @@ def test_oov_word_yields_one_row_flagged_unresolved():
     assert len(syll) == 1, "an spn word still occupies one syllable"
 
 
-def test_in_dictionary_word_is_flagged_dictionary():
+def test_in_dictionary_word_is_flagged_dictionary(monkeypatch):
+    _patch_lexicon(monkeypatch)
     word_df = pd.DataFrame([_word_row("cup", 0.0, 0.30, 1)])
     phone_df = pd.DataFrame([
         {"phone": "K",   "onset": 0.00, "offset": 0.10},
@@ -377,12 +395,15 @@ def test_in_dictionary_word_is_flagged_dictionary():
     assert set(phon["Pron_Source"]) == {"dictionary"}
 
 
-def test_numeric_token_is_dictionary_not_g2p():
+def test_numeric_token_is_dictionary_not_g2p(monkeypatch):
     """Regression: spaCy keeps '48' but the aligner got 'forty eight'.
 
     Judging provenance from the spaCy token would mark every number in the
     corpus as a modeled pronunciation. The MFA words-tier form is the truth.
+    Uses the fixture lexicon (not the real dictionary) so this guard can't
+    pass vacuously via the no-lexicon fallback on a fresh clone/CI.
     """
+    _patch_lexicon(monkeypatch)
     word_df = pd.DataFrame([
         _word_row("48", 4.27, 4.94, 1, transcript="forty eight"),
     ])
@@ -399,8 +420,9 @@ def test_numeric_token_is_dictionary_not_g2p():
     assert set(phon["Pron_Source"]) == {"dictionary"}
 
 
-def test_pron_source_falls_back_to_the_token_without_a_transcript_column():
+def test_pron_source_falls_back_to_the_token_without_a_transcript_column(monkeypatch):
     """A caller may pass a frame that never went through merge_alignment."""
+    _patch_lexicon(monkeypatch)
     word_df = pd.DataFrame([{
         "doc_id": 1, "sentence_id": 1, "token_in_sentence_id": 1,
         "token": "cup", "Onset": 0.0, "End": 0.30,
@@ -414,8 +436,9 @@ def test_pron_source_falls_back_to_the_token_without_a_transcript_column():
     assert set(phon["Pron_Source"]) == {"dictionary"}
 
 
-def test_oov_word_with_real_phones_is_flagged_g2p():
+def test_oov_word_with_real_phones_is_flagged_g2p(monkeypatch):
     """G2P recovered a pronunciation for a word absent from the dictionary."""
+    _patch_lexicon(monkeypatch)
     word_df = pd.DataFrame([_word_row("zorblax", 0.0, 0.20, 1)])
     phone_df = pd.DataFrame([
         {"phone": "Z",   "onset": 0.00, "offset": 0.10},

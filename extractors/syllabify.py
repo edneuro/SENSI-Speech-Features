@@ -271,7 +271,9 @@ def syllabify_pairs(word_df: pd.DataFrame, phone_df: pd.DataFrame
     for w in word_df.itertuples(index=False):
         if pd.isna(getattr(w, 'Onset', None)) or pd.isna(getattr(w, 'End', None)):
             continue
-        interval = (w.doc_id, round(float(w.Onset), 6), round(float(w.End), 6))
+        interval = (w.doc_id,
+                    round(cast(float, w.Onset), 6),
+                    round(cast(float, w.End), 6))
         if interval in seen_intervals:
             # A preceding token already claimed this exact MFA word (the
             # align_merge 'join' case: spaCy "was" + "n't" vs MFA "wasn't").
