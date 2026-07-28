@@ -601,7 +601,7 @@ def test_syllable_gains_ipa_and_keeps_label_and_arpabet():
         {"phone": "P",   "onset": 0.20, "offset": 0.30},
     ])
     syll, _ = syllabify_pairs(word_df, phone_df)
-    assert syll["ARPABET"].iloc[0] == "K-AH1", "unchanged: keeps stress digits"
+    assert syll["ARPABET"].iloc[0] == "K-AH1-P", "unchanged: keeps stress digits"
     assert syll["IPA"].iloc[0] == "k-ʌ-p"
 
 
@@ -751,7 +751,11 @@ _PHON_COLUMNS = [
     for w in word_df.itertuples(index=False):
         if pd.isna(getattr(w, 'Onset', None)) or pd.isna(getattr(w, 'End', None)):
             continue
-        interval = (w.doc_id, round(float(w.Onset), 6), round(float(w.End), 6))
+        # cast(), not float(): itertuples values are typed Scalar, and this repo
+        # keeps Pylance clean (see the surrounding _phones_for_word call).
+        interval = (w.doc_id,
+                    round(cast(float, w.Onset), 6),
+                    round(cast(float, w.End), 6))
         if interval in seen_intervals:
             # A preceding token already claimed this exact MFA word (the
             # align_merge 'join' case: spaCy "was" + "n't" vs MFA "wasn't").
