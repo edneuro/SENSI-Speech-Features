@@ -233,6 +233,10 @@ def to_namespace(plan: Plan, prefs: dict, level: str) -> argparse.Namespace:
     ns.lexical_norms_paths = _norms.get("paths") or None
     ns.late_acquired_threshold = float(_norms.get("late_acquired_threshold", 10.0))
 
+    # Opt-in MFA G2P for out-of-dictionary words (off by default: a generated
+    # pronunciation is modeled from spelling, not observed).
+    ns.g2p_oov = bool(prefs.get("alignment", {}).get("g2p_oov", False))
+
     # Prosody runtime params
     pros = prefs.get("prosody", {})
     ns.pitch_units     = pros.get("pitch_units", "semitones")

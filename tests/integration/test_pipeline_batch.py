@@ -4,7 +4,10 @@ from pathlib import Path
 
 import pytest
 
-from main import run_word_level_batch, build_parser
+from main import (
+    run_word_level_batch, build_parser,
+    _phoneme_columns_to_drop, _syllable_columns_to_drop,
+)
 
 FIXTURES = Path(__file__).parent.parent / 'fixtures'
 
@@ -178,7 +181,9 @@ def test_sidecars_emit_when_struct_and_acoustic_per_column_toggles_off(
         "feat_syllable_arpabet": True, "feat_syllable_pitch_mean": True,
         "feat_syllable_volume_mean": True, "feat_syllable_pitch_delta": True,
         "feat_syllable_volume_delta": True,
-        "feat_phoneme_label": True, "feat_phoneme_onset": True,
+        "feat_phoneme_arpabet": True, "feat_phoneme_stress": True,
+        "feat_phoneme_ipa": True, "feat_phoneme_pron_source": True,
+        "feat_phoneme_onset": True,
         "feat_phoneme_end": True, "feat_phoneme_duration": True,
     }
 
@@ -353,3 +358,36 @@ def test_batch_emits_namespaced_predictability_columns(tmp_path):
     # Document-first token has no context → NaN; a later content word is scored.
     assert pd.isna(df['gpt2_Surprisal'].iloc[0])
     assert df['gpt2_Surprisal'].notna().any()
+
+
+# ---------------------------------------------------------------------------
+# Task 8: phoneme/syllable column-drop maps for the split columns + --g2p-oov
+# ---------------------------------------------------------------------------
+
+def test_phoneme_drop_map_covers_the_split_columns():
+    all_off = {
+        "feat_phoneme_arpabet": False, "feat_phoneme_stress": False,
+        "feat_phoneme_ipa": False, "feat_phoneme_pron_source": False,
+        "feat_phoneme_onset": False, "feat_phoneme_end": False,
+        "feat_phoneme_duration": False,
+        "feat_phoneme_surprisal": False, "feat_phoneme_cohort_entropy": False,
+    }
+    drop = _phoneme_columns_to_drop(all_off)
+    assert {"ARPABET", "Stress", "IPA", "Pron_Source"} <= drop
+    assert "Label" not in drop, "the Label column no longer exists"
+
+
+def test_phoneme_drop_map_is_per_column():
+    drop = _phoneme_columns_to_drop({"feat_phoneme_ipa": False})
+    assert drop == {"IPA"}
+
+
+def test_syllable_drop_map_covers_ipa():
+    assert _syllable_columns_to_drop({"feat_syllable_ipa": False}) == {"IPA"}
+
+
+def test_cli_exposes_g2p_oov_defaulting_off():
+    args = build_parser().parse_args(["--transcript", "x.txt"])
+    assert args.g2p_oov is False
+    args = build_parser().parse_args(["--transcript", "x.txt", "--g2p-oov"])
+    assert args.g2p_oov is True

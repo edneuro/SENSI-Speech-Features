@@ -543,7 +543,12 @@ def test_v5_to_v6_adds_subword_defaults(tmp_path, monkeypatch):
     # New v6 defaults (carried through to v9)
     assert prefs["features"]["feat_syllable_onset"] is True
     assert prefs["features"]["feat_syllable_arpabet"] is False  # the lone default-off
-    assert prefs["features"]["feat_phoneme_label"] is True
+    # v20: feat_phoneme_label was replaced by four per-column toggles; the old
+    # v6-era default (True) carries forward onto all four.
+    assert "feat_phoneme_label" not in prefs["features"]
+    for key in ("feat_phoneme_arpabet", "feat_phoneme_stress",
+                "feat_phoneme_ipa", "feat_phoneme_pron_source"):
+        assert prefs["features"][key] is True, key
     assert prefs["output"]["syllables_csv"] is True
     assert prefs["output"]["phonemes_csv"] is True
     # Pre-existing v5 setting preserved
@@ -1161,3 +1166,77 @@ def test_v18_file_preserves_existing_context_values(tmp_path, monkeypatch):
     monkeypatch.setenv("SENSI_PREFS_PATH", str(p))
     prefs = P.load_preferences()
     assert prefs["predictability"]["context"] == {"llama3_8b": 2048}
+
+
+# ---------------------------------------------------------------------------
+# v19 -> v20: phoneme label split + syllable IPA + alignment.g2p_oov
+# ---------------------------------------------------------------------------
+
+from utils.preferences import SCHEMA_VERSION_V20  # noqa: E402
+
+_NEW_PHONEME_KEYS = ("feat_phoneme_arpabet", "feat_phoneme_stress",
+                     "feat_phoneme_ipa", "feat_phoneme_pron_source")
+
+
+def _load_from(tmp_path, monkeypatch, stored: dict) -> dict:
+    """Write `stored` as the legacy json and return the migrated prefs."""
+    monkeypatch.setenv('SENSI_PREFS_PATH', str(tmp_path / 'p.json'))
+    (tmp_path / 'p.json').write_text(json.dumps(stored), encoding='utf-8')
+    return load_preferences()
+
+
+def test_active_version_is_20():
+    assert SCHEMA_VERSION == SCHEMA_VERSION_V20 == 20
+    assert DEFAULT_PREFS['schema_version'] == 20
+
+
+def test_defaults_drop_label_and_add_the_split_keys():
+    f = DEFAULT_PREFS['features']
+    assert 'feat_phoneme_label' not in f
+    for key in _NEW_PHONEME_KEYS:
+        assert key in f
+    assert f['feat_syllable_ipa'] is False
+    assert DEFAULT_PREFS['alignment'] == {'g2p_oov': False}
+
+
+def test_paragraph_toggle_is_untouched():
+    """It already existed; the migration must not add or reset it."""
+    assert DEFAULT_PREFS['features']['feat_struct_paragraph_id'] is True
+
+
+def test_v19_label_on_migrates_all_four_replacements_on(tmp_path, monkeypatch):
+    prefs = _load_from(tmp_path, monkeypatch, {
+        'schema_version': 19,
+        'features': {'feat_phoneme_label': True},
+    })
+    assert prefs['schema_version'] == 20
+    assert 'feat_phoneme_label' not in prefs['features']
+    for key in _NEW_PHONEME_KEYS:
+        assert prefs['features'][key] is True, key
+
+
+def test_v19_label_off_migrates_all_four_replacements_off(tmp_path, monkeypatch):
+    prefs = _load_from(tmp_path, monkeypatch, {
+        'schema_version': 19,
+        'features': {'feat_phoneme_label': False},
+    })
+    for key in _NEW_PHONEME_KEYS:
+        assert prefs['features'][key] is False, key
+
+
+def test_g2p_oov_defaults_off_after_migration(tmp_path, monkeypatch):
+    prefs = _load_from(tmp_path, monkeypatch,
+                       {'schema_version': 19, 'features': {}})
+    assert prefs['alignment']['g2p_oov'] is False
+
+
+def test_post_v20_user_values_survive_a_reload(tmp_path, monkeypatch):
+    """A v20 source is not re-migrated; the user's own values win."""
+    prefs = _load_from(tmp_path, monkeypatch, {
+        'schema_version': 20,
+        'features': {'feat_phoneme_ipa': False, 'feat_phoneme_arpabet': True},
+        'alignment': {'g2p_oov': True},
+    })
+    assert prefs['features']['feat_phoneme_ipa'] is False
+    assert prefs['features']['feat_phoneme_arpabet'] is True
+    assert prefs['alignment']['g2p_oov'] is True

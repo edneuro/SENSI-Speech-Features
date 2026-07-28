@@ -64,7 +64,7 @@ def test_prealign_batch_fallback_on_mfa_failure(tmp_path, monkeypatch):
 
     pairs = [FakePair(audio, transcript)]
 
-    def _boom(items, persist_dir):
+    def _boom(items, persist_dir, g2p=False):
         raise RuntimeError("MFA not installed")
 
     monkeypatch.setattr(aligner, "ensure_alignments", _boom)
@@ -100,8 +100,9 @@ def test_prealign_batch_skips_unreadable_transcript(tmp_path, monkeypatch):
 
     captured = {}
 
-    def _capture(items, persist_dir):
+    def _capture(items, persist_dir, g2p=False):
         captured["items"] = list(items)
+        captured["g2p"] = g2p
 
     monkeypatch.setattr(aligner, "ensure_alignments", _capture)
 
@@ -111,3 +112,33 @@ def test_prealign_batch_skips_unreadable_transcript(tmp_path, monkeypatch):
     audios = [a for a, _ in captured["items"]]
     assert audios == [str(good_wav)], "only the readable stimulus is staged"
     assert getattr(ns, "_batch_prealigned", False) is True
+    assert captured["g2p"] is False, "g2p_oov defaults off when unset on args"
+
+
+def test_prealign_batch_threads_g2p_oov_true(tmp_path, monkeypatch):
+    """When args.g2p_oov is True, _prealign_batch must pass g2p=True through
+    to ensure_alignments — this is the first real caller of that plumbing."""
+
+    class FakePair:
+        def __init__(self, audio_path, transcript_path):
+            self.audio_path = audio_path
+            self.transcript_path = transcript_path
+
+    transcript = tmp_path / "stim.txt"
+    transcript.write_text("hello world", encoding="utf-8")
+    audio = tmp_path / "stim.wav"
+    audio.write_bytes(b"RIFFfake")
+
+    pairs = [FakePair(audio, transcript)]
+
+    captured = {}
+
+    def _capture(items, persist_dir, g2p=False):
+        captured["g2p"] = g2p
+
+    monkeypatch.setattr(aligner, "ensure_alignments", _capture)
+
+    ns = types.SimpleNamespace(no_align=False, g2p_oov=True)
+    main._prealign_batch(ns, pairs, tmp_path / "out")
+
+    assert captured["g2p"] is True

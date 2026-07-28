@@ -53,6 +53,7 @@ class SubwordFeaturesSection(QWidget):
         syll_labels_keys = [
             ("feat_syllable_label",   "Label (orthographic, pyphen-derived)"),
             ("feat_syllable_arpabet", "ARPABET (dash-joined, with stress)"),
+            ("feat_syllable_ipa",     "IPA (dash-joined)"),
         ]
         for i, (key, label) in enumerate(syll_labels_keys):
             syll_labels_grid.addWidget(
@@ -126,7 +127,10 @@ class SubwordFeaturesSection(QWidget):
         )
         phon_grid = QGridLayout()
         phon_keys = [
-            ("feat_phoneme_label",    "Label (ARPABET incl. stress digit)"),
+            ("feat_phoneme_arpabet",     "ARPABET (bare code, no stress digit)"),
+            ("feat_phoneme_stress",      "Stress (0/1/2; empty on consonants)"),
+            ("feat_phoneme_ipa",         "IPA"),
+            ("feat_phoneme_pron_source", "Pron_Source (dictionary/g2p/oov_unresolved)"),
             ("feat_phoneme_onset",    "Onset"),
             ("feat_phoneme_end",      "End"),
             ("feat_phoneme_duration", "Duration"),
@@ -139,6 +143,25 @@ class SubwordFeaturesSection(QWidget):
         phon_card.add_child_layout(phon_grid)
         phon_card.settings_changed.connect(self.settings_changed)
         layout.addWidget(phon_card)
+
+        # --- Out-of-dictionary words (MFA G2P) ---
+        g2p_card = Card(
+            "Out-of-dictionary words",
+            "MFA aligns words missing from its dictionary (unusual names) to a "
+            "single 'spn' phone with no phoneme identity. Enable this to have "
+            "MFA generate a pronunciation for them instead. The pronunciation "
+            "is modeled from spelling, not observed — Pron_Source marks every "
+            "affected word as 'g2p'. Changing this re-runs alignment once.",
+        )
+        g2p_card.add_widget(
+            self._make_toggle(
+                "g2p_oov",
+                "Generate pronunciations for out-of-dictionary words (G2P)",
+                prefs.get("alignment", {}).get("g2p_oov", False),
+                section="alignment",
+            )
+        )
+        layout.addWidget(g2p_card)
 
         # --- Phoneme surprisal (Brodbeck/Gillis cohort model) ---
         psr_card = ClusterCard(
@@ -190,16 +213,17 @@ class SubwordFeaturesSection(QWidget):
 
     # Note: sibling pages (section_word_features, section_doc_features) take a
     # `section` arg here to route saves to "features" vs "output". This page
-    # only carries `features` keys (sidecar master toggles live on the Run
-    # page), so the simpler signature suffices. Add a `section` parameter if
-    # an output toggle is ever added to this page.
-    def _make_toggle(self, key, label, initial):
+    # mostly carries `features` keys (sidecar master toggles live on the Run
+    # page) but also the standalone `alignment.g2p_oov` toggle, hence the
+    # `section` parameter (mirrors the P-center `k` spinbox writing directly
+    # to `prefs["prosody"]` above).
+    def _make_toggle(self, key, label, initial, section="features"):
         row = ToggleRow(label=label, info_key=key)
         row.set_checked(initial)
-        row.toggled.connect(lambda v, k=key: self._on_toggle(k, v))
+        row.toggled.connect(lambda v, k=key, s=section: self._on_toggle(k, v, s))
         self._toggles[key] = row
         return row
 
-    def _on_toggle(self, key, value):
-        save_preferences({"features": {key: value}})
+    def _on_toggle(self, key, value, section="features"):
+        save_preferences({section: {key: value}})
         self.settings_changed.emit()

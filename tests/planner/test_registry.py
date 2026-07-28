@@ -95,3 +95,23 @@ def test_every_cluster_has_at_least_one_toggle_key_or_master():
             f"not an allowlisted output-key-only-gated cluster "
             f"(would be permanently inactive)"
         )
+
+
+def _cluster(name):
+    return next(c for c in CLUSTERS if c.name == name)
+
+
+def test_phoneme_cluster_uses_the_split_toggles():
+    c = _cluster("phoneme intervals")
+    assert "feat_phoneme_label" not in c.toggle_keys
+    assert {"feat_phoneme_arpabet", "feat_phoneme_stress",
+            "feat_phoneme_ipa", "feat_phoneme_pron_source"} <= set(c.toggle_keys)
+    assert {"ARPABET", "Stress", "IPA", "Pron_Source"} <= set(c.emits_columns)
+    assert "Label" not in c.emits_columns
+
+
+def test_syllable_labels_cluster_gains_ipa():
+    c = _cluster("syllable labels")
+    assert "feat_syllable_ipa" in c.toggle_keys
+    assert "IPA" in c.emits_columns
+    assert "ARPABET" in c.emits_columns   # unchanged

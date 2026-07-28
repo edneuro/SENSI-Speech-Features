@@ -875,11 +875,47 @@ DEFAULT_PREFS_V19: dict[str, Any] = {
 }
 
 # ---------------------------------------------------------------------------
+# v20 constants
+#
+# Phoneme label split + IPA + OOV coverage. REMOVAL-migration (precedent: v14's
+# struct-id rename, v18's predictability unification): the fused
+# `feat_phoneme_label` toggle is replaced by four per-column toggles, because
+# the phoneme CSV's `Label` column (ARPABET + stress digit fused, e.g. 'EY2')
+# becomes ARPABET / Stress / IPA / Pron_Source.
+#
+# Additive alongside it: `feat_syllable_ipa` (opt-in verbose column, matching
+# feat_syllable_arpabet) and a new `alignment` section holding `g2p_oov`
+# (opt-in MFA G2P for out-of-dictionary words — off by default so no run
+# silently gains modeled pronunciations).
+# ---------------------------------------------------------------------------
+
+SCHEMA_VERSION_V20 = 20
+
+_FEATURES_DEFAULT_V20 = {
+    k: v for k, v in DEFAULT_PREFS_V19["features"].items()
+    if k != "feat_phoneme_label"
+}
+_FEATURES_DEFAULT_V20.update({
+    "feat_phoneme_arpabet":     False,
+    "feat_phoneme_stress":      False,
+    "feat_phoneme_ipa":         False,
+    "feat_phoneme_pron_source": False,
+    "feat_syllable_ipa":        False,
+})
+
+DEFAULT_PREFS_V20: dict[str, Any] = {
+    **DEFAULT_PREFS_V19,
+    "schema_version": SCHEMA_VERSION_V20,
+    "features": dict(_FEATURES_DEFAULT_V20),
+    "alignment": {"g2p_oov": False},
+}
+
+# ---------------------------------------------------------------------------
 # Active schema aliases
 # ---------------------------------------------------------------------------
 
-SCHEMA_VERSION = SCHEMA_VERSION_V19  # active version
-DEFAULT_PREFS: dict[str, Any] = DEFAULT_PREFS_V19  # active defaults
+SCHEMA_VERSION = SCHEMA_VERSION_V20  # active version
+DEFAULT_PREFS: dict[str, Any] = DEFAULT_PREFS_V20  # active defaults
 
 
 # ---------------------------------------------------------------------------
@@ -923,7 +959,7 @@ def get_run_yaml_path() -> Path:
 # ---------------------------------------------------------------------------
 
 def _merged_from_user(user: dict[str, Any]) -> tuple[dict[str, Any], bool]:
-    """Run the full v1->v19 migration/merge/finalize chain on a parsed prefs dict.
+    """Run the full v1->v20 migration/merge/finalize chain on a parsed prefs dict.
 
     Pure: performs no disk I/O. Returns (merged, changed) where `changed` is
     True iff the source `schema_version` differed from SCHEMA_VERSION (i.e.
@@ -946,7 +982,7 @@ def _merged_from_user(user: dict[str, Any]) -> tuple[dict[str, Any], bool]:
     if version in (SCHEMA_VERSION_V10, SCHEMA_VERSION_V11,
                    SCHEMA_VERSION_V12, SCHEMA_VERSION_V13, SCHEMA_VERSION_V14,
                    SCHEMA_VERSION_V15, SCHEMA_VERSION_V16, SCHEMA_VERSION_V17,
-                   SCHEMA_VERSION_V18, SCHEMA_VERSION_V19):
+                   SCHEMA_VERSION_V18, SCHEMA_VERSION_V19, SCHEMA_VERSION_V20):
         # v10–v15 are additive: missing keys are filled from the current
         # defaults (merged starts as DEFAULT_PREFS). v11's backend coercion and
         # the version stamp are applied in the finalize step below, which
@@ -1122,6 +1158,19 @@ def _merged_from_user(user: dict[str, Any]) -> tuple[dict[str, Any], bool]:
         metrics["topmatch"] = top_on
         pred["models"] = models
         pred.pop("llm_model", None)
+
+    # v20 finalize (pre-v20 sources only — post-v20 values are the user's):
+    # the fused phoneme `Label` column is split, so its single toggle becomes
+    # four. Carry the old on/off state to all four so a user who had the
+    # column off keeps every replacement off. Not additive — the key is
+    # removed, not merely defaulted (precedent: v14, v18).
+    if isinstance(version, int) and version < SCHEMA_VERSION_V20:
+        f = merged.get("features", {})
+        label_on = f.pop("feat_phoneme_label", None)
+        if label_on is not None:
+            for key in ("feat_phoneme_arpabet", "feat_phoneme_stress",
+                        "feat_phoneme_ipa", "feat_phoneme_pron_source"):
+                f[key] = bool(label_on)
 
     changed = merged.get("schema_version") != SCHEMA_VERSION
     merged["schema_version"] = SCHEMA_VERSION

@@ -340,7 +340,7 @@ def test_word_args_propagates_subword_master_toggles(prefs_tmp):
     from utils.preferences import save_preferences
     from gui.run_dispatch import build_args_word_level
     save_preferences({"output": {"syllables_csv": False, "phonemes_csv": True},
-                      "features": {"feat_phoneme_label": True}})  # activate phoneme cluster
+                      "features": {"feat_phoneme_arpabet": True}})  # activate phoneme cluster
     args = build_args_word_level()
     assert args.no_syllables is True
     assert args.no_phonemes is False

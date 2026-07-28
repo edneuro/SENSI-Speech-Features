@@ -116,7 +116,7 @@ def test_sidecars_only_namespace():
         output={"word_level_csv": False, "syllables_csv": True,
                 "phonemes_csv": True, "document_summary": False},
         features={"feat_syllable_onset": True, "feat_syllable_label": True,
-                  "feat_phoneme_label": True},
+                  "feat_phoneme_arpabet": True},
     )
     plan = plan_from_prefs(prefs)
     ns = to_namespace(plan, prefs, level="word")
@@ -125,6 +125,28 @@ def test_sidecars_only_namespace():
     assert ns.no_word_csv is True, "user did NOT request features CSV"
     assert ns.no_syllables is False
     assert ns.no_phonemes is False
+
+
+def test_g2p_oov_reaches_the_namespace():
+    prefs = copy.deepcopy(DEFAULT_PREFS)
+    prefs["alignment"]["g2p_oov"] = True
+    ns = to_namespace(plan_from_prefs(prefs), prefs, level="word")
+    assert ns.g2p_oov is True
+
+    prefs["alignment"]["g2p_oov"] = False
+    ns = to_namespace(plan_from_prefs(prefs), prefs, level="word")
+    assert ns.g2p_oov is False
+
+
+def test_g2p_oov_defaults_off_when_alignment_section_absent():
+    """Older-shaped prefs dicts (e.g. this file's `_prefs` helper) lack an
+    `alignment` section; the namespace must still default it off, not crash."""
+    prefs = _prefs(
+        output={"word_level_csv": True},
+        features={},
+    )
+    ns = to_namespace(plan_from_prefs(prefs), prefs, level="word")
+    assert ns.g2p_oov is False
 
 
 def test_syllable_prosody_forces_prosody_flag_off():

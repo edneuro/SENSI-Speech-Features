@@ -192,6 +192,13 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument('--no-phonemes',  action='store_true',
                    help='Skip <stim>_phonemes.csv emission.')
 
+    # Alignment options
+    p.add_argument('--g2p-oov', action='store_true',
+                   help='Use the MFA G2P model to generate pronunciations for '
+                        'out-of-dictionary words instead of aligning them to a '
+                        'single spn phone. Off by default: the pronunciation is '
+                        'modeled, not observed.')
+
     # Sub-word per-column toggles (default = on)
     p.add_argument('--no-syl-onset',         action='store_true')
     p.add_argument('--no-syl-end',           action='store_true')
@@ -384,7 +391,8 @@ def run(args) -> pd.DataFrame:
             print('[mfa] Loading alignment…')
         align_df, phones_df = mfa_align(
             args.audio, text, cache=_align_cache,
-            persist_dir=persist_dir, run_if_missing=run_if_missing)
+            persist_dir=persist_dir, run_if_missing=run_if_missing,
+            g2p=bool(getattr(args, 'g2p_oov', False)))
         args._phones_df = phones_df
         if df is not None:
             from extractors.align_merge import merge_alignment
@@ -551,6 +559,7 @@ _SYLLABLE_COLUMN_MAP = {
     "feat_syllable_duration":     "Duration",
     "feat_syllable_label":        "Label",
     "feat_syllable_arpabet":      "ARPABET",
+    "feat_syllable_ipa":          "IPA",
     "feat_syllable_pitch_mean":   "Pitch_Mean",
     "feat_syllable_volume_mean":  "Volume_Mean",
     "feat_syllable_pitch_delta":  "Pitch_Delta",
@@ -559,7 +568,10 @@ _SYLLABLE_COLUMN_MAP = {
 }
 
 _PHONEME_COLUMN_MAP = {
-    "feat_phoneme_label":    "Label",
+    "feat_phoneme_arpabet":     "ARPABET",
+    "feat_phoneme_stress":      "Stress",
+    "feat_phoneme_ipa":         "IPA",
+    "feat_phoneme_pron_source": "Pron_Source",
     "feat_phoneme_onset":    "Onset",
     "feat_phoneme_end":      "End",
     "feat_phoneme_duration": "Duration",
@@ -744,7 +756,8 @@ def _prealign_batch(run_args, work_items, output_dir) -> None:
     if not items:
         return
     try:
-        ensure_alignments(items, alignment_dir(output_dir))
+        ensure_alignments(items, alignment_dir(output_dir),
+                           g2p=bool(getattr(run_args, 'g2p_oov', False)))
     except Exception as exc:
         print(f'[mfa] batch pre-alignment failed ({exc}); falling back to '
               'per-document alignment', file=sys.stderr)

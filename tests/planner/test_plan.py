@@ -92,7 +92,7 @@ def test_subword_features_force_parse_and_align():
         output={"word_level_csv": False, "syllables_csv": True, "phonemes_csv": True,
                 "document_summary": False},
         features={"feat_syllable_onset": True, "feat_syllable_end": True,
-                  "feat_phoneme_label": True,
+                  "feat_phoneme_arpabet": True,
                   # All struct + acoustic OFF (matches the user's reported config)
                   "feat_struct_doc_id": False, "feat_struct_sentence_id": False,
                   "feat_struct_token_id": False, "feat_struct_token_in_sentence_id": False,

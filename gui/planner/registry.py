@@ -370,11 +370,14 @@ CLUSTERS: list[FeatureCluster] = [
     # §2.1 Phoneme intervals — phoneme half of syllabify_pairs
     FeatureCluster(
         name="phoneme intervals",
-        toggle_keys=("feat_phoneme_label", "feat_phoneme_onset",
-                     "feat_phoneme_end", "feat_phoneme_duration"),
+        toggle_keys=("feat_phoneme_arpabet", "feat_phoneme_stress",
+                     "feat_phoneme_ipa", "feat_phoneme_pron_source",
+                     "feat_phoneme_onset", "feat_phoneme_end",
+                     "feat_phoneme_duration"),
         output_csv="phonemes",
         requires_stages=("spacy_parse", "mfa_align", "syllabify_pairs"),
-        emits_columns=("Label", "Onset", "End", "Duration"),
+        emits_columns=("ARPABET", "Stress", "IPA", "Pron_Source",
+                       "Onset", "End", "Duration"),
         master_toggle="master_phoneme_intervals",
     ),
 
@@ -389,13 +392,14 @@ CLUSTERS: list[FeatureCluster] = [
         master_toggle="master_syllable_intervals",
     ),
 
-    # §2.2b Syllable labels (Label + ARPABET)
+    # §2.2b Syllable labels (Label + ARPABET + IPA)
     FeatureCluster(
         name="syllable labels",
-        toggle_keys=("feat_syllable_label", "feat_syllable_arpabet"),
+        toggle_keys=("feat_syllable_label", "feat_syllable_arpabet",
+                     "feat_syllable_ipa"),
         output_csv="syllables",
         requires_stages=("spacy_parse", "mfa_align", "syllabify_pairs"),
-        emits_columns=("Label", "ARPABET"),
+        emits_columns=("Label", "ARPABET", "IPA"),
         master_toggle="master_syllable_labels",
     ),
 

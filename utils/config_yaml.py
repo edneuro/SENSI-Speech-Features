@@ -52,6 +52,7 @@ _SECTION_COMMENTS = {
     "acoustic_ts": "Acoustic time-series (TRF) parameters.",
     "phoneme_surprisal": "Phoneme surprisal / cohort entropy parameters.",
     "lexical_norms": "Lexical-norm table paths + late-AoA threshold.",
+    "alignment": "Forced-alignment options (MFA G2P for out-of-dictionary words).",
     "shared": "Machine-specific: folders, analyzer name, theme, token-file paths.",
 }
 

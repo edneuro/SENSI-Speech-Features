@@ -27,7 +27,7 @@ _FEATURE_MATRIX = [
        "features": {"freq_subtlex": True}}, "word_subtlex_only"),
     ({"output": {"word_level_csv": False, "syllables_csv": True,
                   "phonemes_csv": True, "document_summary": False},
-       "features": {"feat_syllable_onset": True, "feat_phoneme_label": True}},
+       "features": {"feat_syllable_onset": True, "feat_phoneme_arpabet": True}},
      "sidecars_only"),
     ({"output": {"word_level_csv": True, "syllables_csv": False,
                   "phonemes_csv": False, "document_summary": False},

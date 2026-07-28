@@ -9,7 +9,7 @@
 # Comments are regenerated on every save; hand-added comments do not survive.
 
 # Config schema version — managed by the app; do not edit.
-schema_version: 19
+schema_version: 20
 
 # Per-feature toggles (feat_* / master_* / freq_* / sem_* / lexling_*).
 features:
@@ -73,7 +73,6 @@ features:
   feat_syllable_volume_mean: false
   feat_syllable_pitch_delta: false
   feat_syllable_volume_delta: false
-  feat_phoneme_label: false
   feat_phoneme_onset: false
   feat_phoneme_end: false
   feat_phoneme_duration: false
@@ -128,6 +127,11 @@ features:
   master_phoneme_surprisal: true
   feat_phoneme_surprisal: false
   feat_phoneme_cohort_entropy: false
+  feat_phoneme_arpabet: false
+  feat_phoneme_stress: false
+  feat_phoneme_ipa: false
+  feat_phoneme_pron_source: false
+  feat_syllable_ipa: false
 
 # Predictability roster: models (slugs), metrics, per-model context caps.
 predictability:
@@ -227,3 +231,7 @@ phoneme_surprisal:
   analysis_sr: 128
   strip_stress: true
   primary_only: true
+
+# Forced-alignment options (MFA G2P for out-of-dictionary words).
+alignment:
+  g2p_oov: false
