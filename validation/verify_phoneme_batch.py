@@ -21,6 +21,11 @@ docs in the two check functions below):
 
 Usage:  python validation/verify_phoneme_batch.py
 Exit 0 = all checks passed.
+
+Requires validation/output_baseline_pre_v20/ (git-ignored — a one-time copy
+of validation/output/ taken before the v20 phoneme-split/IPA/G2P batch ran;
+see the batch's Task 12) to exist as the comparison target. This script does
+not regenerate it.
 """
 from __future__ import annotations
 
@@ -212,11 +217,14 @@ for stem in _stems():
     dup = int(new_p.duplicated(subset=["Onset", "End", "ARPABET"], keep="first").sum())
     check(dup == 0, f"{stem}: {dup} duplicate phoneme intervals remain")
 
-    # 4. Stress is empty on consonants, populated on vowels.
-    vowels = new_p["IPA"].isin(list("ɑæʌɔɛ iɪ"
-                                    "uʊəɚɝ")) | \
-        new_p["ARPABET"].isin(["AA", "AE", "AH", "AO", "AW", "AY", "EH", "ER",
-                               "EY", "IH", "IY", "OW", "OY", "UH", "UW"])
+    # 4. Stress is empty on consonants, populated on vowels. ARPABET alone
+    # covers all 15 CMU vowels (monophthongs + diphthongs); an earlier IPA
+    # half-check here was dead weight (a stray space in the monophthong
+    # string plus missing two-codepoint diphthongs aʊ/aɪ/eɪ/oʊ/ɔɪ, and
+    # .isin(list(...)) can't match multi-codepoint cells against
+    # single-character list entries anyway) — dropped rather than completed.
+    vowels = new_p["ARPABET"].isin(["AA", "AE", "AH", "AO", "AW", "AY", "EH", "ER",
+                                    "EY", "IH", "IY", "OW", "OY", "UH", "UW"])
     check(bool(new_p.loc[vowels, "Stress"].notna().all()),
           f"{stem}: some vowel rows have empty Stress")
     check(bool(new_p.loc[~vowels & (new_p["ARPABET"] != "spn"), "Stress"].isna().all()),

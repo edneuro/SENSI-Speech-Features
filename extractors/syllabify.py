@@ -168,6 +168,7 @@ _PHON_COLUMNS = [
 
 _SPN = "spn"
 _LEXICON_CACHE: set[str] | None = None
+_LEXICON_EMPTY_WARNED = False
 
 
 def _lexicon_words() -> set[str]:
@@ -180,7 +181,7 @@ def _lexicon_words() -> set[str]:
     dictionary is unavailable, in which case every word is reported as
     'dictionary' rather than mislabelled as 'g2p'.
     """
-    global _LEXICON_CACHE
+    global _LEXICON_CACHE, _LEXICON_EMPTY_WARNED
     if _LEXICON_CACHE is None:
         from extractors.phoneme_surprisal import DEFAULT_DICT_PATH
         words: set[str] = set()
@@ -193,6 +194,18 @@ def _lexicon_words() -> set[str]:
         except OSError:
             words = set()
         _LEXICON_CACHE = words
+        if not words and not _LEXICON_EMPTY_WARNED:
+            # Otherwise plausible-and-wrong with no signal: _pron_source
+            # falls back to 'dictionary' for every word (see its docstring)
+            # when the lexicon is empty, including genuinely G2P-derived
+            # ones. Warn once so a missing/unreadable dictionary doesn't
+            # silently masquerade as "everything looked up cleanly".
+            _LEXICON_EMPTY_WARNED = True
+            print(f"[phonemes] WARNING: MFA dictionary unreadable at "
+                  f"{DEFAULT_DICT_PATH} — Pron_Source will report "
+                  "'dictionary' for every word (including genuinely "
+                  "G2P-derived ones), since there is no lexicon to check "
+                  "against.", file=sys.stderr)
     return _LEXICON_CACHE
 
 

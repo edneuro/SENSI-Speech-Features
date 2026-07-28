@@ -158,7 +158,7 @@ reader who needs "the" pronunciation of *read* should not assume the
 present tense without sentence context, which is exactly the ambiguity a
 spelling-only lookup (dictionary **or** G2P) cannot resolve on its own.
 
-Two conventions worth naming, because they surprise people:
+Three conventions worth naming, because they surprise people:
 
 - `R` → `ɹ` (a **lowercase turned r**, the alveolar approximant), not
   `r` (the alveolar trill). English `r` is not a trill.

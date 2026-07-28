@@ -226,7 +226,15 @@ second read of a 200k-line file.
 
 - word in dictionary → `dictionary`
 - word not in dictionary, real phones present → `g2p`
-- word not in dictionary, only `spn` → `oov_unresolved`
+- ANY phone in the word's phone sequence is `spn` → `oov_unresolved`
+
+CORRECTION (final review, 2026-07-27): the sentence above originally read "word
+not in dictionary, only `spn`", implying the check requires every phone to be
+`spn`. The shipped code (`extractors/syllabify.py::_pron_source`) instead
+short-circuits as soon as it sees a single `spn` phone anywhere in the
+sequence — the safer reading, since a partial `spn` still means MFA could not
+resolve part of the pronunciation. `docs/features/phoneme.md` already
+documents the code's actual behavior; this spec was the stale one.
 
 The form checked is the **MFA words-tier form** (the word frame's `Transcript`), never the
 spaCy token. Numbers make the difference load-bearing: spaCy keeps `48` while the aligner

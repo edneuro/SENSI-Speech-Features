@@ -484,8 +484,33 @@ def test_deduped_second_token_is_not_reported_as_missing(capsys):
         _word_row("n't", 4.50, 4.60, 2),
     ])
     phone_df = pd.DataFrame([{"phone": "W", "onset": 4.50, "offset": 4.60}])
-    syllabify_pairs(word_df, phone_df)
+    _, phon = syllabify_pairs(word_df, phone_df)
     assert "n't" not in capsys.readouterr().err
+    # The real dedup pin: "n't" shares was's exact [Onset, End] interval, so
+    # it must not get its own emitted phoneme row at all — merely being
+    # absent from stderr is also true if dedup were removed entirely (n't
+    # would still get the W phone and simply not be "missing").
+    assert set(phon["token"]) == {"was"}
+
+
+def test_lexicon_empty_warns_once_to_stderr(monkeypatch, capsys):
+    """Final-review Fix 5: an unreadable MFA dictionary makes _pron_source
+    report 'dictionary' for EVERY word (including genuinely G2P-derived
+    ones) with no signal that anything went wrong. Warn once to stderr."""
+    import extractors.phoneme_surprisal as ps
+    monkeypatch.setattr(syllabify, "_LEXICON_CACHE", None)
+    monkeypatch.setattr(syllabify, "_LEXICON_EMPTY_WARNED", False)
+    monkeypatch.setattr(ps, "DEFAULT_DICT_PATH", "Z:/does/not/exist_at_all.dict")
+
+    lex1 = syllabify._lexicon_words()
+    assert lex1 == set()
+    err = capsys.readouterr().err
+    assert "unreadable" in err.lower()
+
+    # Memoized + warned-once: a second call must not warn again.
+    lex2 = syllabify._lexicon_words()
+    assert lex2 == set()
+    assert capsys.readouterr().err == ""
 
 
 def test_empty_frames_still_carry_the_new_schema():
