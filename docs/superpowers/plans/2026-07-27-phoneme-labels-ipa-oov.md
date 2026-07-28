@@ -2196,15 +2196,23 @@ print("all checks passed")
 
 - [ ] **Step 3: Re-run the pipeline over the real stimuli**
 
-Enable the sub-word outputs (defaults are opt-in/off), then run headlessly:
+Use the **existing** `validation/config/` — it already drives this corpus (everything
+CPU-feasible enabled, folders pointed at `validation/data/` and `validation/output/`).
+
+**Do NOT use the `main.py` CLI here.** There is no CLI flag for phoneme surprisal
+(`--no-phoneme-surprisal` does not exist), so `_want_psr` stays False and the
+`phoneme_surprisal.mat` sidecar that Step 5 checks would never be written.
+
+One edit first: add `feat_syllable_ipa: true` to `validation/config/features.yaml`, or the new
+syllable `IPA` column defaults off and cannot be validated.
+
+Leave that file's `schema_version: 19` and `feat_phoneme_label: true` **as they are** — the run
+then exercises the real v19 to v20 removal-migration on a real config, and all four new
+phoneme keys should come out enabled. A free, high-value migration test.
 
 ```bash
 conda activate ./env
-python main.py \
-  --transcripts-folder validation/data/transcripts \
-  --audio-folder validation/data/audio \
-  --output-folder validation/output \
-  --analyzer validation
+python run.py --config-dir validation/config
 ```
 
 Watch the log for `[mfa] 10 stimuli: 0 cached, 10 aligned in 1 run` — the sidecar version
