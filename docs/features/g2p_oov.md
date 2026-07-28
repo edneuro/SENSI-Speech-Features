@@ -54,9 +54,32 @@ a **hypothesis derived from orthography**, not a transcription of what the
 speaker did. English spelling is an unreliable guide to pronunciation, and
 proper nouns — exactly the population this option exists for — are the
 worst case: surnames and place names routinely violate the regularities a
-G2P model learned. MFA's own documentation says of generated
-pronunciations, "It is important to check the pronunciations manually"
-([MFA generate]).
+G2P model learned.
+
+MFA's own documentation makes essentially the same point, though about a
+different (adjacent) workflow. On the same `mfa g2p` dictionary-generating
+page, the "Per-utterance G2P" section describes a distinct sub-feature —
+concatenating a top-hypothesis-per-word G2P guess across an entire
+utterance, with no dictionary produced — and says of it: "This method is
+largely not recommended as the output is only the top hypothesis per word
+in isolation as MFA does not have access to necessary higher order
+information, so homographs may often have the wrong pronunciation (i.e.,
+English present tense read [ɹ iː d] vs English past tense read [ɹ ɛ d]).
+Use at your own risk." ([MFA generate])
+
+That is not a claim about `--g2p_model_path` (the flag this project uses,
+which generates one dictionary entry per OOV word for alignment, not a
+whole-utterance transcript) — the two are related but not the same
+workflow, and this doc will not pretend otherwise. What carries over
+honestly is the *mechanism* the warning is about, not the warning's literal
+subject: both modes predict a pronunciation from a word's spelling alone,
+with no access to the sentence it sits in. *read* is the clean illustration
+of why that is risky — the same letters are `[ɹ iː d]` or `[ɹ ɛ d]`
+depending on tense, a distinction spelling does not encode and G2P-in-
+isolation cannot recover. A surname G2P guesses from `--g2p_model_path` is
+under the identical constraint: one plausible pronunciation from spelling,
+no sentence context to disambiguate it — which is exactly why this
+project treats every `g2p` phone as a hypothesis rather than ground truth.
 
 The *boundaries* MFA then finds are real (they come from the acoustic
 model searching the audio). The *identities* are not. Practical
@@ -213,7 +236,7 @@ model is a data asset MFA downloads, and `--g2p_model_path` is part of
 
 ## Papers
 - <a name="mfa-g2p"></a>**[MFA G2P]** *Montreal Forced Aligner user guide — `mfa align` command reference.* [montreal-forced-aligner.readthedocs.io](https://montreal-forced-aligner.readthedocs.io/en/latest/user_guide/workflows/alignment.html) — documents `--g2p_model_path`: "Path to G2P model to use for OOV items."
-- <a name="mfa-generate"></a>**[MFA generate]** *Montreal Forced Aligner user guide — Generate pronunciations for words (`mfa g2p`).* [montreal-forced-aligner.readthedocs.io](https://montreal-forced-aligner.readthedocs.io/en/latest/user_guide/workflows/dictionary_generating.html) — G2P generation of pronunciations for OOV items, and the caution that generated pronunciations should be checked manually.
+- <a name="mfa-generate"></a>**[MFA generate]** *Montreal Forced Aligner user guide — Generate pronunciations for words (`mfa g2p`).* [montreal-forced-aligner.readthedocs.io](https://montreal-forced-aligner.readthedocs.io/en/latest/user_guide/workflows/dictionary_generating.html) — the page's "Per-utterance G2P" section describes concatenating per-word, in-isolation G2P hypotheses across an utterance and calls that specific mode "largely not recommended" because homographs (e.g. *read* as `[ɹ iː d]` vs `[ɹ ɛ d]`) may get the wrong pronunciation; "Use at your own risk." That caution is about the per-utterance sub-feature, not `--g2p_model_path`, though the underlying mechanism — a pronunciation guessed from spelling with no sentence context — is the same one this project's `g2p` rows rely on.
 - <a name="mcauliffe-2017"></a>**[McAuliffe 2017]** McAuliffe, Socolof, Mihuc, Wagner, Sonderegger. *Montreal Forced Aligner: trainable text-speech alignment using Kaldi.* Interspeech 2017. [doi:10.21437/Interspeech.2017-1386](https://doi.org/10.21437/Interspeech.2017-1386) — the aligner, and the forced-alignment assumption that the transcript is what was said.
 
 [MFA G2P]: #mfa-g2p

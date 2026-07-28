@@ -78,15 +78,19 @@ If you need conventional IPA output, reassemble it yourself from
 ## The full table
 
 39 phones, reproduced from `extractors/arpabet_ipa.py`, which is the
-single source of truth. Example words are given with the pronunciation
-the shipped MFA dictionary actually lists for them, so every row is
-independently checkable.
+single source of truth. Example words are given with the **dominant**
+(highest pronunciation-probability) entry the shipped MFA dictionary
+lists for them, so every row is independently checkable. `english_us_arpa.dict`
+carries a pronunciation-probability weight per entry when a word has more
+than one — several common words do — and citing a low-probability variant
+as "the" pronunciation would undercut a page whose whole point is
+dictionary verification, so the weight is checked for every example below.
 
 ### Vowels (15)
 
 | `ARPABET` | `IPA` | Example | Dictionary entry |
 |---|---|---|---|
-| `AA` | `ɑ` | odd | `AA1` |
+| `AA` | `ɑ` | odd | `AA1 D` |
 | `AE` | `æ` | at | `AE1 T` |
 | `AH` | `ʌ` (`ə` when `Stress == 0`) | butter / about | `B AH1 T ER0` / `AH0 B AW1 T` |
 | `AO` | `ɔ` | caught | `K AO1 T` |
@@ -94,19 +98,25 @@ independently checkable.
 | `AY` | `aɪ` | hide | `HH AY1 D` |
 | `EH` | `ɛ` | Ed | `EH1 D` |
 | `ER` | `ɝ` (`ɚ` when `Stress == 0`) | hurt / letter | `HH ER1 T` / `L EH1 T ER0` |
-| `EY` | `eɪ` | ate | `EY1` |
+| `EY` | `eɪ` | ate | `EY1 T` |
 | `IH` | `ɪ` | big | `B IH1 G` |
-| `IY` | `i` | eat | `IY1` |
+| `IY` | `i` | eat | `IY1 T` |
 | `OW` | `oʊ` | oat | `OW1 T` |
 | `OY` | `ɔɪ` | toy | `T OY1` |
 | `UH` | `ʊ` | hood | `HH UH1 D` |
 | `UW` | `u` | two | `T UW1` |
 
 CMU's canonical example word for `AO` is *ought*, but the MFA dictionary
-this pipeline ships lists `ought` as `AA1` — it reflects the **cot–caught
-merger** common in American English, so *ought* is not a usable `AO`
-example here. *caught* (`K AO1 T`) is, and is used above. Worth knowing
-generally: `AA` and `AO` are not cleanly separated by this lexicon.
+this pipeline ships lists `ought` as `AA1` (and `AA1 T` at weight `0.99`,
+its dominant entry) — it reflects the **cot–caught merger** common in
+American English, so *ought* is not a usable `AO` example here. *caught*
+is used above instead, and is the least clean of the four dictionary
+examples on this page even so: `english_us_arpa.dict` carries three
+weighted entries for it — `K AO1 T` at `0.24`, `K AA1` at `0.01`, and
+`K AA1 T` at `0.99` (the dominant, merged form). `K AO1 T` is quoted above
+because it is the entry that actually contains `AO`; the dominant entry
+for the word does not. Worth knowing generally: `AA` and `AO` are not
+cleanly separated by this lexicon.
 
 ### Consonants (24)
 
@@ -136,6 +146,17 @@ generally: `AA` and `AO` are not cleanly separated by this lexicon.
 | `Y` | `j` | yield | `Y IY1 L D` |
 | `Z` | `z` | zee | `Z IY1` |
 | `ZH` | `ʒ` | seizure | `S IY1 ZH ER0` |
+
+*read*'s dictionary entry is itself a small illustration of the homograph
+problem discussed in [`g2p_oov`](g2p_oov.md) (the same *read*
+present/past example MFA's own G2P documentation uses):
+`english_us_arpa.dict` carries `R IY1 D` (present tense, weight `0.87`)
+alongside `R EH1 D` (past tense, weight `0.99`, the dominant entry) and two
+lower-weight partial forms. `R IY1 D` is quoted above because it is the
+entry that illustrates plain `R` → `ɹ`, not because it is dominant — a
+reader who needs "the" pronunciation of *read* should not assume the
+present tense without sentence context, which is exactly the ambiguity a
+spelling-only lookup (dictionary **or** G2P) cannot resolve on its own.
 
 Two conventions worth naming, because they surprise people:
 
