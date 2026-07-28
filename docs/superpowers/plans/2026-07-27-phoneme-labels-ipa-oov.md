@@ -1723,9 +1723,14 @@ because it changes alignment rather than a single column:
                 prefs.get("alignment", {}).get("g2p_oov", False),
             )
         )
-        g2p_card.settings_changed.connect(self.settings_changed)
         layout.addWidget(g2p_card)
 ```
+
+A plain `Card` has **no** `settings_changed` signal — only `ClusterCard` does — so do NOT
+call `g2p_card.settings_changed.connect(...)`; it raises `AttributeError` while building the
+page. Refresh still works because `_on_toggle` emits the page-level signal itself, which
+`gui/main_window.py` wires to the Run tab. The existing P-center `Card` on this page is the
+precedent.
 
 `g2p_oov` lives in `prefs["alignment"]`, **not** `prefs["features"]`. Follow this page's
 existing pattern for non-`features` keys (see how the P-center `k` spinbox writes to
