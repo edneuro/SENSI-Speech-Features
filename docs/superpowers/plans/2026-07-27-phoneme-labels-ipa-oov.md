@@ -13,7 +13,8 @@
 ## Global Constraints
 
 - **Environment:** `conda activate ./env` from the repo root. It is a path-based conda *prefix* env, not a venv, and there is no env named `sensi`. If invoking `./env/python.exe` directly without activation, prepend `env/Library/bin` to `PATH` or ~26 tests fail on `libsndfile.dll`.
-- **Nothing that works today may change its output values.** The only intended value changes are: duplicate phoneme/syllable rows disappearing, `phoneme_surprisal.mat` no longer double-counting, and OOV words appearing where they previously vanished. `P_Center` in particular must come out **bit-identical** — see Task 4.
+- **Nothing that works today may change its output values.** The only intended value changes are: duplicate phoneme/syllable rows disappearing, `phoneme_surprisal.mat` no longer double-counting, and OOV words appearing where they previously vanished. `P_Center` in particular must be **bit-identical for a given alignment** — see Task 4.
+  > ⚠️ **Corrected during execution.** "Bit-identical" holds only when the alignment is held fixed. This batch bumps `SIDECAR_VERSION` 1→2, which forces a full MFA re-align, and MFA is **not** bit-reproducible at frame granularity (measured: phoneme onsets moved up to 0.02 s = 2 frames on re-aligned stimuli). So the strict assertion must be made by running the new code against the **baseline TextGrids**; a full-pipeline comparison needs a tolerance (≤0.03 s). See Task 12.
 - **`MKL_THREADING_LAYER` must stay set at every entry point** (`main.py`, `gui.py`, `run.py`, `tests/conftest.py`). Never remove those lines.
 - **A green suite does not prove a real run works.** Repo fixtures under `tests/fixtures/audio/` are empty placeholders. Task 12 is the real-stimulus gate and is not optional.
 - **MFA must run at most once per document.** Never add a code path that re-aligns per pass; alignment is cached via `_prealign_batch` / `ensure_alignments`.
@@ -2114,7 +2115,19 @@ for stem in _stems():
     old_s = pd.read_csv(OLD / "syllable" / f"{stem}_syllables.csv")
     new_s = pd.read_csv(NEW / "syllable" / f"{stem}_syllables.csv")
 
-    # 1. P_Center must be BIT-IDENTICAL. This is the silent regression the
+    # 1. P_Center. TWO checks, and the distinction matters:
+    #    (a) STRICT, the real regression guard: run the NEW code against the
+    #        BASELINE TextGrids (alignment held fixed) and require exact equality.
+    #        Anything else here is a genuine code regression.
+    #    (b) TOLERANT, structural: comparing the re-run pipeline against the
+    #        baseline cannot require exact equality, because SIDECAR_VERSION 1->2
+    #        forces a re-align and MFA is not bit-reproducible at frame
+    #        granularity. Allow <=0.03 s and PRINT the worst delta.
+    #    And do NOT key either comparison on token_in_sentence_id: this batch
+    #    renumbers it, so an id join silently pairs DIFFERENT WORDS on the
+    #    renumbered stimuli. Key on token text + syllable_id + occurrence, or
+    #    compare positionally in document order.
+    # This is the silent regression the
     #    pcenter rewire could have introduced.
     if "P_Center" in old_s.columns:
         check("P_Center" in new_s.columns, f"{stem}: P_Center column vanished")
