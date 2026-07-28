@@ -388,7 +388,10 @@ In `utils/textgrid_parser.py::parse_phones`, change the silence set and the docs
     silence_labels = {'', 'SIL', 'sil', 'sp'}
 ```
 
-Note the added lowercase `'sil'` — MFA 3.x writes lowercase; the old set only had `'SIL'`.
+Lowercase `'sil'` is added purely as defensive future-proofing. Verified against a real
+`english_us_arpa` TextGrid: **MFA 3.4 writes silence as empty text (`text = ""`)**, not `sil`
+or `sp`, so the existing set already caught every silence interval and nothing was leaking.
+Do not describe this addition as a bug fix.
 
 - [ ] **Step 4: Run the tests to verify they pass**
 
