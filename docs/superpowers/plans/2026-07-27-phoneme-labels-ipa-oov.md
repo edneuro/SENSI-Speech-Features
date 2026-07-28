@@ -438,9 +438,12 @@ import pytest
 from extractors.syllabify import syllabify_pairs
 
 
-def _word_row(token, onset, end, tis_id):
+def _word_row(token, onset, end, tis_id, transcript=None):
+    """One word_df row. `transcript` is the MFA words-tier form; it defaults to
+    the token, and differs from it for digits ('48' -> 'forty eight')."""
     return {"doc_id": 1, "sentence_id": 1, "token_in_sentence_id": tis_id,
-            "token": token, "Onset": onset, "End": end}
+            "token": token, "Transcript": token if transcript is None else transcript,
+            "Onset": onset, "End": end}
 
 
 def test_split_columns_replace_label():
@@ -533,6 +536,43 @@ def test_oov_word_yields_one_row_flagged_unresolved():
 
 def test_in_dictionary_word_is_flagged_dictionary():
     word_df = pd.DataFrame([_word_row("cup", 0.0, 0.30, 1)])
+    phone_df = pd.DataFrame([
+        {"phone": "K",   "onset": 0.00, "offset": 0.10},
+        {"phone": "AH1", "onset": 0.10, "offset": 0.20},
+        {"phone": "P",   "onset": 0.20, "offset": 0.30},
+    ])
+    _, phon = syllabify_pairs(word_df, phone_df)
+    assert set(phon["Pron_Source"]) == {"dictionary"}
+
+
+def test_numeric_token_is_dictionary_not_g2p():
+    """Regression: spaCy keeps '48' but the aligner got 'forty eight'.
+
+    Judging provenance from the spaCy token would mark every number in the
+    corpus as a modeled pronunciation. The MFA words-tier form is the truth.
+    """
+    word_df = pd.DataFrame([
+        _word_row("48", 4.27, 4.94, 1, transcript="forty eight"),
+    ])
+    phone_df = pd.DataFrame([
+        {"phone": "F",   "onset": 4.27, "offset": 4.40},
+        {"phone": "AO1", "onset": 4.40, "offset": 4.55},
+        {"phone": "R",   "onset": 4.55, "offset": 4.65},
+        {"phone": "T",   "onset": 4.65, "offset": 4.72},
+        {"phone": "IY0", "onset": 4.72, "offset": 4.80},
+        {"phone": "EY1", "onset": 4.80, "offset": 4.90},
+        {"phone": "T",   "onset": 4.90, "offset": 4.94},
+    ])
+    _, phon = syllabify_pairs(word_df, phone_df)
+    assert set(phon["Pron_Source"]) == {"dictionary"}
+
+
+def test_pron_source_falls_back_to_the_token_without_a_transcript_column():
+    """A caller may pass a frame that never went through merge_alignment."""
+    word_df = pd.DataFrame([{
+        "doc_id": 1, "sentence_id": 1, "token_in_sentence_id": 1,
+        "token": "cup", "Onset": 0.0, "End": 0.30,
+    }])
     phone_df = pd.DataFrame([
         {"phone": "K",   "onset": 0.00, "offset": 0.10},
         {"phone": "AH1", "onset": 0.10, "offset": 0.20},
@@ -657,14 +697,33 @@ def _split_label(label: str) -> tuple[str, int | None]:
     return text, None
 
 
-def _pron_source(token: str, phones: list[Phone]) -> str:
-    """dictionary | g2p | oov_unresolved for one word's phone sequence."""
+def _pron_source(mfa_form, phones: list[Phone]) -> str:
+    """dictionary | g2p | oov_unresolved for one word's phone sequence.
+
+    `mfa_form` is the MFA WORDS-TIER form (the word_df `Transcript` value), not
+    the spaCy token. This matters: spaCy keeps digits ('48') while the aligner
+    receives them spelled out, so `Transcript` is 'forty eight'. Checking the
+    spaCy token would find '48' absent from the dictionary and mislabel a
+    perfectly ordinary dictionary pronunciation as 'g2p' — verified to hit every
+    numeric token in the real stimuli ('48', '2', '6', '8', '10', '3').
+
+    A Transcript may hold several space-separated words (the align_merge 'expand'
+    case); the pronunciation is dictionary-derived only if EVERY part is in the
+    lexicon.
+    """
     if any(p.label == _SPN for p in phones):
         return "oov_unresolved"
     lexicon = _lexicon_words()
-    if lexicon and str(token).lower() not in lexicon:
-        return "g2p"
-    return "dictionary"
+    if not lexicon:
+        # No dictionary available: report the neutral value rather than
+        # mislabelling every word as g2p.
+        return "dictionary"
+    parts = [p for p in str(mfa_form or "").split() if p]
+    if not parts:
+        return "dictionary"
+    if all(p.lower() in lexicon for p in parts):
+        return "dictionary"
+    return "g2p"
 ```
 
 **3b.** Update the column schemas:
@@ -704,7 +763,10 @@ _PHON_COLUMNS = [
             continue
         seen_intervals.add(interval)
 
-        source = _pron_source(cast(str, w.token), word_phones)
+        # Transcript is the MFA words-tier form; fall back to the token only
+        # when a caller passes a frame without that column (see _pron_source).
+        source = _pron_source(
+            getattr(w, 'Transcript', None) or w.token, word_phones)
         syllables = syllabify_word(word_phones)
         labels = assign_labels(cast(str, w.token), syllables)
 
@@ -2078,6 +2140,14 @@ for stem in _stems():
           f"{stem}: some vowel rows have empty Stress")
     check(new_p.loc[~vowels & (new_p["ARPABET"] != "spn"), "Stress"].isna().all(),
           f"{stem}: some consonant rows have a Stress value")
+
+    # 4b. Pron_Source sanity: with g2p off, a corpus of ordinary English read
+    #     speech should be entirely 'dictionary'. Any 'g2p' here means the
+    #     provenance check is judging the wrong string (the classic failure is
+    #     using the spaCy token, so every number reads as g2p).
+    check(set(new_p["Pron_Source"]) <= {"dictionary", "oov_unresolved"},
+          f"{stem}: unexpected Pron_Source values "
+          f"{sorted(set(new_p['Pron_Source']))} with g2p off")
 
     # 5. IPA populated for every real phone; Label column gone.
     real = new_p["ARPABET"] != "spn"

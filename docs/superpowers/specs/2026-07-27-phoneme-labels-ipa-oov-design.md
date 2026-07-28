@@ -228,6 +228,14 @@ second read of a 200k-line file.
 - word not in dictionary, real phones present → `g2p`
 - word not in dictionary, only `spn` → `oov_unresolved`
 
+The form checked is the **MFA words-tier form** (the word frame's `Transcript`), never the
+spaCy token. Numbers make the difference load-bearing: spaCy keeps `48` while the aligner
+received `forty eight`, so judging by the token would mark every number in the corpus as a
+modeled pronunciation. Verified against the real stimuli — `48`, `2`, `6`, `8`, `10`, `3` are
+all absent from the dictionary as digit strings but fully present as their spelled forms. A
+`Transcript` holding several space-separated words (the `align_merge` *expand* case) counts as
+`dictionary` only when **every** part is in the lexicon.
+
 ### 6.4 Zero-phoneme reporting
 
 `syllabify_pairs` collects words that end with no phoneme rows and reports them to stdout and
