@@ -22,8 +22,8 @@ Three user-reported items, plus the coupled correctness work each one forces:
    duplicates them.
 
 A fourth item follows from the investigation: newline tokens occupy word-CSV rows and shift
-the id columns (§2.3). Removing them without preserving what they encode would lose paragraph
-structure, so paragraph membership becomes a real column (§7).
+the id columns (§2.3). Paragraph membership is already recorded by the existing `paragraph_id`
+column, so removing those rows loses nothing (§7).
 
 ## 2. Investigation findings (evidence, not conjecture)
 
@@ -93,7 +93,8 @@ SPACE tokens.
 least one falls mid-sentence — in `LJ002-0321`, `'…time of distribution\nwere often 48
 hours…'` is one sentence (spaCy assigns both halves `sentence_id=1`). No transcript in the
 set contains a blank line. So a paragraph counter incremented per `\n` would split a single
-sentence across two paragraphs. Paragraphs must be defined by blank lines (§7).
+sentence across two paragraphs. Paragraphs must be defined by blank lines — which is already
+how the shipped `paragraph_id` column works (§7), so no change is needed there.
 
 ### 2.4 Out of scope: "was this word actually spoken?"
 
@@ -255,32 +256,36 @@ Not chosen: rule-based clitic splitting (`n't`→`N T`, `'s`→`Z`, …). It wou
 hand-maintained table that mis-splits silently on edge cases, and it makes syllable
 attribution ambiguous (in `wasn't`, `AH0` belongs cleanly to neither token).
 
-## 7. Paragraph tracking and SPACE-row removal
+## 7. SPACE-row removal (paragraph tracking already exists)
 
-In `extractors/text_parser.py`:
+**Correction to an earlier draft of this spec:** paragraph tracking is already implemented and
+fully wired. `extractors/text_parser.py:32,47-75,104` computes paragraph spans from blank
+lines (`_PARAGRAPH_SEP_RE = r'\n[ \t]*\n+'`) — exactly the §2.3 rule — and emits
+`paragraph_id`. It already has a `feat_struct_paragraph_id` pref
+(`preferences.py:232`), a `_WORD_FEATURE_COLUMN_MAP` entry (`main.py:481`), a GUI toggle
+(`section_word_features.py:54`), planner `emits_columns` (`registry.py:241`), and
+`docs/features/structural_ids.md`. The doc summary already emits `n_paragraphs`
+(`out_count_paragraphs`). The word CSV has carried `paragraph_id` all along.
 
-1. **Paragraph spans** from the raw text by splitting on `\n\s*\n`; each token's
-   `paragraph_id` (1-based) comes from its document char offset `token.idx`. Blank-line
-   definition per §2.3 — a single `\n` is a line wrap and does not start a paragraph.
-   Verified that spaCy receives raw text: `main.py:311` reads the file and passes it straight
-   to `spacy_parse`; `normalize_whitespace` only runs on the MFA path.
-2. **Skip `token.is_space`** tokens — they never become rows.
-3. **Assign `token_id` over surviving tokens**, building a `{token.i → token_id}` map, and
+So the requirement "we must still know which tokens belong to which paragraph" is **already
+satisfied**, and removing the newline rows cannot lose it. No new column, pref, toggle, doc, or
+migration entry is needed for paragraphs.
+
+The only actual work is in `extractors/text_parser.py::parse`:
+
+1. **Skip `token.is_space`** tokens — they never become rows.
+2. **Assign `token_id` over surviving tokens**, building a `{token.i → token_id}` map, and
    resolve `head_token_id` **through that map** (a root maps to its own `token_id`).
-4. `token_in_sentence_id` counts surviving tokens, becoming a true sentence position.
+3. `token_in_sentence_id` counts surviving tokens, becoming a true sentence position.
 
-> ⚠️ Step 3 is mandatory, not optional. `text_parser.py:121` currently computes
+> ⚠️ Step 2 is mandatory, not optional. `text_parser.py:121` currently computes
 > `head_token_id = token.head.i + 1` using spaCy's doc index, which counts SPACE tokens.
 > Today `token_id` also counts them, so the two agree **by accident**. Skipping SPACE rows
 > without the remap makes every `head_token_id` past the first newline point at the wrong
 > word, with no error raised.
 
-New `paragraph_id` column on the word CSV and the sentence CSV, both gated by the single new
-`feat_struct_paragraph_id` toggle. On all ten current stimuli it reads `1` throughout — the
-truthful value for a single hard-wrapped passage — and starts carrying information as soon as
-a genuinely multi-paragraph stimulus arrives.
-
-Doc-level paragraph count is **not** added; out of scope.
+A sentence-level `paragraph_id` column is **not** added — out of scope, not requested, and
+derivable by joining the word CSV on `sentence_id`.
 
 ## 8. Prefs — v19 → v20 (removal-migration)
 
@@ -298,8 +303,9 @@ finalize block.
 | `feat_phoneme_ipa` | inherits old `feat_phoneme_label` | |
 | `feat_phoneme_pron_source` | inherits old `feat_phoneme_label` | |
 | `feat_syllable_ipa` | `False` | Opt-in, matching `feat_syllable_arpabet`'s verbose-column precedent |
-| `feat_struct_paragraph_id` | `True` | Structural columns are on by default per the v15 opt-in scheme |
 | `alignment.g2p_oov` | `False` | Opt-in per §2.4 — never model a pronunciation unasked |
+
+No paragraph key is added — `feat_struct_paragraph_id` already exists (§7).
 
 Migration carries the old `feat_phoneme_label` value forward to all four replacements, so a
 user who had it off keeps all four off.
@@ -317,20 +323,19 @@ breakages**: they read the stress digit out of the `Label` string and fail witho
 | ⚠️ `extractors/phoneme_surprisal.py:196` | Read `ARPABET` (already stress-free) instead of `Label`; for the `strip_stress=False` path, recombine `ARPABET + Stress`. Otherwise `KeyError`, or wrong values. |
 | `extractors/arpabet_ipa.py` | **New** (§5) |
 | `extractors/syllabify.py` | `_PHON_COLUMNS`/`_SYLL_COLUMNS`; emit the split columns + `IPA` + `Pron_Source`; dedup (§6.5); zero-phoneme collection (§6.4) |
-| `extractors/text_parser.py` | Paragraph ids, SPACE skip, `token_id`/head remap (§7) |
+| `extractors/text_parser.py` | SPACE skip + `token_id`/`token_in_sentence_id`/head remap (§7). Paragraph logic already present — do not touch it. |
 | `extractors/aligner.py` | `--g2p_model_path`; `mfa_g2p` sidecar key; `SIDECAR_VERSION` 1→2 |
 | `utils/textgrid_parser.py` | Stop filtering `spn` (§6.1) |
 | `utils/download_models.py` | Fetch the g2p model |
 | `utils/preferences.py` | v20 migration (§8) |
-| `utils/session_units.py` | `ARPABET`/`Stress`/`IPA`/`Pron_Source`/`paragraph_id` → `"category"` |
-| `main.py` | `_PHONEME_COLUMN_MAP` (4 new keys, drop `feat_phoneme_label`); `_SYLLABLE_COLUMN_MAP` (`feat_syllable_ipa`); `_WORD_FEATURE_COLUMN_MAP` **and** `_SENTENCE_COLUMN_MAP` (both gain `feat_struct_paragraph_id` → `paragraph_id`; one toggle gates the column on both CSVs); `--g2p-oov` CLI flag; thread the pref to `_prealign_batch` |
+| `utils/session_units.py` | **No change.** `_STATIC_UNITS` maps only physical-unit columns (seconds/dB/count) and has no categorical entries; the new label columns are correctly absent. |
+| `main.py` | `_PHONEME_COLUMN_MAP` (4 new keys, drop `feat_phoneme_label`); `_SYLLABLE_COLUMN_MAP` (`feat_syllable_ipa`); `--g2p-oov` CLI flag; thread the pref to `_prealign_batch`. `_WORD_FEATURE_COLUMN_MAP` needs no change. |
 | `gui/planner/registry.py` | `emits_columns` on the phoneme + syllable-label stages; G2P pref plumbing |
 | `gui/planner/emit.py` | `g2p_oov` into the Namespace |
 | `gui/section_subword_features.py` | One phoneme-label toggle → four; syllable `IPA` row; G2P toggle |
-| `gui/section_word_features.py` | `paragraph_id` structural toggle |
 | `gui/main_window.py` | `settings_changed → refresh` wiring if a page gains a card |
 | `run.py` | Honour `alignment.g2p_oov` |
-| `docs/features/` | Rewrite `phoneme.md`; extend `syllable_labels.md`; new `feat_phoneme_ipa.md`, `feat_struct_paragraph_id.md`, `g2p_oov.md` |
+| `docs/features/` | Rewrite `phoneme.md`; extend `syllable_labels.md`; new `feat_phoneme_ipa.md`, `g2p_oov.md`. Add the SPACE-row/id note to the existing `structural_ids.md`. |
 | `gui/feature_docs.py` | Register the new toggle keys in `_SHARED_DOC_MAP` |
 | `docs/master_plan.md` | §3 row, §6 prefs-version note, and correct the §4 Brain Treebank parity claim (§2.3) |
 | `docs/changelog.md` | Full batch write-up |
@@ -390,5 +395,6 @@ Re-run all ten `validation/` stimuli and assert:
   as the roadmap's *Correctness scoring* item.
 - Rule-based clitic phoneme splitting (§6.5).
 - Syllable-level `Stress` column (§4).
-- Doc-level paragraph count (§7).
+- Sentence-level `paragraph_id` column (§7). Doc-level `n_paragraphs` and word-level
+  `paragraph_id` already exist and are not touched.
 - Any change to word-level `Surprisal`, prosody, or acoustic output.
