@@ -1157,15 +1157,19 @@ def _run_mfa(corpus_dir: str, output_dir: str, *, g2p: bool = False) -> None:
 
 Add `import sys` at the top of the module.
 
-In `utils/download_models.py`, add the g2p model beside the existing acoustic/dictionary
-downloads, following that file's existing invocation pattern:
+In `utils/download_models.py`, add a third entry to the existing
+`(model_type, model_name)` loop at line 25 (there is no `_download` helper — the loop calls
+`subprocess.run(['mfa', 'model', 'download', model_type, model_name])` directly):
 
 ```python
-    _download('g2p', 'english_us_arpa')   # OOV pronunciations (~11 MB)
-```
-
-Match the actual helper name used in that file; if downloads are inline `subprocess` calls,
-add a third call mirroring the dictionary one with `'g2p'` in place of `'dictionary'`.
+    for model_type, model_name in [
+        ('acoustic',    'english_us_arpa'),
+        ('dictionary',  'english_us_arpa'),
+        # g2p generates pronunciations for out-of-dictionary words (~11 MB).
+        # Only used when the alignment.g2p_oov pref is on, but vendored here so
+        # the toggle works offline for collaborators.
+        ('g2p',         'english_us_arpa'),
+    ]:
 
 - [ ] **Step 4: Run the tests**
 
@@ -1200,69 +1204,89 @@ git commit -m "feat(align): opt-in MFA G2P for OOV words; sidecar v2 records the
 
 Add to `tests/utils/test_preferences_migration.py`:
 
+There is **no** public `_migrate(dict) -> dict`. Migration runs inside
+`load_preferences()`, which reads the legacy JSON path (or the YAML pair) from the directory
+named by the `SENSI_PREFS_PATH` env var. Follow the existing pattern in this file exactly:
+write an old-schema JSON file to `tmp_path`, `monkeypatch.setenv('SENSI_PREFS_PATH', ...)`,
+then call `load_preferences()`.
+
 ```python
+import json
+
 from utils.preferences import (
-    DEFAULT_PREFS, SCHEMA_VERSION, SCHEMA_VERSION_V20, _migrate,
+    DEFAULT_PREFS,
+    SCHEMA_VERSION,
+    SCHEMA_VERSION_V20,
+    load_preferences,
 )
 
 _NEW_PHONEME_KEYS = ("feat_phoneme_arpabet", "feat_phoneme_stress",
                      "feat_phoneme_ipa", "feat_phoneme_pron_source")
 
 
+def _load_from(tmp_path, monkeypatch, stored: dict) -> dict:
+    """Write `stored` as the legacy json and return the migrated prefs."""
+    monkeypatch.setenv('SENSI_PREFS_PATH', str(tmp_path / 'p.json'))
+    (tmp_path / 'p.json').write_text(json.dumps(stored), encoding='utf-8')
+    return load_preferences()
+
+
 def test_active_version_is_20():
     assert SCHEMA_VERSION == SCHEMA_VERSION_V20 == 20
-    assert DEFAULT_PREFS["schema_version"] == 20
+    assert DEFAULT_PREFS['schema_version'] == 20
 
 
 def test_defaults_drop_label_and_add_the_split_keys():
-    f = DEFAULT_PREFS["features"]
-    assert "feat_phoneme_label" not in f
+    f = DEFAULT_PREFS['features']
+    assert 'feat_phoneme_label' not in f
     for key in _NEW_PHONEME_KEYS:
         assert key in f
-    assert f["feat_syllable_ipa"] is False
-    assert DEFAULT_PREFS["alignment"] == {"g2p_oov": False}
+    assert f['feat_syllable_ipa'] is False
+    assert DEFAULT_PREFS['alignment'] == {'g2p_oov': False}
 
 
 def test_paragraph_toggle_is_untouched():
     """It already existed; the migration must not add or reset it."""
-    assert DEFAULT_PREFS["features"]["feat_struct_paragraph_id"] is True
+    assert DEFAULT_PREFS['features']['feat_struct_paragraph_id'] is True
 
 
-def test_v19_label_on_migrates_all_four_replacements_on():
-    v19 = {"schema_version": 19, "features": {"feat_phoneme_label": True}}
-    out = _migrate(v19)
-    assert out["schema_version"] == 20
-    assert "feat_phoneme_label" not in out["features"]
+def test_v19_label_on_migrates_all_four_replacements_on(tmp_path, monkeypatch):
+    prefs = _load_from(tmp_path, monkeypatch, {
+        'schema_version': 19,
+        'features': {'feat_phoneme_label': True},
+    })
+    assert prefs['schema_version'] == 20
+    assert 'feat_phoneme_label' not in prefs['features']
     for key in _NEW_PHONEME_KEYS:
-        assert out["features"][key] is True
+        assert prefs['features'][key] is True, key
 
 
-def test_v19_label_off_migrates_all_four_replacements_off():
-    v19 = {"schema_version": 19, "features": {"feat_phoneme_label": False}}
-    out = _migrate(v19)
+def test_v19_label_off_migrates_all_four_replacements_off(tmp_path, monkeypatch):
+    prefs = _load_from(tmp_path, monkeypatch, {
+        'schema_version': 19,
+        'features': {'feat_phoneme_label': False},
+    })
     for key in _NEW_PHONEME_KEYS:
-        assert out["features"][key] is False
+        assert prefs['features'][key] is False, key
 
 
-def test_g2p_oov_defaults_off_after_migration():
-    out = _migrate({"schema_version": 19, "features": {}})
-    assert out["alignment"]["g2p_oov"] is False
+def test_g2p_oov_defaults_off_after_migration(tmp_path, monkeypatch):
+    prefs = _load_from(tmp_path, monkeypatch,
+                       {'schema_version': 19, 'features': {}})
+    assert prefs['alignment']['g2p_oov'] is False
 
 
-def test_post_v20_user_values_survive_a_reload():
-    v20 = {
-        "schema_version": 20,
-        "features": {"feat_phoneme_ipa": False, "feat_phoneme_arpabet": True},
-        "alignment": {"g2p_oov": True},
-    }
-    out = _migrate(v20)
-    assert out["features"]["feat_phoneme_ipa"] is False
-    assert out["features"]["feat_phoneme_arpabet"] is True
-    assert out["alignment"]["g2p_oov"] is True
+def test_post_v20_user_values_survive_a_reload(tmp_path, monkeypatch):
+    """A v20 source is not re-migrated; the user's own values win."""
+    prefs = _load_from(tmp_path, monkeypatch, {
+        'schema_version': 20,
+        'features': {'feat_phoneme_ipa': False, 'feat_phoneme_arpabet': True},
+        'alignment': {'g2p_oov': True},
+    })
+    assert prefs['features']['feat_phoneme_ipa'] is False
+    assert prefs['features']['feat_phoneme_arpabet'] is True
+    assert prefs['alignment']['g2p_oov'] is True
 ```
-
-Confirm the migration entry point's real name before running (`_migrate` here) by checking
-how the existing tests in this file invoke it, and match it.
 
 - [ ] **Step 2: Run the test to verify it fails**
 
@@ -1862,22 +1886,24 @@ git commit -m "fix(parser): drop whitespace tokens; remap token_id and head_toke
 
 Add to `tests/gui/test_feature_docs.py`:
 
+The module's public predicate is `has_feature_doc(toggle_key)` (there is no `doc_for_toggle`);
+`load_feature_doc(toggle_key)` returns the parsed doc or `None`.
+
 ```python
-from gui.feature_docs import _SHARED_DOC_MAP, doc_for_toggle
+from gui.feature_docs import _SHARED_DOC_MAP, has_feature_doc, load_feature_doc
 
 
 def test_every_new_toggle_has_a_doc():
     for key in ("feat_phoneme_arpabet", "feat_phoneme_stress",
                 "feat_phoneme_ipa", "feat_phoneme_pron_source",
                 "feat_syllable_ipa", "g2p_oov"):
-        assert doc_for_toggle(key) is not None, key
+        assert has_feature_doc(key), key
+        assert load_feature_doc(key) is not None, key
 
 
 def test_retired_toggle_is_gone():
     assert "feat_phoneme_label" not in _SHARED_DOC_MAP
 ```
-
-Match `doc_for_toggle`'s real name in that module before running.
 
 - [ ] **Step 2: Run the test to verify it fails**
 
