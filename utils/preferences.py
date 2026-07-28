@@ -51,6 +51,7 @@ Override the directory holding both files via SENSI_CONFIG_DIR, or (for
 
 import json
 import os
+import sys
 from copy import deepcopy
 from pathlib import Path
 from typing import Any
@@ -1177,25 +1178,45 @@ def _merged_from_user(user: dict[str, Any]) -> tuple[dict[str, Any], bool]:
     return merged, changed
 
 
-def _read_yaml_tolerant(path: Path) -> dict[str, Any]:
+def _read_yaml_tolerant(path: Path) -> tuple[dict[str, Any], bool]:
+    """Best-effort read of one half of the YAML pair.
+
+    Returns (data, parsed_ok). `parsed_ok` is False only when `path` exists
+    but could not be parsed (malformed YAML or an OS-level read error) — the
+    caller uses this to know it must not overwrite that file. A missing or
+    legitimately empty file is not a parse failure: it returns ({}, True).
+    """
     import yaml as _yaml
     try:
-        return read_yaml(path)
+        return read_yaml(path), True
     except (_yaml.YAMLError, OSError):
-        return {}
+        return {}, False
 
 
-def _write_yaml_pair(merged: dict[str, Any]) -> None:
+def _write_yaml_pair(merged: dict[str, Any], *,
+                      write_features: bool = True,
+                      write_run: bool = True) -> None:
+    """Write the halves of `merged` back to disk.
+
+    write_features/write_run let the caller refuse to rewrite a half whose
+    on-disk file could not be parsed in the first place (see load_preferences)
+    — overwriting a file we never understood would destroy the only evidence
+    a user has for diagnosing their own corrupted config.
+    """
     features_data, run_data = split_prefs(merged)
-    write_features_yaml(get_features_yaml_path(), features_data)
-    write_run_yaml(get_run_yaml_path(), run_data)
+    if write_features:
+        write_features_yaml(get_features_yaml_path(), features_data)
+    if write_run:
+        write_run_yaml(get_run_yaml_path(), run_data)
 
 
 def load_preferences() -> dict[str, Any]:
     """Load preferences from the YAML pair; one-time import from legacy json."""
     f_path, r_path = get_features_yaml_path(), get_run_yaml_path()
     if f_path.exists() or r_path.exists():
-        user = join_yaml_pair(_read_yaml_tolerant(f_path), _read_yaml_tolerant(r_path))
+        f_data, f_ok = _read_yaml_tolerant(f_path)
+        r_data, r_ok = _read_yaml_tolerant(r_path)
+        user = join_yaml_pair(f_data, r_data)
         if get_preferences_path().exists() and (
                 not user or not (f_path.exists() and r_path.exists())):
             # Half-import window: a crash (or torn write) between writing
@@ -1208,20 +1229,31 @@ def load_preferences() -> dict[str, Any]:
             # orphaning the json forever, fall through and (re)run the import
             # so the pair gets completed.
             return _load_legacy_json()
+        if not f_ok:
+            print(f"SensiExtractor: warning: {f_path} could not be parsed "
+                  "as YAML — it will be left unchanged on disk and this "
+                  "session falls back to defaults for its settings.",
+                  file=sys.stderr)
+        if not r_ok:
+            print(f"SensiExtractor: warning: {r_path} could not be parsed "
+                  "as YAML — it will be left unchanged on disk and this "
+                  "session falls back to defaults for its settings.",
+                  file=sys.stderr)
         # The YAML store began at v19; a missing/hand-stripped schema_version
-        # must not fall into the v1 flat-json migration, so a NON-EMPTY user
-        # (real section content, just missing/miscast the version key) is
-        # assumed to be v19 (sectioned-shaped), NOT the current
-        # SCHEMA_VERSION. Assuming "current" would skip every pending
+        # must not fall into the v1 flat-json migration, so a NON-EMPTY
+        # features half (real section content, just missing/miscast the
+        # version key) is assumed to be v19 (sectioned-shaped), NOT the
+        # current SCHEMA_VERSION. Assuming "current" would skip every pending
         # finalize block below (v20's feat_phoneme_label removal in
         # particular), letting a retired key survive forever with `changed`
         # False so the file is never rewritten to self-heal. A quoted version
         # (`schema_version: '19'`) is coerced to int the same way.
-        # An EMPTY user (e.g. a corrupted features.yaml recovered to {} by
-        # _read_yaml_tolerant) has nothing to migrate — keep assuming
-        # "current" there so a bad file is never silently overwritten with
-        # fresh defaults (see test_corrupted_features_yaml_falls_back_to_defaults).
-        has_content = bool(user.keys() - {'schema_version'})
+        # This is deliberately based on f_data (the parsed features.yaml
+        # payload alone), NOT the joined `user` dict: run.yaml contributing a
+        # non-empty `shared` section must never make an emptied/corrupted
+        # features.yaml look like it has content to migrate — see
+        # test_corrupted_features_yaml_with_valid_run_yaml_is_not_overwritten.
+        has_content = bool(f_data.keys() - {'schema_version'})
         assumed_version = SCHEMA_VERSION_V19 if has_content else SCHEMA_VERSION
         raw_version = user.get('schema_version')
         if raw_version is None:
@@ -1234,7 +1266,10 @@ def load_preferences() -> dict[str, Any]:
         merged, changed = _merged_from_user(user)
         if changed:
             try:
-                _write_yaml_pair(merged)
+                # Never rewrite a half we could not parse in the first
+                # place — that would silently destroy a corrupted file the
+                # user needs to diagnose their own settings.
+                _write_yaml_pair(merged, write_features=f_ok, write_run=r_ok)
             except OSError:
                 pass  # read-only config dir: settings still load for the
                       # session, persistence just doesn't happen

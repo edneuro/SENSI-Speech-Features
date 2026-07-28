@@ -99,9 +99,10 @@ def test_yaml_pair_takes_priority_over_legacy_json(tmp_path, monkeypatch):
     assert (tmp_path / "preferences.json").exists()    # json untouched when pair exists
 
 
-def test_missing_schema_version_in_yaml_assumes_current(tmp_path, monkeypatch):
+def test_missing_schema_version_in_yaml_assumes_v19(tmp_path, monkeypatch):
     # A hand-made features.yaml without schema_version must NOT be run through
-    # the v1 flat-file migration (which would mangle its sections).
+    # the v1 flat-file migration (which would mangle its sections) — it is
+    # assumed v19 (sectioned-shaped) and migrated forward, not assumed current.
     monkeypatch.setenv("SENSI_CONFIG_DIR", str(tmp_path))
     features, run = split_prefs(deepcopy(DEFAULT_PREFS))
     features.pop("schema_version")
@@ -157,6 +158,60 @@ def test_corrupted_features_yaml_falls_back_to_defaults(tmp_path, monkeypatch):
     assert prefs["features"] == DEFAULT_PREFS["features"]
     # load never overwrites a corrupted file
     assert (tmp_path / FEATURES_YAML).read_text(encoding="utf-8") == "features: [unclosed"
+
+
+def test_corrupted_features_yaml_with_valid_run_yaml_is_not_overwritten(
+        tmp_path, monkeypatch, capsys):
+    # Regression: join_yaml_pair merges features.yaml + run.yaml into one
+    # `user` dict before the "does this look like it has content to migrate"
+    # gate saw it. A valid, non-empty run.yaml's `shared` section alone made
+    # the merged dict look non-empty even though features.yaml was
+    # corrupted-and-emptied, so load_preferences assumed v19, ran a no-op
+    # migration, and `_write_yaml_pair` silently overwrote the corrupted
+    # features.yaml with fresh defaults. This is the case the pre-existing
+    # test_corrupted_features_yaml_falls_back_to_defaults could not catch,
+    # because it never writes a run.yaml (so both halves were empty there).
+    monkeypatch.setenv("SENSI_CONFIG_DIR", str(tmp_path))
+    corrupted = "features: [unclosed"
+    (tmp_path / FEATURES_YAML).write_text(corrupted, encoding="utf-8")
+    _features, run = split_prefs(deepcopy(DEFAULT_PREFS))
+    run["shared"]["analyzer_name"] = "StillHere"
+    write_run_yaml(tmp_path / RUN_YAML, run)
+
+    prefs = load_preferences()
+
+    assert prefs["features"] == DEFAULT_PREFS["features"]        # usable defaults
+    assert prefs["shared"]["analyzer_name"] == "StillHere"       # run.yaml preserved in memory
+    # the corrupted file is byte-for-byte unchanged on disk
+    assert (tmp_path / FEATURES_YAML).read_text(encoding="utf-8") == corrupted
+    err = capsys.readouterr().err
+    assert str(tmp_path / FEATURES_YAML) in err
+
+
+def test_corrupted_run_yaml_with_valid_features_yaml_is_not_overwritten(
+        tmp_path, monkeypatch, capsys):
+    # Symmetric case: a corrupted run.yaml must not be overwritten either,
+    # even when features.yaml is valid, pre-v20, and genuinely needs its
+    # self-healing rewrite (so `changed` really is True this time).
+    monkeypatch.setenv("SENSI_CONFIG_DIR", str(tmp_path))
+    features, _run = split_prefs(deepcopy(DEFAULT_PREFS))
+    features.pop("schema_version")               # pre-v20 shaped: needs migrating
+    features["features"]["master_structural"] = False
+    write_features_yaml(tmp_path / FEATURES_YAML, features)
+    corrupted = "shared: [unclosed"
+    (tmp_path / RUN_YAML).write_text(corrupted, encoding="utf-8")
+
+    prefs = load_preferences()
+
+    assert prefs["features"]["master_structural"] is False
+    assert prefs["schema_version"] == SCHEMA_VERSION
+    # the corrupted run.yaml is byte-for-byte unchanged on disk
+    assert (tmp_path / RUN_YAML).read_text(encoding="utf-8") == corrupted
+    # features.yaml still self-heals despite the corrupted sibling
+    on_disk = read_yaml(tmp_path / FEATURES_YAML)
+    assert on_disk["schema_version"] == SCHEMA_VERSION
+    err = capsys.readouterr().err
+    assert str(tmp_path / RUN_YAML) in err
 
 
 def test_unknown_keys_survive_save_load(tmp_path, monkeypatch):
