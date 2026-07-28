@@ -27,7 +27,7 @@ These don't emit user-facing columns directly. They produce raw artifacts that o
   - Identifiers: `doc_id, paragraph_id, sentence_id, sentence, start, end, token_id, token_in_sentence_id`
   - Linguistic: `token, lemma, upos, xpos, feats, dep_rel, head_token_id`
 - **Consumers:** every word-level cluster except pure-acoustic; every sub-word cluster (needs `doc_id/sentence_id/token_in_sentence_id` for FK joins); every doc-level cluster that aggregates word features.
-- **Notes:** Tokenization is the canonical "what is a word" definition for the pipeline. `start/end` are **character offsets** in the sentence string, not seconds — easy to confuse with `Onset/End` from MFA.
+- **Notes:** Tokenization is the canonical "what is a word" definition for the pipeline. `start/end` are **character offsets** in the sentence string, not seconds — easy to confuse with `Onset/End` from MFA. As of 2026-07-27 whitespace tokens (`token.is_space`, e.g. a literal `\n`) are **skipped** and never become rows, so `token_id`/`token_in_sentence_id` count emitted tokens only and `token_in_sentence_id` is a true sentence position; `head_token_id` is resolved through a `{token.i → token_id}` map built over surviving tokens (not `token.head.i + 1`), which is mandatory for the heads to stay correct.
 
 ### 0.2 MFA forced alignment — `extractors/aligner.py`
 
@@ -36,7 +36,8 @@ These don't emit user-facing columns directly. They produce raw artifacts that o
 - **Inputs:** audio path (.wav), prepared transcript (digits spelled out by `utils/transcript_prep.py` using `num2words`)
 - **Outputs:** two DataFrames
   - `word_alignment_df` with columns `Transcript, Onset, End` (seconds, one row per spoken word)
-  - `phones_df` with columns `phone, onset, offset` (seconds, one row per phoneme, ARPABET labels with stress digits 0/1/2 on vowels)
+  - `phones_df` with columns `phone, onset, offset` (seconds, one row per phoneme, ARPABET labels with stress digits 0/1/2 on vowels). Silence intervals (`''`, `sil`, `SIL`, `sp`) are dropped; MFA's unknown-word phone `spn` is **kept** as of 2026-07-27 (dropping it silently deleted out-of-dictionary words from every sub-word CSV).
+- **Options:** `alignment.g2p_oov` (prefs; `--g2p-oov` on the CLI; default **off**) passes `--g2p_model_path mfa_data/pretrained_models/g2p/english_us_arpa.zip` to `mfa align`, so out-of-dictionary words receive a spelling-derived pronunciation instead of a single `spn`. Recorded in the freshness sidecar as `mfa_g2p` (`SIDECAR_VERSION` 2), so flipping it re-aligns exactly once.
 - **Consumers:** word-level acoustic + prosody; all sub-word clusters; doc-level prosody.
 - **Notes:** Single subprocess call per stimulus; expensive (~10-60s on real audio). Words MFA fails to align come back missing — the per-word merge in `main.py:_merge_alignment` leaves `Onset/End` as NaN for those, and downstream consumers must tolerate NaN.
 
@@ -144,20 +145,22 @@ Emits `<stim>_syllables.csv` and `<stim>_phonemes.csv`. **Always emitted as side
 
 ### 2.1 Phoneme intervals — `extractors/syllabify.py:syllabify_pairs` (phoneme half)
 
-- **Features (rows in `<stim>_phonemes.csv`):** `doc_id, sentence_id, token_in_sentence_id, token, syllable_id, phoneme_id, Label, Onset, End, Duration`
-- **Library:** pure pandas (consumes MFA phones tier directly)
-- **Inputs:** §0.1 spaCy parse (for `doc_id/sentence_id/token_in_sentence_id/token` FK columns) + §0.2 MFA phones_df + §0.2 MFA word tier merged into word df (for `Onset/End` interval bounds)
-- **Per-column toggles:** `feat_phoneme_label, feat_phoneme_onset, feat_phoneme_end, feat_phoneme_duration`
+- **Features (rows in `<stim>_phonemes.csv`):** `doc_id, sentence_id, token_in_sentence_id, token, syllable_id, phoneme_id, ARPABET, Stress, IPA, Pron_Source, Onset, End, Duration`
+- **Library:** pure pandas (consumes MFA phones tier directly) + `extractors/arpabet_ipa.py` (dependency-free ARPABET→IPA lookup) for `IPA`
+- **Inputs:** §0.1 spaCy parse (for `doc_id/sentence_id/token_in_sentence_id/token` FK columns) + §0.2 MFA phones_df + §0.2 MFA word tier merged into word df (for `Onset/End` interval bounds **and** `Transcript`, which `Pron_Source` is derived from)
+- **Per-column toggles:** `feat_phoneme_arpabet, feat_phoneme_stress, feat_phoneme_ipa, feat_phoneme_pron_source, feat_phoneme_onset, feat_phoneme_end, feat_phoneme_duration`
 - **Master sidecar toggle:** `output.phonemes_csv`
-- **Notes:** Label is ARPABET with stress digit. Phonemes whose `[onset, offset]` falls fully within a word's `[Onset, End]` are assigned to that word; phones outside any word are silently dropped.
+- **Alignment option consumed:** `alignment.g2p_oov` (§0.2) — changes which phones exist for out-of-dictionary words, and hence `Pron_Source`
+- **Notes:** The fused `Label` column (`EY2`) was replaced on 2026-07-27 by `ARPABET` (bare code) + `Stress` (nullable `Int64`: `0/1/2` on vowels, **empty** on consonants) + `IPA`. `IPA` is a function of `ARPABET` **and** `Stress` (`AH0`→`ə` vs `AH1`→`ʌ`; `ER0`→`ɚ` vs `ER1`→`ɝ`). `Pron_Source` ∈ `{dictionary, g2p, oov_unresolved}`. Phonemes whose `[onset, offset]` falls fully within a word's `[Onset, End]` are assigned to that word; phones outside any word are silently dropped. Tokens sharing an identical `[Onset, End]` with a preceding token (the `align_merge` *join* case: `was` + `n't` → MFA `wasn't`) emit rows **once**, under the first token. MFA's unknown-word phone `spn` is **not** filtered as silence, so an out-of-dictionary word yields one syllable + one phoneme row rather than vanishing.
 
 ### 2.2 Syllabification + orthographic labels — `extractors/syllabify.py:syllabify_pairs` (syllable half)
 
-- **Features (rows in `<stim>_syllables.csv`):** `doc_id, sentence_id, token_in_sentence_id, token, syllable_id, Label, ARPABET, Onset, End, Duration`
-- **Library:** `pyphen` (optional, for orthographic syllable labels in `Label` column); falls back to ARPABET-without-stress if pyphen is missing
+- **Features (rows in `<stim>_syllables.csv`):** `doc_id, sentence_id, token_in_sentence_id, token, syllable_id, Label, ARPABET, IPA, Onset, End, Duration`
+- **Library:** `pyphen` (optional, for orthographic syllable labels in `Label` column); falls back to ARPABET-without-stress if pyphen is missing. `extractors/arpabet_ipa.py:syllable_to_ipa` for `IPA`
 - **Inputs:** §0.1 spaCy parse + §0.2 MFA word + phones tiers + per-word phone grouping (Maximum Onset Principle implemented in `syllabify_word`)
-- **Per-column toggles:** `feat_syllable_onset, feat_syllable_end, feat_syllable_duration, feat_syllable_label, feat_syllable_arpabet`
+- **Per-column toggles:** `feat_syllable_onset, feat_syllable_end, feat_syllable_duration, feat_syllable_label, feat_syllable_arpabet, feat_syllable_ipa`
 - **Master sidecar toggle:** `output.syllables_csv`
+- **Notes:** `IPA` (added 2026-07-27) is dash-joined over the syllable's phonemes, e.g. `d-ɹ-i`, with no `ˈ`/`ˌ` stress marks. Unlike the phoneme level, the syllable-level `ARPABET` **still carries stress digits** (`D-R-IY0`) — deliberately unchanged, so the two CSVs encode stress differently. There is no syllable-level `Stress` column.
 
 ### 2.3 Syllable prosody — `extractors/syllable_prosody.py`
 
@@ -172,7 +175,7 @@ Emits `<stim>_syllables.csv` and `<stim>_phonemes.csv`. **Always emitted as side
 - **Library:** pure pandas/numpy (no external model)
 - **Inputs:** §2.2 syllables_df + §2.1 phonemes_df (for per-phoneme onset/duration + nucleus detection)
 - **Formula:** `P_Center = nucleus_onset − k × onset_consonant_duration`
-  - `nucleus_onset` = onset time of the first ARPABET vowel label (ending in `0`/`1`/`2`)
+  - `nucleus_onset` = onset time of the first vowel phone in the syllable, detected as `Stress.notna()` on the phoneme frame (was a `Label`-suffix digit test before the 2026-07-27 column split)
   - `onset_consonant_duration` = sum of durations of phonemes before the nucleus
   - `k` = Scott 1993 coefficient, default 0.3, stored at `prefs["prosody"]["pcenter_k"]`
 - **Edge cases:** vowel-initial → `onset_consonant_duration = 0`; no vowel nucleus → fallback to `syllable.Onset`; missing MFA alignment → `NaN`

@@ -1,62 +1,143 @@
 ---
 key: syllable_labels
-name: Syllable labels (orthographic + ARPABET)
+name: Syllable labels (orthographic + ARPABET + IPA)
 levels: [word]
-gui_toggles: [feat_syllable_label, feat_syllable_arpabet]
-output_columns: [Label, ARPABET]
+gui_toggles: [feat_syllable_label, feat_syllable_arpabet, feat_syllable_ipa]
+output_columns: [Label, ARPABET, IPA]
 libraries: [pyphen, montreal-forced-aligner]
 status: implemented
 depth: shallow
 ---
 
 ## Meaning
-Two label columns identifying each syllable in
-`<stim>_syllables.csv`:
+Three label columns identifying each syllable in
+`syllable/<stim>_syllables.csv`:
 
-| Column | Source | Example for "unbelievable" syllable 1 |
+| Column | Source | Example: *below* |
 |---|---|---|
-| `Label`   | Orthographic, from pyphen hyphenation | `"un"` |
-| `ARPABET` | Phonetic, dash-joined ARPABET phones including stress digits | `"AH0-N"` |
+| `Label`   | Orthographic, from pyphen hyphenation | `"be"`, `"low"` |
+| `ARPABET` | Phonetic, dash-joined ARPABET phones **including stress digits** | `"B-IH0"`, `"L-OW1"` |
+| `IPA`     | Phonetic, dash-joined IPA segments, **no stress marks** | `"b-ɪ"`, `"l-oʊ"` |
+
+A longer word, showing what happens when pyphen's split does not match
+the phone-derived syllable count — *Adrianna*, whose MFA pronunciation is
+`EY2 D R IY0 AE1 N AH0` (four phonological syllables) while pyphen offers
+only three fragments (*Adri-an-na*):
+
+```
+syllable_id  Label      ARPABET    IPA
+    1        EY         EY2        eɪ
+    2        D-R-IY     D-R-IY0    d-ɹ-i
+    3        AE         AE1        æ
+    4        N-AH       N-AH0      n-ə
+```
+
+Note `Label` here is **not** orthographic — the count mismatch triggered
+the stress-stripped-ARPABET fallback described below.
 
 `Label` is the **printable** syllable form for human-readable inspection
 and downstream joins on orthographic syllables. `ARPABET` is the
-**phonological** form used by stress-aware analyses — the trailing
-digit `0/1/2` on each vowel encodes the lexical stress (`0` = none,
-`1` = primary, `2` = secondary).
+**phonological** form used by stress-aware analyses — the trailing digit
+`0/1/2` on each vowel encodes the lexical stress (`0` = none, `1` =
+primary, `2` = secondary). `IPA` is the same phonological form in the
+notation most phoneticians read; it is a relabelling of `ARPABET`, not a
+new measurement, so the two are redundant as regressors.
+
+`feat_syllable_ipa` is **off by default**, matching `feat_syllable_arpabet`'s
+precedent for verbose string columns — enable it on the GUI's Sub-word
+page if you want it.
+
+### ⚠️ The two levels encode stress differently. This is deliberate.
+
+| | Stress lives in… | Example |
+|---|---|---|
+| **Syllable** CSV | the `ARPABET` string itself, as a digit suffix per vowel | `D-R-IY1` |
+| **Phoneme** CSV | a separate [`Stress`](phoneme.md) column; `ARPABET` is bare | `ARPABET=IY`, `Stress=1` |
+
+The phoneme CSV's fused `Label` column was split into
+`ARPABET` + `Stress` + `IPA` on 2026-07-27. The syllable CSV's `ARPABET`
+was **not** touched: it is a dash-joined *string* over several phones, so
+there is no single stress value to lift out of it, and stripping the
+digits would have destroyed information for every existing consumer of
+that column. The 2026-07-27 change to this CSV was purely additive — one
+new `IPA` column.
+
+Consequences to keep in mind:
+
+- Do **not** write a stress filter that works on both files. On the
+  syllable CSV you still need a string test; use the phoneme CSV if you
+  want numeric stress.
+- The syllable `IPA` column carries **no** stress information at all — no
+  `ˈ`/`ˌ` marks (they are not emitted; see
+  [`feat_phoneme_ipa`](feat_phoneme_ipa.md)) and no digits. If you need
+  the syllable's stress alongside its IPA, read it off `ARPABET`, or join
+  the phoneme CSV on `(doc_id, sentence_id, token_in_sentence_id,
+  syllable_id)` and take `Stress` where `Stress.notna()`.
+- There is deliberately **no syllable-level `Stress` column**. Adding one
+  was considered and rejected as out of scope for the additive-only
+  change to this file.
 
 ## Usage
-- Group / filter by primary-stress syllables — pitch accents on
-  stressed syllables elicit a P200 ERP modulated by the F0-peak onset
-  latency, making stressed syllables the canonical units for
-  prominence-related ERP analyses ([Heim 2006](prosody_pitch.md#heim-2006)).
+- Group / filter by primary-stress syllables — pitch accents on stressed
+  syllables elicit a P200 ERP modulated by the F0-peak onset latency,
+  making stressed syllables the canonical units for prominence-related
+  ERP analyses ([Heim 2006](prosody_pitch.md#heim-2006)).
 - Build syllable-class regressors (e.g. open vs. closed syllables) by
-  parsing the ARPABET string.
+  parsing the `ARPABET` string.
 - Match syllables across stimuli by their `ARPABET` string for
-  stimulus-pair contrasts in phonological-similarity studies.
+  stimulus-pair contrasts in phonological-similarity studies. Use `IPA`
+  instead when matching against a corpus that is not ARPABET-annotated.
 
 ## Implementation in SensiExtractor
-Source: `extractors/syllabify.py:assign_labels` (downstream of MFA alignment).
+Source: `extractors/syllabify.py:assign_labels` (`Label` / `ARPABET`) and
+`extractors/arpabet_ipa.py:syllable_to_ipa` (`IPA`), both downstream of
+MFA alignment.
 
-- `Label` is generated by running `pyphen.Pyphen("en_US").inserted()`
-  on the word's surface form and splitting on the inserted hyphens —
-  but only when pyphen's fragment count matches the phone-derived
-  syllable count for that word.
+- `Label` is generated by running `pyphen.Pyphen("en_US").inserted()` on
+  the word's surface form and splitting on the inserted hyphens — but
+  only when pyphen's fragment count matches the phone-derived syllable
+  count for that word.
   ⚠️ Pyphen is orthographic-syllable hyphenation — it doesn't always
-  align perfectly with phonological syllable boundaries; the ARPABET
+  align perfectly with phonological syllable boundaries; the `ARPABET`
   column is the better source when phonological boundaries matter.
 - `ARPABET` is built by joining all phones in the syllable with `-`,
   preserving the stress digit suffix on each vowel phone.
+- `IPA` is built by mapping each phone through `arpabet_ipa.to_ipa` and
+  joining with `-`. It is computed from the **same** `(code, stress)`
+  pairs the phoneme rows are built from, in the same loop, so the two
+  CSVs can never disagree about a phone.
+  Unmappable segments are **dropped** rather than emitted as empty
+  fields, so a syllable containing MFA's unknown-word phone `spn` yields
+  an empty string rather than a run of stray dashes — an
+  `oov_unresolved` word's single syllable therefore has a non-empty
+  `ARPABET` (`spn`) but an **empty** `IPA`.
 - When pyphen is unavailable, or its fragment count doesn't match the
   phone-derived syllable count, `Label` falls back to the same
   dash-joined ARPABET string as the `ARPABET` column but with stress
-  digits stripped (e.g. `"B-EH"` instead of `"B-EH1"`) — see the
-  warning in [`articulation_rate`](feat_doc_prosody_articulation_rate.md)
-  for the same dependency.
+  digits stripped (e.g. `"B-EH"` instead of `"B-EH1"`) — see the warning
+  in [`articulation_rate`](feat_doc_prosody_articulation_rate.md) for the
+  same dependency.
+
+**Rows, not just columns, changed on 2026-07-27.** Two long-standing
+defects in which words reach this file were fixed at the same time, and
+they change row counts on real stimuli:
+
+- A token that shares one MFA word with the token before it (spaCy's
+  `was` + `n't` against MFA's single `wasn't`) used to produce a
+  **duplicate** set of syllable rows. It now emits once, under the first
+  token.
+- An out-of-dictionary word used to produce **no** syllable rows at all.
+  It now yields exactly one syllable carrying `ARPABET = 'spn'`.
+
+Both are described in full in [`phoneme`](phoneme.md).
 
 ## Papers
 - [Heim 2006](prosody_pitch.md#heim-2006) — see
   [`prosody_pitch`](prosody_pitch.md) — P200 ERP elicited by pitch
   accents on stressed syllables.
+- The ARPABET inventory and its stress-digit convention, and the
+  ARPABET↔IPA correspondence used by the `IPA` column, are cited in
+  [`feat_phoneme_ipa`](feat_phoneme_ipa.md#papers).
 
 ## Datasets
 <!-- auto-populated from docs/datasets/*.md once the dataset registry exists -->

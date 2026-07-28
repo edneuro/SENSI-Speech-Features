@@ -108,6 +108,29 @@ the single rarest lexicon word. This avoids `log2(0)` and gives OOV
 phonemes the maximum surprisal a real dictionary entry could have,
 rather than an arbitrary sentinel.
 
+**⚠️ `spn` rows score `NaN` — which is a different claim from the cap.**
+An out-of-dictionary word MFA could not pronounce is aligned to its single
+unknown-word phone `spn` (see [`phoneme`](phoneme.md#pron_source--where-the-pronunciation-came-from),
+`Pron_Source == 'oov_unresolved'`). Those rows get `phoneme_surprisal` and
+`cohort_entropy` of **`NaN`**, not the cap. The two mean different things
+and conflating them corrupts a TRF design matrix:
+
+| | Meaning | Value |
+|---|---|---|
+| **OOV cap** | A *real, identified* phoneme sequence walked off the lexicon trie. The phones are known; no dictionary word matches them. Maximum surprisal is a defensible estimate. | `cap` / `entropy = 0` |
+| **`NaN`** | There is **no phoneme identity to score at all.** `spn` is not a phoneme; it is MFA's placeholder for "I don't know what was said here." No cohort can be defined, so no number is meaningful. | `NaN` |
+
+Assigning the cap to `spn` would assert that a maximally surprising phone
+occurred — a strong, unfounded claim about a row whose phonetic content is
+simply unknown. `NaN` says "no measurement", which is the truth, and it
+propagates correctly: `NaN` impulses are skipped by the `.mat` rasterizer
+and are visible to any downstream `dropna`. If you would rather exclude
+these rows entirely, filter on `Pron_Source`.
+
+Before 2026-07-27 the question never arose, because `spn` was filtered out
+as silence upstream and out-of-dictionary words produced **no phoneme rows
+at all** — see [`phoneme`](phoneme.md#implementation-in-sensiextractor).
+
 **Frequency floor.** A dictionary word with `wordfreq` frequency `0`
 (present in the MFA lexicon but not observed in the combined corpus
 blend backing `wordfreq`) is **not** dropped — it is floored to `f_min`, the
@@ -183,14 +206,24 @@ that doesn't exist yet:
 strip_stress=True, primary_only=True)` groups the already-aligned
 `phonemes_df` rows (`syllabify_pairs`'s output) by
 `(doc_id, sentence_id, token_in_sentence_id)` — i.e. per word, in
-phoneme order — strips stress digits off each row's `Label` to match
-the trie, scores the sequence with `phoneme_scores`, and appends two
+phoneme order — reads each row's **`ARPABET`** column, which is already
+stress-free, scores the sequence with `phoneme_scores`, and appends two
 new float columns, `phoneme_surprisal` and `cohort_entropy`, rounded
-to 4 decimal places. It does not touch `_PHON_COLUMNS` in
+to 4 decimal places. When `strip_stress=False` (a stress-sensitive trie)
+the fused form is rebuilt as `ARPABET + Stress`, skipping `Stress` where
+it is `NA`. Groups whose phones are silence or `spn` are skipped and left
+`NaN`. It does not touch `_PHON_COLUMNS` in
 `syllabify.py`; the two columns are additive. Per-column drop is wired
-through `_PHONEME_COLUMN_MAP` in `main.py` exactly like the existing
-`Label`/`Onset`/`End`/`Duration` phoneme columns, gated by
-`feat_phoneme_surprisal` / `feat_phoneme_cohort_entropy`.
+through `_PHONEME_COLUMN_MAP` in `main.py` exactly like the
+`ARPABET`/`Stress`/`IPA`/`Pron_Source`/`Onset`/`End`/`Duration` phoneme
+columns, gated by `feat_phoneme_surprisal` / `feat_phoneme_cohort_entropy`.
+
+⚠️ Reading `ARPABET` rather than the old fused `Label` was mandatory, not
+cosmetic: after the 2026-07-27 column split there is no `Label` column on
+the phoneme frame, so the old code would have raised `KeyError` — the loud
+failure mode. The quiet one was next door in
+[`P_Center`](feat_syllable_pcenter.md), which detected vowels via
+`Label.str[-1:].str.isdigit()` and now uses `Stress.notna()`.
 
 ### `.mat` sidecar: value + control impulse trains
 
@@ -212,7 +245,20 @@ Impulses are placed at `round(onset_s * analysis_sr)` using the same
 MATLAB-style half-away-from-zero rounding as `acoustic_ts._mround`
 (`_mround` is duplicated here rather than imported, to keep the two
 extractors independent). Same-sample collisions **sum** for the two
-value trains and stay at unit height for the two control trains. The
+value trains and stay at unit height for the two control trains.
+
+> ⚠️ That summing rule interacted with a real data bug, fixed 2026-07-27.
+> Contractions and possessives used to emit their phoneme rows **twice**
+> (spaCy's `was` + `n't` both claimed MFA's single `wasn't` interval), so
+> the duplicated rows landed on identical sample indices and **summed** —
+> the `phoneme_surprisal` and `cohort_entropy` trains carried doubled
+> impulses at every contraction, and `word_onset` fired twice at one
+> instant. Nothing raised. Deduplicating the phoneme rows in
+> `syllabify_pairs` fixed the `.mat` output as a side effect. If you have
+> archived `.mat` sidecars from before that date and your stimuli contain
+> contractions, they are affected and should be regenerated.
+
+The
 file also carries `t = arange(N)/analysis_sr`, `fs = analysis_sr`, and
 a `config` struct recording `analysis_sr`, `strip_stress`,
 `primary_only`, `context_independent`, `first_phoneme_empty_context`,

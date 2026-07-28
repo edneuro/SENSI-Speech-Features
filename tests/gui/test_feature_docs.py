@@ -197,6 +197,35 @@ def test_acoustic_ts_toggles_route_to_docs():
     assert _doc_path("feat_acoustic_ts_mfcc").name == "acoustic_mfcc.md"
 
 
+def test_every_new_toggle_has_a_doc():
+    """Phoneme-label split / IPA / G2P batch: every new toggle key must resolve
+    to a real docs/features/*.md, or the GUI silently drops its ⓘ icon."""
+    from gui.feature_docs import has_feature_doc, load_feature_doc
+    for key in ("feat_phoneme_arpabet", "feat_phoneme_stress",
+                "feat_phoneme_ipa", "feat_phoneme_pron_source",
+                "feat_syllable_ipa", "g2p_oov"):
+        assert has_feature_doc(key), key
+        assert load_feature_doc(key) is not None, key
+
+
+def test_retired_toggle_is_gone():
+    """`feat_phoneme_label` was removed by the prefs v20 removal-migration; a
+    stale routing entry would advertise a toggle that no longer exists."""
+    from gui.feature_docs import _SHARED_DOC_MAP
+    assert "feat_phoneme_label" not in _SHARED_DOC_MAP
+
+
+def test_new_phoneme_toggles_route_to_expected_files():
+    from gui.feature_docs import _doc_path
+    assert _doc_path("feat_phoneme_arpabet").name == "phoneme.md"
+    assert _doc_path("feat_phoneme_stress").name == "phoneme.md"
+    assert _doc_path("feat_phoneme_pron_source").name == "phoneme.md"
+    # IPA gets its own doc — it carries the whole ARPABET→IPA table.
+    assert _doc_path("feat_phoneme_ipa").name == "feat_phoneme_ipa.md"
+    assert _doc_path("feat_syllable_ipa").name == "syllable_labels.md"
+    assert _doc_path("g2p_oov").name == "g2p_oov.md"
+
+
 def test_predictability_toggles_route_to_merged_docs():
     """Post-unification: "pred_surprisal" routes to the merged, model-agnostic
     pred_surprisal.md (replacing the old per-model pred_surprisal_gpt2.md /

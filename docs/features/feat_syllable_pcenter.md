@@ -18,8 +18,14 @@ onset. Scott's ([Scott 1993]) formula, originally from
     P_Center = nucleus_onset − k · onset_consonant_duration
 
 Where:
-- `nucleus_onset` = onset time of the syllable's vowel (the first
-  ARPABET phone whose label ends in a stress digit `0/1/2`).
+- `nucleus_onset` = onset time of the syllable's vowel — the first phone
+  in the [phoneme CSV](phoneme.md) whose `Stress` is **not** empty.
+  ⚠️ Note the polarity: `Stress == 0` is an *unstressed vowel* and counts
+  as a nucleus; only an empty `Stress` means "not a vowel". Before the
+  2026-07-27 column split this was a suffix test on the fused `Label`
+  string (`Label.str[-1:].str.isdigit()`); had it not been migrated, no
+  vowel would ever have been detected and every `P_Center` would have
+  silently fallen back to the syllable onset with no exception raised.
 - `onset_consonant_duration` = total duration of the consonant(s)
   preceding the vowel.
 - `k` = an empirical coefficient (default **0.3**, configurable on the
@@ -60,8 +66,8 @@ Source: `extractors/pcenter.py:add_pcenter`
 1. Sorts the phoneme DataFrame by
    `(doc_id, sentence_id, token_in_sentence_id, syllable_id, phoneme_id)`.
 2. For each syllable, identifies the first phone whose
-   [ARPABET](syllable_labels.md) label ends in `0`, `1`, or `2` (the
-   vowel nucleus).
+   [`Stress`](phoneme.md) value is present (`Stress.notna()`) — the vowel
+   nucleus.
 3. Computes `P_Center = vowel.Onset − k · Σ(consonants_before.Duration)`,
    rounded to 4 decimal places.
 4. If no vowel nucleus is found (extremely rare; only happens for
@@ -74,9 +80,14 @@ Source: `extractors/pcenter.py:add_pcenter`
 - *k = 0.3 default* — the original [Scott 1993] empirically derived
   value for English speech. Configurable for studies that want
   a different weighting.
-- ⚠️ *Vowel-nucleus identification by trailing stress digit* — spec
-  uses ARPABET convention; all ARPABET vowels carry stress digits and
-  no consonants do, so this is a clean discriminator.
+- ⚠️ *Vowel-nucleus identification by presence of stress* — the ARPABET
+  convention is that every vowel carries a stress digit and no consonant
+  does ([CMUdict](phoneme.md#cmudict)), so "has a stress value" is a clean
+  vowel discriminator. Since the 2026-07-27 column split the pipeline
+  stores that digit in a nullable `Stress` column, so the test is
+  `Stress.notna()` — and an unstressed vowel (`Stress == 0`) is correctly
+  still a nucleus. An `oov_unresolved` `spn` row has no stress, so such a
+  syllable takes the fallback in step 4.
 - *Fallback to physical Onset* — preserves a usable value for the
   rare malformed-syllable case so the column doesn't sprinkle NaN
   unexpectedly.

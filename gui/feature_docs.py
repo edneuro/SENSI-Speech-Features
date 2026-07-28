@@ -108,19 +108,28 @@ _SHARED_DOC_MAP: dict[str, str] = {
     "feat_syllable_onset":    "syllable_timing.md",
     "feat_syllable_end":      "syllable_timing.md",
     "feat_syllable_duration": "syllable_timing.md",
-    # Syllable labels (orthographic + ARPABET)
+    # Syllable labels (orthographic + ARPABET + IPA)
     "feat_syllable_label":   "syllable_labels.md",
     "feat_syllable_arpabet": "syllable_labels.md",
+    "feat_syllable_ipa":     "syllable_labels.md",
     # Syllable prosody (4 toggles share one explainer)
     "feat_syllable_pitch_mean":   "syllable_prosody.md",
     "feat_syllable_volume_mean":  "syllable_prosody.md",
     "feat_syllable_pitch_delta":  "syllable_prosody.md",
     "feat_syllable_volume_delta": "syllable_prosody.md",
-    # Phoneme-level columns (4 toggles share one explainer)
-    "feat_phoneme_label":    "phoneme.md",
+    # Phoneme-level columns. Six toggles share phoneme.md (the CSV's column
+    # table); `feat_phoneme_ipa` gets its own doc because it carries the whole
+    # ARPABET→IPA correspondence table. `feat_phoneme_label` was retired by the
+    # prefs v20 removal-migration (it became ARPABET + Stress + IPA).
+    "feat_phoneme_arpabet":     "phoneme.md",
+    "feat_phoneme_stress":      "phoneme.md",
+    "feat_phoneme_ipa":         "feat_phoneme_ipa.md",
+    "feat_phoneme_pron_source": "phoneme.md",
     "feat_phoneme_onset":    "phoneme.md",
     "feat_phoneme_end":      "phoneme.md",
     "feat_phoneme_duration": "phoneme.md",
+    # Out-of-dictionary handling (MFA G2P) — an alignment option, not a column
+    "g2p_oov":               "g2p_oov.md",
     # Phoneme surprisal + cohort entropy (2 toggles share one explainer)
     "feat_phoneme_surprisal":       "phoneme_surprisal.md",
     "feat_phoneme_cohort_entropy":  "phoneme_surprisal.md",
