@@ -757,7 +757,7 @@ def _prealign_batch(run_args, work_items, output_dir) -> None:
         return
     try:
         ensure_alignments(items, alignment_dir(output_dir),
-                           g2p=bool(getattr(run_args, 'g2p_oov', False)))
+                          g2p=bool(getattr(run_args, 'g2p_oov', False)))
     except Exception as exc:
         print(f'[mfa] batch pre-alignment failed ({exc}); falling back to '
               'per-document alignment', file=sys.stderr)

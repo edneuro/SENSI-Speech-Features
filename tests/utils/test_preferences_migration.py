@@ -8,6 +8,7 @@ from utils.preferences import (
     load_preferences,
     save_preferences,
     SCHEMA_VERSION,
+    SCHEMA_VERSION_V20,
 )
 
 
@@ -1172,8 +1173,6 @@ def test_v18_file_preserves_existing_context_values(tmp_path, monkeypatch):
 # v19 -> v20: phoneme label split + syllable IPA + alignment.g2p_oov
 # ---------------------------------------------------------------------------
 
-from utils.preferences import SCHEMA_VERSION_V20  # noqa: E402
-
 _NEW_PHONEME_KEYS = ("feat_phoneme_arpabet", "feat_phoneme_stress",
                      "feat_phoneme_ipa", "feat_phoneme_pron_source")
 
@@ -1240,3 +1239,33 @@ def test_post_v20_user_values_survive_a_reload(tmp_path, monkeypatch):
     assert prefs['features']['feat_phoneme_ipa'] is False
     assert prefs['features']['feat_phoneme_arpabet'] is True
     assert prefs['alignment']['g2p_oov'] is True
+
+
+def test_alignment_section_merges_by_inner_key_not_wholesale():
+    """Regression for a missed registration step: `alignment` must be listed
+    in _CURRENT_SECTIONS (utils/preferences.py) so it merges by inner key like
+    every other section (acoustic_ts, phoneme_surprisal, ...). An unregistered
+    section is wholesale-replaced, so saving one alignment.* toggle would
+    silently erase any sibling key the instant a second one exists — this
+    pins the merge behavior itself, not just that g2p_oov is present."""
+    from utils.preferences import _deep_merge_current
+    cur = {"alignment": {"g2p_oov": False, "future_key": True}}
+    usr = {"alignment": {"g2p_oov": True}}
+    _deep_merge_current(cur, usr)
+    assert cur["alignment"] == {"g2p_oov": True, "future_key": True}, (
+        "alignment must merge by inner key: a partial user dict must not "
+        "erase sibling keys"
+    )
+
+
+def test_partial_alignment_section_on_disk_default_fills_g2p_oov(tmp_path, monkeypatch):
+    """A features.yaml carrying a partial (empty) `alignment` section must
+    still load with g2p_oov present and False, not an empty dict — the
+    end-to-end counterpart of the _deep_merge_current test above."""
+    import yaml
+    monkeypatch.setenv("SENSI_CONFIG_DIR", str(tmp_path))
+    (tmp_path / "features.yaml").write_text(
+        yaml.safe_dump({"schema_version": 20, "alignment": {}}),
+        encoding="utf-8")
+    prefs = load_preferences()
+    assert prefs["alignment"] == {"g2p_oov": False}

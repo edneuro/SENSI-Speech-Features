@@ -1316,7 +1316,7 @@ def _deep_merge_v3(into: dict, src: dict) -> None:
 
 _CURRENT_SECTIONS = ('shared', 'features', 'predictability',
                      'semantic', 'output', 'prosody', 'lexical_norms',
-                     'acoustic_ts', 'phoneme_surprisal')
+                     'acoustic_ts', 'phoneme_surprisal', 'alignment')
 
 
 def _deep_merge_current(into: dict, src: dict) -> None:
