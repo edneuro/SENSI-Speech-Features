@@ -70,15 +70,24 @@ def main() -> None:
     import yaml as _yaml
     from utils.preferences import (load_preferences, get_features_yaml_path,
                                    get_run_yaml_path)
-    from utils.config_yaml import validate_features_yaml, validate_run_yaml
+    from utils.config_yaml import (validate_features_yaml, validate_run_yaml,
+                                   retired_keys_present)
 
     # Parse each file's raw content directly rather than via read_yaml: that
     # helper coerces a non-mapping root (e.g. a YAML list) to {}, which would
     # let a malformed features.yaml validate clean and silently run with
     # defaults. read_yaml's tolerant coercion is left alone for
     # load_preferences, which relies on it (half-import fallback).
+    #
+    # This validates the RAW (pre-migration) shape on purpose — it exists to
+    # catch a malformed hand-edited config before an hour of work, not to
+    # duplicate load_preferences()'s migration below. A key retired by a past
+    # migration (e.g. v19's feat_phoneme_label) is therefore tolerated here
+    # (warned, not errored) via retired_keys_present — see utils/config_yaml.py.
     errors: list[str] = []
-    for path, validate in ((get_features_yaml_path(), validate_features_yaml),
+    features_raw: dict = {}
+    features_path = get_features_yaml_path()
+    for path, validate in ((features_path, validate_features_yaml),
                            (get_run_yaml_path(), validate_run_yaml)):
         if path.exists():
             try:
@@ -92,12 +101,16 @@ def main() -> None:
         if raw is not None and not isinstance(raw, dict):
             errors.append(f"{path.name}: root must be a mapping")
             continue
+        if path == features_path:
+            features_raw = raw or {}
         errors.extend(f"{path.name}: {e}" for e in validate(raw or {}))
     if errors:
         print("Invalid config:", file=sys.stderr)
         for e in errors:
             print(f"  - {e}", file=sys.stderr)
         sys.exit(1)
+    for w in retired_keys_present(features_raw):
+        print(f"[warn] {w}", file=sys.stderr)
 
     if not get_features_yaml_path().exists():
         print(f"[warn] features.yaml not found in {get_features_yaml_path().parent} "

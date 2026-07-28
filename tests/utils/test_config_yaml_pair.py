@@ -6,6 +6,7 @@ from utils.config_yaml import (
     FEATURES_YAML, RUN_YAML, split_prefs, join_yaml_pair, read_yaml,
     write_features_yaml, write_run_yaml,
     validate_features_yaml, validate_run_yaml,
+    retired_keys_present, RETIRED_FEATURE_KEYS, RETIRED_PREDICTABILITY_KEYS,
 )
 
 
@@ -145,3 +146,53 @@ def test_validate_features_yaml_non_mapping_output_section_reports_error():
 def test_validate_run_yaml_non_mapping_shared_section_reports_error():
     errs = validate_run_yaml({"shared": 5})
     assert any("shared" in e and "must be a mapping" in e for e in errs)
+
+
+# ---------------------------------------------------------------------------
+# Final-review Fix 2: retired keys are tolerated (warned), not errors; a
+# genuine typo is still an error.
+# ---------------------------------------------------------------------------
+
+def test_validate_features_yaml_tolerates_every_retired_feature_key():
+    features, _ = split_prefs(DEFAULT_PREFS)
+    for key in RETIRED_FEATURE_KEYS:
+        features["features"][key] = True
+    assert validate_features_yaml(features) == []
+
+
+def test_validate_features_yaml_tolerates_retired_predictability_llm_model():
+    features, _ = split_prefs(DEFAULT_PREFS)
+    features["predictability"]["llm_model"] = "gpt-3.5"
+    assert validate_features_yaml(features) == []
+
+
+def test_validate_features_yaml_still_rejects_a_genuine_typo():
+    features, _ = split_prefs(DEFAULT_PREFS)
+    features["features"]["feat_phoneme_arpabetX"] = True
+    errs = validate_features_yaml(features)
+    assert any("feat_phoneme_arpabetX" in e for e in errs)
+
+
+def test_retired_keys_present_reports_each_retired_feature_key():
+    features, _ = split_prefs(DEFAULT_PREFS)
+    features["features"]["feat_phoneme_label"] = True
+    warnings = retired_keys_present(features)
+    assert any("feat_phoneme_label" in w for w in warnings)
+
+
+def test_retired_keys_present_reports_retired_predictability_key():
+    features, _ = split_prefs(DEFAULT_PREFS)
+    features["predictability"]["llm_model"] = "gpt-3.5"
+    warnings = retired_keys_present(features)
+    assert any("predictability.llm_model" in w for w in warnings)
+
+
+def test_retired_keys_present_empty_for_a_clean_default_config():
+    features, _ = split_prefs(DEFAULT_PREFS)
+    assert retired_keys_present(features) == []
+
+
+def test_retired_keys_present_ignores_a_genuine_typo():
+    features, _ = split_prefs(DEFAULT_PREFS)
+    features["features"]["feat_phoneme_arpabetX"] = True
+    assert retired_keys_present(features) == []

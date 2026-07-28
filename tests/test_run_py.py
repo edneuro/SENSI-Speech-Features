@@ -91,3 +91,85 @@ def test_main_warns_when_features_yaml_missing(tmp_path, monkeypatch, capsys):
     run.main()
     err = capsys.readouterr().err
     assert "features.yaml not found" in err
+
+
+# ---------------------------------------------------------------------------
+# Final-review Fix 2: run.py's raw validation must not sys.exit(1) on a
+# pre-v20 features.yaml carrying a retired toggle — it must warn and still
+# reach dispatch(), which is where load_preferences() migrates it away.
+# ---------------------------------------------------------------------------
+
+def test_main_migrates_v19_features_yaml_with_retired_phoneme_label(
+        tmp_path, monkeypatch, capsys):
+    import run
+    _write_pair(tmp_path, monkeypatch)
+    (tmp_path / FEATURES_YAML).write_text(
+        "schema_version: 19\nfeatures:\n  feat_phoneme_label: true\n",
+        encoding="utf-8")
+    calls = {}
+    monkeypatch.setattr(
+        "main.run_word_level_batch",
+        lambda *a, **k: calls.setdefault("word", True), raising=False)
+    monkeypatch.setattr(
+        "main.run_doc_level_batch",
+        lambda *a, **k: calls.setdefault("doc", True), raising=False)
+    monkeypatch.setattr("sys.argv", ["run.py"])
+    run.main()  # must NOT raise SystemExit
+    assert calls.get("word") is True
+    assert "retired toggle 'feat_phoneme_label'" in capsys.readouterr().err
+
+
+def test_main_migrates_features_yaml_with_missing_schema_version(
+        tmp_path, monkeypatch, capsys):
+    # A hand-stripped/never-set schema_version must be assumed v19 (not
+    # "current"), else the v20 finalize block never runs and
+    # feat_phoneme_label survives forever (changed stays False).
+    import run
+    _write_pair(tmp_path, monkeypatch)
+    (tmp_path / FEATURES_YAML).write_text(
+        "features:\n  feat_phoneme_label: true\n", encoding="utf-8")
+    monkeypatch.setattr("main.run_word_level_batch",
+                        lambda *a, **k: None, raising=False)
+    monkeypatch.setattr("main.run_doc_level_batch",
+                        lambda *a, **k: None, raising=False)
+    monkeypatch.setattr("sys.argv", ["run.py"])
+    run.main()  # must NOT raise SystemExit
+    from utils.preferences import load_preferences
+    prefs = load_preferences()
+    assert "feat_phoneme_label" not in prefs["features"]
+    assert prefs["features"]["feat_phoneme_arpabet"] is True
+
+
+def test_main_migrates_features_yaml_with_quoted_schema_version(
+        tmp_path, monkeypatch, capsys):
+    # schema_version: '19' (a YAML string, e.g. from a hand-quoted edit) must
+    # migrate the same as an int 19, not silently fall through to the v1
+    # flat-json migration path (which would mangle the sectioned shape).
+    import run
+    _write_pair(tmp_path, monkeypatch)
+    (tmp_path / FEATURES_YAML).write_text(
+        "schema_version: '19'\nfeatures:\n  feat_phoneme_label: true\n",
+        encoding="utf-8")
+    monkeypatch.setattr("main.run_word_level_batch",
+                        lambda *a, **k: None, raising=False)
+    monkeypatch.setattr("main.run_doc_level_batch",
+                        lambda *a, **k: None, raising=False)
+    monkeypatch.setattr("sys.argv", ["run.py"])
+    run.main()  # must NOT raise SystemExit
+    from utils.preferences import load_preferences
+    prefs = load_preferences()
+    assert "feat_phoneme_label" not in prefs["features"]
+    assert prefs["features"]["feat_phoneme_arpabet"] is True
+
+
+def test_main_still_exits_on_a_genuine_typo_not_a_retired_key(
+        tmp_path, monkeypatch, capsys):
+    import run
+    _write_pair(tmp_path, monkeypatch)
+    (tmp_path / FEATURES_YAML).write_text(
+        "features:\n  feat_phoneme_arpabetX: true\n", encoding="utf-8")
+    monkeypatch.setattr("sys.argv", ["run.py"])
+    with pytest.raises(SystemExit) as ei:
+        run.main()
+    assert ei.value.code == 1
+    assert "feat_phoneme_arpabetX" in capsys.readouterr().err

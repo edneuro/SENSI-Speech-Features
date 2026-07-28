@@ -1209,8 +1209,28 @@ def load_preferences() -> dict[str, Any]:
             # so the pair gets completed.
             return _load_legacy_json()
         # The YAML store began at v19; a missing/hand-stripped schema_version
-        # must not fall into the v1 flat-json migration.
-        user.setdefault('schema_version', SCHEMA_VERSION)
+        # must not fall into the v1 flat-json migration, so a NON-EMPTY user
+        # (real section content, just missing/miscast the version key) is
+        # assumed to be v19 (sectioned-shaped), NOT the current
+        # SCHEMA_VERSION. Assuming "current" would skip every pending
+        # finalize block below (v20's feat_phoneme_label removal in
+        # particular), letting a retired key survive forever with `changed`
+        # False so the file is never rewritten to self-heal. A quoted version
+        # (`schema_version: '19'`) is coerced to int the same way.
+        # An EMPTY user (e.g. a corrupted features.yaml recovered to {} by
+        # _read_yaml_tolerant) has nothing to migrate — keep assuming
+        # "current" there so a bad file is never silently overwritten with
+        # fresh defaults (see test_corrupted_features_yaml_falls_back_to_defaults).
+        has_content = bool(user.keys() - {'schema_version'})
+        assumed_version = SCHEMA_VERSION_V19 if has_content else SCHEMA_VERSION
+        raw_version = user.get('schema_version')
+        if raw_version is None:
+            user['schema_version'] = assumed_version
+        else:
+            try:
+                user['schema_version'] = int(raw_version)
+            except (TypeError, ValueError):
+                user['schema_version'] = assumed_version
         merged, changed = _merged_from_user(user)
         if changed:
             try:

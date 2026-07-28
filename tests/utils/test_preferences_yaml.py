@@ -113,6 +113,43 @@ def test_missing_schema_version_in_yaml_assumes_current(tmp_path, monkeypatch):
     assert prefs["schema_version"] == SCHEMA_VERSION
 
 
+def test_missing_schema_version_still_runs_the_v20_finalize_block(
+        tmp_path, monkeypatch):
+    # Final-review Fix 2: a missing schema_version used to be assumed
+    # SCHEMA_VERSION (current), which skipped the v20 finalize block and let
+    # a retired feat_phoneme_label survive with `changed` False (never
+    # rewritten). It must instead be assumed v19, so the removal-migration
+    # runs and the file self-heals on this very load.
+    monkeypatch.setenv("SENSI_CONFIG_DIR", str(tmp_path))
+    (tmp_path / FEATURES_YAML).write_text(
+        "features:\n  feat_phoneme_label: true\n", encoding="utf-8")
+    write_run_yaml(tmp_path / RUN_YAML, split_prefs(deepcopy(DEFAULT_PREFS))[1])
+    prefs = load_preferences()
+    assert "feat_phoneme_label" not in prefs["features"]
+    assert prefs["features"]["feat_phoneme_arpabet"] is True
+    assert prefs["schema_version"] == SCHEMA_VERSION
+    # self-healed: reading the file back off disk shows the same thing, not
+    # just the in-memory result.
+    on_disk = read_yaml(tmp_path / FEATURES_YAML)
+    assert "feat_phoneme_label" not in on_disk["features"]
+
+
+def test_quoted_schema_version_migrates_like_the_int_equivalent(
+        tmp_path, monkeypatch):
+    # schema_version: '19' (a YAML string) must not silently fall through the
+    # int-keyed version-branch comparison into the v1 flat-json migration
+    # path, which would mangle this file's already-sectioned shape.
+    monkeypatch.setenv("SENSI_CONFIG_DIR", str(tmp_path))
+    (tmp_path / FEATURES_YAML).write_text(
+        "schema_version: '19'\nfeatures:\n  feat_phoneme_label: true\n",
+        encoding="utf-8")
+    write_run_yaml(tmp_path / RUN_YAML, split_prefs(deepcopy(DEFAULT_PREFS))[1])
+    prefs = load_preferences()
+    assert "feat_phoneme_label" not in prefs["features"]
+    assert prefs["features"]["feat_phoneme_arpabet"] is True
+    assert prefs["schema_version"] == SCHEMA_VERSION
+
+
 def test_corrupted_features_yaml_falls_back_to_defaults(tmp_path, monkeypatch):
     monkeypatch.setenv("SENSI_CONFIG_DIR", str(tmp_path))
     (tmp_path / FEATURES_YAML).write_text("features: [unclosed", encoding="utf-8")

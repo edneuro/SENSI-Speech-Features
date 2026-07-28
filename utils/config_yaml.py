@@ -57,6 +57,29 @@ _SECTION_COMMENTS = {
 }
 
 
+# Feature/output toggle keys that existed in a past schema version and have
+# since been removed or renamed by a utils.preferences migration step.
+# validate_features_yaml() tolerates these (warns, does not error) so a
+# pre-migration features.yaml — which WILL contain them, since each was a
+# default at some point — does not fail run.py's raw-shape validation before
+# load_preferences() gets a chance to migrate it away. A genuinely unknown
+# key (typo or hand-edit) is still an error.
+RETIRED_FEATURE_KEYS = frozenset({
+    "feat_phoneme_label",   # v20: split into 4 feat_phoneme_* column toggles
+    "pred_surprisal_gpt2",  # v18: unified into predictability.models/metrics
+    "pred_surprisal_llm",   # v18
+    "pred_cloze",           # v18
+    "pred_topmatch",        # v18
+    "feat_struct_term_id",  # v14: renamed to feat_struct_token_id
+})
+
+# predictability.* settings retired the same way (section-scoped, so tracked
+# separately from the features/output toggle keys above).
+RETIRED_PREDICTABILITY_KEYS = frozenset({
+    "llm_model",  # v18: superseded by predictability.models (a slug list)
+})
+
+
 def split_prefs(prefs: dict) -> tuple[dict, dict]:
     """Split a merged prefs dict into (features_data, run_data). Deep copies."""
     run = {k: deepcopy(prefs[k]) for k in _RUN_SECTIONS if k in prefs}
@@ -145,6 +168,8 @@ def validate_features_yaml(data: dict) -> list[str]:
             continue
         valid = set(_defaults[section])
         for key, val in (raw or {}).items():
+            if key in RETIRED_FEATURE_KEYS:
+                continue  # tolerated; see retired_keys_present() for the warning
             if key not in valid:
                 errors.append(f"unknown {section} toggle: {key!r}")
             elif not isinstance(val, bool):
@@ -159,6 +184,8 @@ def validate_features_yaml(data: dict) -> list[str]:
         if not (isinstance(default_section, dict) and isinstance(values, dict)):
             continue
         for k, v in values.items():
+            if section == "predictability" and k in RETIRED_PREDICTABILITY_KEYS:
+                continue  # tolerated; see retired_keys_present() for the warning
             if k not in default_section:
                 errors.append(f"unknown setting: {section}.{k}")
             elif not _type_ok(default_section[k], v):
@@ -173,6 +200,39 @@ def validate_features_yaml(data: dict) -> list[str]:
             if k not in _defaults["semantic"]:
                 errors.append(f"unknown semantic key: {k!r}")
     return errors
+
+
+def retired_keys_present(data: dict) -> list[str]:
+    """Non-fatal warning strings for retired keys found in a features.yaml
+    payload — call this only after validate_features_yaml(data) returns [].
+
+    A retired key is not a validation error (see RETIRED_FEATURE_KEYS /
+    RETIRED_PREDICTABILITY_KEYS above): it means the file predates a
+    utils.preferences migration and load_preferences() will drop it on the
+    next save. Surfacing it as a warning still tells the user their config
+    is stale, without blocking a headless run.py the way an error would.
+    """
+    warnings: list[str] = []
+    if not isinstance(data, dict):
+        return warnings
+    for section in ("features", "output"):
+        raw = data.get(section)
+        if isinstance(raw, dict):
+            for key in raw:
+                if key in RETIRED_FEATURE_KEYS:
+                    warnings.append(
+                        f"retired toggle {key!r} in {section!r} — migrated "
+                        "away; it will be dropped from features.yaml on the "
+                        "next save")
+    pred = data.get("predictability")
+    if isinstance(pred, dict):
+        for key in pred:
+            if key in RETIRED_PREDICTABILITY_KEYS:
+                warnings.append(
+                    f"retired setting 'predictability.{key}' — migrated "
+                    "away; it will be dropped from features.yaml on the "
+                    "next save")
+    return warnings
 
 
 def validate_run_yaml(data: dict) -> list[str]:
