@@ -25,6 +25,10 @@ def main() -> int:
     for model_type, model_name in [
         ('acoustic',    'english_us_arpa'),
         ('dictionary',  'english_us_arpa'),
+        # g2p generates pronunciations for out-of-dictionary words (~11 MB).
+        # Only used when the alignment.g2p_oov pref is on, but vendored here so
+        # the toggle works offline for collaborators.
+        ('g2p',         'english_us_arpa'),
     ]:
         print(f'  mfa model download {model_type} {model_name} ...')
         result = subprocess.run(

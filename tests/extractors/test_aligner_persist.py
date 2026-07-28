@@ -100,7 +100,7 @@ def test_disk_hit_parses_without_running_mfa(tmp_path, monkeypatch):
     (persist / "stim.TextGrid").write_text("fake tg", encoding="utf-8")
     called = []
     monkeypatch.setattr(aligner, "_align_uncached",
-                        lambda a, t: called.append(1))
+                        lambda a, t, g2p=False: called.append(1))
     monkeypatch.setattr(aligner, "_parse_textgrid", lambda p: _fake_frames())
     w, p = aligner.align_with_phones(
         str(tmp_path / "stim.wav"), "hello", persist_dir=persist)
@@ -112,7 +112,7 @@ def test_run_if_missing_false_raises_on_disk_miss(tmp_path, monkeypatch):
     persist = tmp_path / "align"
     persist.mkdir()  # empty: no TextGrid for this stem
     monkeypatch.setattr(aligner, "_align_uncached",
-                        lambda a, t: pytest.fail("MFA must not run"))
+                        lambda a, t, g2p=False: pytest.fail("MFA must not run"))
     with pytest.raises(RuntimeError):
         aligner.align_with_phones(
             str(tmp_path / "stim.wav"), "hello",
@@ -122,7 +122,8 @@ def test_run_if_missing_false_raises_on_disk_miss(tmp_path, monkeypatch):
 def test_run_if_missing_true_falls_back_to_mfa(tmp_path, monkeypatch):
     persist = tmp_path / "align"
     persist.mkdir()
-    monkeypatch.setattr(aligner, "_align_uncached", lambda a, t: _fake_frames())
+    monkeypatch.setattr(aligner, "_align_uncached",
+                        lambda a, t, g2p=False: _fake_frames())
     w, _ = aligner.align_with_phones(
         str(tmp_path / "stim.wav"), "hello",
         persist_dir=persist, run_if_missing=True)
@@ -137,7 +138,7 @@ def _install_fake_mfa(monkeypatch, aligned_stems=None):
     """
     runs = {"count": 0}
 
-    def fake(corpus_dir, output_dir):
+    def fake(corpus_dir, output_dir, g2p=False):
         runs["count"] += 1
         for name in os.listdir(corpus_dir):
             if not name.endswith(".lab"):
@@ -197,7 +198,7 @@ def test_ensure_only_realigns_stale_subset(tmp_path, monkeypatch):
     # Change only two's transcript.
     staged = []
 
-    def spy(corpus_dir, output_dir):
+    def spy(corpus_dir, output_dir, g2p=False):
         staged.extend(n[:-4] for n in os.listdir(corpus_dir)
                       if n.endswith(".lab"))
         for s in staged:

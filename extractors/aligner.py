@@ -30,6 +30,7 @@ import json
 import os
 import shutil
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
 
@@ -42,7 +43,16 @@ MFA_ACOUSTIC_MODEL = 'english_us_arpa'
 MFA_DICTIONARY = 'english_us_arpa'
 
 ALIGNMENT_SUBDIR = 'Montreal Forced Alignment'
-SIDECAR_VERSION = 1
+SIDECAR_VERSION = 2
+
+G2P_MODEL_PATH = (Path(__file__).resolve().parent.parent
+                  / 'mfa_data' / 'pretrained_models' / 'g2p'
+                  / 'english_us_arpa.zip')
+
+
+def g2p_model_available() -> bool:
+    """True when the vendored MFA G2P model is present."""
+    return G2P_MODEL_PATH.exists()
 
 
 def alignment_dir(output_folder) -> Path:
@@ -71,7 +81,8 @@ def _sha256_file(path: str, _chunk: int = 1 << 20) -> str:
     return h.hexdigest()
 
 
-def _freshness_dict(audio_path: str, transcript_text: str) -> dict:
+def _freshness_dict(audio_path: str, transcript_text: str, *,
+                     g2p: bool = False) -> dict:
     """The sidecar contents identifying the inputs a TextGrid was aligned from."""
     return {
         'transcript_sha256': _sha256_text(prepare_for_aligner(transcript_text)),
@@ -79,19 +90,20 @@ def _freshness_dict(audio_path: str, transcript_text: str) -> dict:
         'audio_size': os.path.getsize(audio_path),
         'mfa_acoustic': MFA_ACOUSTIC_MODEL,
         'mfa_dictionary': MFA_DICTIONARY,
+        'mfa_g2p': bool(g2p),
         'version': SIDECAR_VERSION,
     }
 
 
 def _write_sidecar(persist_dir, stem: str, audio_path: str,
-                   transcript_text: str) -> None:
-    meta = _freshness_dict(audio_path, transcript_text)
+                   transcript_text: str, *, g2p: bool = False) -> None:
+    meta = _freshness_dict(audio_path, transcript_text, g2p=g2p)
     (Path(persist_dir) / f'{stem}.json').write_text(
         json.dumps(meta, indent=2, sort_keys=True), encoding='utf-8')
 
 
 def _is_fresh(persist_dir, stem: str, audio_path: str,
-              transcript_text: str) -> bool:
+              transcript_text: str, *, g2p: bool = False) -> bool:
     """True iff a reusable, current TextGrid exists for this stimulus.
 
     Requires the TextGrid and sidecar to exist and every key in the sidecar to
@@ -113,6 +125,8 @@ def _is_fresh(persist_dir, stem: str, audio_path: str,
         return False
     if meta.get('mfa_dictionary') != MFA_DICTIONARY:
         return False
+    if bool(meta.get('mfa_g2p', False)) != bool(g2p):
+        return False
     if meta.get('transcript_sha256') != _sha256_text(
             prepare_for_aligner(transcript_text)):
         return False
@@ -130,6 +144,8 @@ def align_with_phones(
     cache: dict | None = None,
     persist_dir=None,
     run_if_missing: bool = True,
+    *,
+    g2p: bool = False,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Run MFA forced alignment and return both word and phone tiers.
 
@@ -155,6 +171,13 @@ def align_with_phones(
                      batch passes that run after pre-alignment, where a miss
                      means the stimulus already failed to align and MFA should
                      not be retried silently.
+        g2p:         Keyword-only. When True and the vendored MFA G2P model is
+                     present, MFA generates a pronunciation for out-of-dictionary
+                     words instead of aligning them to a single `spn` phone (see
+                     `_run_mfa`). Only affects the `_align_uncached` fallback
+                     path — a disk hit under `persist_dir` is parsed as-is.
+                     Included in the memo `cache` key so a process can't serve
+                     an alignment cached under the opposite setting.
 
     Returns:
         Tuple of (words_df, phones_df).
@@ -169,7 +192,7 @@ def align_with_phones(
         RuntimeError: if MFA is not installed or alignment fails, or if
                      `run_if_missing` is False and no disk alignment exists.
     """
-    key = (os.path.abspath(audio_path), transcript)
+    key = (os.path.abspath(audio_path), transcript, bool(g2p))
     if cache is not None and key in cache:
         word_df, phone_df = cache[key]
         return word_df.copy(), phone_df.copy()
@@ -187,7 +210,7 @@ def align_with_phones(
                 "pre-alignment step should have produced it; this stimulus "
                 "likely failed to align."
             )
-        result = _align_uncached(audio_path, transcript)
+        result = _align_uncached(audio_path, transcript, g2p=g2p)
 
     if cache is not None:
         cache[key] = result
@@ -197,7 +220,7 @@ def align_with_phones(
 
 
 def _align_uncached(
-    audio_path: str, transcript: str
+    audio_path: str, transcript: str, *, g2p: bool = False
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Run MFA once for (audio_path, transcript). See align_with_phones."""
     prepared = prepare_for_aligner(transcript)
@@ -216,7 +239,7 @@ def _align_uncached(
         with open(lab_path, 'w', encoding='utf-8') as f:
             f.write(prepared)
 
-        _run_mfa(corpus_dir, output_dir)
+        _run_mfa(corpus_dir, output_dir, g2p=g2p)
 
         tg_path = os.path.join(output_dir, f'{stem}.TextGrid')
         if not os.path.exists(tg_path):
@@ -244,14 +267,15 @@ def _parse_textgrid(tg_path: str) -> tuple[pd.DataFrame, pd.DataFrame]:
     return word_df, phone_df
 
 
-def ensure_alignments(items, persist_dir) -> dict:
+def ensure_alignments(items, persist_dir, *, g2p: bool = False) -> dict:
     """Ensure a fresh <stem>.TextGrid exists under persist_dir for each item.
 
     items: iterable of (audio_path, transcript_text). The stem is derived from
-    the audio basename. Fresh stimuli (matching sidecar) are left untouched;
-    stale/missing ones have their old artifacts deleted, then the whole stale
-    set is aligned in a SINGLE `mfa align` invocation and each result is moved
-    into persist_dir with a sidecar. If nothing is stale, no subprocess runs.
+    the audio basename. Fresh stimuli (matching sidecar, including the `g2p`
+    setting) are left untouched; stale/missing ones have their old artifacts
+    deleted, then the whole stale set is aligned in a SINGLE `mfa align`
+    invocation and each result is moved into persist_dir with a sidecar. If
+    nothing is stale, no subprocess runs.
 
     Returns {'cached': [...], 'aligned': [...], 'failed': [...]} of stems.
 
@@ -268,7 +292,7 @@ def ensure_alignments(items, persist_dir) -> dict:
     stale_by_stem: dict[str, tuple[str, str]] = {}
     for audio_path, transcript_text in items:
         stem = _stem(audio_path)
-        if _is_fresh(persist_dir, stem, audio_path, transcript_text):
+        if _is_fresh(persist_dir, stem, audio_path, transcript_text, g2p=g2p):
             cached.append(stem)
         else:
             if stem in stale_by_stem:
@@ -299,13 +323,14 @@ def ensure_alignments(items, persist_dir) -> dict:
                       encoding='utf-8') as f:
                 f.write(prepare_for_aligner(transcript_text))
 
-        _run_mfa(corpus_dir, output_dir)   # single invocation for the batch
+        _run_mfa(corpus_dir, output_dir, g2p=g2p)   # single invocation for the batch
 
         for stem, (audio_path, transcript_text) in stale_by_stem.items():
             produced = os.path.join(output_dir, f'{stem}.TextGrid')
             if os.path.exists(produced):
                 shutil.move(produced, str(persist_dir / f'{stem}.TextGrid'))
-                _write_sidecar(persist_dir, stem, audio_path, transcript_text)
+                _write_sidecar(persist_dir, stem, audio_path, transcript_text,
+                               g2p=g2p)
                 aligned.append(stem)
             else:
                 failed.append(stem)
@@ -332,8 +357,14 @@ def align(audio_path: str, transcript: str) -> pd.DataFrame:
     return word_df
 
 
-def _run_mfa(corpus_dir: str, output_dir: str) -> None:
-    """Invoke MFA as a subprocess. Raises RuntimeError on failure."""
+def _run_mfa(corpus_dir: str, output_dir: str, *, g2p: bool = False) -> None:
+    """Invoke MFA as a subprocess. Raises RuntimeError on failure.
+
+    When `g2p` is set and the vendored G2P model is present, MFA generates a
+    pronunciation for out-of-dictionary words instead of aligning them to a
+    single `spn` phone. This changes alignment output, so callers must record it
+    in the freshness sidecar (see _freshness_dict).
+    """
     cmd = [
         'mfa', 'align',
         corpus_dir,
@@ -343,6 +374,14 @@ def _run_mfa(corpus_dir: str, output_dir: str) -> None:
         '--clean',
         '--quiet',
     ]
+    if g2p:
+        if g2p_model_available():
+            cmd += ['--g2p_model_path', str(G2P_MODEL_PATH)]
+        else:
+            print(f'[mfa] WARNING: g2p requested but no G2P model at '
+                  f'{G2P_MODEL_PATH}; out-of-dictionary words will align to '
+                  f'spn. Run: python utils/download_models.py',
+                  file=sys.stderr)
     result = subprocess.run(cmd, capture_output=True, text=True)
     if result.returncode != 0:
         raise RuntimeError(
