@@ -1,7 +1,8 @@
 """Perceptual center (P-center) for syllables.
 
 Formula: P_Center = nucleus_onset - k * onset_consonant_duration
-where nucleus = first vowel phoneme (ARPABET label ending in 0/1/2)
+where nucleus = first vowel phoneme (a phone carrying a Stress digit; note
+Stress == 0 is an unstressed VOWEL, only <NA> means 'not a vowel')
 and onset_consonant_duration = sum of durations of preceding consonants.
 
 Reference: Marcus (1981), Scott (1993).
@@ -18,7 +19,7 @@ def _pcenter_raw(group: pd.DataFrame, k: float) -> float:
     """P_Center for one syllable's phoneme group (rows sorted by phoneme_id).
     Returns NaN when no vowel nucleus is present; caller applies fallback.
     """
-    is_vowel = group['Label'].str[-1:].str.isdigit().tolist()
+    is_vowel = group['Stress'].notna().tolist()
     try:
         first_vowel = is_vowel.index(True)
     except ValueError:

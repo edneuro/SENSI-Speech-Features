@@ -5,17 +5,30 @@ import pandas as pd
 from extractors.pcenter import add_pcenter
 
 
+def _split_label(label):
+    """'AE1' -> ('AE', 1); 'B' -> ('B', None). Mirrors syllabify._split_label."""
+    text = str(label)
+    if text and text[-1].isdigit():
+        return text[:-1], int(text[-1])
+    return text, None
+
+
 def _phon_df(token_in_sentence_id, syl_id, phonemes):
-    """phonemes: list of (label, onset, end)"""
+    """phonemes: list of (label, onset, end). `label` is the fused ARPABET
+    form (e.g. 'AE1'); split here into ARPABET + Stress to match the
+    post-Task-3 phoneme frame schema."""
     rows = []
     for i, (label, onset, end) in enumerate(phonemes):
+        code, stress = _split_label(label)
         rows.append({
             'doc_id': 'd', 'sentence_id': 1, 'token_in_sentence_id': token_in_sentence_id,
             'token': 'w', 'syllable_id': syl_id, 'phoneme_id': i + 1,
-            'Label': label, 'Onset': onset, 'End': end,
+            'ARPABET': code, 'Stress': stress, 'Onset': onset, 'End': end,
             'Duration': round(end - onset, 4),
         })
-    return pd.DataFrame(rows)
+    df = pd.DataFrame(rows)
+    df['Stress'] = df['Stress'].astype('Int64')
+    return df
 
 
 def _syl_df(token_in_sentence_id, syl_id, onset, end):
@@ -120,3 +133,61 @@ def test_two_words_no_cross_contamination():
     assert abs(result['P_Center'].iloc[2] - 0.50) < 1e-6
     # Token 2, Syllable 2: nucleus_onset=0.77, onset_dur=0.05, P_Center=0.77-0.3*0.05=0.755
     assert abs(result['P_Center'].iloc[3] - round(0.77 - 0.3 * 0.05, 4)) < 1e-6
+
+
+# ---------------------------------------------------------------------------
+# Task 4: vowel detection via Stress, not the fused Label
+# ---------------------------------------------------------------------------
+
+def _phon(arpabet, stress, onset, end, phoneme_id):
+    return {"doc_id": 1, "sentence_id": 1, "token_in_sentence_id": 1,
+            "syllable_id": 1, "phoneme_id": phoneme_id,
+            "ARPABET": arpabet, "Stress": stress,
+            "Onset": onset, "End": end, "Duration": round(end - onset, 4)}
+
+
+def test_nucleus_is_found_via_stress_column():
+    """Regression: vowel detection must not depend on a fused Label string."""
+    syll = pd.DataFrame([{
+        "doc_id": 1, "sentence_id": 1, "token_in_sentence_id": 1,
+        "syllable_id": 1, "Onset": 0.0, "End": 0.30,
+    }])
+    phon = pd.DataFrame([
+        _phon("K",  None, 0.00, 0.10, 1),
+        _phon("AH", 1,    0.10, 0.20, 2),
+        _phon("P",  None, 0.20, 0.30, 3),
+    ]).astype({"Stress": "Int64"})
+
+    out = add_pcenter(syll, phon, k=0.3)
+    # nucleus_onset 0.10 - 0.3 * onset_dur 0.10 = 0.07
+    assert out["P_Center"].iloc[0] == 0.07
+    assert out["P_Center"].iloc[0] != 0.0, "must not degrade to syllable onset"
+
+
+def test_unstressed_vowel_still_counts_as_a_nucleus():
+    """Stress == 0 is a vowel. Only <NA> means 'not a vowel'."""
+    syll = pd.DataFrame([{
+        "doc_id": 1, "sentence_id": 1, "token_in_sentence_id": 1,
+        "syllable_id": 1, "Onset": 0.0, "End": 0.20,
+    }])
+    phon = pd.DataFrame([
+        _phon("B",  None, 0.00, 0.10, 1),
+        _phon("AH", 0,    0.10, 0.20, 2),
+    ]).astype({"Stress": "Int64"})
+
+    out = add_pcenter(syll, phon, k=0.3)
+    assert out["P_Center"].iloc[0] == 0.07
+
+
+def test_vowelless_syllable_falls_back_to_syllable_onset():
+    syll = pd.DataFrame([{
+        "doc_id": 1, "sentence_id": 1, "token_in_sentence_id": 1,
+        "syllable_id": 1, "Onset": 1.5, "End": 1.70,
+    }])
+    phon = pd.DataFrame([
+        _phon("HH", None, 1.50, 1.60, 1),
+        _phon("M",  None, 1.60, 1.70, 2),
+    ]).astype({"Stress": "Int64"})
+
+    out = add_pcenter(syll, phon, k=0.3)
+    assert out["P_Center"].iloc[0] == 1.5

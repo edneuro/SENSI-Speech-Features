@@ -4,10 +4,13 @@ Algorithm and rationale: see docs/superpowers/specs/2026-05-13-phoneme-syllable-
 """
 from __future__ import annotations
 
+import sys
 from dataclasses import dataclass, field
 from typing import cast
 
 import pandas as pd
+
+from extractors.arpabet_ipa import syllable_to_ipa, to_ipa
 
 
 @dataclass(frozen=True)
@@ -155,12 +158,79 @@ def assign_labels(word: str, syllables: list[Syllable]) -> LabelResult:
 # trip on missing-column errors. Single source of truth for column order.
 _SYLL_COLUMNS = [
     'doc_id', 'sentence_id', 'token_in_sentence_id', 'token', 'syllable_id',
-    'Label', 'ARPABET', 'Onset', 'End', 'Duration',
+    'Label', 'ARPABET', 'IPA', 'Onset', 'End', 'Duration',
 ]
 _PHON_COLUMNS = [
     'doc_id', 'sentence_id', 'token_in_sentence_id', 'token', 'syllable_id',
-    'phoneme_id', 'Label', 'Onset', 'End', 'Duration',
+    'phoneme_id', 'ARPABET', 'Stress', 'IPA', 'Pron_Source',
+    'Onset', 'End', 'Duration',
 ]
+
+_SPN = "spn"
+_LEXICON_CACHE: set[str] | None = None
+
+
+def _lexicon_words() -> set[str]:
+    """Memoized set of words present in the MFA pronunciation dictionary.
+
+    Used only to label Pron_Source: MFA does not mark G2P-derived words in the
+    TextGrid, so a words-tier form absent from the dictionary is one whose
+    pronunciation was generated (or absent entirely). Reuses the same .dict
+    that extractors/phoneme_surprisal.py parses. Returns an empty set if the
+    dictionary is unavailable, in which case every word is reported as
+    'dictionary' rather than mislabelled as 'g2p'.
+    """
+    global _LEXICON_CACHE
+    if _LEXICON_CACHE is None:
+        from extractors.phoneme_surprisal import DEFAULT_DICT_PATH
+        words: set[str] = set()
+        try:
+            with open(DEFAULT_DICT_PATH, "r", encoding="utf-8") as fh:
+                for line in fh:
+                    word = line.split("\t", 1)[0].strip()
+                    if word and word[0] not in "[<":
+                        words.add(word.lower())
+        except OSError:
+            words = set()
+        _LEXICON_CACHE = words
+    return _LEXICON_CACHE
+
+
+def _split_label(label: str) -> tuple[str, int | None]:
+    """'EY2' -> ('EY', 2); 'D' -> ('D', None)."""
+    text = str(label)
+    if text and text[-1].isdigit():
+        return text[:-1], int(text[-1])
+    return text, None
+
+
+def _pron_source(mfa_form, phones: list[Phone]) -> str:
+    """dictionary | g2p | oov_unresolved for one word's phone sequence.
+
+    `mfa_form` is the MFA WORDS-TIER form (the word_df `Transcript` value), not
+    the spaCy token. This matters: spaCy keeps digits ('48') while the aligner
+    receives them spelled out, so `Transcript` is 'forty eight'. Checking the
+    spaCy token would find '48' absent from the dictionary and mislabel a
+    perfectly ordinary dictionary pronunciation as 'g2p' — verified to hit every
+    numeric token in the real stimuli ('48', '2', '6', '8', '10', '3').
+
+    A Transcript may hold several space-separated words (the align_merge 'expand'
+    case); the pronunciation is dictionary-derived only if EVERY part is in the
+    lexicon.
+    """
+    if any(p.label == _SPN for p in phones):
+        return "oov_unresolved"
+    lexicon = _lexicon_words()
+    if not lexicon:
+        # No dictionary available: report the neutral value rather than
+        # mislabelling every word as g2p.
+        return "dictionary"
+    parts = [p for p in str(mfa_form or "").split() if p]
+    if not parts:
+        return "dictionary"
+    if all(p.lower() in lexicon for p in parts):
+        return "dictionary"
+    return "g2p"
 
 
 def _phones_for_word(phone_df: pd.DataFrame, word_onset: float, word_end: float
@@ -187,42 +257,72 @@ def syllabify_pairs(word_df: pd.DataFrame, phone_df: pd.DataFrame
     phone_df must have columns: phone, onset, offset (output of parse_phones).
 
     Returns (syllables_df, phonemes_df) following the column inventory in
-    spec §4. Words that have no phones inside their [Onset, End] interval
-    produce no rows in either DataFrame.
+    spec §4. Words that have no phones inside their [Onset, End] interval are
+    reported to stderr rather than silently dropped. Tokens that share an
+    exact [Onset, End] interval with an earlier token (e.g. spaCy's "was" +
+    "n't" both mapped onto MFA's single "wasn't" interval) are emitted once,
+    for the first token only, so their phonemes are not duplicated.
     """
     syll_rows: list[dict] = []
     phon_rows: list[dict] = []
+    seen_intervals: set[tuple] = set()
+    missing: list[str] = []
 
     for w in word_df.itertuples(index=False):
         if pd.isna(getattr(w, 'Onset', None)) or pd.isna(getattr(w, 'End', None)):
             continue
+        interval = (w.doc_id, round(float(w.Onset), 6), round(float(w.End), 6))
+        if interval in seen_intervals:
+            # A preceding token already claimed this exact MFA word (the
+            # align_merge 'join' case: spaCy "was" + "n't" vs MFA "wasn't").
+            # Emitting again would duplicate real acoustic phonemes.
+            continue
         word_phones = _phones_for_word(phone_df, cast(float, w.Onset), cast(float, w.End))
         if not word_phones:
+            missing.append(str(w.token))
             continue
+        seen_intervals.add(interval)
 
+        # Transcript is the MFA words-tier form; fall back to the token only
+        # when a caller passes a frame without that column (see _pron_source).
+        source = _pron_source(
+            getattr(w, 'Transcript', None) or w.token, word_phones)
         syllables = syllabify_word(word_phones)
         labels = assign_labels(cast(str, w.token), syllables)
 
         for syll_idx, (syl, label_str, arpabet_str) in enumerate(
                 zip(syllables, labels.labels, labels.arpabet), start=1):
+            split = [_split_label(p.label) for p in syl.phonemes]
             syll_rows.append({
                 'doc_id': w.doc_id, 'sentence_id': w.sentence_id,
                 'token_in_sentence_id': w.token_in_sentence_id, 'token': w.token,
                 'syllable_id': syll_idx,
                 'Label': label_str, 'ARPABET': arpabet_str,
+                'IPA': syllable_to_ipa(split),
                 'Onset': syl.onset, 'End': syl.end,
                 'Duration': round(syl.duration, 4),
             })
-            for phon_idx, phon in enumerate(syl.phonemes, start=1):
+            for phon_idx, (phon, (code, stress)) in enumerate(
+                    zip(syl.phonemes, split), start=1):
                 phon_rows.append({
                     'doc_id': w.doc_id, 'sentence_id': w.sentence_id,
                     'token_in_sentence_id': w.token_in_sentence_id, 'token': w.token,
                     'syllable_id': syll_idx, 'phoneme_id': phon_idx,
-                    'Label': phon.label,
+                    'ARPABET': code,
+                    'Stress': stress,
+                    'IPA': to_ipa(code, stress),
+                    'Pron_Source': source,
                     'Onset': phon.onset, 'End': phon.end,
                     'Duration': round(phon.duration, 4),
                 })
 
+    if missing:
+        print(f'[phonemes] WARNING: {len(missing)} words had no phonemes '
+              f'(likely OOV): {", ".join(missing)}', file=sys.stderr)
+
     syll_df = pd.DataFrame(syll_rows) if syll_rows else pd.DataFrame(columns=_SYLL_COLUMNS)
-    phon_df = pd.DataFrame(phon_rows) if phon_rows else pd.DataFrame(columns=_PHON_COLUMNS)
-    return syll_df, phon_df
+    phon_df_out = pd.DataFrame(phon_rows) if phon_rows else pd.DataFrame(columns=_PHON_COLUMNS)
+    # Nullable Int64: empty on consonants (stress does not apply) as opposed to
+    # 0, which means "unstressed vowel". A plain int64 column cannot hold both.
+    phon_df_out['Stress'] = phon_df_out['Stress'].astype('Int64')
+    return syll_df, phon_df_out

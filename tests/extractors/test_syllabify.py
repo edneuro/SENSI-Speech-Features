@@ -264,3 +264,214 @@ def test_syllabify_pairs_word_with_no_aligned_phones_skipped():
     # Only 'a' produces rows; 'gap' is dropped
     assert syll_df.token.tolist() == ['a']
     assert phon_df.token.tolist() == ['a']
+
+
+# ---------------------------------------------------------------------------
+# Task 3: split ARPABET/Stress/IPA, dedup shared alignments, Pron_Source
+# ---------------------------------------------------------------------------
+
+def _word_row(token, onset, end, tis_id, transcript=None):
+    """One word_df row. `transcript` is the MFA words-tier form; it defaults to
+    the token, and differs from it for digits ('48' -> 'forty eight')."""
+    return {"doc_id": 1, "sentence_id": 1, "token_in_sentence_id": tis_id,
+            "token": token, "Transcript": token if transcript is None else transcript,
+            "Onset": onset, "End": end}
+
+
+def test_split_columns_replace_label():
+    word_df = pd.DataFrame([_word_row("cup", 0.0, 0.30, 1)])
+    phone_df = pd.DataFrame([
+        {"phone": "K",   "onset": 0.00, "offset": 0.10},
+        {"phone": "AH1", "onset": 0.10, "offset": 0.20},
+        {"phone": "P",   "onset": 0.20, "offset": 0.30},
+    ])
+    _, phon = syllabify_pairs(word_df, phone_df)
+
+    assert "Label" not in phon.columns
+    assert list(phon["ARPABET"]) == ["K", "AH", "P"]
+    assert list(phon["IPA"]) == ["k", "ʌ", "p"]
+
+
+def test_stress_is_empty_on_consonants_and_zero_on_unstressed_vowels():
+    """Empty != 0. Empty means 'does not apply'; 0 means 'unstressed vowel'."""
+    word_df = pd.DataFrame([_word_row("about", 0.0, 0.40, 1)])
+    phone_df = pd.DataFrame([
+        {"phone": "AH0", "onset": 0.00, "offset": 0.10},
+        {"phone": "B",   "onset": 0.10, "offset": 0.20},
+        {"phone": "AW1", "onset": 0.20, "offset": 0.30},
+        {"phone": "T",   "onset": 0.30, "offset": 0.40},
+    ])
+    _, phon = syllabify_pairs(word_df, phone_df)
+
+    assert str(phon["Stress"].dtype) == "Int64"
+    stress = list(phon["Stress"])
+    assert stress[0] == 0            # unstressed vowel -> 0, NOT empty
+    assert pd.isna(stress[1])        # consonant -> empty, NOT 0
+    assert stress[2] == 1
+    assert pd.isna(stress[3])
+    # And the schwa/wedge distinction follows from it:
+    assert list(phon["IPA"]) == ["ə", "b", "aʊ", "t"]
+
+
+def test_contraction_phonemes_are_emitted_once_for_the_first_token():
+    """spaCy 'was' + "n't" both carry MFA "wasn't"'s interval."""
+    word_df = pd.DataFrame([
+        _word_row("was", 4.50, 4.87, 1),
+        _word_row("n't", 4.50, 4.87, 2),
+    ])
+    phone_df = pd.DataFrame([
+        {"phone": "W",   "onset": 4.50, "offset": 4.60},
+        {"phone": "AH1", "onset": 4.60, "offset": 4.68},
+        {"phone": "Z",   "onset": 4.68, "offset": 4.75},
+        {"phone": "AH0", "onset": 4.75, "offset": 4.81},
+        {"phone": "N",   "onset": 4.81, "offset": 4.84},
+        {"phone": "T",   "onset": 4.84, "offset": 4.87},
+    ])
+    syll, phon = syllabify_pairs(word_df, phone_df)
+
+    assert len(phon) == 6, "phonemes must not be emitted twice"
+    assert set(phon["token"]) == {"was"}
+    assert len(syll) == 2
+    assert set(syll["token"]) == {"was"}
+
+
+def test_distinct_words_with_distinct_intervals_are_both_emitted():
+    """Dedup must key on the interval, not merely on adjacency."""
+    word_df = pd.DataFrame([
+        _word_row("a", 0.00, 0.10, 1),
+        _word_row("bee", 0.10, 0.30, 2),
+    ])
+    phone_df = pd.DataFrame([
+        {"phone": "AH0", "onset": 0.00, "offset": 0.10},
+        {"phone": "B",   "onset": 0.10, "offset": 0.20},
+        {"phone": "IY1", "onset": 0.20, "offset": 0.30},
+    ])
+    _, phon = syllabify_pairs(word_df, phone_df)
+    assert set(phon["token"]) == {"a", "bee"}
+    assert len(phon) == 3
+
+
+def test_oov_word_yields_one_row_flagged_unresolved():
+    word_df = pd.DataFrame([_word_row("zorblax", 0.0, 0.33, 1)])
+    phone_df = pd.DataFrame([
+        {"phone": "spn", "onset": 0.0, "offset": 0.33},
+    ])
+    syll, phon = syllabify_pairs(word_df, phone_df)
+
+    assert len(phon) == 1
+    assert phon["ARPABET"].iloc[0] == "spn"
+    assert pd.isna(phon["Stress"].iloc[0])
+    assert phon["IPA"].iloc[0] == ""
+    assert phon["Pron_Source"].iloc[0] == "oov_unresolved"
+    assert len(syll) == 1, "an spn word still occupies one syllable"
+
+
+def test_in_dictionary_word_is_flagged_dictionary():
+    word_df = pd.DataFrame([_word_row("cup", 0.0, 0.30, 1)])
+    phone_df = pd.DataFrame([
+        {"phone": "K",   "onset": 0.00, "offset": 0.10},
+        {"phone": "AH1", "onset": 0.10, "offset": 0.20},
+        {"phone": "P",   "onset": 0.20, "offset": 0.30},
+    ])
+    _, phon = syllabify_pairs(word_df, phone_df)
+    assert set(phon["Pron_Source"]) == {"dictionary"}
+
+
+def test_numeric_token_is_dictionary_not_g2p():
+    """Regression: spaCy keeps '48' but the aligner got 'forty eight'.
+
+    Judging provenance from the spaCy token would mark every number in the
+    corpus as a modeled pronunciation. The MFA words-tier form is the truth.
+    """
+    word_df = pd.DataFrame([
+        _word_row("48", 4.27, 4.94, 1, transcript="forty eight"),
+    ])
+    phone_df = pd.DataFrame([
+        {"phone": "F",   "onset": 4.27, "offset": 4.40},
+        {"phone": "AO1", "onset": 4.40, "offset": 4.55},
+        {"phone": "R",   "onset": 4.55, "offset": 4.65},
+        {"phone": "T",   "onset": 4.65, "offset": 4.72},
+        {"phone": "IY0", "onset": 4.72, "offset": 4.80},
+        {"phone": "EY1", "onset": 4.80, "offset": 4.90},
+        {"phone": "T",   "onset": 4.90, "offset": 4.94},
+    ])
+    _, phon = syllabify_pairs(word_df, phone_df)
+    assert set(phon["Pron_Source"]) == {"dictionary"}
+
+
+def test_pron_source_falls_back_to_the_token_without_a_transcript_column():
+    """A caller may pass a frame that never went through merge_alignment."""
+    word_df = pd.DataFrame([{
+        "doc_id": 1, "sentence_id": 1, "token_in_sentence_id": 1,
+        "token": "cup", "Onset": 0.0, "End": 0.30,
+    }])
+    phone_df = pd.DataFrame([
+        {"phone": "K",   "onset": 0.00, "offset": 0.10},
+        {"phone": "AH1", "onset": 0.10, "offset": 0.20},
+        {"phone": "P",   "onset": 0.20, "offset": 0.30},
+    ])
+    _, phon = syllabify_pairs(word_df, phone_df)
+    assert set(phon["Pron_Source"]) == {"dictionary"}
+
+
+def test_oov_word_with_real_phones_is_flagged_g2p():
+    """G2P recovered a pronunciation for a word absent from the dictionary."""
+    word_df = pd.DataFrame([_word_row("zorblax", 0.0, 0.20, 1)])
+    phone_df = pd.DataFrame([
+        {"phone": "Z",   "onset": 0.00, "offset": 0.10},
+        {"phone": "AO1", "onset": 0.10, "offset": 0.20},
+    ])
+    _, phon = syllabify_pairs(word_df, phone_df)
+    assert set(phon["Pron_Source"]) == {"g2p"}
+
+
+def test_syllable_gains_ipa_and_keeps_label_and_arpabet():
+    word_df = pd.DataFrame([_word_row("cup", 0.0, 0.30, 1)])
+    phone_df = pd.DataFrame([
+        {"phone": "K",   "onset": 0.00, "offset": 0.10},
+        {"phone": "AH1", "onset": 0.10, "offset": 0.20},
+        {"phone": "P",   "onset": 0.20, "offset": 0.30},
+    ])
+    syll, _ = syllabify_pairs(word_df, phone_df)
+    # 'cup' is one syllable (onset K, nucleus AH1, coda P); unchanged: ARPABET
+    # keeps stress digits.
+    assert syll["ARPABET"].iloc[0] == "K-AH1-P", "unchanged: keeps stress digits"
+    assert syll["IPA"].iloc[0] == "k-ʌ-p"
+
+
+def test_zero_phoneme_words_are_reported(capsys):
+    """A word with no phones at all must not vanish silently."""
+    word_df = pd.DataFrame([
+        _word_row("cup", 0.0, 0.10, 1),
+        _word_row("ghost", 5.0, 5.20, 2),   # no phones in its interval
+    ])
+    phone_df = pd.DataFrame([
+        {"phone": "K", "onset": 0.00, "offset": 0.10},
+    ])
+    syllabify_pairs(word_df, phone_df)
+    err = capsys.readouterr().err
+    assert "ghost" in err
+    assert "no phonemes" in err
+
+
+def test_deduped_second_token_is_not_reported_as_missing(capsys):
+    """n't legitimately has no rows; that is not an anomaly."""
+    word_df = pd.DataFrame([
+        _word_row("was", 4.50, 4.60, 1),
+        _word_row("n't", 4.50, 4.60, 2),
+    ])
+    phone_df = pd.DataFrame([{"phone": "W", "onset": 4.50, "offset": 4.60}])
+    syllabify_pairs(word_df, phone_df)
+    assert "n't" not in capsys.readouterr().err
+
+
+def test_empty_frames_still_carry_the_new_schema():
+    syll, phon = syllabify_pairs(
+        pd.DataFrame(columns=["doc_id", "sentence_id", "token_in_sentence_id",
+                              "token", "Onset", "End"]),
+        pd.DataFrame(columns=["phone", "onset", "offset"]),
+    )
+    for col in ("ARPABET", "Stress", "IPA", "Pron_Source"):
+        assert col in phon.columns
+    assert "Label" not in phon.columns
+    assert "IPA" in syll.columns

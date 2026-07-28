@@ -1,7 +1,9 @@
 import math
 import pandas as pd
 import pytest
-from extractors.phoneme_surprisal import build_cohort_trie, phoneme_scores
+from extractors.phoneme_surprisal import (
+    add_phoneme_surprisal, build_cohort_trie, phoneme_scores,
+)
 
 # Lexicon {cat:3, cab:1, dog:2} with stress-stripped ARPABET pronunciations.
 _ENTRIES = [
@@ -73,14 +75,16 @@ def test_load_mfa_lexicon_parses_variable_columns(tmp_path):
 
 def _cat_phon_df():
     # One word "cat", one syllable, three phonemes at 0.10/0.15/0.20 s.
-    return pd.DataFrame([
+    df = pd.DataFrame([
         dict(doc_id=1, sentence_id=1, token_in_sentence_id=1, token="cat",
-             syllable_id=1, phoneme_id=1, Label="K", Onset=0.10, End=0.15, Duration=0.05),
+             syllable_id=1, phoneme_id=1, ARPABET="K", Stress=None, Onset=0.10, End=0.15, Duration=0.05),
         dict(doc_id=1, sentence_id=1, token_in_sentence_id=1, token="cat",
-             syllable_id=1, phoneme_id=2, Label="AE1", Onset=0.15, End=0.18, Duration=0.03),
+             syllable_id=1, phoneme_id=2, ARPABET="AE", Stress=1, Onset=0.15, End=0.18, Duration=0.03),
         dict(doc_id=1, sentence_id=1, token_in_sentence_id=1, token="cat",
-             syllable_id=1, phoneme_id=3, Label="T", Onset=0.18, End=0.20, Duration=0.02),
+             syllable_id=1, phoneme_id=3, ARPABET="T", Stress=None, Onset=0.18, End=0.20, Duration=0.02),
     ])
+    df["Stress"] = df["Stress"].astype("Int64")
+    return df
 
 
 def test_add_phoneme_surprisal_appends_two_columns(monkeypatch):
@@ -111,3 +115,49 @@ def test_phoneme_surprisal_mat_vars_impulses_and_controls():
     # only the first phoneme of the word is a word onset
     assert out["word_onset"][10, 0] == 1
     assert out["word_onset"][15, 0] == 0 and out["word_onset"][18, 0] == 0
+
+
+# ---------------------------------------------------------------------------
+# Task 5: read ARPABET/Stress, not the fused Label; spn -> NaN
+# ---------------------------------------------------------------------------
+
+def _row(arpabet, stress, phoneme_id, tis_id=1):
+    return {"doc_id": 1, "sentence_id": 1, "token_in_sentence_id": tis_id,
+            "token": "cup", "syllable_id": 1, "phoneme_id": phoneme_id,
+            "ARPABET": arpabet, "Stress": stress,
+            "Onset": 0.1 * phoneme_id, "End": 0.1 * phoneme_id + 0.1,
+            "Duration": 0.1}
+
+
+def test_reads_arpabet_column():
+    df = pd.DataFrame([
+        _row("K", None, 1), _row("AH", 1, 2), _row("P", None, 3),
+    ]).astype({"Stress": "Int64"})
+    out = add_phoneme_surprisal(df)
+    assert "phoneme_surprisal" in out.columns
+    assert out["phoneme_surprisal"].iloc[0] > 0
+    assert out["phoneme_surprisal"].notna().all()
+
+
+def test_spn_row_scores_nan_not_the_oov_cap():
+    df = pd.DataFrame([
+        {"doc_id": 1, "sentence_id": 1, "token_in_sentence_id": 1,
+         "token": "zorblax", "syllable_id": 1, "phoneme_id": 1,
+         "ARPABET": "spn", "Stress": None, "Onset": 0.0, "End": 0.33,
+         "Duration": 0.33},
+    ]).astype({"Stress": "Int64"})
+    out = add_phoneme_surprisal(df)
+    assert pd.isna(out["phoneme_surprisal"].iloc[0])
+    assert pd.isna(out["cohort_entropy"].iloc[0])
+
+
+def test_strip_stress_false_recombines_arpabet_and_stress():
+    """The stress-sensitive trie needs the fused form back."""
+    df = pd.DataFrame([
+        _row("K", None, 1), _row("AH", 1, 2), _row("P", None, 3),
+    ]).astype({"Stress": "Int64"})
+    out = add_phoneme_surprisal(df, strip_stress=False, primary_only=True)
+    # A stress-sensitive trie still finds 'K AH1 P', so the first phoneme is
+    # scored from the real cohort rather than pinned at the OOV cap.
+    assert out["phoneme_surprisal"].iloc[0] > 0
+    assert out["phoneme_surprisal"].notna().all()

@@ -10,9 +10,12 @@ def test_mat_roundtrip_has_four_trains(tmp_path, monkeypatch):
     monkeypatch.setattr(ps, "get_cohort_trie", lambda *a, **k: trie)
     df = pd.DataFrame([
         dict(doc_id=1, sentence_id=1, token_in_sentence_id=1, token="cat",
-             syllable_id=1, phoneme_id=i + 1, Label=lbl, Onset=on, End=on + 0.03, Duration=0.03)
-        for i, (lbl, on) in enumerate([("K", 0.10), ("AE1", 0.15), ("T", 0.18)])
+             syllable_id=1, phoneme_id=i + 1, ARPABET=code, Stress=stress,
+             Onset=on, End=on + 0.03, Duration=0.03)
+        for i, (code, stress, on) in enumerate(
+            [("K", None, 0.10), ("AE", 1, 0.15), ("T", None, 0.18)])
     ])
+    df["Stress"] = df["Stress"].astype("Int64")
     df = ps.add_phoneme_surprisal(df)
     out = ps.phoneme_surprisal_mat_vars(df, 1.0, 100, {"analysis_sr": 100})
     p = tmp_path / "s_phoneme_surprisal.mat"

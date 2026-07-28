@@ -172,8 +172,14 @@ def add_phoneme_surprisal(phon_df, *, dict_path: str = DEFAULT_DICT_PATH,
     """Append phoneme_surprisal + cohort_entropy columns to a phonemes DataFrame.
 
     Scores each word's aligned phoneme sequence (rows grouped by doc/sentence/
-    token, in phoneme order). Row `Label`s carry ARPABET stress digits; they are
-    stripped here to match the (stress-stripped) trie.
+    token, in phoneme order). Reads the stress-free `ARPABET` column directly;
+    when `strip_stress=False` the fused form is rebuilt from `ARPABET` + `Stress`
+    to match a stress-sensitive trie.
+
+    Rows whose ARPABET is `spn` (an out-of-dictionary word MFA had no
+    pronunciation for) score NaN: there is no phoneme identity to evaluate.
+    That is deliberately distinct from the OOV *cap*, which means a real
+    phoneme sequence walked off the lexicon.
     """
     import pandas as pd  # local import keeps module import light
 
@@ -192,8 +198,17 @@ def add_phoneme_surprisal(phon_df, *, dict_path: str = DEFAULT_DICT_PATH,
     # list-assignment onto `df` then aligns by position too.
     positions = df.reset_index(drop=True)
     for _, grp in positions.groupby(_GROUP_KEYS, sort=False):
-        phones = [_strip_stress(str(lbl)) if strip_stress else str(lbl)
-                  for lbl in grp["Label"]]
+        codes = [str(c) for c in grp["ARPABET"]]
+        if any(c in _SILENCE_PHONES for c in codes):
+            # spn / silence: no phoneme identity to score. Leave NaN.
+            continue
+        if strip_stress:
+            phones = codes
+        else:
+            phones = [
+                c if pd.isna(s) else f"{c}{int(s)}"
+                for c, s in zip(codes, grp["Stress"])
+            ]
         surp, ent = phoneme_scores(trie, phones)
         for pos, s, e in zip(grp.index, surp, ent):
             surp_col[pos] = round(s, 4)
