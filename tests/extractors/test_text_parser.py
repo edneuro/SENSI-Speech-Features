@@ -157,3 +157,71 @@ def test_every_head_token_id_is_a_valid_token_id(spacy_available):
     # head_token_id must correspond to an actual row's token_id in the doc.
     df = parse("The dog barked loudly. Then the cat slept for many hours.")
     assert set(df['head_token_id']).issubset(set(df['token_id']))
+
+
+# ---------------------------------------------------------------------------
+# SPACE-token dropping + id remapping — hard-wrapped transcripts produce a
+# literal newline token from spaCy; it must not consume a token_id/
+# token_in_sentence_id or shift head_token_id references.
+# ---------------------------------------------------------------------------
+
+_WRAPPED = ("Others who arrived just after the time of distribution\n"
+            "were often 48 hours without food.\n")
+
+
+@pytest.mark.parametrize("text", [_WRAPPED])
+def test_no_space_rows_are_emitted(spacy_available, text):
+    df = parse(text)
+    assert (df["upos"] != "SPACE").all()
+    assert not df["token"].str.strip().eq("").any()
+
+
+def test_token_ids_are_contiguous_after_dropping_newlines(spacy_available):
+    df = parse(_WRAPPED)
+    assert list(df["token_id"]) == list(range(1, len(df) + 1))
+
+
+def test_token_in_sentence_id_is_a_true_sentence_position(spacy_available):
+    df = parse(_WRAPPED)
+    for _, sent in df.groupby("sentence_id"):
+        assert list(sent["token_in_sentence_id"]) == list(range(1, len(sent) + 1))
+
+
+def test_head_token_id_resolves_to_a_real_token_id(spacy_available):
+    """The remap regression: heads must not point past the newline shift."""
+    df = parse(_WRAPPED)
+    valid = set(df["token_id"])
+    assert set(df["head_token_id"]) <= valid
+
+
+def test_head_token_id_still_names_the_correct_word(spacy_available):
+    df = parse(_WRAPPED)
+    by_id = dict(zip(df["token_id"], df["token"]))
+    row = df[df["token"] == "distribution"].iloc[0]
+    # 'distribution' is the object of 'of'; its head must be a real word,
+    # never a whitespace token or an off-by-one neighbour.
+    assert by_id[row["head_token_id"]].strip() != ""
+
+
+def test_a_root_is_its_own_head(spacy_available):
+    df = parse("The cat sat.")
+    roots = df[df["dep_rel"] == "ROOT"]
+    assert len(roots) >= 1
+    for _, r in roots.iterrows():
+        assert r["head_token_id"] == r["token_id"]
+
+
+def test_mid_sentence_newline_does_not_start_a_paragraph(spacy_available):
+    """A hard line wrap is not a paragraph break; only blank lines are."""
+    df = parse(_WRAPPED)
+    assert set(df["paragraph_id"]) == {1}
+
+
+def test_blank_line_still_starts_a_paragraph(spacy_available):
+    df = parse("First para here.\n\nSecond para here.\n")
+    assert set(df["paragraph_id"]) == {1, 2}
+
+
+def test_punctuation_rows_are_still_emitted(spacy_available):
+    df = parse("Hello, world.")
+    assert (df["upos"] == "PUNCT").sum() == 2

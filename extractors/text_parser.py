@@ -10,8 +10,12 @@ Columns produced:
     token_id, token_in_sentence_id, token, lemma,
     upos, xpos, feats, dep_rel, head_token_id
 
-token_id is the global whole-document token index (1-based); token_in_sentence_id
-is the position within the current sentence (resets to 1 each sentence).
+Whitespace tokens (spaCy emits a literal newline as a token, upos='SPACE', for
+hard-wrapped transcripts) are excluded from the output entirely — they are not
+words. token_id is the global whole-document index (1-based) over emitted
+(non-whitespace) tokens only; token_in_sentence_id is the position within the
+current sentence, also counting emitted tokens only (resets to 1 each
+sentence).
 
 head_token_id references the syntactic head by its global token_id, so it is
 self-contained against the token_id column and never ambiguous across sentence
@@ -96,14 +100,38 @@ def parse(text: str, doc_id: int = 1) -> pd.DataFrame:
     doc = nlp(text)
     paragraphs = _paragraph_spans(text)
 
+    # Pass 1: assign token_id over EMITTED tokens only, and record the
+    # spaCy-doc-index -> token_id mapping.
+    #
+    # Whitespace tokens (a literal newline in the transcript) are not words:
+    # they used to occupy a row with NaN for every feature and to consume both
+    # a token_id and a token_in_sentence_id, shifting every following word by
+    # one. They are dropped here.
+    #
+    # This mapping is what keeps head_token_id correct. spaCy's token.head.i is
+    # a doc-level index that still counts the skipped whitespace, so
+    # `token.head.i + 1` is only equal to the head's token_id while nothing is
+    # skipped. Resolving through id_by_doc_index is mandatory, not defensive.
+    id_by_doc_index: dict[int, int] = {}
+    next_id = 1
+    for token in doc:
+        if token.is_space:
+            continue
+        id_by_doc_index[token.i] = next_id
+        next_id += 1
+
     rows = []
-    token_id = 1
 
     for sent_idx, sent in enumerate(doc.sents, start=1):
         sent_start_char = sent.start_char
         paragraph_id = _paragraph_id_for_char(sent_start_char, paragraphs)
 
-        for tok_idx, token in enumerate(sent, start=1):
+        tok_idx = 0
+        for token in sent:
+            if token.is_space:
+                continue
+            tok_idx += 1
+
             # Character offsets relative to the sentence string (1-indexed)
             char_start = token.idx - sent_start_char + 1
             char_end = char_start + len(token.text) - 1
@@ -113,12 +141,14 @@ def parse(text: str, doc_id: int = 1) -> pd.DataFrame:
             # with pandas' default na_values on any standard pd.read_csv().
             feats = str(token.morph)
 
-            # head_token_id is the token_id (global, whole-document index) of
-            # the syntactic head, so it is self-contained against the token_id
-            # column and unambiguous across sentence boundaries. For the root
-            # token its own head is itself. token_id counts tokens in document
-            # order starting at 1, so the head's token_id is token.head.i + 1.
-            head_token_id = token.head.i + 1
+            # head_token_id is the head's token_id (global, whole-document,
+            # 1-based over emitted tokens), so it is self-contained against the
+            # token_id column and unambiguous across sentence boundaries. A
+            # root token's head is itself. If a head is itself whitespace
+            # (spaCy can attach to one in malformed input) the token is treated
+            # as its own head rather than dangling.
+            head_token_id = id_by_doc_index.get(
+                token.head.i, id_by_doc_index[token.i])
 
             rows.append({
                 'doc_id': doc_id,
@@ -127,7 +157,7 @@ def parse(text: str, doc_id: int = 1) -> pd.DataFrame:
                 'sentence': sent.text,
                 'start': char_start,
                 'end': char_end,
-                'token_id': token_id,
+                'token_id': id_by_doc_index[token.i],
                 'token_in_sentence_id': tok_idx,
                 'token': token.text,
                 'lemma': token.lemma_,
@@ -137,6 +167,5 @@ def parse(text: str, doc_id: int = 1) -> pd.DataFrame:
                 'dep_rel': token.dep_,
                 'head_token_id': head_token_id,
             })
-            token_id += 1
 
     return pd.DataFrame(rows)
