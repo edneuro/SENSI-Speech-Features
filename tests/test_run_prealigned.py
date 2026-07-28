@@ -115,6 +115,114 @@ def test_prealign_batch_skips_unreadable_transcript(tmp_path, monkeypatch):
     assert captured["g2p"] is False, "g2p_oov defaults off when unset on args"
 
 
+def _run_args(transcript, audio, *, g2p_oov, align_cache):
+    return types.SimpleNamespace(
+        transcript=str(transcript), audio=str(audio), output_folder=None,
+        doc_id=1,
+        no_parse=True, no_freq=True, no_edu_freq=True, no_lexical_norms=True,
+        no_sem_domain=True, no_surprisal=True, no_llm_cloze=True,
+        no_align=False, no_prosody=True, sem_categories="",
+        save_prefs=False, g2p_oov=g2p_oov, _align_cache=align_cache,
+    )
+
+
+def _canned_alignment(a, t, *, g2p=False):
+    return (pd.DataFrame({"Transcript": ["hello", "world"],
+                          "Onset": [0.0, 0.5], "End": [0.4, 0.9]}),
+           pd.DataFrame({"phone": ["HH"], "onset": [0.0], "offset": [0.1]}))
+
+
+@pytest.mark.parametrize("g2p_oov", [False, True])
+def test_run_cache_hit_log_matches_the_real_align_with_phones_key(
+        tmp_path, monkeypatch, capsys, g2p_oov):
+    """Fix 1: main.py rebuilds the align_with_phones memo key by hand for a
+    log-only cache-hit check. It must use extractors.aligner.cache_key (the
+    same helper align_with_phones uses to store the entry) — a hand-rolled
+    2-tuple that omits `g2p` never matches, so "[mfa] Reusing cached
+    alignment…" never fires even on a genuine memo hit. Covers both g2p
+    settings, since g2p is exactly the element that was omitted."""
+    transcript = tmp_path / "stim.txt"
+    transcript.write_text("hello world", encoding="utf-8")
+    audio = tmp_path / "stim.wav"
+    audio.write_bytes(b"RIFFfake")
+
+    calls = {"n": 0}
+
+    def _counted(a, t, *, g2p=False):
+        calls["n"] += 1
+        return _canned_alignment(a, t, g2p=g2p)
+
+    monkeypatch.setattr(aligner, "_align_uncached", _counted)
+
+    align_cache: dict = {}
+    main.run(_run_args(transcript, audio, g2p_oov=g2p_oov, align_cache=align_cache))
+    first_out = capsys.readouterr().out
+    assert "[mfa] Loading alignment" in first_out
+    assert calls["n"] == 1
+
+    # Second call: same audio/transcript/g2p, sharing the same cache dict —
+    # align_with_phones actually serves this from its memo (assert via the
+    # call count), so the log line reporting it must also fire.
+    main.run(_run_args(transcript, audio, g2p_oov=g2p_oov, align_cache=align_cache))
+    second_out = capsys.readouterr().out
+    assert calls["n"] == 1, "MFA must run at most once per document"
+    assert "[mfa] Reusing cached alignment" in second_out
+    assert "[mfa] Loading alignment" not in second_out
+
+
+def test_run_cache_hit_log_does_not_false_positive_across_different_g2p(
+        tmp_path, monkeypatch, capsys):
+    """A cache entry stored under one g2p setting must not be reported (or
+    served) as a hit for the opposite setting — same invariant the memo key
+    itself enforces (extractors/aligner.py's `g2p` element)."""
+    transcript = tmp_path / "stim.txt"
+    transcript.write_text("hello world", encoding="utf-8")
+    audio = tmp_path / "stim.wav"
+    audio.write_bytes(b"RIFFfake")
+
+    calls = {"n": 0}
+
+    def _counted(a, t, *, g2p=False):
+        calls["n"] += 1
+        return _canned_alignment(a, t, g2p=g2p)
+
+    monkeypatch.setattr(aligner, "_align_uncached", _counted)
+
+    align_cache: dict = {}
+    main.run(_run_args(transcript, audio, g2p_oov=False, align_cache=align_cache))
+    capsys.readouterr()
+    main.run(_run_args(transcript, audio, g2p_oov=True, align_cache=align_cache))
+    out = capsys.readouterr().out
+    assert calls["n"] == 2, "different g2p must not be served from the other's cache entry"
+    assert "[mfa] Loading alignment" in out
+    assert "[mfa] Reusing cached alignment" not in out
+
+
+def test_run_forwards_g2p_oov_value_to_align_with_phones(tmp_path, monkeypatch):
+    """Final-review Fix 4: main.run()'s call site —
+    mfa_align(..., g2p=bool(getattr(args, 'g2p_oov', False))) — was unpinned
+    by any test (correct by inspection only). Record the value
+    _align_uncached actually receives and assert both settings forward."""
+    transcript = tmp_path / "stim.txt"
+    transcript.write_text("hello world", encoding="utf-8")
+    audio = tmp_path / "stim.wav"
+    audio.write_bytes(b"RIFFfake")
+
+    received = {}
+
+    def _capture(a, t, *, g2p=False):
+        received["g2p"] = g2p
+        return _canned_alignment(a, t, g2p=g2p)
+
+    monkeypatch.setattr(aligner, "_align_uncached", _capture)
+
+    main.run(_run_args(transcript, audio, g2p_oov=True, align_cache={}))
+    assert received["g2p"] is True
+
+    main.run(_run_args(transcript, audio, g2p_oov=False, align_cache={}))
+    assert received["g2p"] is False
+
+
 def test_prealign_batch_threads_g2p_oov_true(tmp_path, monkeypatch):
     """When args.g2p_oov is True, _prealign_batch must pass g2p=True through
     to ensure_alignments — this is the first real caller of that plumbing."""

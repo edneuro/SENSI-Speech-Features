@@ -22,6 +22,10 @@ from gui.planner import plan_from_prefs
 # module-load time.
 from extractors import predictability
 from extractors.predictability_models import is_gated, all_specs
+# Imported as a module (see the `predictability` note above) so tests can
+# monkeypatch `extractors.aligner.g2p_model_available` and have it take
+# effect here.
+from extractors import aligner
 
 
 @dataclass(frozen=True)
@@ -146,6 +150,17 @@ def compute_warnings(session_api_key: str = "", session_hf_token: str = "") -> l
             toggle_key=None, severity="red",
             message="MFA binary not found on PATH. Activate the ./env conda env "
                     "before running the GUI."))
+
+    # G2P for OOV words requested but the vendored model isn't present —
+    # today this silently degrades every OOV word to a single `spn` phone
+    # (see extractors/aligner._run_mfa), with only a run-time stderr line.
+    if ("mfa_align" in in_plan and prefs.get("alignment", {}).get("g2p_oov", False)
+            and not aligner.g2p_model_available()):
+        out.append(Warning(
+            toggle_key=None, severity="amber",
+            message="G2P for out-of-dictionary words is on, but the vendored "
+                    "MFA G2P model is missing — OOV words will align to a "
+                    "single spn phone instead. Run: python utils/download_models.py"))
 
     # parselmouth (any prosody stage in plan)
     if set(in_plan) & _PROSODY_STAGES:

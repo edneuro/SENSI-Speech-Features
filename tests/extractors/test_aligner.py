@@ -4,6 +4,7 @@ The MFA subprocess is never invoked here — we monkeypatch the uncached compute
 so the tests run without Kaldi/MFA and stay fast.
 """
 import json
+import os
 
 import pandas as pd
 
@@ -105,6 +106,33 @@ def test_run_mfa_passes_g2p_flag_only_when_requested(monkeypatch):
     aligner._run_mfa("corpus", "out", g2p=True)
     assert "--g2p_model_path" in calls[1]
     assert calls[1][calls[1].index("--g2p_model_path") + 1].endswith(".zip")
+
+
+def test_align_with_phones_forwards_g2p_value_through_align_uncached_to_run_mfa(
+        tmp_path, monkeypatch):
+    """Final-review Fix 4: nothing previously pinned VALUE-correct g2p
+    forwarding all the way from the public API to _run_mfa — the fakes above
+    all accept g2p but never record it. This exercises the real (unmocked)
+    align_with_phones -> _align_uncached chain, only replacing _run_mfa
+    (record the value) and _parse_textgrid (avoid needing a real TextGrid)."""
+    audio = tmp_path / "s.wav"
+    audio.write_bytes(b"RIFFfake-audio")
+    received = {}
+
+    def _fake_run_mfa(corpus_dir, output_dir, *, g2p=False):
+        received["g2p"] = g2p
+        stem = os.path.splitext(os.path.basename(str(audio)))[0]
+        open(os.path.join(output_dir, f"{stem}.TextGrid"), "w").close()
+
+    monkeypatch.setattr(aligner, "_run_mfa", _fake_run_mfa)
+    monkeypatch.setattr(aligner, "_parse_textgrid",
+                        lambda p: _fake_result("g2p-check"))
+
+    aligner.align_with_phones(str(audio), "hello", g2p=True)
+    assert received["g2p"] is True
+
+    aligner.align_with_phones(str(audio), "hello", g2p=False)
+    assert received["g2p"] is False
 
 
 def test_g2p_requested_but_model_missing_is_a_warning_not_a_crash(monkeypatch, capsys):

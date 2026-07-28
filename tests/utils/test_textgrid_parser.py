@@ -52,11 +52,14 @@ def test_spn_is_kept_so_oov_words_are_not_silently_dropped(tmp_path):
 
 
 def test_real_silence_labels_are_still_filtered(tmp_path):
+    # Covers all four members of the silence set {'', 'SIL', 'sil', 'sp'}
+    # (Task 2 rewrote it to include uppercase 'SIL'; nothing previously
+    # exercised that spelling surviving the filter).
     tg = _write_textgrid(
         tmp_path,
-        [(0.0, 0.5, "has")],
+        [(0.0, 0.6, "has")],
         [(0.0, 0.1, "sil"), (0.1, 0.2, "sp"), (0.2, 0.3, ""),
-         (0.3, 0.5, "HH")],
+         (0.3, 0.4, "SIL"), (0.4, 0.6, "HH")],
     )
     phones = parse_phones(tg)
     assert list(phones["phone"]) == ["HH"]

@@ -372,7 +372,7 @@ def run(args) -> pd.DataFrame:
     args._phones_df = None  # reset each run; populated below when alignment runs
     if not args.no_align and args.audio:
         from extractors.aligner import (
-            align_with_phones as mfa_align, alignment_dir,
+            align_with_phones as mfa_align, alignment_dir, cache_key,
         )
         # Reuse a per-document alignment across passes (word + doc batches in
         # one GUI run share `_align_cache`), so MFA runs at most once per doc.
@@ -384,15 +384,21 @@ def run(args) -> pd.DataFrame:
         persist_dir = (alignment_dir(args.output_folder)
                        if getattr(args, 'output_folder', None) else None)
         run_if_missing = not getattr(args, '_batch_prealigned', False)
+        g2p_oov = bool(getattr(args, 'g2p_oov', False))
+        # Built via the SAME helper align_with_phones uses to store the memo
+        # entry (extractors.aligner.cache_key), so this log-only check can
+        # never desync from the real lookup inside mfa_align — a hand-rebuilt
+        # tuple here previously omitted the `g2p` element added for OOV
+        # support, so the "Reusing cached alignment" line never fired.
         if _align_cache is not None and (
-                os.path.abspath(args.audio), text) in _align_cache:
+                cache_key(args.audio, text, g2p_oov) in _align_cache):
             print('[mfa] Reusing cached alignment…')
         else:
             print('[mfa] Loading alignment…')
         align_df, phones_df = mfa_align(
             args.audio, text, cache=_align_cache,
             persist_dir=persist_dir, run_if_missing=run_if_missing,
-            g2p=bool(getattr(args, 'g2p_oov', False)))
+            g2p=g2p_oov)
         args._phones_df = phones_df
         if df is not None:
             from extractors.align_merge import merge_alignment

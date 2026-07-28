@@ -55,6 +55,18 @@ def g2p_model_available() -> bool:
     return G2P_MODEL_PATH.exists()
 
 
+def cache_key(audio_path: str, transcript: str, g2p: bool = False) -> tuple:
+    """The align_with_phones memo key.
+
+    One definition, shared by align_with_phones (which stores/reads the
+    cache) and any caller that needs to check for a cache hit without
+    running alignment (e.g. main.py's cache-hit log message) — so a new
+    parameter here (like `g2p`) cannot silently desync a hand-rebuilt tuple
+    at the call site.
+    """
+    return (os.path.abspath(audio_path), transcript, bool(g2p))
+
+
 def alignment_dir(output_folder) -> Path:
     """Return <output_folder>/Montreal Forced Alignment (not created here)."""
     return Path(output_folder) / ALIGNMENT_SUBDIR
@@ -192,7 +204,7 @@ def align_with_phones(
         RuntimeError: if MFA is not installed or alignment fails, or if
                      `run_if_missing` is False and no disk alignment exists.
     """
-    key = (os.path.abspath(audio_path), transcript, bool(g2p))
+    key = cache_key(audio_path, transcript, g2p)
     if cache is not None and key in cache:
         word_df, phone_df = cache[key]
         return word_df.copy(), phone_df.copy()

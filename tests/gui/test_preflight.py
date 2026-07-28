@@ -209,6 +209,53 @@ def test_no_subword_alignment_warning_anymore(prefs_tmp):
     assert not any("enable" in w.message.lower() for w in warnings)
 
 
+def test_warns_when_g2p_oov_on_but_model_missing(prefs_tmp, monkeypatch):
+    """Final-review Fix 4: enabling alignment.g2p_oov without the vendored
+    MFA G2P model silently degrades every OOV word to a single spn phone
+    (extractors/aligner._run_mfa) with only a run-time stderr line. This is
+    the preflight-time equivalent of the existing MFA-on-PATH check."""
+    import extractors.aligner as al
+    monkeypatch.setattr(al, "g2p_model_available", lambda: False)
+    from utils.preferences import save_preferences
+    from gui.preflight import compute_warnings
+    save_preferences({
+        "output": {"word_level_csv": True},
+        "features": {"feat_acoustic_onset": True},
+        "alignment": {"g2p_oov": True},
+    })
+    warnings = compute_warnings()
+    msgs = " ".join(w.message for w in warnings)
+    assert "g2p" in msgs.lower() and "spn" in msgs.lower()
+
+
+def test_no_g2p_warning_when_model_present(prefs_tmp, monkeypatch):
+    import extractors.aligner as al
+    monkeypatch.setattr(al, "g2p_model_available", lambda: True)
+    from utils.preferences import save_preferences
+    from gui.preflight import compute_warnings
+    save_preferences({
+        "output": {"word_level_csv": True},
+        "features": {"feat_acoustic_onset": True},
+        "alignment": {"g2p_oov": True},
+    })
+    warnings = compute_warnings()
+    assert not any("g2p" in w.message.lower() for w in warnings)
+
+
+def test_no_g2p_warning_when_toggle_off(prefs_tmp, monkeypatch):
+    import extractors.aligner as al
+    monkeypatch.setattr(al, "g2p_model_available", lambda: False)
+    from utils.preferences import save_preferences
+    from gui.preflight import compute_warnings
+    save_preferences({
+        "output": {"word_level_csv": True},
+        "features": {"feat_acoustic_onset": True},
+        "alignment": {"g2p_oov": False},
+    })
+    warnings = compute_warnings()
+    assert not any("g2p" in w.message.lower() for w in warnings)
+
+
 def test_warns_when_pyphen_missing_and_syllable_label_on(prefs_tmp, monkeypatch):
     import sys
     monkeypatch.setitem(sys.modules, "pyphen", None)

@@ -189,6 +189,32 @@ def test_ensure_deletes_stale_before_realign(tmp_path, monkeypatch):
         "stale TextGrid must be removed, not left for reuse"
 
 
+def test_ensure_alignments_forwards_g2p_value_to_run_mfa(tmp_path, monkeypatch):
+    """Final-review Fix 4: pins VALUE-correct g2p forwarding from the public
+    ensure_alignments API down to _run_mfa (existing fakes accept g2p=False
+    but never record what they received)."""
+    persist = tmp_path / "align"
+    a1 = _make_audio(tmp_path, "one.wav", b"aaaa")
+    a2 = _make_audio(tmp_path, "two.wav", b"bbbb")
+    received = {}
+
+    def _fake_run_mfa(corpus_dir, output_dir, g2p=False):
+        received["g2p"] = g2p
+        for name in os.listdir(corpus_dir):
+            if name.endswith(".lab"):
+                stem = name[:-4]
+                with open(os.path.join(output_dir, f"{stem}.TextGrid"), "w") as f:
+                    f.write("tg")
+
+    monkeypatch.setattr(aligner, "_run_mfa", _fake_run_mfa)
+
+    aligner.ensure_alignments([(a1, "hi one")], persist, g2p=True)
+    assert received["g2p"] is True
+
+    aligner.ensure_alignments([(a2, "hi two")], persist, g2p=False)
+    assert received["g2p"] is False
+
+
 def test_ensure_only_realigns_stale_subset(tmp_path, monkeypatch):
     persist = tmp_path / "align"
     a1 = _make_audio(tmp_path, "one.wav", b"aaaa")
