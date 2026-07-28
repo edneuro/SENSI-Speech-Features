@@ -194,13 +194,15 @@ def test_head_token_id_resolves_to_a_real_token_id(spacy_available):
     assert set(df["head_token_id"]) <= valid
 
 
-def test_head_token_id_still_names_the_correct_word(spacy_available):
+def test_head_token_id_names_the_correct_word_across_a_dropped_newline(spacy_available):
+    """'Others' precedes the dropped newline; its head 'were' follows it, so
+    this pair actually spans the boundary. The brief's original pair
+    (distribution -> of) sits entirely before the newline and proves nothing."""
     df = parse(_WRAPPED)
     by_id = dict(zip(df["token_id"], df["token"]))
-    row = df[df["token"] == "distribution"].iloc[0]
-    # 'distribution' is the object of 'of'; its head must be a real word,
-    # never a whitespace token or an off-by-one neighbour.
-    assert by_id[row["head_token_id"]].strip() != ""
+    others = df[df["token"] == "Others"].iloc[0]
+    assert by_id[others["head_token_id"]] == "were"
+    assert others["head_token_id"] == 10
 
 
 def test_a_root_is_its_own_head(spacy_available):
@@ -209,6 +211,17 @@ def test_a_root_is_its_own_head(spacy_available):
     assert len(roots) >= 1
     for _, r in roots.iterrows():
         assert r["head_token_id"] == r["token_id"]
+
+
+def test_root_after_a_dropped_newline_is_still_its_own_head(spacy_available):
+    """The regression guard. Under the old `token.head.i + 1` formula, 'were'
+    (the ROOT immediately after the first dropped newline) gets head 11
+    ('often') instead of 10 (itself) — a wrong-word head with no exception."""
+    df = parse(_WRAPPED)
+    were = df[df["token"] == "were"].iloc[0]
+    assert were["dep_rel"] == "ROOT"
+    assert were["token_id"] == 10
+    assert were["head_token_id"] == were["token_id"] == 10
 
 
 def test_mid_sentence_newline_does_not_start_a_paragraph(spacy_available):
