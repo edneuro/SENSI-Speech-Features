@@ -38,7 +38,7 @@ All optional; grouped by level.
   - *Prosody* (Praat/Parselmouth): pitch & volume mean/min/max/std/delta
 - **Sub-word**
   - *Syllable*: timing, ARPABET label, prosody, P-center
-  - *Phoneme*: timing, label, phoneme surprisal / cohort entropy
+  - *Phoneme*: timing, `ARPABET` + `Stress` + `IPA` + `Pron_Source`, phoneme surprisal / cohort entropy
 - **Sentence-level**: timing, prosody (pitch/volume/HNR), BERT sentence embedding
 - **Document-level** (one row per stimulus): token/sentence counts, mean frequency/surprisal, lexical diversity (TTR, MTLD), readability (Flesch), category proportions, composite psycholinguistic scores, document prosody & pause statistics
 - **Acoustic level** (audio-only, no transcript): continuous TRF predictors — broadband & onset envelopes, log-mel spectrogram, MFCCs — written as `.mat` time series

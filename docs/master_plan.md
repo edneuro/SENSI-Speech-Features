@@ -1,6 +1,6 @@
 # SensiExtractor — Master Plan
 
-**Last updated:** 2026-07-27
+**Last updated:** 2026-08-04
 
 This document is the single entry point for project state. Read this first; deeper specs / plans / batch designs are linked from here.
 
@@ -12,9 +12,9 @@ SensiExtractor is the standardized SOP tool for the SENSI naturalistic-EEG pipel
 
 ## 2. Current state — what we're working on RIGHT NOW
 
-**No batch is mid-flight.** The most recent shipped work is the **phoneme label split + IPA + phoneme-coverage correctness** batch (2026-07-27) — implemented, tests-green, on branch `feat/phoneme-labels-ipa-oov`, with real-stimulus validation outstanding (see the table below; it is the one batch whose validation is *load-bearing*, since it changed row counts and fixed two silent data defects). Before that, the config/predictability cluster (all 2026-07-10 → 07-12): Config ergonomics (defaults templates + persistent HF token), Unified YAML config (Project C), per-model predictability context size (Project B), Predictability model unification (Project A), and the release-hardening correctness sweep. Full summaries are in §3 — this section no longer restates them.
+**No batch is mid-flight.** The most recent shipped work is the **phoneme label split + IPA + phoneme-coverage correctness** batch — **merged to `main` on 2026-07-28** (22 commits, `474a5f4..c0fda8e`; the `feat/phoneme-labels-ipa-oov` branch has been deleted) with its **real-stimulus validation PASSED**, not outstanding. See §2b for exactly what that run covered and the three things it did *not*. Before that, the config/predictability cluster (all 2026-07-10 → 07-12): Config ergonomics (defaults templates + persistent HF token), Unified YAML config (Project C), per-model predictability context size (Project B), Predictability model unification (Project A), and the release-hardening correctness sweep. Full summaries are in §3 — this section no longer restates them.
 
-**The one thing outstanding across all of that: end-to-end manual validation on a real ISC-Wu Tsai stimulus** (see table below). Everything ships implemented + tests-green, but this environment has only empty placeholder audio fixtures, so no real MFA-dependent run has been exercised.
+**Real-stimulus validation is no longer the blanket gap it was.** On 2026-07-28 a full `python run.py --config-dir validation/config` pass ran over the ten real stimuli in `validation/data/` with everything CPU-feasible enabled, and `validation/verify_phoneme_batch.py` exits 0. That single run exercised most of the backlog below — see §2b. The repo's own test fixtures are still empty placeholders, so the suite alone still proves nothing about MFA-dependent behaviour; the `validation/` corpus is what does.
 
 **Also open (documentation):** the feature-doc **author-review pass** — grep `docs/features/` for `⚠️` and resolve each interpolated *why*. The citation-audit pass already landed (2026-05-27, `docs/feature-docs-audit.md`); the ⚠️ interpolation review is the remainder. See §4 "Documentation tracks."
 
@@ -24,24 +24,49 @@ Prefs schema is at **v20**; the version history and the two-file YAML storage mo
 
 **Fixed: headless `python run.py` no longer breaks on a pre-v20 `features.yaml`.** `run.py` still validates the raw config **before** `load_preferences()` runs the version-migration chain (`run.py:81-82`, `:108`) — that ordering is intentional, since raw validation exists to catch a malformed hand-edited config before an hour of work, not to duplicate migration. What changed: a fixed set of **retired keys** (`utils/config_yaml.RETIRED_FEATURE_KEYS` / `RETIRED_PREDICTABILITY_KEYS` — `feat_phoneme_label`, the v18 `pred_*` toggles, `feat_struct_term_id`, `predictability.llm_model`) is now tolerated by `validate_features_yaml` and reported as a non-fatal `[warn] retired toggle …` line (`retired_keys_present`) instead of an error, so a v19-shaped `features.yaml` reaches `load_preferences()`'s migration and `dispatch()` runs normally. A genuinely unknown/typo'd key is still a hard error. Also fixed the edge case this exposed: `load_preferences()` used to `setdefault` a **missing** `schema_version` to the *current* version rather than v19, which skipped every pending finalize block (including v20's `feat_phoneme_label` removal) and left the file never rewritten (`changed` stayed `False`); a **quoted** `schema_version` (e.g. `'19'`) hit the same bug because the int-keyed version-branch comparison silently fell through to the v1 flat-json migration path. Both now normalize to v19 before the migration chain runs. See `tests/test_run_py.py` and `tests/utils/test_preferences_yaml.py` for the regression coverage.
 
-### Awaiting end-to-end manual validation on a real ISC-Wu Tsai stimulus
+## 2b. Real-stimulus validation — what the 2026-07-28 run covered
 
-The feature batches below all ship implemented + tests-green; what's outstanding is the same thing: someone runs `python gui.py` on a real stimulus and eyeballs the outputs. They're rolled up here so §2 doesn't repeat the same status for every batch.
+One `python run.py --config-dir validation/config` pass over the ten stimuli in
+`validation/data/` (5 ISC + 5 LJSpeech), everything CPU-feasible enabled, followed by
+`validation/verify_phoneme_batch.py` (exit 0). Artifacts produced and inspected:
 
-| Batch | Date | What to look at |
-|---|---|---|
-| **Phoneme label split + IPA + phoneme coverage** | 2026-07-27 | **The highest-priority validation in this table — this batch changed output values and row counts, and two of its fixes are for defects that failed silently.** Re-run all ten `validation/` stimuli and check, in order of how badly a regression would hurt: **(1) `P_Center` must be bit-identical** to the archived CSVs — the nucleus test moved from a `Label` string-suffix check to `Stress.notna()`, and if that migration were wrong every P-centre would silently collapse to the syllable onset with no exception. **(2) Row counts** drop by exactly the duplicate copies and by zero elsewhere: `3_M` phonemes 111 → **105** (−6) and syllables 41 → **39** (−2); `LJ003-0007` phonemes 124 → **119** (−5) and syllables 48 → **46** (−2); the other eight unchanged. (The removed count is *half* the rows flagged as sharing an interval — 12 flagged in `3_M` = 6 kept + 6 removed.) **(3) `Stress`** empty on every consonant row and populated on every vowel row — and read as `Int64`, not float. **(4) `IPA`** non-empty for every non-`spn` row; spot-check `AH0`→`ə` vs `AH1`→`ʌ` and `ER0`→`ɚ` vs `ER1`→`ɝ`. **(5)** `paragraph_id == 1` throughout, zero SPACE rows, and `head_token_id` resolving to a real `token_id` on the three hard-wrapped `LJ*` stimuli. **(6)** The `Zorblax` OOV corpus: with `alignment.g2p_oov` **off**, one `oov_unresolved` phoneme row with real timing; with it **on**, real phones marked `g2p`. **(7)** `phoneme_surprisal.mat` no longer double-counting at the duplicated contraction onsets. Also worth exercising the documented per-document staleness gap: with an existing `Montreal Forced Alignment/<stem>.TextGrid`, confirm the **batch** path re-aligns when `g2p_oov` flips (sidecar `mfa_g2p`), and that the per-document fallback does not — see [`g2p_oov`](features/g2p_oov.md). |
-| Unified YAML config (Project C) | 2026-07-12 | Launch `python gui.py` once on a machine that still has a `config/preferences.json` from a prior session — confirm it becomes `preferences.json.bak` and `config/features.yaml` + `config/run.yaml` appear with the analyzer name and folder paths carried over intact. Click "Reset settings" and confirm the folder paths (and analyzer name) survive — only `features.yaml` should be rewritten. Then a headless smoke test: `python run.py` (or `--config-dir` pointed at a scratch config folder) against a real stimulus, confirming it produces the same outputs as an equivalent GUI run. |
-| Predictability model unification (Project A) | 2026-07-10/11 | Select at least one gated Llama model (needs a HuggingFace token + accepted license — see `docs/features/llm_credentials.md`) alongside GPT-2 on the Predictability card, enable all three metrics, and run on a real stimulus. Confirm the word CSV has one `<slug>_<Metric>` column per model × metric (e.g. `gpt2_Surprisal`, `llama3_8b_Cloze`), first-word/PUNCT rows are `NaN`, and `gpt2_Surprisal` values are unchanged vs. the pre-unification `Surprisal` column on the same stimulus (GPT-2 is pinned full-precision CPU specifically so this should hold; a unit test pins the NaN/positive shape of the values but not byte-identical equality against a real archived run — worth spot-checking here). Confirm `doc_agg_predictability` produces a `mean_<slug>_<metric>` doc-summary column for each selected model × metric. Not yet run against a real gated Llama checkpoint in the implementation environment (no GPU / gated-model download there). |
-| Persistent, batch-once MFA alignment | 2026-07-08 | Run a real batch twice on the same stimuli (`python gui.py`, or `python main.py --transcripts-folder … --audio-folder … --output-folder …`). **Run 1:** confirm `<output_folder>/Montreal Forced Alignment/<stem>.TextGrid` + `<stem>.json` appear and the log reads `[mfa] N stimuli: 0 cached, N aligned in 1 run`. **Run 2 (unchanged inputs):** log reads `[mfa] N stimuli: N cached, 0 aligned` — no MFA subprocess, noticeably faster startup — and outputs match run 1. **Staleness:** edit one transcript, re-run; only that stimulus re-aligns (`1 aligned`, rest cached) and its TextGrid/sidecar are rewritten. Confirm word-CSV `Onset`/`End` values are unchanged vs the pre-change baseline for the untouched stimuli. |
-| Phoneme surprisal + cohort entropy | 2026-07-06 | Enable `feat_phoneme_surprisal` / `feat_phoneme_cohort_entropy` / `phoneme_surprisal_mat` (GUI Sub-word page + Run page, or CLI) and run on a real stimulus with MFA alignment on. Confirm `phoneme/<stim>_phonemes.csv` has `phoneme_surprisal` + `cohort_entropy` columns with sane values (first phoneme of a word > 0; entropy reaches exactly 0 on the final phoneme of a monosyllabic word once its cohort narrows to one candidate). Confirm `phoneme/<stim>_phoneme_surprisal.mat` loads with four length-`N` trains (`phoneme_surprisal`, `cohort_entropy`, `phoneme_onset`, `word_onset`) plus `t`/`fs`/`config`, `N` matching the acoustic `.mat`'s grid when the same `analysis_sr` is used. Not yet run against a real stimulus in the implementation environment — MFA is installed but only empty placeholder audio fixtures are present there. |
-| Acoustic level (audio-only TRF features) | 2026-06-13 | Run `python gui.py` (or `python main.py --level acoustic --audio-folder … --output-folder …`) on a real stimulus; confirm `acoustic/<stim>_acoustic.mat` loads in MATLAB/scipy with `envelope`, `onset_envelope`, `logmel`, `mel_center_freqs` (and `mfcc` if enabled) all sharing the same length `N = round(duration × analysis_rate)` and aligned to the `t`/`fs` vectors. Sanity-check the envelope tracks syllabic rhythm and `analysis_rate` matches the intended EEG rate. |
-| Embeddings (Word2Vec + BERT) | 2026-05-22 | Download Google News Word2Vec model; verify `word/<stim>_word2vec.mat` and `word/<stim>_bert_word.mat` and `sentence/<stim>_bert_sentence.mat` shapes and content. |
-| Sentence-level tier | 2026-05-22 | `sentence/<stim>_sentences.csv` appears with correct timing and HNR. |
-| Output reorganization | 2026-05-22 | Output appears in `word/` / `syllable/` / `phoneme/` / `document/` subfolders. |
-| P-center | 2026-05-20 | `P_Center` column appears in `syllable/<stim>_syllables.csv` with reasonable values. |
-| Phoneme / Syllable batch | 2026-05-13 | Both sidecars appear with sane shapes; ≥ 1 syllable per word; no overlapping intervals; ARPABET phoneme labels present. |
-| Acoustic prosody | 2026-05-12 | Per-column expected ranges below. |
+| Batch | Status after 2026-07-28 |
+|---|---|
+| **Phoneme label split + IPA + phoneme coverage** (2026-07-27) | **VALIDATED.** Row deltas exactly as predicted (`3_M` phonemes 111→105, syllables 41→39; `LJ003-0007` 124→119 and 48→46; other eight unchanged). Zero leftover duplicate `(Onset,End,ARPABET)` triples. `Stress` is `Int64`, empty on consonants. `IPA` non-empty on every non-`spn` row. `Pron_Source` = `dictionary` throughout (the check that would have caught the spaCy-token bug, which would have marked every number `g2p`). `Zorblax` OOV corpus correct both ways. `.mat` value trains no longer double-count. |
+| Persistent, batch-once MFA alignment (2026-07-08) | **VALIDATED.** `[mfa] 10 stimuli: 0 cached, 10 aligned in 1 run` (the `SIDECAR_VERSION` 1→2 bump forcing exactly one re-align), then `10 cached, 0 aligned` on an immediate re-run with no subprocess. 10 TextGrids + 10 freshness sidecars on disk. |
+| Phoneme surprisal + cohort entropy (2026-07-06) | **VALIDATED.** 10 `_phoneme_surprisal.mat` sidecars produced and diffed against the pre-change baseline. |
+| Output reorganization (2026-05-22) | **VALIDATED.** `word/` 30, `syllable/` 10, `phoneme/` 20, `sentence/` 20, `document/` 5, `acoustic/` 11 files. |
+| P-center (2026-05-20) | **VALIDATED.** Bit-identical across all 422 syllables when the alignment is held fixed — see the ⚠️ note below. |
+| Phoneme / Syllable batch (2026-05-13) | **VALIDATED** via the above. |
+| Sentence-level tier (2026-05-22) | **Artifacts confirmed** — 10 `_sentences.csv` + 10 `_bert_sentence.mat`. Column *values* not eyeballed. |
+| Embeddings (Word2Vec + BERT) (2026-05-22) | **Artifacts confirmed** — 10 `_word2vec.mat`, 10 `_bert_word.mat`, 10 `_bert_sentence.mat`. Shapes/contents not opened in MATLAB. |
+| Acoustic level (2026-06-13) | **Artifacts confirmed** — 10 `_acoustic.mat`. Grid alignment (`N = round(duration × analysis_rate)`) not re-verified in MATLAB. |
+| Unified YAML config (Project C, 2026-07-12) | **VALIDATED, and better than asked** — the run used a `features.yaml` deliberately left at `schema_version: 19` carrying `feat_phoneme_label`, so it exercised the real v19→v20 removal-migration end to end. |
+| Predictability model unification (Project A, 2026-07-10/11) | **PARTIAL.** `gpt2_Surprisal` / `gpt2_Cloze` / `gpt2_TopMatch` all present on real audio with correct NaN shape (0 PUNCT rows carry a value). **Not covered: any gated Llama model** — needs a HF token + accepted licence, and no GPU here. |
+| Acoustic prosody (2026-05-12) | **VALIDATED against the cheatsheet below**, with one query — see `doc_hnr`. |
+
+Measured on the 50 document-summary rows and 340 word rows of that run:
+
+| Column | Measured | Expected | Verdict |
+|---|---|---|---|
+| `doc_articulation_rate` | 3.45 – 4.75 syll/s | 3–6 | OK |
+| `doc_volume_mean` | 58.2 – 65.4 dB | 50–75 | OK |
+| `doc_pause_count` | 1 – 4 | sane integer | OK |
+| `doc_pitch_mean` | −1.06 – 0.78 st | relative, ~0 | OK |
+| `doc_hnr` | **8.97 – 13.01 dB** (mean 11.2) | 10–25 | ⚠️ **15 of 50 rows below the 10 dB floor.** Not negative, so the unvoiced-sentinel fix is holding. Most likely the source audio: these are audiobook and classroom recordings, not studio. **Needs a human ear to confirm before publication** — if it is just the corpus, recalibrate the floor in the cheatsheet. |
+| `Pitch_Mean` (word) | −13.9 – 10.5 st | −12 to +12 | 3 of 302 marginally outside |
+| `Volume_Mean` (word) | 51.8 – 78.7 dB | 50–75 | 4 of 303 marginally outside |
+| `gpt2_Surprisal` | 0.02 – 38.9 bits | >0, NaN on PUNCT | OK; 1 of 293 above 30 bits (a rare word) |
+
+> ⚠️ **`P_Center` "bit-identical" needs its precondition stated, or the next person will chase a false failure.** It is bit-identical **only when the alignment is held fixed** — i.e. run the new code against the *archived* TextGrids. A full-pipeline re-run cannot match exactly, because any batch that bumps `SIDECAR_VERSION` forces a re-align and **MFA is not bit-reproducible at frame granularity** (measured: up to 0.02 s ≈ 2 frames on 7 of 422 syllables; `LJ005-0063`, which has no whitespace rows and so no renumbering, still moved 3 phoneme onsets). Also **never join old-vs-new on `token_in_sentence_id`** — this batch renumbers it, so an id join silently pairs *different words* (it paired new `often` against old `were`). Key on token text + occurrence, or compare positionally.
+
+### Still genuinely outstanding
+
+1. **A gated Llama predictability run** — needs a HF token, an accepted licence, and ideally a GPU.
+2. **MATLAB-side loading** of the `.mat` sidecars (acoustic grid length, embedding shapes). Produced and readable by `scipy`, never opened in MATLAB.
+3. **The `doc_hnr` judgement call** above.
+4. **Sentence-CSV and embedding value inspection** — artifacts exist, values unexamined.
+
 
 **Prosody expected-range cheatsheet** (keep handy when validating):
 
@@ -50,7 +75,7 @@ The feature batches below all ship implemented + tests-green; what's outstanding
 | `Pitch_Mean` (word CSV) | 60–300 Hz, or −12 to +12 semitones | Pitch floor/ceiling wrong for speaker. |
 | `Volume_Mean` (word CSV) | 50–75 dB SPL (clear studio) | Audio level off; Praat assumes normalized input. |
 | `Pitch_Delta` (word CSV) | Mix of +/-, NaN on first word | Always 0 → identical values; always NaN past first → bug. |
-| `doc_hnr` (master CSV) | 10–25 dB for clear speech | Wildly negative → unvoiced-sentinel fix `460801b` didn't take. |
+| `doc_hnr` (master CSV) | 10–25 dB for clear studio speech; **the `validation/` corpus measures 9–13 dB** (see §2b) | Wildly negative → unvoiced-sentinel fix `460801b` didn't take. Merely *low* (9–13) is expected on audiobook/classroom source audio — do not treat it as a regression without comparing against a studio recording. |
 | `doc_articulation_rate` (master CSV) | 3–6 syll/sec | NaN → `pyphen` missing; 0 → no aligned words. |
 | `doc_pause_count` (master CSV) | Reasonable integer | 0 on stimulus with obvious pauses → check `--pause-threshold` (default 0.25 s). |
 
