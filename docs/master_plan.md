@@ -1,6 +1,6 @@
 # SensiExtractor — Master Plan
 
-**Last updated:** 2026-08-04
+**Last updated:** 2026-09-02
 
 This document is the single entry point for project state. Read this first; deeper specs / plans / batch designs are linked from here.
 
@@ -23,6 +23,68 @@ Prefs schema is at **v20**; the version history and the two-file YAML storage mo
 > **Bookkeeping gap closed (2026-08-04).** The v11→v12 lexical-norms, v13→v14 struct-id-rename and v14→v15 opt-in-defaults batches now have §3 rows. They were missing because v14 and v15 both shipped inside the omnibus commit `7ae44d5` ("many updates and sherlock test") and v12 inside `12ad6a5`, so there was no per-batch commit to summarise. Every prefs version v1→v20 is now accounted for in §3.
 
 **Fixed: headless `python run.py` no longer breaks on a pre-v20 `features.yaml`.** `run.py` still validates the raw config **before** `load_preferences()` runs the version-migration chain (`run.py:81-82`, `:108`) — that ordering is intentional, since raw validation exists to catch a malformed hand-edited config before an hour of work, not to duplicate migration. What changed: a fixed set of **retired keys** (`utils/config_yaml.RETIRED_FEATURE_KEYS` / `RETIRED_PREDICTABILITY_KEYS` — `feat_phoneme_label`, the v18 `pred_*` toggles, `feat_struct_term_id`, `predictability.llm_model`) is now tolerated by `validate_features_yaml` and reported as a non-fatal `[warn] retired toggle …` line (`retired_keys_present`) instead of an error, so a v19-shaped `features.yaml` reaches `load_preferences()`'s migration and `dispatch()` runs normally. A genuinely unknown/typo'd key is still a hard error. Also fixed the edge case this exposed: `load_preferences()` used to `setdefault` a **missing** `schema_version` to the *current* version rather than v19, which skipped every pending finalize block (including v20's `feat_phoneme_label` removal) and left the file never rewritten (`changed` stayed `False`); a **quoted** `schema_version` (e.g. `'19'`) hit the same bug because the int-keyed version-branch comparison silently fell through to the v1 flat-json migration path. Both now normalize to v19 before the migration chain runs. See `tests/test_run_py.py` and `tests/utils/test_preferences_yaml.py` for the regression coverage.
+
+## 2a. NEXT SESSION STARTS HERE — the 2026-08-04 full-project audit
+
+A seven-layer audit of the whole project ran on Windows on **2026-08-04** (every feature
+toggle and sub-option, every emitted column vs its documentation, all five `.mat` types in
+MATLAB R2024b, GUI robustness, headless/Sherlock YAML, config migration and corruption).
+
+**It found ~45 defects. Nothing has been fixed yet — the audit was audit-only.**
+
+**Open decision, never answered:** fix in the order in `audit/SUMMARY.md` (invariant +
+manifest first), or verify the Tier 2 defects first so the true scope is known before
+touching code?
+
+**Findings:** `audit/SUMMARY.md` (distilled, prioritised) and `audit/reports/{A..G}-*.md`.
+> ⚠️ `audit/` is **git-excluded** (`.git/info/exclude`) — none of it is under version
+> control. Confirm the directory still exists before relying on it; if the machine is
+> reimaged the audit must be re-run.
+
+**Findings are split into two tiers and the split matters.** Tier 1 (9) were each confirmed
+by the controller independently of the reporting agent; Tier 2 (~36) were reported but not
+re-verified. One agent claim was **refuted** on checking (LIWC reported as silently
+selectable — in fact its radio is `setEnabled(False)` with a licence tooltip and an on-page
+note), so Tier 2 items should be verified before they are fixed.
+
+**Worst finding — this contradicts §6's "MFA runs at most once per doc" invariant.** When
+`_prealign_batch`'s single MFA invocation fails, the per-document fallback aligns but
+**never persists** TextGrids (`align_with_phones` only reads from `persist_dir` by design),
+so the next pass finds nothing cached and re-aligns every stimulus a second time in the same
+dispatch. Observed live: word log `[mfa] batch pre-alignment failed`, doc log `10 stimuli:
+0 cached, 10 aligned`; 19 min vs 7. **And every run manifest reports `warnings: []` with no
+MFA keys**, so a provenance check reading manifests sees a clean run. Trigger:
+`mfa_data/corpus/corpus.db` is global rather than scoped per run, and two runs 79 s apart
+collided — the pattern a Sherlock array job produces.
+
+**Other Tier 1:** `doc_pitch_delta_mean`/`doc_volume_delta_mean` emit mean **absolute**
+delta, not the documented signed mean (~350× off); `doc_pause_pct_silence` is a fraction,
+not percent (and `session_units.py` agrees with the wrong doc); an inverted pitch range is
+**GUI-reachable** and silently NaNs all pitch while reporting success (`floor=400,
+ceiling=100` is inside the spinbox ranges); ~30 `--no-syl-*`/`--no-phon-*`/`--no-sent-*` CLI
+flags are dead code; the Cancel button is unwired at the middle (both `should_cancel` and
+`cancel_requested` exist); `gpt2_Cloze` reaches exact `0.0` via 6-dp rounding, breaking the
+documented `Cloze = 2^(−Surprisal)`.
+
+**Two surfaces came back clean — do not re-audit.** The `.mat` sidecars (0 defects, all five
+types in MATLAB R2024b, which never disagreed with scipy) and the predictability math
+(2172/2172 pairs exact against an independent recomputation, native **and** chunked paths,
+via `sherlock/validate_llama_predictability.py --model-slug gpt2` — that harness is
+model-agnostic and runs on Windows; only the gated Llama weights need Sherlock).
+
+**Biggest verification gap:** the `validation/` corpus cannot exercise OOV/G2P at all —
+`out_g2p` is identical to `out_allon` (100 % `Pron_Source == dictionary`, zero `spn`) even
+with the flag on. Adding one stimulus with a genuinely out-of-dictionary proper noun is the
+cheapest large win available.
+
+**Release blockers tracked separately from the defects:** no `LICENSE`; the 49 ⚠️ markers in
+25 `docs/features/*.md` (owner's domain review, §4); CI runs install + import smoke only so
+the 896-test suite never runs on any platform; no version/tag or `CITATION.cff`.
+
+**Validated in real use since the audit:** the user's live `config/features.yaml` was v19
+during the audit and **migrated itself to v20 on 2026-08-11** during ordinary use — retired
+key removed, all four replacements present and correctly inheriting `false`, new `alignment`
+section added. The v20 removal-migration works unattended on a real config.
 
 ## 2b. Real-stimulus validation — what the 2026-07-28 run covered
 
