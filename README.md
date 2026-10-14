@@ -62,7 +62,7 @@ one file per feature.
 ### Step 1 — Install Miniconda and hook it into your shell
 
 Download the installer for your OS from
-<https://docs.conda.io/en/latest/miniconda.html>.
+<https://www.anaconda.com/docs/getting-started/installation>.
 
 **Windows**
 - Run the `.exe` (default options are fine).
