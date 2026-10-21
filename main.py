@@ -157,7 +157,7 @@ def build_parser() -> argparse.ArgumentParser:
     from extractors.acoustic_ts import MTRF_COMP
     p.add_argument('--env-comp', type=float, default=MTRF_COMP,
                    help='Envelope power-law compression exponent '
-                        '(default: log10(2) ≈ 0.30103, exactly matching '
+                        '(default: log10(2) ~ 0.30103, exactly matching '
                         'mTRFenvelope.m — a rounded 0.3 breaks the '
                         'bit-for-bit mTRF replication).')
     p.add_argument('--env-window', type=float, default=1.0,
@@ -199,25 +199,11 @@ def build_parser() -> argparse.ArgumentParser:
                         'single spn phone. Off by default: the pronunciation is '
                         'modeled, not observed.')
 
-    # Sub-word per-column toggles (default = on)
-    p.add_argument('--no-syl-onset',         action='store_true')
-    p.add_argument('--no-syl-end',           action='store_true')
-    p.add_argument('--no-syl-duration',      action='store_true')
-    p.add_argument('--no-syl-label',         action='store_true')
-    p.add_argument('--no-syl-arpabet',       action='store_true')
-    p.add_argument('--no-syl-pitch-mean',    action='store_true')
-    p.add_argument('--no-syl-volume-mean',   action='store_true')
-    p.add_argument('--no-syl-pitch-delta',   action='store_true')
-    p.add_argument('--no-syl-volume-delta',  action='store_true')
-    p.add_argument('--no-syl-pcenter', action='store_true',
-                   help='Skip P_Center column in syllables CSV.')
+    # Per-column sub-word / sentence choices live in config/features.yaml
+    # (feat_syllable_* / feat_phoneme_* / feat_sentence_*), read via the
+    # planner; the CLI only carries the master skips above and below.
     p.add_argument('--pcenter-k', type=float, default=0.3,
                    help='Scott 1993 P-center coefficient (default 0.3).')
-
-    p.add_argument('--no-phon-label',    action='store_true')
-    p.add_argument('--no-phon-onset',    action='store_true')
-    p.add_argument('--no-phon-end',      action='store_true')
-    p.add_argument('--no-phon-duration', action='store_true')
 
     # Sentence-level sidecar master toggle
     p.add_argument('--no-sentences', action='store_true',
@@ -227,22 +213,6 @@ def build_parser() -> argparse.ArgumentParser:
     # controlled by ns.no_word2vec / ns.no_bert_word / ns.no_bert_sentence
     # set by gui/planner/emit.py. CLI does not expose these flags because the
     # models require large downloads; use the GUI to enable embeddings.
-
-    # Sentence per-column toggles
-    p.add_argument('--no-sent-text',          action='store_true')
-    p.add_argument('--no-sent-onset',         action='store_true')
-    p.add_argument('--no-sent-end',           action='store_true')
-    p.add_argument('--no-sent-pitch-mean',    action='store_true')
-    p.add_argument('--no-sent-pitch-min',     action='store_true')
-    p.add_argument('--no-sent-pitch-max',     action='store_true')
-    p.add_argument('--no-sent-pitch-std',     action='store_true')
-    p.add_argument('--no-sent-pitch-delta',   action='store_true')
-    p.add_argument('--no-sent-volume-mean',   action='store_true')
-    p.add_argument('--no-sent-volume-min',    action='store_true')
-    p.add_argument('--no-sent-volume-max',    action='store_true')
-    p.add_argument('--no-sent-volume-std',    action='store_true')
-    p.add_argument('--no-sent-volume-delta',  action='store_true')
-    p.add_argument('--no-sent-hnr',           action='store_true')
 
     return p
 
