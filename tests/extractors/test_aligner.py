@@ -70,7 +70,7 @@ def test_sidecar_records_g2p_and_version_2(tmp_path, monkeypatch):
     meta_off = aligner._freshness_dict(str(audio), "hello", g2p=False)
     meta_on = aligner._freshness_dict(str(audio), "hello", g2p=True)
 
-    assert meta_off["version"] == 2
+    assert meta_off["version"] == aligner.SIDECAR_VERSION
     assert meta_off["mfa_g2p"] is False
     assert meta_on["mfa_g2p"] is True
 

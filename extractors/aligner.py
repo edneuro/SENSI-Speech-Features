@@ -43,7 +43,9 @@ MFA_ACOUSTIC_MODEL = 'english_us_arpa'
 MFA_DICTIONARY = 'english_us_arpa'
 
 ALIGNMENT_SUBDIR = 'Montreal Forced Alignment'
-SIDECAR_VERSION = 2
+# 3: one speaker per stimulus (see _stage) — TextGrids from the pooled-speaker
+# layout (v2) are re-aligned once.
+SIDECAR_VERSION = 3
 
 G2P_MODEL_PATH = (Path(__file__).resolve().parent.parent
                   / 'mfa_data' / 'pretrained_models' / 'g2p'
@@ -253,19 +255,14 @@ def _align_uncached(
         os.makedirs(corpus_dir)
         os.makedirs(output_dir)
 
-        stem = os.path.splitext(os.path.basename(audio_path))[0]
-
-        # MFA expects audio + transcript with matching filenames
-        shutil.copy(audio_path, os.path.join(corpus_dir, f'{stem}.wav'))
-        lab_path = os.path.join(corpus_dir, f'{stem}.lab')
-        with open(lab_path, 'w', encoding='utf-8') as f:
-            f.write(prepared)
+        stem = _stem(audio_path)
+        _stage(corpus_dir, stem, audio_path, prepared)
 
         _run_mfa(corpus_dir, output_dir, g2p=g2p,
                  temp_dir=os.path.join(tmpdir, 'mfa_tmp'))
 
-        tg_path = os.path.join(output_dir, f'{stem}.TextGrid')
-        if not os.path.exists(tg_path):
+        tg_path = _produced_textgrid(output_dir, stem)
+        if tg_path is None:
             raise RuntimeError(
                 f"MFA did not produce a TextGrid for {stem}. "
                 "Check that the audio and transcript match, and that MFA models are downloaded."
@@ -279,6 +276,34 @@ def _align_uncached(
         shutil.move(tg_path, str(dest))
         _write_sidecar(persist_dir, stem, audio_path, transcript, g2p=g2p)
         return _parse_textgrid(str(dest))
+
+
+def _stage(corpus_dir: str, stem: str, audio_path: str, prepared: str) -> None:
+    """Copy one stimulus into `corpus_dir/<stem>/` as `<stem>.wav` + `.lab`.
+
+    MFA names the speaker after the folder a file sits in, and computes CMVN
+    and the fMLLR speaker-adaptation transform per speaker. One subfolder per
+    stimulus makes every recording its own speaker, so a batch aligns each
+    file exactly as if it were aligned alone: its onsets depend only on its
+    own audio, never on which other recordings share the batch. (A flat
+    corpus folder pooled every file into one speaker, shifting some onsets by
+    up to ~80 ms with batch composition.)
+    """
+    spk_dir = os.path.join(corpus_dir, stem)
+    os.makedirs(spk_dir, exist_ok=True)
+    shutil.copy(audio_path, os.path.join(spk_dir, f'{stem}.wav'))
+    with open(os.path.join(spk_dir, f'{stem}.lab'), 'w', encoding='utf-8') as f:
+        f.write(prepared)
+
+
+def _produced_textgrid(output_dir: str, stem: str) -> str | None:
+    """Path of MFA's TextGrid for `stem` (MFA mirrors the speaker subfolder
+    in its output; the flat location is accepted too), or None if absent."""
+    for path in (os.path.join(output_dir, stem, f'{stem}.TextGrid'),
+                 os.path.join(output_dir, f'{stem}.TextGrid')):
+        if os.path.exists(path):
+            return path
+    return None
 
 
 def _parse_textgrid(tg_path: str) -> tuple[pd.DataFrame, pd.DataFrame]:
@@ -349,18 +374,16 @@ def ensure_alignments(items, persist_dir, *, g2p: bool = False) -> dict:
         os.makedirs(corpus_dir)
         os.makedirs(output_dir)
         for stem, (audio_path, transcript_text) in stale_by_stem.items():
-            shutil.copy(audio_path, os.path.join(corpus_dir, f'{stem}.wav'))
-            with open(os.path.join(corpus_dir, f'{stem}.lab'), 'w',
-                      encoding='utf-8') as f:
-                f.write(prepare_for_aligner(transcript_text))
+            _stage(corpus_dir, stem, audio_path,
+                   prepare_for_aligner(transcript_text))
 
         # single invocation for the batch
         _run_mfa(corpus_dir, output_dir, g2p=g2p,
                  temp_dir=os.path.join(tmpdir, 'mfa_tmp'))
 
         for stem, (audio_path, transcript_text) in stale_by_stem.items():
-            produced = os.path.join(output_dir, f'{stem}.TextGrid')
-            if os.path.exists(produced):
+            produced = _produced_textgrid(output_dir, stem)
+            if produced is not None:
                 shutil.move(produced, str(persist_dir / f'{stem}.TextGrid'))
                 _write_sidecar(persist_dir, stem, audio_path, transcript_text,
                                g2p=g2p)

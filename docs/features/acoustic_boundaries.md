@@ -79,6 +79,17 @@ alignment runs in **one** MFA subprocess (one Kaldi model load) rather
 than once per document. A single-file CLI run (no `--output-folder`)
 has no persistence directory and always aligns fresh.
 
+Each stimulus is staged in its **own speaker folder** inside that one MFA
+run (`extractors/aligner.py:_stage`). MFA names the speaker after the
+folder and computes feature normalization (CMVN) and its speaker-adaptation
+transform (fMLLR, a second alignment pass) per speaker. With one folder per
+stimulus, every recording is normalized and adapted from its own audio
+only, so its `Onset`/`End` do not depend on which other recordings share
+the batch. Before 2026-10-21 all stimuli sat in one folder and MFA pooled
+them as a single speaker, which shifted some word boundaries by up to
+~80 ms depending on batch composition. TextGrids from that layout are
+re-aligned once (sidecar version 3).
+
 This is also the **upstream step** for the syllable and phoneme
 sidecars and for the prosody extractors — they all consume the same
 `.TextGrid` (via `parse_phones` for the sub-word tier).

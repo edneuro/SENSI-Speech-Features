@@ -12,6 +12,11 @@ import pytest
 from extractors import aligner
 
 
+def _staged_files(corpus_dir):
+    """File names staged for MFA, across the per-stimulus speaker subfolders."""
+    return [n for _, _, names in os.walk(corpus_dir) for n in names]
+
+
 def _make_audio(tmp_path, name="stim.wav", data=b"RIFFfake-audio-bytes"):
     p = tmp_path / name
     p.write_bytes(data)
@@ -143,7 +148,7 @@ def _install_fake_mfa(monkeypatch, aligned_stems=None):
 
     def fake(corpus_dir, output_dir, g2p=False, **kw):
         runs["count"] += 1
-        for name in os.listdir(corpus_dir):
+        for name in _staged_files(corpus_dir):
             if not name.endswith(".lab"):
                 continue
             stem = name[:-4]
@@ -203,7 +208,7 @@ def test_ensure_alignments_forwards_g2p_value_to_run_mfa(tmp_path, monkeypatch):
 
     def _fake_run_mfa(corpus_dir, output_dir, g2p=False, **kw):
         received["g2p"] = g2p
-        for name in os.listdir(corpus_dir):
+        for name in _staged_files(corpus_dir):
             if name.endswith(".lab"):
                 stem = name[:-4]
                 with open(os.path.join(output_dir, f"{stem}.TextGrid"), "w") as f:
@@ -228,7 +233,7 @@ def test_ensure_only_realigns_stale_subset(tmp_path, monkeypatch):
     staged = []
 
     def spy(corpus_dir, output_dir, g2p=False, **kw):
-        staged.extend(n[:-4] for n in os.listdir(corpus_dir)
+        staged.extend(n[:-4] for n in _staged_files(corpus_dir)
                       if n.endswith(".lab"))
         for s in staged:
             with open(os.path.join(output_dir, f"{s}.TextGrid"), "w") as f:
@@ -290,7 +295,7 @@ def test_every_mfa_call_gets_its_own_temporary_directory(tmp_path, monkeypatch):
     def fake_subprocess_run(cmd, **kw):
         cmds.append(cmd)
         corpus_dir, output_dir = cmd[2], cmd[5]
-        for name in os.listdir(corpus_dir):
+        for name in _staged_files(corpus_dir):
             if name.endswith(".lab"):
                 with open(os.path.join(output_dir, f"{name[:-4]}.TextGrid"),
                           "w") as f:
@@ -311,3 +316,44 @@ def test_every_mfa_call_gets_its_own_temporary_directory(tmp_path, monkeypatch):
     if mfa_root:
         for d in temp_dirs:
             assert not os.path.abspath(d).startswith(os.path.abspath(mfa_root))
+
+
+def test_batch_stages_one_speaker_folder_per_stimulus(tmp_path, monkeypatch):
+    """Each recording gets its own speaker subfolder, so MFA's per-speaker
+    CMVN / fMLLR never pools audio across stimuli. MFA mirrors the subfolder
+    in its output; those nested TextGrids must be collected."""
+    seen = {}
+
+    def fake(corpus_dir, output_dir, g2p=False, **kw):
+        for spk in os.listdir(corpus_dir):
+            seen[spk] = sorted(os.listdir(os.path.join(corpus_dir, spk)))
+            os.makedirs(os.path.join(output_dir, spk))
+            with open(os.path.join(output_dir, spk, f"{spk}.TextGrid"), "w") as f:
+                f.write("tg")
+
+    monkeypatch.setattr(aligner, "_run_mfa", fake)
+    items = []
+    for stem in ("one", "two"):
+        wav = tmp_path / f"{stem}.wav"
+        wav.write_bytes(stem.encode())
+        items.append((str(wav), f"hi {stem}"))
+    res = aligner.ensure_alignments(items, tmp_path / "persist")
+    assert seen == {"one": ["one.lab", "one.wav"], "two": ["two.lab", "two.wav"]}
+    assert res["aligned"] == ["one", "two"] and res["failed"] == []
+    assert (tmp_path / "persist" / "one.TextGrid").exists()
+
+
+def test_pooled_speaker_sidecars_are_stale(tmp_path):
+    """TextGrids written under the pooled-speaker layout (sidecar v2) are
+    re-aligned once rather than reused."""
+    persist = tmp_path / "align"
+    persist.mkdir()
+    audio = tmp_path / "stim.wav"
+    audio.write_bytes(b"RIFFfake")
+    (persist / "stim.TextGrid").write_text("tg", encoding="utf-8")
+    aligner._write_sidecar(persist, "stim", str(audio), "hello")
+    side = persist / "stim.json"
+    meta = json.loads(side.read_text(encoding="utf-8"))
+    meta["version"] = 2
+    side.write_text(json.dumps(meta), encoding="utf-8")
+    assert not aligner._is_fresh(persist, "stim", str(audio), "hello")

@@ -125,7 +125,8 @@ output (checked: no likelihood/confidence flag, and no
 The setting changes MFA's output, so a cached TextGrid produced under the
 other setting is stale. Alignment persistence handles this: the freshness
 sidecar written next to each TextGrid records an `mfa_g2p` key, and its
-`SIDECAR_VERSION` was bumped 1 → 2 when the key was added. So:
+`SIDECAR_VERSION` was bumped 1 → 2 when the key was added (and to 3 on
+2026-10-21 for the one-speaker-per-stimulus layout). So:
 
 - The first batch run after upgrading re-aligns every stimulus **once**
   (the sidecar version changed), then caches normally.
@@ -133,30 +134,15 @@ sidecar written next to each TextGrid records an `mfa_g2p` key, and its
 - MFA still runs at most once per document per dispatch — the option
   changes the *arguments*, never the number of alignment passes.
 
-### ⚠️ Known gap: a stale TextGrid on the per-document path is trusted
-
-The batch path is safe. `aligner.ensure_alignments` — the pre-alignment
-pass both `run_word_level_batch` and `run_doc_level_batch` call, and
-therefore the path every GUI run, `run.py` run and folder-mode CLI run
-takes — compares the sidecar's `mfa_g2p` against the requested setting and
-re-aligns when they differ.
-
-The **per-document** path does not. `aligner.align_with_phones` checks
-only whether `<stem>.TextGrid` *exists* under `persist_dir`; if it does,
-it parses it and never consults the sidecar. So if a TextGrid produced
-with the opposite `g2p` setting is already sitting there, flipping this
-option **changes nothing and reports nothing**. That path is reached when
-an output folder is configured but the batch pre-alignment pass did not
-run — for example when the pre-pass failed and fell back to per-document
-alignment — and by any direct caller of `align_with_phones(...,
-persist_dir=...)`.
-
-**If you flip this option and the phones do not change, delete
-`<output_folder>/Montreal Forced Alignment/<stem>.TextGrid` (and its
-`.json`) and re-run, or use the folder/batch path, which re-aligns
-correctly on its own.** A pure single-document CLI run (`--audio` +
-`--transcript` with no output folder) has no persistence directory at all,
-runs MFA every time, and honours the flag.
+Both alignment paths honour the setting. The batch pre-alignment pass
+(`aligner.ensure_alignments`) and the per-document path
+(`aligner.align_with_phones` with a `persist_dir`, used when the batch
+pre-pass failed and fell back) both reuse a TextGrid only when its sidecar
+matches the current inputs, `mfa_g2p` included. Before 2026-10-21 the
+per-document path trusted any existing TextGrid, so flipping this option
+could silently change nothing there. A pure single-document CLI run
+(`--audio` + `--transcript` with no output folder) has no persistence
+directory at all and runs MFA every time.
 
 ## Usage
 Turn it **on** when your stimuli contain unusual proper nouns, invented
