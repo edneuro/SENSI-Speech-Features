@@ -49,11 +49,14 @@ def run(progress_cb: Callable[[int, int, str], None],
         done_cb: Callable[[str], None],
         session_api_key: str,
         session_hf_token: str = "",
-        in_thread: bool = True) -> None:
+        in_thread: bool = True,
+        should_cancel: Callable[[], bool] | None = None) -> None:
     """Dispatch a run in a background thread (or inline when in_thread=False).
 
     progress_cb(current, total, stimulus_id) — forwarded to on_pair_done.
-    done_cb("done") or done_cb("error: <message>") on completion.
+    done_cb("done"), done_cb("cancelled") or done_cb("error: <message>") on
+    completion. should_cancel() is polled by each batch between documents and
+    between the word / doc / acoustic passes.
 
     Word + doc batches in a single dispatch share a `run_ts` (timestamp
     string) so their log files group together in the Logs tab. The doc
@@ -61,6 +64,9 @@ def run(progress_cb: Callable[[int, int, str], None],
     running — both batches scan the same input folders, so the no-match
     list would otherwise be a duplicate.
     """
+
+    def cancelled() -> bool:
+        return bool(should_cancel and should_cancel())
 
     def _go():
         import os
@@ -86,20 +92,29 @@ def run(progress_cb: Callable[[int, int, str], None],
                 ns.run_ts = run_ts
                 ns.skip_no_match = False
                 ns._align_cache = align_cache
-                run_word_level_batch(ns, on_pair_done=progress_cb)
+                run_word_level_batch(ns, on_pair_done=progress_cb,
+                                     should_cancel=should_cancel)
+            if cancelled():
+                done_cb("cancelled")
+                return
             if "documents_summary" in plan.output_csvs:
                 from main import run_doc_level_batch
                 ns = _prepare_runtime_args(planner.to_namespace(plan, prefs, level="doc"))
                 ns.run_ts = run_ts
                 ns.skip_no_match = bool(word_outputs)
                 ns._align_cache = align_cache
-                run_doc_level_batch(ns, on_pair_done=progress_cb)
+                run_doc_level_batch(ns, on_pair_done=progress_cb,
+                                    should_cancel=should_cancel)
+            if cancelled():
+                done_cb("cancelled")
+                return
             if "acoustic" in plan.output_csvs:
                 from main import run_acoustic_level_batch
                 ns = planner.to_acoustic_namespace(prefs)
                 ns.run_ts = run_ts
-                run_acoustic_level_batch(ns, on_pair_done=progress_cb)
-            done_cb("done")
+                run_acoustic_level_batch(ns, on_pair_done=progress_cb,
+                                         should_cancel=should_cancel)
+            done_cb("cancelled" if cancelled() else "done")
         except Exception as exc:
             done_cb(f"error: {exc}")
         finally:

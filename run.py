@@ -103,6 +103,9 @@ def main() -> None:
             continue
         if path == features_path:
             features_raw = raw or {}
+            if raw is None:
+                print(f"[warn] {path.name} is empty — running with shipped "
+                      "defaults (minimal feature set).", file=sys.stderr)
         errors.extend(f"{path.name}: {e}" for e in validate(raw or {}))
     if errors:
         print("Invalid config:", file=sys.stderr)
@@ -120,11 +123,18 @@ def main() -> None:
 
     prefs = load_preferences()
     shared = prefs["shared"]
-    # Expand ~ and $VARS so HPC paths like $SCRATCH/... resolve.
+    # Expand ~ and $VARS so HPC paths like $SCRATCH/... resolve. A path that is
+    # still relative is anchored to the config folder (like hf_token_file), so
+    # the same run.yaml means the same folders wherever the job is launched.
+    config_dir = get_run_yaml_path().parent
     for key in ("last_transcripts_folder", "last_audio_folder",
                 "last_output_folder"):
         val = shared.get(key) or ""
-        shared[key] = os.path.expanduser(os.path.expandvars(val)) if val else ""
+        if val:
+            val = os.path.expanduser(os.path.expandvars(val))
+            if not os.path.isabs(val):
+                val = os.path.normpath(os.path.join(config_dir, val))
+        shared[key] = val
 
     if not (shared.get("analyzer_name") or "").strip():
         print("run.yaml: shared.analyzer_name is required (name for this run).",

@@ -206,7 +206,12 @@ def extract_acoustic(audio_path: str, rate: float, cfg: dict) -> dict:
         "analysis_rate": float(rate), "env_method": cfg.get("env_method", "rms"),
         "env_comp": float(cfg.get("env_comp", MTRF_COMP)),
         "env_window": float(cfg.get("env_window", 1.0)),
-        "n_mels": int(cfg.get("n_mels", 16)), "n_mfcc": int(cfg.get("n_mfcc", 13)),
+        # n_mfcc records what was actually computed: MFCCs come from the mel
+        # bands, so at most n_mels coefficients exist (config checks refuse
+        # n_mfcc > n_mels, but a hand-built cfg could still ask for more).
+        "n_mels": int(cfg.get("n_mels", 16)),
+        "n_mfcc": (int(out["mfcc"].shape[1]) if "mfcc" in out
+                   else int(cfg.get("n_mfcc", 13))),
         "fmin": float(fmin), "fmax": float(fmax),
         "mel_preset": cfg.get("mel_preset", "speech"),
         "source_sr": float(sr), "duration_s": float(y.size / sr),

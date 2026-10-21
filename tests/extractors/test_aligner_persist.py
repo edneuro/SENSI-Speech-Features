@@ -175,6 +175,8 @@ def test_ensure_aligns_all_missing_in_one_run(tmp_path, monkeypatch):
 
 def test_ensure_skips_mfa_when_all_fresh(tmp_path, monkeypatch):
     persist = tmp_path / "align"
+    # Fake TextGrids aren't parseable; treat them as readable here.
+    monkeypatch.setattr(aligner, "_readable", lambda p: True)
     a1 = _make_audio(tmp_path, "one.wav", b"aaaa")
     _install_fake_mfa(monkeypatch)  # first call populates disk
     aligner.ensure_alignments([(a1, "hi one")], persist)
@@ -225,6 +227,8 @@ def test_ensure_alignments_forwards_g2p_value_to_run_mfa(tmp_path, monkeypatch):
 
 def test_ensure_only_realigns_stale_subset(tmp_path, monkeypatch):
     persist = tmp_path / "align"
+    # Fake TextGrids aren't parseable; treat them as readable here.
+    monkeypatch.setattr(aligner, "_readable", lambda p: True)
     a1 = _make_audio(tmp_path, "one.wav", b"aaaa")
     a2 = _make_audio(tmp_path, "two.wav", b"bbbb")
     _install_fake_mfa(monkeypatch)
@@ -357,3 +361,25 @@ def test_pooled_speaker_sidecars_are_stale(tmp_path):
     meta["version"] = 2
     side.write_text(json.dumps(meta), encoding="utf-8")
     assert not aligner._is_fresh(persist, "stim", str(audio), "hello")
+
+
+def test_unreadable_textgrid_with_fresh_sidecar_is_realigned(tmp_path, monkeypatch):
+    """A damaged TextGrid whose sidecar still matches is re-aligned and
+    reported as 'corrupt', instead of being trusted and failing later."""
+    persist = tmp_path / "align"
+    persist.mkdir()
+    audio = tmp_path / "stim.wav"
+    audio.write_bytes(b"RIFFfake")
+    (persist / "stim.TextGrid").write_text("garbage", encoding="utf-8")
+    aligner._write_sidecar(persist, "stim", str(audio), "hello")
+    ran = []
+
+    def fake(corpus_dir, output_dir, g2p=False, **kw):
+        ran.append(1)
+        with open(os.path.join(output_dir, "stim.TextGrid"), "w") as f:
+            f.write("tg")
+
+    monkeypatch.setattr(aligner, "_run_mfa", fake)
+    res = aligner.ensure_alignments([(str(audio), "hello")], persist)
+    assert ran == [1]
+    assert res["corrupt"] == ["stim"] and res["aligned"] == ["stim"]

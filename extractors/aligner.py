@@ -278,6 +278,15 @@ def _align_uncached(
         return _parse_textgrid(str(dest))
 
 
+def _readable(tg_path) -> bool:
+    """True if the TextGrid parses (see _parse_textgrid)."""
+    try:
+        _parse_textgrid(str(tg_path))
+        return True
+    except Exception:
+        return False
+
+
 def _stage(corpus_dir: str, stem: str, audio_path: str, prepared: str) -> None:
     """Copy one stimulus into `corpus_dir/<stem>/` as `<stem>.wav` + `.lab`.
 
@@ -333,7 +342,10 @@ def ensure_alignments(items, persist_dir, *, g2p: bool = False) -> dict:
     invocation and each result is moved into persist_dir with a sidecar. If
     nothing is stale, no subprocess runs.
 
-    Returns {'cached': [...], 'aligned': [...], 'failed': [...]} of stems.
+    Returns {'cached': [...], 'aligned': [...], 'failed': [...],
+    'corrupt': [...]} of stems; 'corrupt' lists fresh-looking TextGrids that
+    could not be parsed and were therefore re-aligned (also in 'aligned' or
+    'failed').
 
     Note: a per-stimulus alignment miss is reported in 'failed' (no exception),
     but a whole-subprocess failure raises from `_run_mfa` and propagates — with
@@ -344,12 +356,21 @@ def ensure_alignments(items, persist_dir, *, g2p: bool = False) -> dict:
     persist_dir.mkdir(parents=True, exist_ok=True)
 
     cached: list[str] = []
+    corrupt: list[str] = []
     # Dedup by stem (unique stimulus ids expected); last transcript wins.
     stale_by_stem: dict[str, tuple[str, str]] = {}
     for audio_path, transcript_text in items:
         stem = _stem(audio_path)
         if _is_fresh(persist_dir, stem, audio_path, transcript_text, g2p=g2p):
-            cached.append(stem)
+            if _readable(persist_dir / f'{stem}.TextGrid'):
+                cached.append(stem)
+                continue
+            # Sidecar matches but the TextGrid itself is damaged (partial
+            # copy, disk error, hand edit): re-align instead of failing later.
+            print(f"[mfa] WARNING: saved alignment for {stem!r} is unreadable; "
+                  "re-aligning it")
+            corrupt.append(stem)
+            stale_by_stem[stem] = (audio_path, transcript_text)
         else:
             if stem in stale_by_stem:
                 print(f"[mfa] WARNING: duplicate stem {stem!r} in batch; "
@@ -358,7 +379,7 @@ def ensure_alignments(items, persist_dir, *, g2p: bool = False) -> dict:
 
     if not stale_by_stem:
         print(f"[mfa] {len(cached)} stimuli: all cached, 0 aligned")
-        return {'cached': cached, 'aligned': [], 'failed': []}
+        return {'cached': cached, 'aligned': [], 'failed': [], 'corrupt': []}
 
     # Delete stale artifacts first so a failed realign can't leave a stale file
     # for run() to pick up.
@@ -396,7 +417,8 @@ def ensure_alignments(items, persist_dir, *, g2p: bool = False) -> dict:
     if failed:
         msg += f", {len(failed)} failed ({', '.join(failed)})"
     print(msg)
-    return {'cached': cached, 'aligned': aligned, 'failed': failed}
+    return {'cached': cached, 'aligned': aligned, 'failed': failed,
+            'corrupt': corrupt}
 
 
 def align(audio_path: str, transcript: str) -> pd.DataFrame:

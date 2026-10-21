@@ -1,5 +1,6 @@
 """Run section: output checkboxes, readiness summary, cost estimate, Run button."""
 
+import threading
 from pathlib import Path
 
 from PySide6.QtCore import Signal
@@ -11,7 +12,11 @@ from gui.widgets import SectionHeader, ToggleRow
 from gui.preflight import compute_warnings
 from gui.run_dispatch import run as dispatch_run
 from gui.planner import plan_from_prefs
+from utils.config_checks import value_errors
 from utils.preferences import load_preferences, save_preferences
+
+# Transcript extensions the batch runners pair (gui/planner/emit.py).
+_TEXT_EXTS = (".txt", ".tsv", ".md")
 
 
 # Maps a plan output-CSV id -> the artifact it actually writes (path template +
@@ -54,6 +59,12 @@ class RunSection(QWidget):
         # creation that might cause them to fire.
         self._progress_event.connect(self._on_progress_main)
         self._done_event.connect(self._on_done_main)
+        # Cancel: the status strip's button sets this; the batch runners poll
+        # it between documents (main.py should_cancel), so the file in progress
+        # finishes and the rest are skipped.
+        self._cancel = threading.Event()
+        if status_strip is not None:
+            status_strip.cancel_requested.connect(self._on_cancel)
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(24, 16, 24, 16)
@@ -163,8 +174,9 @@ class RunSection(QWidget):
         # acoustic level is audio-only: its runner globs the audio folder and
         # ignores transcripts, so an acoustic-only run must NOT require a
         # transcripts folder. Every other output is derived from the transcript,
-        # so those still require it. Audio is required whenever any output is
-        # selected (acoustic needs it; the word/doc batches are paired with audio).
+        # so those still require it. Audio is required only when the run uses
+        # it: the acoustic level, or any stage that needs forced alignment. A
+        # text-only run (no alignment) works without an audio folder.
         shared = prefs["shared"]
 
         def _dir_ok(p: str) -> bool:
@@ -180,6 +192,9 @@ class RunSection(QWidget):
         has_output        = bool(plan.output_csvs)
         needs_transcripts = bool(plan.output_csvs - {"acoustic"})
         acoustic_only     = has_output and not needs_transcripts
+        needs_audio       = has_output and (
+            "acoustic" in plan.output_csvs or "mfa_align" in plan.stages_to_run)
+        audio_path        = shared.get("last_audio_folder", "")
 
         missing = []
         if not has_output:
@@ -188,11 +203,18 @@ class RunSection(QWidget):
             missing.append("enter an analyzer name (Inputs)")
         if not output_ok:
             missing.append("pick an output folder (Inputs)")
-        if has_output and not audio_ok:
+        if needs_audio and not audio_ok:
             missing.append("pick an audio folder (Inputs)")
+        elif audio_path and not audio_ok:
+            missing.append("the audio folder in Inputs doesn't exist")
         if needs_transcripts and not transcripts_ok:
             missing.append("pick a transcripts folder (needed for word / document "
                            "/ sub-word / sentence / embedding outputs)")
+        elif needs_transcripts and not any(
+                p.is_file() and p.suffix.lower() in _TEXT_EXTS
+                for p in Path(shared["last_transcripts_folder"]).iterdir()):
+            missing.append("the transcripts folder has no .txt / .tsv / .md files")
+        missing += value_errors(prefs)
 
         ok = not missing
         self.run_button.setEnabled(ok)
@@ -225,11 +247,19 @@ class RunSection(QWidget):
         if self._status_strip:
             self._status_strip.set_running(i, total, name)
 
+    def _on_cancel(self) -> None:
+        self._cancel.set()
+        if self._status_strip:
+            self._status_strip.set_cancelling()
+
     def _on_done_main(self, status: str) -> None:
         """Main-thread slot for worker-thread completion."""
         if status == "done":
             if self._status_strip:
                 self._status_strip.set_done(1, 0)
+        elif status == "cancelled":
+            if self._status_strip:
+                self._status_strip.set_cancelled()
         else:
             if self._status_strip:
                 self._status_strip.set_errored(1)
@@ -237,6 +267,7 @@ class RunSection(QWidget):
         self.run_button.setEnabled(True)
 
     def _on_run(self) -> None:
+        self._cancel.clear()
         self.run_button.setEnabled(False)
         self.run_started.emit()
         if self._status_strip:
@@ -250,4 +281,5 @@ class RunSection(QWidget):
             done_cb=self._done_event.emit,
             session_api_key=self._get_api_key(),
             session_hf_token=self._get_hf_token(),
+            should_cancel=self._cancel.is_set,
         )

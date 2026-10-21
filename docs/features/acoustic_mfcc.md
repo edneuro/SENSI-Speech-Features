@@ -58,7 +58,10 @@ not a claim that MFCCs cannot carry decodable information.*
 Identical to the other acoustic features: set `analysis_rate` to your EEG
 rate (typically 64–128 Hz) and `mfcc` will have `round(duration × rate)` rows
 aligned to `t`/`fs`. `n_mfcc` is your predictor count (13 is the ASR
-convention; you rarely need more for TRF). MFCC values are returned raw;
+convention; you rarely need more for TRF). It can't exceed `n_mels`, since the
+coefficients are computed from the mel bands: the Run tab and `run.py` refuse
+`n_mfcc > n_mels`, and the `.mat` `config.n_mfcc` records the number actually
+computed. MFCC values are returned raw;
 z-score per coefficient in your TRF pipeline before fitting, and note that
 `MFCC-0` (energy) is on a very different scale from the higher coefficients.
 When MFCCs are enabled and the log-mel is not, `mel_center_freqs` is still

@@ -91,7 +91,8 @@ class AcousticFeaturesSection(QWidget):
         env_row = QHBoxLayout(); env_row.setContentsMargins(0, 0, 0, 0)
         env_row.addWidget(QLabel("Compression:"))
         self._env_comp_spin = QDoubleSpinBox()
-        self._env_comp_spin.setRange(0.0, 2.0)
+        # Exponent on the envelope; 0 would flatten it to a constant 1.
+        self._env_comp_spin.setRange(0.01, 2.0)
         self._env_comp_spin.setSingleStep(0.05)
         # 6 decimals: QDoubleSpinBox rounds its value to `decimals`, so any
         # user touch would re-save the default log10(2) ≈ 0.30103 truncated

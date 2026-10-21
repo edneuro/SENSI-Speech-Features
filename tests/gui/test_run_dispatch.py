@@ -602,3 +602,32 @@ def test_acoustic_namespace_carries_config():
     assert ns.acoustic_ts["analysis_rate"] == 64
     assert ns.acoustic_ts["env_method"] == "hilbert"
     assert ns.acoustic_ts["mel_preset"] == "music"
+
+
+def test_dispatch_passes_cancel_and_stops_between_passes(monkeypatch, tmp_path):
+    """should_cancel reaches the word batch, and a cancel during it skips the
+    doc pass and reports 'cancelled'."""
+    monkeypatch.setenv("SENSI_PREFS_PATH", str(tmp_path / "prefs.json"))
+    import main
+    from gui import run_dispatch
+    from utils.preferences import save_preferences
+    save_preferences({"output": {"word_level_csv": True, "document_summary": True}})
+    seen = {}
+
+    def fake_word(ns, *, on_pair_done=None, should_cancel=None):
+        seen["word"] = should_cancel
+        flag["on"] = True
+
+    def fake_doc(*a, **kw):
+        seen["doc"] = True
+
+    flag = {"on": False}
+    monkeypatch.setattr(main, "run_word_level_batch", fake_word)
+    monkeypatch.setattr(main, "run_doc_level_batch", fake_doc)
+    statuses = []
+    run_dispatch.run(progress_cb=lambda *a: None, done_cb=statuses.append,
+                     session_api_key="", in_thread=False,
+                     should_cancel=lambda: flag["on"])
+    assert callable(seen["word"])
+    assert "doc" not in seen
+    assert statuses == ["cancelled"]

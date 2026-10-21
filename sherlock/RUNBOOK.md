@@ -104,7 +104,9 @@ secret ever goes into this config. The shipped default, `hf_token.txt`, is a
 *relative* path, which `run.py` resolves against `config/` itself (not your home
 dir) — so it means `$GROUP_HOME/SensiExtractor/config/hf_token.txt` here. Use an
 absolute path or `~/...` instead if you'd rather keep the token outside the repo
-folder. (Once the code arrives in step 4, `cp config/run_defaults.yaml config/run.yaml`
+folder. The folder keys (`last_*_folder`) follow the same rule: a relative
+path is resolved against `config/`, so absolute `$SCRATCH/...` paths are the
+least surprising choice. (Once the code arrives in step 4, `cp config/run_defaults.yaml config/run.yaml`
 on Sherlock is an equivalent way to start this file for any *future* re-run.)
 
 ## 4 · Upload code, container, data — [linux]

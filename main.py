@@ -489,7 +489,8 @@ def _warn_pairing_gaps(logger, args, pairing) -> None:
         names = ', '.join(p.name for p in pairing.unmatched_text)
         logger.add_warning(
             f'{len(pairing.unmatched_text)} transcript(s) have no matching '
-            f'audio and ran text-only (no alignment or prosody): {names}')
+            f'audio and ran text-only (no timing, prosody, syllable or '
+            f'phoneme output): {names}')
 
 
 def _batch_work_items(pairing) -> list:
@@ -816,6 +817,9 @@ def _prealign_batch(run_args, work_items, output_dir, logger=None) -> None:
                 'per-document alignment')
         return
     if logger is not None:
+        for stem in result.get('corrupt', []):
+            logger.add_warning(f'Saved alignment for {stem} was unreadable; '
+                               're-aligned')
         for stem in result.get('failed', []):
             logger.add_warning(f'MFA produced no alignment for {stem}')
     run_args._batch_prealigned = True
@@ -994,6 +998,8 @@ def run_word_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None
                 except Exception as exc:
                     print(f'[sentence] failed for {pair.stimulus_id}: {exc}',
                           file=sys.stderr)
+                    logger.add_warning(
+                        f'{pair.stimulus_id}: sentence CSV not written ({exc})')
 
             # Word2Vec embedding (.mat)
             # getattr default True → skip unless emit.py explicitly sets False.

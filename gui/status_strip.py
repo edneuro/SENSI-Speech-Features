@@ -48,6 +48,21 @@ class StatusStrip(QFrame):
         self.detail_label.setText(f"{total}/{total} files in {elapsed_s:.0f}s")
         self.cancel_btn.setEnabled(False)
 
+    def show_message(self, text: str) -> None:
+        """Show a one-off problem (e.g. a failed settings save)."""
+        self.state_label.setText("⚠  Warning")
+        self.detail_label.setText(text)
+
+    def set_cancelling(self) -> None:
+        self.state_label.setText("●  Cancelling")
+        self.detail_label.setText("Stopping after the current file…")
+        self.cancel_btn.setEnabled(False)
+
+    def set_cancelled(self) -> None:
+        self.state_label.setText("○  Cancelled")
+        self.detail_label.setText("Run cancelled — files finished so far are saved; see Logs.")
+        self.cancel_btn.setEnabled(False)
+
     def set_errored(self, n_errors: int) -> None:
         self.state_label.setText("⚠  Errored")
         self.detail_label.setText(f"{n_errors} files failed — see Logs.")

@@ -39,9 +39,11 @@ def _load_model(model_path: str | Path) -> Any:
     if p.exists():
         return KeyedVectors.load_word2vec_format(str(p), binary=True)
     # Auto-download on first use; gensim caches in ~/gensim-data/.
+    cached = Path(gensim_dl.base_dir, "word2vec-google-news-300").exists()
     print(
-        "[word2vec] Model not found locally — downloading Google News 300d "
-        "(~1.7 GB, one-time). Subsequent runs use gensim's local cache.",
+        "[word2vec] Loading Google News 300d from gensim's cache…" if cached
+        else "[word2vec] Model not found locally — downloading Google News "
+             "300d (~1.7 GB, one-time). Subsequent runs use gensim's local cache.",
         file=sys.stderr,
     )
     try:

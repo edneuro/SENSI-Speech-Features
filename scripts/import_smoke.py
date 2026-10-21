@@ -23,12 +23,12 @@ sys.path.insert(0, str(ROOT))
 # side-effect-free — it stays here only because import-testing it adds nothing.)
 SKIP = {"utils.download_models"}
 
-targets = ["main", "PySide6.QtWidgets"]
-for pkg in ("extractors", "utils"):
+targets = ["main", "run", "PySide6.QtWidgets"]
+for pkg in ("extractors", "utils", "gui", "gui/planner"):
     for path in sorted((ROOT / pkg).glob("*.py")):
         if path.stem == "__init__":
             continue
-        mod = f"{pkg}.{path.stem}"
+        mod = f"{pkg.replace('/', '.')}.{path.stem}"
         if mod in SKIP:
             continue
         targets.append(mod)

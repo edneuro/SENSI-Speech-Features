@@ -23,6 +23,8 @@ def _type_ok(default_val, val) -> bool:
         return isinstance(val, str)
     if isinstance(default_val, list):
         return isinstance(val, list)
+    if isinstance(default_val, dict):
+        return isinstance(val, dict)
     return True
 
 
@@ -118,6 +120,21 @@ def _dump_with_sections(header: str, data: dict) -> str:
     return "".join(parts)
 
 
+def _replace_with_retry(src, dst, attempts: int = 10, delay_s: float = 0.05) -> None:
+    """os.replace, retried briefly: on Windows another program (antivirus,
+    OneDrive, an editor) holding `dst` open for an instant makes the rename
+    fail with PermissionError; waiting ~0.5 s total covers that."""
+    import time
+    for i in range(attempts):
+        try:
+            os.replace(src, dst)
+            return
+        except PermissionError:
+            if i == attempts - 1:
+                raise
+            time.sleep(delay_s)
+
+
 def _write_text(path, text: str) -> None:
     """Write `text` to `path` atomically (temp file in the same dir + os.replace).
 
@@ -133,7 +150,7 @@ def _write_text(path, text: str) -> None:
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as f:
             f.write(text)
-        os.replace(tmp_name, p)
+        _replace_with_retry(tmp_name, p)
     except BaseException:
         try:
             os.remove(tmp_name)
@@ -199,6 +216,8 @@ def validate_features_yaml(data: dict) -> list[str]:
         for k in (sem_raw or {}):
             if k not in _defaults["semantic"]:
                 errors.append(f"unknown semantic key: {k!r}")
+    from utils.config_checks import value_errors
+    errors.extend(value_errors(data))
     return errors
 
 

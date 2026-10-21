@@ -167,11 +167,30 @@ def test_cost_panel_hidden_when_local_model(qtbot, tmp_path, monkeypatch):
 # slot fires and mutates the status_strip.
 
 
+class _FakeSignal:
+    def __init__(self):
+        self.slots = []
+
+    def connect(self, slot):
+        self.slots.append(slot)
+
+    def emit(self):
+        for slot in self.slots:
+            slot()
+
+
 class _FakeStatusStrip:
     """Minimal stand-in for StatusStrip — captures the last call made."""
 
     def __init__(self):
         self.calls = []
+        self.cancel_requested = _FakeSignal()
+
+    def set_cancelling(self):
+        self.calls.append(("cancelling",))
+
+    def set_cancelled(self):
+        self.calls.append(("cancelled",))
 
     def set_running(self, current, total, file_name):
         self.calls.append(("running", current, total, file_name))
@@ -254,3 +273,89 @@ def test_done_event_from_worker_thread_runs_slot_on_main_thread(qtbot):
         threading.Thread(target=worker, daemon=True).start()
     assert blocker.args == ["done"]
     assert any(c[0] == "done" for c in strip.calls)
+
+
+def _ready_acoustic(tmp_path, save_preferences):
+    audio = tmp_path / "audio"; audio.mkdir()
+    out = tmp_path / "out"; out.mkdir()
+    save_preferences({"shared": {
+        "analyzer_name": "me", "last_audio_folder": str(audio),
+        "last_output_folder": str(out), "last_transcripts_folder": ""}})
+    _enable_only_acoustic(save_preferences)
+
+
+def test_inverted_pitch_range_blocks_run(qtbot, tmp_path, monkeypatch):
+    monkeypatch.setenv("SENSI_PREFS_PATH", str(tmp_path / "prefs.json"))
+    from utils.preferences import save_preferences
+    from gui.section_run import RunSection
+    _ready_acoustic(tmp_path, save_preferences)
+    w = RunSection(get_session_api_key=lambda: "", status_strip=None)
+    qtbot.addWidget(w)
+    assert w.run_button.isEnabled()
+    save_preferences({"prosody": {"pitch_floor_hz": 400.0, "pitch_ceiling_hz": 100.0}})
+    w.refresh()
+    assert not w.run_button.isEnabled()
+    assert "Pitch floor" in w.readiness_label.text()
+
+
+def test_mfcc_above_mel_bands_blocks_run(qtbot, tmp_path, monkeypatch):
+    monkeypatch.setenv("SENSI_PREFS_PATH", str(tmp_path / "prefs.json"))
+    from utils.preferences import save_preferences
+    from gui.section_run import RunSection
+    _ready_acoustic(tmp_path, save_preferences)
+    save_preferences({"acoustic_ts": {"n_mels": 16, "n_mfcc": 40}})
+    w = RunSection(get_session_api_key=lambda: "", status_strip=None)
+    qtbot.addWidget(w)
+    assert not w.run_button.isEnabled()
+    assert "MFCC count" in w.readiness_label.text()
+
+
+def _word_only(tmp_path, save_preferences, transcripts):
+    out = tmp_path / "out"; out.mkdir()
+    save_preferences({
+        "shared": {"analyzer_name": "me", "last_audio_folder": "",
+                   "last_output_folder": str(out),
+                   "last_transcripts_folder": str(transcripts)},
+        "output": {"word_level_csv": True, "document_summary": False,
+                   "syllables_csv": False, "phonemes_csv": False,
+                   "sentences_csv": False, "acoustic_ts_mat": False},
+    })
+
+
+def test_text_only_run_needs_no_audio_folder(qtbot, tmp_path, monkeypatch):
+    monkeypatch.setenv("SENSI_PREFS_PATH", str(tmp_path / "prefs.json"))
+    from utils.preferences import save_preferences
+    from gui.section_run import RunSection
+    from gui.planner import plan_from_prefs
+    from utils.preferences import load_preferences
+    t = tmp_path / "t"; t.mkdir(); (t / "a.txt").write_text("hi", encoding="utf-8")
+    _word_only(tmp_path, save_preferences, t)
+    assert "mfa_align" not in plan_from_prefs(load_preferences()).stages_to_run
+    w = RunSection(get_session_api_key=lambda: "", status_strip=None)
+    qtbot.addWidget(w)
+    assert w.run_button.isEnabled(), w.readiness_label.text()
+
+
+def test_empty_transcripts_folder_blocks_run(qtbot, tmp_path, monkeypatch):
+    monkeypatch.setenv("SENSI_PREFS_PATH", str(tmp_path / "prefs.json"))
+    from utils.preferences import save_preferences
+    from gui.section_run import RunSection
+    t = tmp_path / "t"; t.mkdir()
+    _word_only(tmp_path, save_preferences, t)
+    w = RunSection(get_session_api_key=lambda: "", status_strip=None)
+    qtbot.addWidget(w)
+    assert not w.run_button.isEnabled()
+    assert "no .txt" in w.readiness_label.text()
+
+
+def test_cancel_button_reaches_the_runners(qtbot):
+    from gui.section_run import RunSection
+    strip = _FakeStatusStrip()
+    w = RunSection(get_session_api_key=lambda: "", status_strip=strip)
+    qtbot.addWidget(w)
+    assert not w._cancel.is_set()
+    strip.cancel_requested.emit()
+    assert w._cancel.is_set()
+    assert ("cancelling",) in strip.calls
+    w._done_event.emit("cancelled")
+    assert ("cancelled",) in strip.calls

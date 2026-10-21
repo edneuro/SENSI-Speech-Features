@@ -94,7 +94,8 @@ class InputsSection(QWidget):
         p = Path(path_str)
         if not p.is_dir():
             row.set_error(True)
-            count_label.setText("Folder does not exist.")
+            count_label.setText("That's a file, not a folder." if p.exists()
+                                else "Folder does not exist.")
             return -1
         row.set_error(False)
         if not exts:

@@ -80,6 +80,10 @@ class MainWindow(QMainWindow):
 
         # Status strip (created early so RunSection can hold a reference to it)
         self.status_strip = StatusStrip()
+        # A settings save that fails even after retrying (file locked by
+        # another program) is shown in the strip instead of only the console.
+        from utils.preferences import set_save_error_handler
+        set_save_error_handler(self.status_strip.show_message)
 
         # Content stack (populated by _build_and_wire_sections; rebuilt on reset)
         self.stack = QStackedWidget()

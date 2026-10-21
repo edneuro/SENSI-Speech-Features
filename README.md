@@ -214,6 +214,13 @@ cp config/run_defaults.yaml config/run.yaml
 python run.py
 ```
 
+Folder paths in `run.yaml` can be absolute (recommended) or relative; a
+relative path is resolved against the folder holding `run.yaml`, not the
+folder you launch `run.py` from. `run.py` checks the config before doing any
+work and stops with a plain-language message for an unknown key, a wrong type,
+an out-of-range value (e.g. a pitch floor above the ceiling) or a missing
+input folder.
+
 `run.py` also prints this hint whenever `config/features.yaml` is missing.
 Both templates are regenerated from the code defaults by
 `python scripts/export_default_config.py` and are pinned by a drift-guard

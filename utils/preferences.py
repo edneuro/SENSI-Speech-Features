@@ -60,6 +60,9 @@ from utils.config_yaml import (FEATURES_YAML, RUN_YAML, read_yaml,
                                split_prefs, join_yaml_pair,
                                write_features_yaml, write_run_yaml)
 
+# Config files already reported as unparseable this session (warn once each).
+_WARNED_UNPARSEABLE: set[str] = set()
+
 # ---------------------------------------------------------------------------
 # v2 constants (preserved so v1→v2 intermediate step still works)
 # ---------------------------------------------------------------------------
@@ -1229,16 +1232,15 @@ def load_preferences() -> dict[str, Any]:
             # orphaning the json forever, fall through and (re)run the import
             # so the pair gets completed.
             return _load_legacy_json()
-        if not f_ok:
-            print(f"SensiExtractor: warning: {f_path} could not be parsed "
-                  "as YAML — it will be left unchanged on disk and this "
-                  "session falls back to defaults for its settings.",
-                  file=sys.stderr)
-        if not r_ok:
-            print(f"SensiExtractor: warning: {r_path} could not be parsed "
-                  "as YAML — it will be left unchanged on disk and this "
-                  "session falls back to defaults for its settings.",
-                  file=sys.stderr)
+        # Warn once per file per session: load_preferences runs on every
+        # GUI refresh, which printed the same warning dozens of times.
+        for path_, ok_ in ((f_path, f_ok), (r_path, r_ok)):
+            if not ok_ and str(path_) not in _WARNED_UNPARSEABLE:
+                _WARNED_UNPARSEABLE.add(str(path_))
+                print(f"SensiExtractor: warning: {path_} could not be parsed "
+                      "as YAML — it will be left unchanged on disk and this "
+                      "session falls back to defaults for its settings.",
+                      file=sys.stderr)
         # The YAML store began at v19; a missing/hand-stripped schema_version
         # must not fall into the v1 flat-json migration, so a NON-EMPTY
         # features half (real section content, just missing/miscast the
@@ -1321,10 +1323,28 @@ def save_preferences(updates: dict[str, Any]) -> None:
     f_path, r_path = get_features_yaml_path(), get_run_yaml_path()
     touched_run = 'shared' in updates
     touched_features = any(k != 'shared' for k in updates)
-    if touched_features or not f_path.exists():
-        write_features_yaml(f_path, features_data)
-    if touched_run or not r_path.exists():
-        write_run_yaml(r_path, run_data)
+    try:
+        if touched_features or not f_path.exists():
+            write_features_yaml(f_path, features_data)
+        if touched_run or not r_path.exists():
+            write_run_yaml(r_path, run_data)
+    except OSError as exc:
+        # The write already retried a transient lock (config_yaml._write_text).
+        # The GUI registers a handler so the failure is shown, not just printed.
+        if _save_error_handler is None:
+            raise
+        _save_error_handler(f"Couldn't save your settings ({exc}). The last "
+                            "change will be lost when the app closes.")
+
+
+_save_error_handler = None
+
+
+def set_save_error_handler(handler) -> None:
+    """Register a callable(message) that reports a failed settings save (the
+    GUI shows it); without one, save_preferences raises the OSError."""
+    global _save_error_handler
+    _save_error_handler = handler
 
 
 def reset_to_defaults(*, keep_shared: bool = True) -> dict[str, Any]:
