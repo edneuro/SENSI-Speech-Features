@@ -21,7 +21,7 @@ def _fake_result(tag):
 def test_no_cache_calls_mfa_every_time(monkeypatch):
     calls = []
     monkeypatch.setattr(aligner, "_align_uncached",
-                        lambda a, t, g2p=False: (calls.append((a, t)), _fake_result("x"))[1])
+                        lambda a, t, g2p=False, **kw: (calls.append((a, t)), _fake_result("x"))[1])
     aligner.align_with_phones("a.wav", "hello")
     aligner.align_with_phones("a.wav", "hello")
     assert len(calls) == 2, "without a cache, MFA must run on every call"
@@ -30,7 +30,7 @@ def test_no_cache_calls_mfa_every_time(monkeypatch):
 def test_cache_runs_mfa_once_per_document(monkeypatch):
     calls = []
     monkeypatch.setattr(aligner, "_align_uncached",
-                        lambda a, t, g2p=False: (calls.append((a, t)), _fake_result("x"))[1])
+                        lambda a, t, g2p=False, **kw: (calls.append((a, t)), _fake_result("x"))[1])
     cache: dict = {}
     # Same (audio, transcript) twice — simulates the word pass then the doc pass.
     w1, p1 = aligner.align_with_phones("stim.wav", "hello world", cache=cache)
@@ -44,7 +44,7 @@ def test_cache_runs_mfa_once_per_document(monkeypatch):
 def test_cache_distinguishes_documents(monkeypatch):
     calls = []
     monkeypatch.setattr(aligner, "_align_uncached",
-                        lambda a, t, g2p=False: (calls.append((a, t)), _fake_result("x"))[1])
+                        lambda a, t, g2p=False, **kw: (calls.append((a, t)), _fake_result("x"))[1])
     cache: dict = {}
     aligner.align_with_phones("one.wav", "text one", cache=cache)
     aligner.align_with_phones("two.wav", "text two", cache=cache)
@@ -53,7 +53,7 @@ def test_cache_distinguishes_documents(monkeypatch):
 
 def test_cache_returns_independent_copies(monkeypatch):
     monkeypatch.setattr(aligner, "_align_uncached",
-                        lambda a, t, g2p=False: _fake_result("original"))
+                        lambda a, t, g2p=False, **kw: _fake_result("original"))
     cache: dict = {}
     w1, _ = aligner.align_with_phones("s.wav", "t", cache=cache)
     # Mutating the returned frame must not corrupt the cached entry.
@@ -119,7 +119,7 @@ def test_align_with_phones_forwards_g2p_value_through_align_uncached_to_run_mfa(
     audio.write_bytes(b"RIFFfake-audio")
     received = {}
 
-    def _fake_run_mfa(corpus_dir, output_dir, *, g2p=False):
+    def _fake_run_mfa(corpus_dir, output_dir, *, g2p=False, **kw):
         received["g2p"] = g2p
         stem = os.path.splitext(os.path.basename(str(audio)))[0]
         open(os.path.join(output_dir, f"{stem}.TextGrid"), "w").close()

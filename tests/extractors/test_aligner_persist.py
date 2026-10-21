@@ -98,9 +98,12 @@ def test_disk_hit_parses_without_running_mfa(tmp_path, monkeypatch):
     persist = tmp_path / "align"
     persist.mkdir()
     (persist / "stim.TextGrid").write_text("fake tg", encoding="utf-8")
+    audio = tmp_path / "stim.wav"
+    audio.write_bytes(b"RIFFfake")
+    aligner._write_sidecar(persist, "stim", str(audio), "hello")
     called = []
     monkeypatch.setattr(aligner, "_align_uncached",
-                        lambda a, t, g2p=False: called.append(1))
+                        lambda a, t, g2p=False, **kw: called.append(1))
     monkeypatch.setattr(aligner, "_parse_textgrid", lambda p: _fake_frames())
     w, p = aligner.align_with_phones(
         str(tmp_path / "stim.wav"), "hello", persist_dir=persist)
@@ -112,7 +115,7 @@ def test_run_if_missing_false_raises_on_disk_miss(tmp_path, monkeypatch):
     persist = tmp_path / "align"
     persist.mkdir()  # empty: no TextGrid for this stem
     monkeypatch.setattr(aligner, "_align_uncached",
-                        lambda a, t, g2p=False: pytest.fail("MFA must not run"))
+                        lambda a, t, g2p=False, **kw: pytest.fail("MFA must not run"))
     with pytest.raises(RuntimeError):
         aligner.align_with_phones(
             str(tmp_path / "stim.wav"), "hello",
@@ -123,7 +126,7 @@ def test_run_if_missing_true_falls_back_to_mfa(tmp_path, monkeypatch):
     persist = tmp_path / "align"
     persist.mkdir()
     monkeypatch.setattr(aligner, "_align_uncached",
-                        lambda a, t, g2p=False: _fake_frames())
+                        lambda a, t, g2p=False, **kw: _fake_frames())
     w, _ = aligner.align_with_phones(
         str(tmp_path / "stim.wav"), "hello",
         persist_dir=persist, run_if_missing=True)
@@ -138,7 +141,7 @@ def _install_fake_mfa(monkeypatch, aligned_stems=None):
     """
     runs = {"count": 0}
 
-    def fake(corpus_dir, output_dir, g2p=False):
+    def fake(corpus_dir, output_dir, g2p=False, **kw):
         runs["count"] += 1
         for name in os.listdir(corpus_dir):
             if not name.endswith(".lab"):
@@ -198,7 +201,7 @@ def test_ensure_alignments_forwards_g2p_value_to_run_mfa(tmp_path, monkeypatch):
     a2 = _make_audio(tmp_path, "two.wav", b"bbbb")
     received = {}
 
-    def _fake_run_mfa(corpus_dir, output_dir, g2p=False):
+    def _fake_run_mfa(corpus_dir, output_dir, g2p=False, **kw):
         received["g2p"] = g2p
         for name in os.listdir(corpus_dir):
             if name.endswith(".lab"):
@@ -224,7 +227,7 @@ def test_ensure_only_realigns_stale_subset(tmp_path, monkeypatch):
     # Change only two's transcript.
     staged = []
 
-    def spy(corpus_dir, output_dir, g2p=False):
+    def spy(corpus_dir, output_dir, g2p=False, **kw):
         staged.extend(n[:-4] for n in os.listdir(corpus_dir)
                       if n.endswith(".lab"))
         for s in staged:
@@ -234,3 +237,77 @@ def test_ensure_only_realigns_stale_subset(tmp_path, monkeypatch):
     res = aligner.ensure_alignments([(a1, "hi one"), (a2, "CHANGED")], persist)
     assert staged == ["two"], "only the stale stimulus is re-aligned"
     assert res["cached"] == ["one"] and res["aligned"] == ["two"]
+
+
+def test_fallback_mfa_persists_textgrid_and_sidecar(tmp_path, monkeypatch):
+    """A per-document MFA run (fallback after a failed batch pre-pass) writes
+    its TextGrid + sidecar to persist_dir, so a later pass reads it from disk
+    instead of re-aligning, and the folder matches the CSVs built from it."""
+    persist = tmp_path / "align"
+    audio = tmp_path / "stim.wav"
+    audio.write_bytes(b"RIFFfake")
+
+    def fake(corpus_dir, output_dir, g2p=False, **kw):
+        with open(os.path.join(output_dir, "stim.TextGrid"), "w") as f:
+            f.write("tg")
+
+    monkeypatch.setattr(aligner, "_run_mfa", fake)
+    monkeypatch.setattr(aligner, "_parse_textgrid", lambda p: _fake_frames())
+
+    aligner.align_with_phones(str(audio), "hello", persist_dir=persist)
+    assert (persist / "stim.TextGrid").exists()
+    assert aligner._is_fresh(persist, "stim", str(audio), "hello")
+
+    monkeypatch.setattr(aligner, "_run_mfa",
+                        lambda *a, **kw: pytest.fail("MFA must not run again"))
+    aligner.align_with_phones(str(audio), "hello", persist_dir=persist,
+                              run_if_missing=False)
+
+
+def test_disk_hit_requires_fresh_sidecar(tmp_path, monkeypatch):
+    """A TextGrid whose sidecar no longer matches the transcript is not reused."""
+    persist = tmp_path / "align"
+    persist.mkdir()
+    audio = tmp_path / "stim.wav"
+    audio.write_bytes(b"RIFFfake")
+    (persist / "stim.TextGrid").write_text("fake tg", encoding="utf-8")
+    aligner._write_sidecar(persist, "stim", str(audio), "old transcript")
+    monkeypatch.setattr(aligner, "_parse_textgrid", lambda p: _fake_frames())
+    with pytest.raises(RuntimeError, match="No alignment on disk"):
+        aligner.align_with_phones(str(audio), "new transcript",
+                                  persist_dir=persist, run_if_missing=False)
+
+
+def test_every_mfa_call_gets_its_own_temporary_directory(tmp_path, monkeypatch):
+    """MFA's working folder (corpus.db) is per call, never the shared
+    $MFA_ROOT_DIR/corpus/, so two runs at once can't collide."""
+    cmds = []
+
+    class _Result:
+        returncode = 0
+        stdout = stderr = ""
+
+    def fake_subprocess_run(cmd, **kw):
+        cmds.append(cmd)
+        corpus_dir, output_dir = cmd[2], cmd[5]
+        for name in os.listdir(corpus_dir):
+            if name.endswith(".lab"):
+                with open(os.path.join(output_dir, f"{name[:-4]}.TextGrid"),
+                          "w") as f:
+                    f.write("tg")
+        return _Result()
+
+    monkeypatch.setattr(aligner.subprocess, "run", fake_subprocess_run)
+    monkeypatch.setattr(aligner, "_parse_textgrid", lambda p: _fake_frames())
+    audio = tmp_path / "one.wav"
+    audio.write_bytes(b"RIFFone")
+
+    aligner.align_with_phones(str(audio), "hello")
+    aligner.ensure_alignments([(str(audio), "hello")], tmp_path / "persist")
+
+    temp_dirs = [c[c.index("--temporary_directory") + 1] for c in cmds]
+    assert len(temp_dirs) == 2 and temp_dirs[0] != temp_dirs[1]
+    mfa_root = os.environ.get("MFA_ROOT_DIR")
+    if mfa_root:
+        for d in temp_dirs:
+            assert not os.path.abspath(d).startswith(os.path.abspath(mfa_root))

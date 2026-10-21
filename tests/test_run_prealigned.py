@@ -24,6 +24,7 @@ def test_run_reads_disk_and_never_calls_mfa(tmp_path, monkeypatch):
     transcript.write_text("hello world", encoding="utf-8")
     audio = tmp_path / "stim.wav"
     audio.write_bytes(b"RIFFfake")
+    aligner._write_sidecar(persist, "stim", str(audio), "hello world")
 
     # Disk parse returns canned frames; MFA must never be invoked.
     monkeypatch.setattr(
@@ -33,7 +34,7 @@ def test_run_reads_disk_and_never_calls_mfa(tmp_path, monkeypatch):
                    pd.DataFrame({"phone": ["HH"], "onset": [0.0],
                                  "offset": [0.1]})))
     monkeypatch.setattr(aligner, "_align_uncached",
-                        lambda a, t: pytest.fail("MFA must not run"))
+                        lambda a, t, **kw: pytest.fail("MFA must not run"))
 
     args = types.SimpleNamespace(
         transcript=str(transcript), audio=str(audio), output_folder=str(out),
@@ -148,7 +149,7 @@ def test_run_cache_hit_log_matches_the_real_align_with_phones_key(
 
     calls = {"n": 0}
 
-    def _counted(a, t, *, g2p=False):
+    def _counted(a, t, *, g2p=False, **kw):
         calls["n"] += 1
         return _canned_alignment(a, t, g2p=g2p)
 
@@ -182,7 +183,7 @@ def test_run_cache_hit_log_does_not_false_positive_across_different_g2p(
 
     calls = {"n": 0}
 
-    def _counted(a, t, *, g2p=False):
+    def _counted(a, t, *, g2p=False, **kw):
         calls["n"] += 1
         return _canned_alignment(a, t, g2p=g2p)
 
@@ -210,7 +211,7 @@ def test_run_forwards_g2p_oov_value_to_align_with_phones(tmp_path, monkeypatch):
 
     received = {}
 
-    def _capture(a, t, *, g2p=False):
+    def _capture(a, t, *, g2p=False, **kw):
         received["g2p"] = g2p
         return _canned_alignment(a, t, g2p=g2p)
 
@@ -250,3 +251,62 @@ def test_prealign_batch_threads_g2p_oov_true(tmp_path, monkeypatch):
     main._prealign_batch(ns, pairs, tmp_path / "out")
 
     assert captured["g2p"] is True
+
+
+class _Logger:
+    def __init__(self):
+        self.warnings = []
+
+    def add_warning(self, msg):
+        self.warnings.append(msg)
+
+
+class _Pair:
+    def __init__(self, audio_path, transcript_path):
+        self.audio_path = audio_path
+        self.transcript_path = transcript_path
+
+
+def _one_pair(tmp_path):
+    txt = tmp_path / "stim.txt"
+    txt.write_text("hello world", encoding="utf-8")
+    wav = tmp_path / "stim.wav"
+    wav.write_bytes(b"RIFFstim")
+    return _Pair(wav, txt)
+
+
+def test_prealign_failure_is_recorded_in_manifest(tmp_path, monkeypatch):
+    def _boom(items, persist_dir, g2p=False):
+        raise RuntimeError("MFA alignment failed.\nSTDERR: corpus.db locked")
+
+    monkeypatch.setattr(aligner, "ensure_alignments", _boom)
+    ns = types.SimpleNamespace(no_align=False)
+    log = _Logger()
+    main._prealign_batch(ns, [_one_pair(tmp_path)], tmp_path / "out", log)
+    assert ns._batch_prealigned is False
+    assert log.warnings == [
+        "MFA batch pre-alignment failed (MFA alignment failed.); fell back to "
+        "per-document alignment"]
+
+
+def test_prealign_per_stimulus_miss_is_recorded(tmp_path, monkeypatch):
+    monkeypatch.setattr(
+        aligner, "ensure_alignments",
+        lambda items, persist_dir, g2p=False:
+            {"cached": [], "aligned": [], "failed": ["stim"]})
+    log = _Logger()
+    main._prealign_batch(types.SimpleNamespace(no_align=False),
+                         [_one_pair(tmp_path)], tmp_path / "out", log)
+    assert log.warnings == ["MFA produced no alignment for stim"]
+
+
+def test_prealign_skips_documents_already_aligned_this_dispatch(tmp_path, monkeypatch):
+    """After a fallback pass filled the shared in-memory cache, the next pass
+    must not send those documents to MFA again."""
+    pair = _one_pair(tmp_path)
+    cache = {aligner.cache_key(str(pair.audio_path), "hello world", False): "x"}
+    monkeypatch.setattr(
+        aligner, "ensure_alignments",
+        lambda *a, **kw: pytest.fail("already-aligned docs must not re-run MFA"))
+    ns = types.SimpleNamespace(no_align=False, _align_cache=cache)
+    main._prealign_batch(ns, [pair], tmp_path / "out", _Logger())

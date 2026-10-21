@@ -139,7 +139,13 @@ def main() -> None:
 
     from utils.credentials import export_hf_token
     export_hf_token(shared)
-    dispatch(prefs)
+    from main import InputFolderError
+    try:
+        dispatch(prefs)
+    except InputFolderError as exc:
+        # Missing/typo'd input folders or no transcripts (main._check_input_folders).
+        print(f"run.yaml: {exc}", file=sys.stderr)
+        sys.exit(1)
     print(f"Done. Outputs under {shared['last_output_folder']}.")
 
 

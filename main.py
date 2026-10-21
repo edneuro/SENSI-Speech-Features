@@ -462,6 +462,36 @@ import time
 from utils.file_pairing import find_pairs, Pair
 
 
+class InputFolderError(FileNotFoundError):
+    """A batch input folder is missing or holds nothing to process."""
+
+
+def _check_input_folders(transcripts_dir, audio_folder) -> None:
+    """Fail fast on a missing transcripts folder or a configured-but-missing
+    audio folder. Without this a typo'd transcripts path processes 0 files and
+    a typo'd audio path silently runs every transcript text-only (no MFA,
+    prosody or syllables), both reported as a successful run. Raises
+    InputFolderError so the GUI dispatcher surfaces it as a run error.
+    """
+    if not Path(transcripts_dir).is_dir():
+        raise InputFolderError(
+            f'Transcripts folder does not exist: {transcripts_dir}')
+    if audio_folder and not Path(audio_folder).is_dir():
+        raise InputFolderError(f'Audio folder does not exist: {audio_folder}')
+
+
+def _warn_pairing_gaps(logger, args, pairing) -> None:
+    """Record, in the manifest, transcripts with no matching audio that run
+    text-only while alignment is on (a partial name mismatch or a wrong audio
+    folder would otherwise only show up as missing columns)."""
+    if (args.audio_folder and not getattr(args, 'no_align', False)
+            and pairing.unmatched_text):
+        names = ', '.join(p.name for p in pairing.unmatched_text)
+        logger.add_warning(
+            f'{len(pairing.unmatched_text)} transcript(s) have no matching '
+            f'audio and ran text-only (no alignment or prosody): {names}')
+
+
 def _batch_work_items(pairing) -> list:
     """Ordered work list for the word/doc batches: every matched (text, audio)
     pair, followed by each audio-less transcript as a text-only item.
@@ -724,7 +754,7 @@ def _sentence_embedding_vars(emb: np.ndarray, df: pd.DataFrame,
     }
 
 
-def _prealign_batch(run_args, work_items, output_dir) -> None:
+def _prealign_batch(run_args, work_items, output_dir, logger=None) -> None:
     """Align every audio-bearing stimulus in the batch once, up front.
 
     Populates <output_dir>/Montreal Forced Alignment/ so the per-document run()
@@ -733,7 +763,13 @@ def _prealign_batch(run_args, work_items, output_dir) -> None:
     that stimulus failed to align). If the batch MFA invocation fails outright,
     fall back to per-document alignment: leave _batch_prealigned False so run()
     uses run_if_missing=True and the existing per-pair error handling degrades
-    gracefully instead of aborting the whole batch.
+    gracefully instead of aborting the whole batch. The fallback persists each
+    alignment to the same folder, so a later pass in this dispatch finds it on
+    disk; stimuli already in the shared in-memory `_align_cache` are skipped
+    here too, so MFA runs at most once per document even after a failure.
+
+    Both a whole-batch failure and per-stimulus misses are recorded on
+    `logger` (when given) so they reach the run manifest, not only stderr.
 
     No-op when alignment is disabled or no pair has audio.
     """
@@ -742,7 +778,9 @@ def _prealign_batch(run_args, work_items, output_dir) -> None:
     run_args._batch_prealigned = False
     if getattr(run_args, 'no_align', False):
         return
-    from extractors.aligner import alignment_dir, ensure_alignments
+    from extractors.aligner import alignment_dir, cache_key, ensure_alignments
+    g2p = bool(getattr(run_args, 'g2p_oov', False))
+    align_cache = getattr(run_args, '_align_cache', None) or {}
     items = []
     for pair in work_items:
         if not pair.audio_path:
@@ -758,16 +796,28 @@ def _prealign_batch(run_args, work_items, output_dir) -> None:
             print(f'[mfa] skipping {pair.stimulus_id} in pre-alignment '
                   f'(cannot read transcript: {exc})', file=sys.stderr)
             continue
+        if cache_key(str(pair.audio_path), transcript_text, g2p) in align_cache:
+            continue  # aligned earlier in this dispatch (e.g. by the fallback)
         items.append((str(pair.audio_path), transcript_text))
     if not items:
+        # Nothing left to align: every audio item is already in memory. Leave
+        # _batch_prealigned False so a cache miss could still run MFA, but
+        # none is expected.
         return
     try:
-        ensure_alignments(items, alignment_dir(output_dir),
-                          g2p=bool(getattr(run_args, 'g2p_oov', False)))
+        result = ensure_alignments(items, alignment_dir(output_dir), g2p=g2p) or {}
     except Exception as exc:
+        first_line = (str(exc).strip().splitlines() or [type(exc).__name__])[0]
         print(f'[mfa] batch pre-alignment failed ({exc}); falling back to '
               'per-document alignment', file=sys.stderr)
+        if logger is not None:
+            logger.add_warning(
+                f'MFA batch pre-alignment failed ({first_line}); fell back to '
+                'per-document alignment')
         return
+    if logger is not None:
+        for stem in result.get('failed', []):
+            logger.add_warning(f'MFA produced no alignment for {stem}')
     run_args._batch_prealigned = True
 
 
@@ -783,11 +833,15 @@ def run_word_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None
 
     if not args.analyzer:
         raise SystemExit('--analyzer is required for batch mode')
+    _check_input_folders(transcripts_dir, args.audio_folder)
 
     text_exts = [e.strip() for e in args.text_extensions.split(',') if e.strip()]
     audio_exts = [e.strip() for e in args.audio_extensions.split(',') if e.strip()]
 
     pairing = find_pairs(transcripts_dir, audio_dir, text_exts=text_exts, audio_exts=audio_exts)
+    if not pairing.pairs and not pairing.unmatched_text:
+        raise InputFolderError(
+            f'No transcripts ({", ".join(text_exts)}) found in {transcripts_dir}')
 
     config_snapshot = {
         'no_parse': args.no_parse, 'no_freq': args.no_freq, 'no_edu_freq': args.no_edu_freq,
@@ -813,6 +867,7 @@ def run_word_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None
 
     for warning in pairing.warnings:
         logger.add_warning(warning)
+    _warn_pairing_gaps(logger, args, pairing)
     # Audio-less transcripts are now processed as text-only items (see
     # _batch_work_items), so they are no longer recorded as unmatched_text.
     # Only audio with no transcript stays unprocessable here.
@@ -820,7 +875,7 @@ def run_word_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None
         logger.record_unmatched_audio(unmatched)
 
     work_items = _batch_work_items(pairing)
-    _prealign_batch(args, work_items, output_dir)
+    _prealign_batch(args, work_items, output_dir, logger)
     for i, pair in enumerate(work_items):
         if should_cancel and should_cancel():
             logger.add_warning('Run cancelled by user before processing complete')
@@ -1048,11 +1103,15 @@ def run_doc_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None:
 
     if not args.analyzer:
         raise SystemExit('--analyzer is required for batch mode')
+    _check_input_folders(transcripts_dir, args.audio_folder)
 
     text_exts = [e.strip() for e in args.text_extensions.split(',') if e.strip()]
     audio_exts = [e.strip() for e in args.audio_extensions.split(',') if e.strip()]
 
     pairing = find_pairs(transcripts_dir, audio_dir, text_exts=text_exts, audio_exts=audio_exts)
+    if not pairing.pairs and not pairing.unmatched_text:
+        raise InputFolderError(
+            f'No transcripts ({", ".join(text_exts)}) found in {transcripts_dir}')
 
     doc_toggles = {
         'counts':                not args.no_doc_counts,
@@ -1094,6 +1153,7 @@ def run_doc_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None:
 
     for warning in pairing.warnings:
         logger.add_warning(warning)
+    _warn_pairing_gaps(logger, args, pairing)
     # Audio-less transcripts are processed as text-only items (see
     # _batch_work_items); only audio with no transcript stays unprocessable.
     for unmatched in pairing.unmatched_audio:
@@ -1143,7 +1203,7 @@ def run_doc_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None:
         extract_args.no_prosody = False
 
     work_items = _batch_work_items(pairing)
-    _prealign_batch(extract_args, work_items, output_dir)
+    _prealign_batch(extract_args, work_items, output_dir, logger)
     for i, pair in enumerate(work_items):
         if should_cancel and should_cancel():
             logger.add_warning('Run cancelled by user before processing complete')
@@ -1235,7 +1295,9 @@ def run_acoustic_level_batch(args, *, on_pair_done=None, should_cancel=None) -> 
     import scipy.io
     from extractors.acoustic_ts import extract_acoustic
 
-    audio_dir = Path(args.audio_folder)
+    audio_dir = Path(args.audio_folder or '')
+    if not args.audio_folder or not audio_dir.is_dir():
+        raise InputFolderError(f'Audio folder does not exist: {audio_dir}')
     output_dir = Path(args.output_folder)
     output_dir.mkdir(parents=True, exist_ok=True)
 

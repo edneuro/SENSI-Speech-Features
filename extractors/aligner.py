@@ -170,13 +170,17 @@ def align_with_phones(
                      word batch and the doc batch in a single GUI run), passing
                      a shared dict makes MFA run at most once per document.
                      When None (CLI single runs, tests), no caching is done.
-        persist_dir: Optional directory that may already hold a reusable
+        persist_dir: Optional directory that may hold a reusable
                      `<stem>.TextGrid` from a prior run (see `alignment_dir` /
-                     the batch pre-alignment pass). When set and a TextGrid for
-                     this stimulus exists there, it is parsed directly and MFA
-                     is not invoked. This function only reads from
-                     `persist_dir` — it never writes to it (only
-                     `ensure_alignments` writes).
+                     the batch pre-alignment pass). When set and a FRESH
+                     TextGrid for this stimulus exists there (sidecar matches
+                     the current inputs, see `_is_fresh`), it is parsed directly
+                     and MFA is not invoked. When MFA does run here (the
+                     per-document fallback after a failed batch pre-pass), its
+                     TextGrid + sidecar are persisted to `persist_dir`, so a
+                     later pass in the same dispatch finds it on disk instead
+                     of re-aligning, and the folder always matches the CSVs
+                     produced from it.
         run_if_missing: When True (default), a disk miss under `persist_dir`
                      falls back to running MFA via `_align_uncached`. When
                      False, a disk miss raises RuntimeError instead — used by
@@ -210,10 +214,10 @@ def align_with_phones(
         return word_df.copy(), phone_df.copy()
 
     result = None
-    if persist_dir is not None:
-        tg = Path(persist_dir) / f'{_stem(audio_path)}.TextGrid'
-        if tg.exists():
-            result = _parse_textgrid(str(tg))
+    stem = _stem(audio_path)
+    if persist_dir is not None and _is_fresh(persist_dir, stem, audio_path,
+                                             transcript, g2p=g2p):
+        result = _parse_textgrid(str(Path(persist_dir) / f'{stem}.TextGrid'))
     if result is None:
         if not run_if_missing:
             raise RuntimeError(
@@ -222,7 +226,8 @@ def align_with_phones(
                 "pre-alignment step should have produced it; this stimulus "
                 "likely failed to align."
             )
-        result = _align_uncached(audio_path, transcript, g2p=g2p)
+        result = _align_uncached(audio_path, transcript, g2p=g2p,
+                                 persist_dir=persist_dir)
 
     if cache is not None:
         cache[key] = result
@@ -232,12 +237,17 @@ def align_with_phones(
 
 
 def _align_uncached(
-    audio_path: str, transcript: str, *, g2p: bool = False
+    audio_path: str, transcript: str, *, g2p: bool = False, persist_dir=None
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Run MFA once for (audio_path, transcript). See align_with_phones."""
+    """Run MFA once for (audio_path, transcript). See align_with_phones.
+
+    When `persist_dir` is set, the TextGrid is moved there with a freshness
+    sidecar (stale artifacts for this stem are removed first) — the same
+    on-disk contract `ensure_alignments` writes.
+    """
     prepared = prepare_for_aligner(transcript)
 
-    with tempfile.TemporaryDirectory() as tmpdir:
+    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
         corpus_dir = os.path.join(tmpdir, 'corpus')
         output_dir = os.path.join(tmpdir, 'output')
         os.makedirs(corpus_dir)
@@ -251,7 +261,8 @@ def _align_uncached(
         with open(lab_path, 'w', encoding='utf-8') as f:
             f.write(prepared)
 
-        _run_mfa(corpus_dir, output_dir, g2p=g2p)
+        _run_mfa(corpus_dir, output_dir, g2p=g2p,
+                 temp_dir=os.path.join(tmpdir, 'mfa_tmp'))
 
         tg_path = os.path.join(output_dir, f'{stem}.TextGrid')
         if not os.path.exists(tg_path):
@@ -259,7 +270,15 @@ def _align_uncached(
                 f"MFA did not produce a TextGrid for {stem}. "
                 "Check that the audio and transcript match, and that MFA models are downloaded."
             )
-        return _parse_textgrid(tg_path)
+        if persist_dir is None:
+            return _parse_textgrid(tg_path)
+        persist_dir = Path(persist_dir)
+        persist_dir.mkdir(parents=True, exist_ok=True)
+        (persist_dir / f'{stem}.json').unlink(missing_ok=True)
+        dest = persist_dir / f'{stem}.TextGrid'
+        shutil.move(tg_path, str(dest))
+        _write_sidecar(persist_dir, stem, audio_path, transcript, g2p=g2p)
+        return _parse_textgrid(str(dest))
 
 
 def _parse_textgrid(tg_path: str) -> tuple[pd.DataFrame, pd.DataFrame]:
@@ -324,7 +343,7 @@ def ensure_alignments(items, persist_dir, *, g2p: bool = False) -> dict:
 
     aligned: list[str] = []
     failed: list[str] = []
-    with tempfile.TemporaryDirectory() as tmpdir:
+    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
         corpus_dir = os.path.join(tmpdir, 'corpus')
         output_dir = os.path.join(tmpdir, 'output')
         os.makedirs(corpus_dir)
@@ -335,7 +354,9 @@ def ensure_alignments(items, persist_dir, *, g2p: bool = False) -> dict:
                       encoding='utf-8') as f:
                 f.write(prepare_for_aligner(transcript_text))
 
-        _run_mfa(corpus_dir, output_dir, g2p=g2p)   # single invocation for the batch
+        # single invocation for the batch
+        _run_mfa(corpus_dir, output_dir, g2p=g2p,
+                 temp_dir=os.path.join(tmpdir, 'mfa_tmp'))
 
         for stem, (audio_path, transcript_text) in stale_by_stem.items():
             produced = os.path.join(output_dir, f'{stem}.TextGrid')
@@ -369,8 +390,16 @@ def align(audio_path: str, transcript: str) -> pd.DataFrame:
     return word_df
 
 
-def _run_mfa(corpus_dir: str, output_dir: str, *, g2p: bool = False) -> None:
+def _run_mfa(corpus_dir: str, output_dir: str, *, g2p: bool = False,
+             temp_dir: str | None = None) -> None:
     """Invoke MFA as a subprocess. Raises RuntimeError on failure.
+
+    `temp_dir` becomes MFA's `--temporary_directory` (its working folder,
+    including `corpus.db`). Without it MFA works in `$MFA_ROOT_DIR/<corpus
+    name>/`, which every call shares (the corpus dir is always named
+    `corpus`): two runs at once collide on the database lock, and a read-only
+    MFA_ROOT_DIR (the Sherlock .sif bakes it under /opt) can't be written at
+    all. Callers pass a folder inside their own TemporaryDirectory.
 
     When `g2p` is set and the vendored G2P model is present, MFA generates a
     pronunciation for out-of-dictionary words instead of aligning them to a
@@ -386,6 +415,8 @@ def _run_mfa(corpus_dir: str, output_dir: str, *, g2p: bool = False) -> None:
         '--clean',
         '--quiet',
     ]
+    if temp_dir is not None:
+        cmd += ['--temporary_directory', temp_dir]
     if g2p:
         if g2p_model_available():
             cmd += ['--g2p_model_path', str(G2P_MODEL_PATH)]
