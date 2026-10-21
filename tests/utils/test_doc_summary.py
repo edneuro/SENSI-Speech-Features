@@ -102,6 +102,18 @@ def test_category_proportions_toggled():
     assert summary['prop_animal'] == pytest.approx(1 / 2)
 
 
+def test_category_proportion_is_blank_without_content_words():
+    """No content words: a proportion is undefined, so blank (NaN), not 0."""
+    df = pd.DataFrame({'token': ['the', '.'], 'upos': ['DET', 'PUNCT'],
+                       'Sem_Empath_animal': [None, None]})
+    toggles = _all_off()
+    toggles['category_proportions'] = True
+    summary = build_doc_summary(df, stimulus_id='s', dictionary_used='Empath',
+                                text='The.', toggles=toggles)
+    assert summary['count_animal'] == 0
+    assert pd.isna(summary['prop_animal'])
+
+
 def test_psych_summary_computed_regardless_of_backend():
     # Composite psych is now license-clean (spaCy + VADER) and no longer
     # depends on the semantic backend — it is emitted whenever toggled on,

@@ -1221,16 +1221,17 @@ def run_doc_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None:
             liwc_path = None
             if dict_label == 'LIWC':
                 _, liwc_path = _resolve_sem_backend(args.sem_dict)
-            # The doc-summary name column shows the real transcript filename
-            # (with extension, original casing); pair.stimulus_id (the stem)
-            # still drives the per-level output filenames.
+            # stimulus_id is the transcript stem (original casing), the same id
+            # every per-level output filename uses, so the document table joins
+            # to them directly; the full filename stays in transcript_path.
             summary = build_doc_summary(
-                df, stimulus_id=pair.transcript_path.name, dictionary_used=dict_label,
+                df, stimulus_id=pair.stimulus_id, dictionary_used=dict_label,
                 text=text, toggles=doc_toggles, liwc_dictionary_path=liwc_path,
                 contours=getattr(extract_args, '_contours', None),
                 pause_threshold_s=getattr(extract_args, 'pause_threshold', 0.25),
                 pitch_units=getattr(extract_args, 'pitch_units', 'semitones'),
                 late_acquired_threshold=getattr(args, 'late_acquired_threshold', 10.0),
+                phones_df=getattr(extract_args, '_phones_df', None),
             )
             summary['transcript_path'] = str(pair.transcript_path)
             summary['audio_path'] = str(pair.audio_path) if pair.audio_path else ""

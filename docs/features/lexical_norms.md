@@ -141,7 +141,7 @@ adds, computed over **content words** (`NOUN/VERB/ADJ/ADV/PROPN`):
   convention, documented as such.
 - `mean_concreteness`, `mean_imageability`, `mean_familiarity`,
   `mean_valence`, `mean_arousal`, `mean_dominance`
-- per-norm coverage: `aoa_coverage`, `concreteness_coverage`, … (fraction of
+- per-norm coverage (blank when the document has no content words): `aoa_coverage`, `concreteness_coverage`, … (fraction of
   content tokens that matched the norm — read these to judge how trustworthy
   each mean is).
 

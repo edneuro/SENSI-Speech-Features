@@ -112,15 +112,48 @@ def _count_syllables(token: str) -> int:
     return _syllable_dic.inserted(token).count("-") + 1
 
 
+def _count_spoken_syllables(aligned: pd.DataFrame,
+                            phones_df: pd.DataFrame | None) -> int:
+    """Syllables actually spoken in the aligned words.
+
+    With an MFA phone tier: one syllable per vowel phone (ARPABET vowels carry
+    a stress digit), so the count follows the pronunciation MFA aligned, not
+    the spelling, and a contraction sharing one MFA interval is counted once.
+    An OOV word aligned to a single `spn` phone has no vowels, so it falls back
+    to the pyphen count of the word whose interval holds it. Without a phone
+    tier, pyphen over every aligned non-PUNCT token. Returns -1 if pyphen is
+    needed but unavailable.
+    """
+    words = aligned[aligned["upos"] != "PUNCT"] if "upos" in aligned else aligned
+    if phones_df is None or len(phones_df) == 0:
+        total = 0
+        for token in words["token"].astype(str):
+            syl = _count_syllables(token)
+            if syl < 0:
+                return -1
+            total += syl
+        return total
+    labels = phones_df["phone"].astype(str)
+    total = int(labels.str[-1].str.isdigit().sum())
+    for onset in phones_df.loc[labels == "spn", "onset"]:
+        holder = words[(words["Onset"] <= onset) & (words["End"] > onset)]
+        if len(holder):
+            syl = _count_syllables(str(holder["token"].iloc[0]))
+            if syl < 0:
+                return -1
+            total += syl
+    return total
+
+
 def compute_doc_prosody(df: pd.DataFrame, contours: Contours, *,
                         text: str, pause_threshold_s: float = 0.25,
-                        pitch_units: str = "semitones") -> dict[str, float]:
+                        pitch_units: str = "semitones",
+                        phones_df: pd.DataFrame | None = None) -> dict[str, float]:
     """Return 16 doc-level prosody columns as a flat dict.
 
-    `text` is currently unused — reserved for a future syllable-from-orthography
-    fallback when MFA-aligned word forms differ from the transcript (e.g.,
-    contractions). Callers in build_doc_summary already forward the transcript
-    text, so the wiring is in place.
+    `phones_df` is the MFA phone tier (phone / onset / offset); when given,
+    articulation rate counts syllables from it (see _count_spoken_syllables).
+    `text` is unused (kept for call-site compatibility).
     """
     del text  # see docstring
     # Whole-stimulus pitch/volume aggregates (apply unit conversion).
@@ -142,30 +175,28 @@ def compute_doc_prosody(df: pd.DataFrame, contours: Contours, *,
         pauses = gaps[gaps > pause_threshold_s].tolist()
     pause_count = len(pauses)
     pause_total = float(sum(pauses))
-    pause_mean = float(np.mean(pauses)) if pauses else 0.0
+    # No pauses -> the mean pause length is undefined, not 0 s.
+    pause_mean = float(np.mean(pauses)) if pauses else float("nan")
     if len(aligned) >= 1:
         stim_duration = float(aligned["End"].iloc[-1] - aligned["Onset"].iloc[0])
     else:
         stim_duration = float("nan")
-    pause_pct = (pause_total / stim_duration) if stim_duration and stim_duration > 0 else float("nan")
+    # Percent (0-100) of the first-word-to-last-word span spent in pauses;
+    # leading/trailing file padding is deliberately not counted.
+    pause_pct = (100.0 * pause_total / stim_duration
+                 if stim_duration and stim_duration > 0 else float("nan"))
 
-    # Articulation rate: syllables / spoken time (excludes pauses by definition).
-    syllable_total = 0
-    spoken_time = 0.0
-    pyphen_ok = True
-    for _, row in aligned.iterrows():
-        if row.get("upos") == "PUNCT":
-            continue
-        syl = _count_syllables(str(row["token"]))
-        if syl < 0:
-            pyphen_ok = False
-            break
-        syllable_total += syl
-        spoken_time += float(row["End"]) - float(row["Onset"])
-    if not pyphen_ok or spoken_time <= 0:
+    # Articulation rate: syllables per second of speaking time, where speaking
+    # time is the speech span minus pauses longer than the threshold. Short
+    # gaps between words count as speaking (the standard definition), so the
+    # pause threshold sets what is excluded.
+    speaking_time = (stim_duration - pause_total
+                     if np.isfinite(stim_duration) else float("nan"))
+    syllable_total = _count_spoken_syllables(aligned, phones_df)
+    if syllable_total < 0 or not (speaking_time > 0):
         articulation = float("nan")
     else:
-        articulation = syllable_total / spoken_time
+        articulation = syllable_total / speaking_time
 
     return {
         "doc_pitch_mean": p_mean,

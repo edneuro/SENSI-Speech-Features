@@ -36,6 +36,19 @@ def _df():
     return pd.DataFrame({"token": ["The", "cat", "."],
                          "upos": ["DET", "NOUN", "PUNCT"]})
 
+def test_tiny_cloze_keeps_precision_instead_of_flooring_to_zero():
+    """Cloze is stored to 6 significant digits, so a very unlikely word (38.9
+    bits) keeps a positive probability consistent with its surprisal."""
+    from extractors.predictability import _write_metric_columns
+    p = 2.0 ** -38.9
+    out = {}
+    _write_metric_columns(out, "gpt2", ["surprisal", "cloze"], ["NOUN"],
+                          [{"p": p, "surprisal": 38.9, "top_match": 0}])
+    cloze = out["gpt2_Cloze"][0]
+    assert cloze > 0
+    assert -math.log2(cloze) == pytest.approx(38.9, abs=1e-4)
+
+
 def test_namespaced_columns_per_model_and_metric():
     out = add_predictability(_df(), "The cat.", models=["gpt2", "llama3_8b"],
                              metrics=["surprisal", "cloze"],

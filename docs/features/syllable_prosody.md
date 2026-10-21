@@ -18,10 +18,18 @@ analogues of the word-level [pitch](prosody_pitch.md) and
 |---|---|---|
 | `Pitch_Mean`   | Mean F0 inside the syllable's [Onset, End) window | Same units (semitones rel. speaker median, or Hz) as the word-level pitch column. |
 | `Volume_Mean`  | Mean intensity (dB SPL) inside the window | Same units as the word-level volume column. |
-| `Pitch_Delta`  | `Pitch_Mean[i] − Pitch_Mean[i-1]` within the same word | NaN for the first syllable of each word. |
-| `Volume_Delta` | `Volume_Mean[i] − Volume_Mean[i-1]` within the same word | NaN for the first syllable of each word. |
+| `Pitch_Delta`  | `Pitch_Mean[i] − Pitch_Mean[j]`, where `j` is the most recent earlier syllable with a pitch value, in the same word or the word before | NaN for the first syllable of the stimulus that has a value. |
+| `Volume_Delta` | `Volume_Mean[i] − Volume_Mean[j]`, same rule | Same. |
 
-Only the means and per-word deltas are emitted — no min/max/std at the
+The deltas run across word boundaries: the first syllable of "day" in
+"beautiful day" is compared with "ful". A within-word-only delta would
+be blank for every one-syllable word (about 70 % of rows in running
+speech); if you want it, drop the rows where `syllable_id == 1` before
+analysis. An unvoiced or empty syllable (no pitch frames) gets a blank
+`Pitch_Mean`, and the next syllable is compared with the last one that
+had a value instead of going blank too.
+
+Only the means and deltas are emitted — no min/max/std at the
 syllable level, since syllable windows are short (often < 10 frames)
 and percentile-based extrema would be noisy.
 
@@ -36,9 +44,9 @@ contrasts can be expressed acoustically**. For naturalistic-EEG:
 - Syllable-onset-locked envelope tracking benefits from
   syllable-aligned pitch / intensity covariates rather than
   word-averaged ones.
-- The within-word `Pitch_Delta` captures **intra-word pitch contour
-  shape** — a useful regressor for studies of intonational phrase
-  structure.
+- `Pitch_Delta` captures **syllable-to-syllable pitch movement**,
+  including the step into each new word — a useful regressor for
+  studies of intonational phrase structure.
 
 ## Implementation in SensiExtractor
 Source: `extractors/syllable_prosody.py`. Reuses the same `Contours`
@@ -50,10 +58,12 @@ call per audio file, three different slicing windows.
 1. For each syllable row, slice the pitch and intensity contours to
    `[syllable.Onset, syllable.End)`.
 2. Compute the mean of each contour over valid frames.
-3. Within each word group (rows sharing `doc_id, sentence_id,
-   token_in_sentence_id`), compute `diff()` on the per-syllable means to populate
-   `Pitch_Delta` / `Volume_Delta` (NaN for the first syllable of each
-   word).
+3. Over the whole stimulus, subtract from each syllable's mean the
+   mean of the most recent earlier syllable that has one
+   (`mean - mean.ffill().shift(1)`), giving `Pitch_Delta` /
+   `Volume_Delta`. This matches the word-level deltas. Before
+   2026-10-21 a plain `diff()` was used, so a syllable following an
+   unvoiced one was also blank.
 4. PUNCT / unaligned rows → NaN for all four columns.
 
 The pitch-units configuration (semitones vs. Hz) is shared with the

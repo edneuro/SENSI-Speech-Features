@@ -85,6 +85,7 @@ def build_doc_summary(
     pause_threshold_s: float = 0.25,
     pitch_units: str = 'semitones',
     late_acquired_threshold: float = 10.0,
+    phones_df=None,                      # MFA phone tier, for articulation rate
 ) -> dict:
     """Aggregate a per-word DataFrame into a one-row summary dict."""
     df = token_df
@@ -151,7 +152,8 @@ def build_doc_summary(
             category = parts[2]
             count = int(df[col].fillna(0).astype(int).sum())
             summary[f'count_{category}'] = count
-            summary[f'prop_{category}'] = (count / n_content) if n_content > 0 else 0.0
+            # No content words -> the proportion is undefined (blank), not 0.
+            summary[f'prop_{category}'] = (count / n_content) if n_content > 0 else float('nan')
 
     psych_wanted = any(toggles.get(k) for k in
                        ('psych_authentic', 'psych_analytic', 'psych_tone', 'psych_clout'))
@@ -177,7 +179,7 @@ def build_doc_summary(
         prosody = compute_doc_prosody(
             token_df, contours,
             text=text, pause_threshold_s=pause_threshold_s,
-            pitch_units=pitch_units,
+            pitch_units=pitch_units, phones_df=phones_df,
         )
         summary.update(prosody)
 
@@ -222,6 +224,6 @@ def _lexical_norm_aggregates(df: pd.DataFrame, late_acquired_threshold: float) -
 
     for col, dst in _LEXNORM_COVERAGE_COLS.items():
         if col in df.columns:
-            out[dst] = float(content[col].notna().mean()) if n_content else 0.0
+            out[dst] = float(content[col].notna().mean()) if n_content else float('nan')
 
     return out

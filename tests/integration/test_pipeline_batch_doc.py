@@ -55,6 +55,10 @@ def test_doc_level_master_csv_columns(tmp_path):
     # Always-present columns
     assert 'stimulus_id' in rows[0]
     assert 'n_tokens' in rows[0]
+    # stimulus_id is the stem every per-level output file uses; the full
+    # filename lives in transcript_path.
+    for row in rows:
+        assert row['stimulus_id'] == Path(row['transcript_path']).stem
 
 
 def test_doc_level_does_not_emit_word_level_csvs(tmp_path):

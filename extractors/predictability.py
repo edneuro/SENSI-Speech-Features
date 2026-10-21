@@ -81,7 +81,10 @@ def _write_metric_columns(out, slug, metrics, upos, scores):
                 cols[m].append(round(score["surprisal"], 4)
                                if score["surprisal"] == score["surprisal"] else np.nan)
             elif m == "cloze":
-                cols[m].append(round(score["p"], 6)
+                # 6 significant digits, not 6 decimals: a very unlikely word
+                # keeps a tiny positive probability (e.g. 2.1e-12) instead of
+                # flooring to 0, so Cloze = 2^(-Surprisal) and log(Cloze) hold.
+                cols[m].append(float(f'{score["p"]:.6g}')
                                if score["p"] == score["p"] else np.nan)
             else:  # topmatch
                 tm = score["top_match"]

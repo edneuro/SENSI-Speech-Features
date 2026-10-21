@@ -73,8 +73,12 @@ surprisal = -sum(subword_log_probs) / math.log(2)
 top_match = (argmax_subword == actual_subword)  # at the first subword
 ```
 
-PUNCT rows are masked to `NaN`. The probability is stored rounded to
-6 decimal places.
+PUNCT rows are masked to `NaN`. The probability is stored to 6
+**significant digits** (e.g. `0.0123457`, or `2.07e-12` for a very
+unlikely word), so it is never rounded down to exactly 0 and
+`Cloze = 2^(−Surprisal)` holds for every word. Before 2026-10-21 it was
+rounded to 6 decimal places, which turned any word above about 20 bits
+of surprisal into `0.0`.
 
 ## Papers
 

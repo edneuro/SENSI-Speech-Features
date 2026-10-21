@@ -18,9 +18,13 @@ Document-level features → Prosody card).
 | Column | Meaning | Unit |
 |---|---|---|
 | `doc_pause_count`          | Number of inter-word gaps exceeding the threshold. | integer |
-| `doc_pause_mean_duration`  | Mean duration of those pauses. | seconds |
+| `doc_pause_mean_duration`  | Mean duration of those pauses. Blank when there are no pauses (a mean of nothing is undefined, not 0 s). | seconds |
 | `doc_pause_total_duration` | Sum of those pauses. | seconds |
-| `doc_pause_pct_silence`    | `doc_pause_total_duration / audio_duration` (as percent). | percent (0–100) |
+| `doc_pause_pct_silence`    | Pause time as a percent of the **speech span** (first word's onset to last word's end). | percent (0–100) |
+
+The speech span deliberately leaves out silence before the first word and
+after the last one: that padding depends on how the recording was cut, not
+on the speaker.
 
 ## EEG rationale
 Pauses chunk continuous speech into **prosodic phrases** and **clauses**
@@ -41,10 +45,11 @@ Document-level pause statistics let you:
   with high articulation rate AND many pauses is fast-but-bursty.
 
 `doc_pause_pct_silence` is the most-cited single-number summary of
-"how much of the audio is silence" — useful for stimulus-level
+"how much of the speech is silence" — useful for stimulus-level
 matching and as a sanity check (if it's 0 %, alignment may have
-failed; if > 30 %, you may have unintended long silences at the start
-or end of the audio).
+failed or the speaker never paused longer than the threshold). Because
+it is measured over the speech span, long silence at the very start or
+end of a file does not inflate it.
 
 ## Configuration
 The pause threshold is shared with the document-level **Pause
@@ -61,22 +66,31 @@ The same threshold applies to all four columns — they're not
 independently tunable.
 
 ## Implementation in SensiExtractor
-Source: `extractors/prosody.py` (document-level prosody section). All
-four columns derive from the **word-level [`Word_Gap`](acoustic_durations.md)
-column** plus the audio duration:
+Source: `extractors/prosody.py:compute_doc_prosody`. All four columns
+come from the MFA-aligned words (rows with an `Onset`/`End`), sorted by
+onset. The gap between consecutive words is the same quantity as the
+word-level [`Word_Gap`](acoustic_durations.md) column:
 
 ```python
-gaps = word_df["Word_Gap"].dropna()
-pauses = gaps[gaps > threshold_s]
-doc_pause_count          = int(len(pauses))
-doc_pause_total_duration = float(pauses.sum())
-doc_pause_mean_duration  = float(pauses.mean()) if len(pauses) else float("nan")
-doc_pause_pct_silence    = 100.0 * doc_pause_total_duration / audio_duration_s
+gaps   = onset[1:] - end[:-1]                 # consecutive aligned words
+pauses = gaps[gaps > threshold_s]             # strictly greater than
+span   = end[last] - onset[first]             # speech span
+doc_pause_count          = len(pauses)
+doc_pause_total_duration = sum(pauses)
+doc_pause_mean_duration  = mean(pauses) if pauses else NaN
+doc_pause_pct_silence    = 100.0 * doc_pause_total_duration / span
 ```
 
-When `Word_Gap` is not present (alignment off), all four columns are
-`NaN`. The doc-level page's preflight surfaces a warning in that
-case.
+Words that share one MFA interval (e.g. the two halves of a contraction)
+produce a negative or zero gap, which never counts as a pause.
+
+Before 2026-10-21, `doc_pause_pct_silence` was emitted as a fraction
+(0–1) despite its name, and `doc_pause_mean_duration` was 0 instead of
+blank for a stimulus with no pauses.
+
+These columns need forced alignment; without it the document prosody
+step does not run and they are left out. The doc-level page's preflight
+surfaces a warning in that case.
 
 ## Papers
 - <a name="goldman-eisler-1968"></a>**[Goldman-Eisler 1968]** Goldman-Eisler. *Psycholinguistics: Experiments in Spontaneous Speech.* Academic Press. — foundational study of pause distribution in spontaneous conversation, including the canonical hesitation-pause / juncture-pause distinction.

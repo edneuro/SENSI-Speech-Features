@@ -173,8 +173,8 @@ def test_doc_pause_stats_three_words_one_pause():
     assert doc["doc_pause_count"] == 1
     assert doc["doc_pause_mean_duration"] == pytest.approx(0.5)
     assert doc["doc_pause_total_duration"] == pytest.approx(0.5)
-    # Total stimulus duration = end[last] - onset[first] = 2.0 - 0.0 = 2.0
-    assert doc["doc_pause_pct_silence"] == pytest.approx(0.25)
+    # Speech span = end[last] - onset[first] = 2.0 s; 0.5 s of it is pause.
+    assert doc["doc_pause_pct_silence"] == pytest.approx(25.0)
 
 
 def test_doc_pause_threshold_strict_greater_than():
@@ -209,6 +209,51 @@ def test_doc_single_word_no_pauses():
                               pause_threshold_s=0.25, pitch_units="hz")
     assert doc["doc_pause_count"] == 0
     assert doc["doc_pause_total_duration"] == pytest.approx(0.0)
+    # No pauses: the mean pause length is undefined (blank), not 0 s.
+    assert np.isnan(doc["doc_pause_mean_duration"])
+
+
+def test_articulation_counts_short_gaps_as_speaking_time():
+    """Speaking time = speech span minus pauses above the threshold; a short
+    gap between words (here 0.1 s) is speaking time, a long one (0.5 s) is not."""
+    contours = make_contours(np.full(300, 200.0), np.full(300, 60.0))
+    df = pd.DataFrame([
+        {"token": "run", "Onset": 0.0, "End": 0.4, "upos": "VERB"},
+        {"token": "run", "Onset": 0.5, "End": 1.0, "upos": "VERB"},   # 0.1 s gap
+        {"token": "run", "Onset": 1.5, "End": 2.0, "upos": "VERB"},   # 0.5 s pause
+    ])
+    df = add_word_prosody(df, contours, pitch_units="hz")
+    doc = compute_doc_prosody(df, contours, text="", pause_threshold_s=0.25,
+                              pitch_units="hz")
+    # 3 syllables / (2.0 s span - 0.5 s pause) = 2.0
+    assert doc["doc_articulation_rate"] == pytest.approx(2.0)
+    # A higher threshold turns the 0.5 s gap into speaking time too.
+    doc = compute_doc_prosody(df, contours, text="", pause_threshold_s=1.0,
+                              pitch_units="hz")
+    assert doc["doc_articulation_rate"] == pytest.approx(1.5)
+
+
+def test_articulation_counts_syllables_from_mfa_phones():
+    """With a phone tier, syllables are vowel phones: a contraction sharing one
+    MFA interval counts once, and an `spn` (OOV) word falls back to pyphen."""
+    contours = make_contours(np.full(300, 200.0), np.full(300, 60.0))
+    df = pd.DataFrame([
+        {"token": "was", "Onset": 0.0, "End": 0.5, "upos": "AUX"},
+        {"token": "n't", "Onset": 0.0, "End": 0.5, "upos": "PART"},
+        {"token": "Zorblax", "Onset": 0.5, "End": 1.0, "upos": "PROPN"},
+    ])
+    phones = pd.DataFrame({
+        "phone": ["W", "AA1", "Z", "AH0", "N", "T", "spn"],
+        "onset": [0.0, 0.1, 0.2, 0.3, 0.4, 0.45, 0.5],
+        "offset": [0.1, 0.2, 0.3, 0.4, 0.45, 0.5, 1.0],
+    })
+    df = add_word_prosody(df, contours, pitch_units="hz")
+    doc = compute_doc_prosody(df, contours, text="", pause_threshold_s=0.25,
+                              pitch_units="hz", phones_df=phones)
+    # "wasn't" = 2 vowel phones; Zorblax via pyphen = 2 -> 4 syllables / 1.0 s.
+    from extractors.prosody import _count_syllables
+    assert _count_syllables("Zorblax") == 2
+    assert doc["doc_articulation_rate"] == pytest.approx(4.0)
 
 
 def test_doc_hnr_passed_through_from_contours():

@@ -74,8 +74,10 @@ def add_syllable_prosody(syll_df: pd.DataFrame, contours: Any,
 
     df['Pitch_Mean'] = pitch_means
     df['Volume_Mean'] = volume_means
-    # Delta: difference vs the PREVIOUS syllable in the same stimulus.
-    # NaN on the first row.
-    df['Pitch_Delta'] = df['Pitch_Mean'].diff()
-    df['Volume_Delta'] = df['Volume_Mean'].diff()
+    # Delta: difference vs the previous syllable in the stimulus (across word
+    # boundaries), measured back to the most recent syllable WITH a value --
+    # ffill skips unvoiced/empty syllables instead of blanking the next delta,
+    # as the word-level deltas do. NaN for the first syllable with a value.
+    df['Pitch_Delta'] = df['Pitch_Mean'] - df['Pitch_Mean'].ffill().shift(1)
+    df['Volume_Delta'] = df['Volume_Mean'] - df['Volume_Mean'].ffill().shift(1)
     return df

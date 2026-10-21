@@ -56,6 +56,21 @@ def test_volume_mean_is_intensity_mean_db():
     assert abs(df.Volume_Mean.iloc[0] - 55.0) < 0.01
 
 
+def test_delta_skips_an_unvoiced_syllable():
+    """A syllable with no pitch doesn't blank the next delta: it is measured
+    back to the most recent syllable that had a value."""
+    times = np.arange(100) * 0.01
+    pitch = np.where(times < 0.30, 100.0, 130.0)
+    pitch[(times >= 0.30) & (times < 0.50)] = np.nan       # syllable 2 unvoiced
+    contours = _FakeContours(pitch_hz=pitch, intensity_db=np.full(100, 60.0),
+                             times=times, speaker_median_pitch_hz=100.0)
+    syl = pd.concat([_two_syllables(), _two_syllables().iloc[[1]].assign(
+        syllable_id=3, Onset=0.50, End=0.70)], ignore_index=True)
+    df = add_syllable_prosody(syl, contours, pitch_units='hz')
+    assert pd.isna(df.Pitch_Mean.iloc[1])
+    assert df.Pitch_Delta.iloc[2] == pytest.approx(30.0)   # 130 - 100
+
+
 def test_pitch_delta_is_nan_on_first_syllable():
     df = add_syllable_prosody(_two_syllables(), _flat_contours())
     assert pd.isna(df.Pitch_Delta.iloc[0])

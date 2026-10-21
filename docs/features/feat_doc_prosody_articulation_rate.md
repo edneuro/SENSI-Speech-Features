@@ -4,14 +4,15 @@ name: Articulation rate
 levels: [document]
 gui_toggle: feat_doc_prosody_articulation_rate
 output_columns: [doc_articulation_rate]
-libraries: [pyphen]
+libraries: [pyphen, montreal-forced-aligner]
 status: implemented
 depth: deep
 ---
 
 ## Meaning
-**Syllables per second**, computed over **speaking time only** (audio
-duration minus silent pauses). Single value per stimulus.
+**Syllables per second of speaking time**: the speech span (first
+word's onset to last word's end) minus the silent pauses longer than the
+pause threshold. Single value per stimulus.
 
 Typical adult conversational range: **3–6 syllables/sec** ([Tauroza
 1990]). Values outside this range usually indicate either a
@@ -40,20 +41,26 @@ speaker pauses a lot; together with [`doc_pause_*`](doc_prosody_pauses.md),
 articulation rate gives a complete picture of timing.
 
 ## Math / linguistics
-    articulation_rate = total_syllables / (audio_duration − total_pause_duration)
+    articulation_rate = total_syllables / (speech_span − total_pause_duration)
 
 Where:
-- `total_syllables` is the sum of syllable counts across all aligned
-  content words.
-- Pauses are inter-word gaps exceeding the pause-threshold
-  (default 0.25 s; configurable via the GUI's pause-threshold
-  spinbox).
+- `speech_span` = last aligned word's `End` − first aligned word's
+  `Onset`.
+- `total_pause_duration` is the sum of inter-word gaps **longer than**
+  the pause threshold (default 0.25 s; the same threshold as
+  [`doc_pause_*`](doc_prosody_pauses.md)). Shorter gaps between words
+  count as speaking time, which is the standard definition and is what
+  makes the threshold matter.
+- `total_syllables` counts every aligned word (all parts of speech,
+  punctuation excluded), from the pronunciation MFA aligned: one
+  syllable per vowel phone. A word MFA could not pronounce (aligned to
+  a single `spn` "spoken noise" phone, see [g2p_oov](g2p_oov.md)) is
+  counted with the `pyphen` spelling-based estimate instead.
 
-Syllable counting uses the `pyphen` hyphenation dictionary applied to
-each word's surface form — a well-tested approximation but not exact
-phonological syllabification. The MFA-derived per-syllable timing
-([syllable_timing](syllable_timing.md)) is used when that stage is
-also active; otherwise pyphen-based counting is the fallback.
+Counting from MFA's phones follows the pronunciation actually used
+(e.g. "every" as 2 or 3 syllables, depending on the dictionary entry
+MFA chose) rather than the spelling, and counts a contraction that MFA
+aligns as one stretch ("wasn't") once.
 
 ## Implementation in SensiExtractor
 Source: `extractors/prosody.py:compute_doc_prosody` — see the
@@ -61,21 +68,30 @@ document-batch finishing step in `main.py` which calls it.
 
 **What the code does:**
 
-1. Counts total syllables via `pyphen` over each word's surface form
-   (using the same `_count_syllables` helper as the word-level
-   prosody extractor).
-2. Computes total pause duration as the sum of inter-word gaps
-   exceeding the threshold (configurable in the GUI's Prosody card →
-   "Pause threshold (sec)").
-3. Returns `total_syllables / (audio_duration − total_pause_duration)`.
-4. **If `pyphen` is unavailable**, returns `NaN` with a logged
-   warning rather than crashing.
+1. Takes the MFA-aligned words (rows with `Onset`/`End`), sorted by
+   onset, and computes the speech span and the pauses (gaps longer than
+   the threshold set in the GUI's Prosody card → "Pause threshold
+   (sec)").
+2. Counts syllables with `_count_spoken_syllables`: vowel phones in the
+   MFA phone tier, plus a `pyphen` count for each `spn` word. When no
+   phone tier is available it falls back to `pyphen` over every aligned
+   non-punctuation token.
+3. Returns `total_syllables / (speech_span − total_pause_duration)`, or
+   `NaN` if that speaking time is not positive or `pyphen` is needed but
+   unavailable.
 
-⚠️ The pyphen-based syllable count is approximate — a small
-systematic error (~5–10 % per language) is expected vs. true
-phonological syllabification. For exact counts, use the
-[syllable timing extractor](syllable_timing.md) and aggregate from
-there.
+The syllable count no longer depends on whether the syllable-timing
+outputs are switched on: the phone tier comes from the same alignment
+every time.
+
+**History (2026-10-21):** speaking time used to be the sum of each
+word's MFA duration. That dropped every short gap between words, so the
+pause threshold had no effect, and it counted a contraction sharing one
+MFA interval twice. Syllables used to be counted with `pyphen` over the
+spelling. On three validation stimuli the new values were 1–10 % higher
+(4.35 → 4.40, 3.52 → 3.85, 4.75 → 4.85 syl/s), mostly because MFA's
+pronunciations contain more syllables than the spelling-based estimate
+(e.g. 39 vs 33 for one stimulus).
 
 ## Library
 ```python
