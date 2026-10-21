@@ -27,12 +27,20 @@ _DEFAULT_MODEL_NAME = "bert-base-uncased"
 _MAX_EFFECTIVE_TOKENS = 510   # 512 - 2 for [CLS] and [SEP]
 
 
+# (tokenizer, model) per model name, kept for the process lifetime so BERT
+# loads once per run instead of once per stimulus. The model is in eval mode
+# and only used under inference, so reuse is safe.
+_BERT_CACHE: dict[str, tuple] = {}
+
+
 def _load_bert(model_name: str):
-    from transformers import BertTokenizerFast, BertModel  # type: ignore
-    tokenizer = BertTokenizerFast.from_pretrained(model_name)
-    model = BertModel.from_pretrained(model_name, output_hidden_states=True)
-    model.eval()
-    return tokenizer, model
+    if model_name not in _BERT_CACHE:
+        from transformers import BertTokenizerFast, BertModel  # type: ignore
+        tokenizer = BertTokenizerFast.from_pretrained(model_name)
+        model = BertModel.from_pretrained(model_name, output_hidden_states=True)
+        model.eval()
+        _BERT_CACHE[model_name] = (tokenizer, model)
+    return _BERT_CACHE[model_name]
 
 
 def _sentence_groups(word_df: pd.DataFrame) -> list[dict]:

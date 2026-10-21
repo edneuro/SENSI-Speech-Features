@@ -27,7 +27,20 @@ class Word2VecUnavailable(RuntimeError):
     """Raised when gensim is missing or the model file is not found."""
 
 
+# Loaded models, kept for the process lifetime: the 1.7 GB Google News model
+# took ~20 s to load and was reloaded for every stimulus. Read-only lookups,
+# so reuse is safe (same pattern as predictability._BACKEND_CACHE).
+_MODEL_CACHE: dict[str, Any] = {}
+
+
 def _load_model(model_path: str | Path) -> Any:
+    key = str(Path(model_path))
+    if key not in _MODEL_CACHE:
+        _MODEL_CACHE[key] = _load_model_uncached(model_path)
+    return _MODEL_CACHE[key]
+
+
+def _load_model_uncached(model_path: str | Path) -> Any:
     try:
         from gensim.models import KeyedVectors  # type: ignore
         import gensim.downloader as gensim_dl   # type: ignore

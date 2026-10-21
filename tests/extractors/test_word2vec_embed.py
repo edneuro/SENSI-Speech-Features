@@ -147,3 +147,15 @@ def test_is_valid_dtype_and_shape(mock_load):
     mat, is_valid = embed_word2vec(df, model_path="dummy.bin")
     assert is_valid.shape == (3,)
     assert is_valid.dtype == bool
+
+
+def test_model_loads_once_per_process(monkeypatch):
+    """The 1.7 GB model is loaded once and reused for every stimulus."""
+    from extractors import word2vec_embed as w
+    calls = []
+    monkeypatch.setattr(w, "_MODEL_CACHE", {})
+    monkeypatch.setattr(w, "_load_model_uncached",
+                        lambda p: calls.append(p) or object())
+    first = w._load_model("some/path.bin")
+    assert w._load_model("some/path.bin") is first
+    assert len(calls) == 1

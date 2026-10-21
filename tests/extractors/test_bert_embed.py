@@ -262,3 +262,27 @@ def test_all_punct_sentence_is_invalid():
     )
     assert sent_valid.tolist() == [False]
     assert word_valid.tolist() == [False, False]
+
+
+def test_bert_loads_once_per_process(monkeypatch):
+    """Tokenizer + model are loaded once and reused for every stimulus."""
+    import transformers
+    from extractors import bert_embed as b
+    calls = []
+
+    class _Fake:
+        def eval(self):
+            return self
+
+    def fake_from_pretrained(name, **kw):
+        calls.append(name)
+        return _Fake()
+
+    monkeypatch.setattr(b, "_BERT_CACHE", {})
+    monkeypatch.setattr(transformers.BertTokenizerFast, "from_pretrained",
+                        staticmethod(fake_from_pretrained))
+    monkeypatch.setattr(transformers.BertModel, "from_pretrained",
+                        staticmethod(fake_from_pretrained))
+    first = b._load_bert("bert-base-uncased")
+    assert b._load_bert("bert-base-uncased") is first
+    assert len(calls) == 2          # one tokenizer + one model load, not per call
