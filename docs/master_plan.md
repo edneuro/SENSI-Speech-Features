@@ -12,7 +12,7 @@ SensiExtractor is the standardized SOP tool for the SENSI naturalistic-EEG pipel
 
 ## 2. Current state — what we're working on RIGHT NOW
 
-**No batch is mid-flight.** The most recent shipped work is the **phoneme label split + IPA + phoneme-coverage correctness** batch — **merged to `main` on 2026-07-28** (22 commits, `474a5f4..c0fda8e`; the `feat/phoneme-labels-ipa-oov` branch has been deleted) with its **real-stimulus validation PASSED**, not outstanding. See §2b for exactly what that run covered and the three things it did *not*. Before that, the config/predictability cluster (all 2026-07-10 → 07-12): Config ergonomics (defaults templates + persistent HF token), Unified YAML config (Project C), per-model predictability context size (Project B), Predictability model unification (Project A), and the release-hardening correctness sweep. Full summaries are in §3 — this section no longer restates them.
+**In flight: the audit fix branch `fix/mfa-reporting`** (2026-10-21, unmerged; see §2a). The most recent work merged to `main` is the **phoneme label split + IPA + phoneme-coverage correctness** batch — **merged to `main` on 2026-07-28** (22 commits, `474a5f4..c0fda8e`; the `feat/phoneme-labels-ipa-oov` branch has been deleted) with its **real-stimulus validation PASSED**, not outstanding. See §2b for exactly what that run covered and the three things it did *not*. Before that, the config/predictability cluster (all 2026-07-10 → 07-12): Config ergonomics (defaults templates + persistent HF token), Unified YAML config (Project C), per-model predictability context size (Project B), Predictability model unification (Project A), and the release-hardening correctness sweep. Full summaries are in §3 — this section no longer restates them.
 
 **Real-stimulus validation is no longer the blanket gap it was.** On 2026-07-28 a full `python run.py --config-dir validation/config` pass ran over the ten real stimuli in `validation/data/` with everything CPU-feasible enabled, and `validation/verify_phoneme_batch.py` exits 0. That single run exercised most of the backlog below — see §2b. The repo's own test fixtures are still empty placeholders, so the suite alone still proves nothing about MFA-dependent behaviour; the `validation/` corpus is what does.
 
@@ -24,67 +24,53 @@ Prefs schema is at **v20**; the version history and the two-file YAML storage mo
 
 **Fixed: headless `python run.py` no longer breaks on a pre-v20 `features.yaml`.** `run.py` still validates the raw config **before** `load_preferences()` runs the version-migration chain (`run.py:81-82`, `:108`) — that ordering is intentional, since raw validation exists to catch a malformed hand-edited config before an hour of work, not to duplicate migration. What changed: a fixed set of **retired keys** (`utils/config_yaml.RETIRED_FEATURE_KEYS` / `RETIRED_PREDICTABILITY_KEYS` — `feat_phoneme_label`, the v18 `pred_*` toggles, `feat_struct_term_id`, `predictability.llm_model`) is now tolerated by `validate_features_yaml` and reported as a non-fatal `[warn] retired toggle …` line (`retired_keys_present`) instead of an error, so a v19-shaped `features.yaml` reaches `load_preferences()`'s migration and `dispatch()` runs normally. A genuinely unknown/typo'd key is still a hard error. Also fixed the edge case this exposed: `load_preferences()` used to `setdefault` a **missing** `schema_version` to the *current* version rather than v19, which skipped every pending finalize block (including v20's `feat_phoneme_label` removal) and left the file never rewritten (`changed` stayed `False`); a **quoted** `schema_version` (e.g. `'19'`) hit the same bug because the int-keyed version-branch comparison silently fell through to the v1 flat-json migration path. Both now normalize to v19 before the migration chain runs. See `tests/test_run_py.py` and `tests/utils/test_preferences_yaml.py` for the regression coverage.
 
-## 2a. NEXT SESSION STARTS HERE — the 2026-08-04 full-project audit
+## 2a. NEXT SESSION STARTS HERE — audit fixes on `fix/mfa-reporting` (2026-10-21)
 
-A seven-layer audit of the whole project ran on Windows on **2026-08-04** (every feature
-toggle and sub-option, every emitted column vs its documentation, all five `.mat` types in
-MATLAB R2024b, GUI robustness, headless/Sherlock YAML, config migration and corruption).
+The 2026-08-04 full-project audit was **re-verified claim by claim on 2026-10-21** (read-only,
+against the code). The old audit mis-framed roughly half its "wrong published numbers" (e.g.
+the delta means and syllable deltas were code-correct, doc-wrong). Authority for what is
+real: `audit/REVERIFY-2026-10-21.md`.
+> ⚠️ `audit/` is still **git-excluded** (`.git/info/exclude`); confirm it exists before
+> relying on it.
 
-**It found ~45 defects. Nothing has been fixed yet — the audit was audit-only.**
+**Fixed on branch `fix/mfa-reporting` (not yet merged to `main`, not pushed)** — see the
+2026-10-21 rows in §3: MFA at most once per doc after a batch failure; MFA problems in the
+manifest; per-call MFA temp dir; one MFA speaker per stimulus (batch onsets = single-file
+onsets); fail-fast input folders; the owner's value decisions (percent silence, standard
+articulation rate, blanks for undefined means, stem `stimulus_id`, full-precision cloze,
+syllable deltas skip unvoiced syllables); config value checks shared by `run.py` and the Run
+tab; Cancel wired; Run-tab readiness; corrupt-TextGrid recovery; save retry; relative
+`run.yaml` paths anchored to the config folder; log wording; CI import smoke covers `gui/` +
+`run.py`; ~20 doc-only fixes + a complete units sidecar; dead per-column CLI flags removed.
 
-**Open decision, never answered:** fix in the order in `audit/SUMMARY.md` (invariant +
-manifest first), or verify the Tier 2 defects first so the true scope is known before
-touching code?
+**Before merging:** try the branch in the GUI (`python gui.py`) on real stimuli. Every
+stimulus re-aligns once on its first run (sidecar v3), and several published values change
+(percent silence ×100, articulation rate +1–10 %, `stimulus_id` loses `.txt`, onsets shift
+by up to ~0.05–0.08 s for files previously aligned in a mixed batch).
 
-**Findings:** `audit/SUMMARY.md` (distilled, prioritised) and `audit/reports/{A..G}-*.md`.
-> ⚠️ `audit/` is **git-excluded** (`.git/info/exclude`) — none of it is under version
-> control. Confirm the directory still exists before relying on it; if the machine is
-> reimaged the audit must be re-run.
+**Still open:**
+- **Sherlock:** MFA still writes `command_history.yaml` / `extracted_models/` under
+  `MFA_ROOT_DIR` (inside the read-only `.sif`); unverified whether that fails there. Rebuild
+  the image after merging and run a one-stimulus test job (Sherlock 2.0 nodes retired
+  2026-10-06).
+- **Install:** `setup.sh` should refuse an Intel (`osx-64`) conda and not install
+  `conda-lock` into the base env (a collaborator's old Anaconda stalled for an hour).
+- A stimulus MFA cannot align at all is still attempted once per pass.
+- Leftover dead code: `Plan.column_drops` (computed and tested, never consumed) and the
+  unreachable LIWC-no-.dic preflight warning.
+- **Verification gap:** the `validation/` corpus has no out-of-dictionary word, so OOV/G2P
+  is never exercised; no stimulus is long enough to exercise predictability chunking
+  end-to-end.
+- **Release blockers:** no `LICENSE`; the ⚠️ markers in `docs/features/*.md` (owner's domain
+  review, §4); CI runs install + import smoke only (the test suite never runs in CI); no
+  version/tag or `CITATION.cff`.
 
-**Findings are split into two tiers and the split matters.** Tier 1 (9) were each confirmed
-by the controller independently of the reporting agent; Tier 2 (~36) were reported but not
-re-verified. One agent claim was **refuted** on checking (LIWC reported as silently
-selectable — in fact its radio is `setEnabled(False)` with a licence tooltip and an on-page
-note), so Tier 2 items should be verified before they are fixed.
+**Two surfaces came back clean in the audit — do not re-audit:** the `.mat` sidecars
+(MATLAB R2024b) and the predictability math (2172/2172 pairs exact, native and chunked, via
+`sherlock/validate_llama_predictability.py --model-slug gpt2`).
 
-**Worst finding — this contradicts §6's "MFA runs at most once per doc" invariant.** When
-`_prealign_batch`'s single MFA invocation fails, the per-document fallback aligns but
-**never persists** TextGrids (`align_with_phones` only reads from `persist_dir` by design),
-so the next pass finds nothing cached and re-aligns every stimulus a second time in the same
-dispatch. Observed live: word log `[mfa] batch pre-alignment failed`, doc log `10 stimuli:
-0 cached, 10 aligned`; 19 min vs 7. **And every run manifest reports `warnings: []` with no
-MFA keys**, so a provenance check reading manifests sees a clean run. Trigger:
-`mfa_data/corpus/corpus.db` is global rather than scoped per run, and two runs 79 s apart
-collided — the pattern a Sherlock array job produces.
-
-**Other Tier 1:** `doc_pitch_delta_mean`/`doc_volume_delta_mean` emit mean **absolute**
-delta, not the documented signed mean (~350× off); `doc_pause_pct_silence` is a fraction,
-not percent (and `session_units.py` agrees with the wrong doc); an inverted pitch range is
-**GUI-reachable** and silently NaNs all pitch while reporting success (`floor=400,
-ceiling=100` is inside the spinbox ranges); ~30 `--no-syl-*`/`--no-phon-*`/`--no-sent-*` CLI
-flags are dead code; the Cancel button is unwired at the middle (both `should_cancel` and
-`cancel_requested` exist); `gpt2_Cloze` reaches exact `0.0` via 6-dp rounding, breaking the
-documented `Cloze = 2^(−Surprisal)`.
-
-**Two surfaces came back clean — do not re-audit.** The `.mat` sidecars (0 defects, all five
-types in MATLAB R2024b, which never disagreed with scipy) and the predictability math
-(2172/2172 pairs exact against an independent recomputation, native **and** chunked paths,
-via `sherlock/validate_llama_predictability.py --model-slug gpt2` — that harness is
-model-agnostic and runs on Windows; only the gated Llama weights need Sherlock).
-
-**Biggest verification gap:** the `validation/` corpus cannot exercise OOV/G2P at all —
-`out_g2p` is identical to `out_allon` (100 % `Pron_Source == dictionary`, zero `spn`) even
-with the flag on. Adding one stimulus with a genuinely out-of-dictionary proper noun is the
-cheapest large win available.
-
-**Release blockers tracked separately from the defects:** no `LICENSE`; the 49 ⚠️ markers in
-25 `docs/features/*.md` (owner's domain review, §4); CI runs install + import smoke only so
-the 896-test suite never runs on any platform; no version/tag or `CITATION.cff`.
-
-**Validated in real use since the audit:** the user's live `config/features.yaml` was v19
-during the audit and **migrated itself to v20 on 2026-08-11** during ordinary use — retired
-key removed, all four replacements present and correctly inheriting `false`, new `alignment`
-section added. The v20 removal-migration works unattended on a real config.
+**Validated in real use since the audit:** the user's live `config/features.yaml`
+migrated itself v19 → v20 on 2026-08-11 during ordinary use, correctly.
 
 ## 2b. Real-stimulus validation — what the 2026-07-28 run covered
 
@@ -149,6 +135,7 @@ One line per batch. **Full detail (the exhaustive per-batch write-ups) lives in 
 
 | Date | Batch | One-line summary + spec |
 |---|---|---|
+| 2026-10-21 | **Audit fix batch 2: owner value decisions, config checks, GUI/CLI robustness, doc fixes** | `doc_pause_pct_silence` is a percent of the speech span; `doc_articulation_rate` = syllables (MFA vowel phones) / (span − pauses above threshold), so the threshold matters and contractions count once (values +1–10 % on validation); `doc_pause_mean_duration`, `prop_<cat>`, `*_coverage` blank instead of 0 when undefined; `stimulus_id` = transcript stem; `*_Cloze` to 6 significant digits (never 0); syllable deltas ffill over unvoiced syllables. New `utils/config_checks.py` (ranges, allowed values, floor < ceiling, n_mfcc ≤ n_mels, model slugs, Empath names) used by `run.py` and the Run tab; Cancel wired; audio folder required only when used; corrupt TextGrid re-aligned + reported; save retry + visible failure; relative `run.yaml` folders anchored to the config folder; CI import smoke covers `gui/` + `run.py`; ~20 doc-only fixes + complete `session_units`; dead per-column CLI flags removed. No schema change. No spec (owner decisions recorded in `audit/REVERIFY-2026-10-21.md`). |
 | 2026-10-21 | **MFA failure handling + input-folder checks (audit fix batch 1)** | After a failed batch pre-align, the per-doc fallback now persists its TextGrids and later passes skip already-aligned docs, so MFA runs at most once per doc; disk reuse requires a fresh sidecar; MFA batch failures and per-stimulus misses reach the run manifest; each MFA call gets its own `--temporary_directory`, so a back-to-back run can't hit a lingering lock on the shared `mfa_data/corpus/corpus.db` (MFA still writes `command_history.yaml` / `extracted_models/` under `MFA_ROOT_DIR`, so the read-only Sherlock `.sif` is **not** shown to work); each stimulus is staged as its own MFA speaker, so CMVN/fMLLR no longer pool audio across a batch — batch onsets now equal single-file onsets exactly (3 real stimuli; the old pooled layout differed by up to 0.05 s here, 0.08 s in the audit), sidecar v3 re-aligns old TextGrids once; missing/typo'd transcripts or audio folders and empty transcript folders now fail fast (`InputFolderError`, `run.py` exit 1), and audio-less transcripts during an aligned run are named in the manifest. No schema change. No spec (from the re-verified audit, `audit/REVERIFY-2026-10-21.md`, git-excluded). |
 | 2026-07-27 | **Phoneme label split + IPA + phoneme coverage** | Phoneme CSV's fused `Label` → `ARPABET` + `Stress` (nullable `Int64`) + `IPA` + `Pron_Source` — **BREAKING**; syllable CSV gains dash-joined `IPA`; two silent data defects fixed (OOV words vanished from all sub-word output; contractions duplicated every phoneme, also doubling the `.mat` surprisal trains); whitespace tokens no longer occupy word-CSV rows; opt-in MFA G2P (`alignment.g2p_oov`). Prefs v19→v20 **removal-migration**. `2026-07-27-phoneme-labels-ipa-oov-design.md` |
 | 2026-07-12 | **Config ergonomics: defaults templates + persistent HF token** | Committed `config/*_defaults.yaml` templates for a GUI-free headless setup + persistent HF-token file (`config/hf_token.txt`) with a GUI Save button. No schema bump (v19). `2026-07-12-config-ergonomics-design.md` |
