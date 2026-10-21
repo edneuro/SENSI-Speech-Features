@@ -13,8 +13,13 @@ depth: deep
 Mean **Harmonics-to-Noise Ratio**, in dB, across all voiced frames in
 the audio. HNR measures how much of the signal energy is periodic
 (harmonics: glottal-pulse-driven) versus aperiodic (noise: breath,
-turbulence). Clean studio speech typically sits in **10–25 dB**;
-breathy or hoarse voices drop below 10 dB.
+turbulence). The often-quoted **10–25 dB** range for clean voices
+⚠️ comes from sustained-vowel measurements; running speech (consonants,
+transitions, and onsets inside the voiced frames) typically scores
+lower, so treat values somewhat below 10 dB on connected speech as
+normal rather than as a sign of a breathy or hoarse voice. Observed on
+our 10-stimulus validation corpus (running speech):
+`doc_hnr` 8.97–13.01 dB.
 
 A single value per stimulus.
 

@@ -1,7 +1,7 @@
 ---
 key: feat_syllable_pcenter
 name: Perceptual centre (P-center)
-levels: [word]
+levels: [syllable]
 gui_toggle: feat_syllable_pcenter
 output_columns: [P_Center]
 libraries: []

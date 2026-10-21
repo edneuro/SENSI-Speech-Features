@@ -16,8 +16,13 @@ inside each sentence's audio window. See
 and interpretation — `feat_sentence_hnr` is the same quantity
 computed over a sentence-length window rather than the whole document.
 
-Typical values for clean speech: **10–25 dB**. Lower values indicate
-breathier or noisier phonation.
+The often-quoted **10–25 dB** range for clean voices ⚠️ comes from
+sustained-vowel measurements; running speech typically scores lower,
+and a sentence window is short enough to vary more than the whole-document
+value. Observed on our 10-stimulus validation corpus (running
+speech): sentence `HNR` 6.97–13.78 dB, about a
+quarter of sentences below 10 dB. Within a stimulus, lower values
+indicate breathier or noisier phonation.
 
 ## EEG rationale
 Per-sentence HNR captures **voice-quality variation across the

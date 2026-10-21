@@ -1,7 +1,7 @@
 ---
 key: phoneme
 name: Phoneme-level columns
-levels: [word]
+levels: [phoneme]
 gui_toggles: [feat_phoneme_arpabet, feat_phoneme_stress, feat_phoneme_ipa, feat_phoneme_pron_source, feat_phoneme_onset, feat_phoneme_end, feat_phoneme_duration]
 output_columns: [ARPABET, Stress, IPA, Pron_Source, Onset, End, Duration]
 libraries: [montreal-forced-aligner]

@@ -1,7 +1,7 @@
 ---
 key: syllable_timing
 name: Syllable timing (Onset / End / Duration)
-levels: [word]
+levels: [syllable]
 gui_toggles: [feat_syllable_onset, feat_syllable_end, feat_syllable_duration]
 output_columns: [Onset, End, Duration]
 libraries: [montreal-forced-aligner]

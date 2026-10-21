@@ -1,7 +1,7 @@
 ---
 key: syllable_prosody
 name: Syllable-level prosody (pitch + volume + deltas)
-levels: [word]
+levels: [syllable]
 gui_toggles: [feat_syllable_pitch_mean, feat_syllable_volume_mean, feat_syllable_pitch_delta, feat_syllable_volume_delta]
 output_columns: [Pitch_Mean, Volume_Mean, Pitch_Delta, Volume_Delta]
 libraries: [parselmouth, praat]

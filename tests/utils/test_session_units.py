@@ -98,6 +98,52 @@ def test_doc_summary_includes_articulation_and_pause_units():
     assert by_col["doc_pause_mean_duration"] == "seconds"
 
 
+def test_zipf_unit_is_log10_per_billion():
+    plan = _mk_plan(csvs=frozenset({"features", "documents_summary"}))
+    by_col = {(r["output_csv"], r["column"]): r["unit"]
+              for r in build_session_units(plan)}
+    zipf = "Zipf (log10 frequency per billion words)"
+    assert by_col[("features", "Zipf_Freq")] == zipf
+    assert by_col[("documents_summary", "mean_edu_zipf_overall")] == zipf
+
+
+def test_sentence_csv_rows_and_pitch_units():
+    plan = _mk_plan(csvs=frozenset({"sentences"}),
+                    stage_configs={"praat_contours": {"pitch_units": "Hz"}})
+    by_col = {r["column"]: r["unit"] for r in build_session_units(plan)}
+    assert by_col["Onset"] == "seconds"
+    assert by_col["HNR"] == "dB"
+    assert by_col["Volume_Delta"] == "dB"
+    assert by_col["Pitch_Mean"] == "Hz"
+
+
+def test_subword_lexnorm_and_doc_aggregate_rows():
+    plan = _mk_plan(csvs=frozenset({"features", "syllables", "phonemes",
+                                    "documents_summary"}))
+    by_col = {(r["output_csv"], r["column"]): r["unit"]
+              for r in build_session_units(plan)}
+    assert by_col[("syllables", "P_Center")] == "seconds"
+    assert by_col[("phonemes", "phoneme_surprisal")] == "bits"
+    assert by_col[("phonemes", "cohort_entropy")] == "bits"
+    assert by_col[("features", "Concreteness")] == "rating (1-5)"
+    assert by_col[("documents_summary", "mean_aoa")] == "years"
+    assert by_col[("documents_summary", "ttr")] == "ratio (0-1)"
+    assert by_col[("documents_summary", "aoa_coverage")] == "proportion (0-1)"
+
+
+def test_doc_predictability_mean_rows():
+    plan = Plan(
+        stages_to_run=("predictability",),
+        output_csvs=frozenset({"documents_summary"}),
+        column_drops={"documents_summary": frozenset()},
+        stage_configs={},
+        predictability_columns=("gpt2_Surprisal", "llama3_8b_TopMatch"),
+    )
+    by_col = {r["column"]: r["unit"] for r in build_session_units(plan)}
+    assert by_col["mean_gpt2_surprisal"] == "bits"
+    assert by_col["mean_llama3_8b_topmatch"] == "proportion (0-1)"
+
+
 def test_multiple_csvs_active():
     plan = _mk_plan(csvs=frozenset({"features", "syllables", "phonemes"}))
     rows = build_session_units(plan)

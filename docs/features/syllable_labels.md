@@ -1,7 +1,7 @@
 ---
 key: syllable_labels
 name: Syllable labels (orthographic + ARPABET + IPA)
-levels: [word]
+levels: [syllable]
 gui_toggles: [feat_syllable_label, feat_syllable_arpabet, feat_syllable_ipa]
 output_columns: [Label, ARPABET, IPA]
 libraries: [pyphen, montreal-forced-aligner]

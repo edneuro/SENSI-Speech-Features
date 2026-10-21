@@ -1,7 +1,7 @@
 ---
 key: phoneme_surprisal
 name: Phoneme surprisal + cohort entropy
-levels: [word]
+levels: [phoneme]
 gui_toggles: [feat_phoneme_surprisal, feat_phoneme_cohort_entropy]
 output_columns: [phoneme_surprisal, cohort_entropy]
 libraries: [wordfreq]

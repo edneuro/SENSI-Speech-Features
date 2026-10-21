@@ -22,7 +22,11 @@ active category, the extractor emits one binary column:
 
 Plus a roll-up column `Sem_Categories` — a comma-separated list of all
 categories matched by the word (or `""` if none, `NaN` if function
-word).
+word). **In the CSV both `""` and `NaN` are written as an empty cell**,
+so the distinction does not survive the file. To tell them apart, use a
+per-category `Sem_<Dict>_<cat>` column (`0` = scored content word with
+no match, `NaN` = not scored) or the `upos` column (scored iff `upos` is
+in the content-POS set below).
 
 **Content-POS filter:** scoring is restricted to `NOUN`, `VERB`, `ADJ`,
 `ADV`, `PROPN`. Function words, determiners, punctuation, etc. receive

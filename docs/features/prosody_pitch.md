@@ -20,7 +20,7 @@ contour, computed within each word's MFA-aligned acoustic window
 | `Pitch_Min`   | 5th-percentile F0 inside the word | Robust min — avoids the spurious zero from unvoiced/octave-jump frames. |
 | `Pitch_Max`   | 95th-percentile F0 inside the word | Robust max — same reason. |
 | `Pitch_Std`   | Standard deviation of F0 inside the word | Within-word pitch variability. |
-| `Pitch_Delta` | `Pitch_Mean[i] − Pitch_Mean[i-1]` | Word-to-word pitch change. `NaN` for the first word. |
+| `Pitch_Delta` | `Pitch_Mean[i] − Pitch_Mean[j]`, `j` = most recent earlier word with a `Pitch_Mean` | Word-to-word pitch change; PUNCT/unaligned rows are skipped (like `Word_Gap`). `NaN` for the first aligned word. |
 
 Words with no aligned acoustic interval (failed alignment, PUNCT) get
 `NaN` for all five columns.
@@ -86,7 +86,10 @@ Source: `extractors/prosody.py:add_word_prosody`. Underlying contours:
    `speaker_median_pitch_hz` if requested.
 3. For each word row (in order), slices contour frames to `[Onset,
    End)` and computes `_agg(slice)` = `(mean, p5, p95, std)`.
-4. Computes `Pitch_Delta` as the row-to-row diff of `Pitch_Mean`.
+4. Computes `Pitch_Delta` as `Pitch_Mean − Pitch_Mean.ffill().shift(1)`:
+   the change from the most recent earlier word that has a value, so
+   a PUNCT or unaligned row in between doesn't turn the next word's
+   delta into NaN.
 5. PUNCT rows / unaligned rows receive NaN for all five columns
    uniformly.
 

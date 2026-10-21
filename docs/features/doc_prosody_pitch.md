@@ -20,7 +20,7 @@ same units as the [word-level pitch](prosody_pitch.md) columns
 | `doc_pitch_min`         | 5th-percentile F0 over the audio. |
 | `doc_pitch_max`         | 95th-percentile F0 over the audio. |
 | `doc_pitch_std`         | Standard deviation of F0 across the audio. |
-| `doc_pitch_delta_mean`  | Mean of the word-level [`Pitch_Delta`](prosody_pitch.md) column. |
+| `doc_pitch_delta_mean`  | Mean of the **absolute** word-level [`Pitch_Delta`](prosody_pitch.md) values (rises and falls don't cancel). |
 
 The first four operate on the **raw F0 contour** (all voiced frames),
 not on the per-word means — so `doc_pitch_mean` ≠ `mean(Pitch_Mean)`
@@ -39,7 +39,7 @@ useful as a covariate when matching stimuli on expressiveness across
 recording sessions or speakers.
 
 `doc_pitch_delta_mean` differs from the other four: it's the **average
-word-to-word movement** rather than a contour-frame statistic. Useful
+word-to-word movement magnitude** (unsigned) rather than a contour-frame statistic. Useful
 when the question is about overall prosodic dynamism rather than range.
 
 ## Implementation in SensiExtractor
@@ -53,7 +53,9 @@ robustness reason as the word-level columns: octave-jump errors
 otherwise dominate true extrema.
 
 `doc_pitch_delta_mean` is computed in pandas as
-`word_df["Pitch_Delta"].mean()` (NaN-aware) — so it requires the
+`word_df["Pitch_Delta"].abs().mean()` (NaN-aware) — the mean absolute
+delta, so a rise followed by an equal fall counts as movement rather
+than cancelling to zero. It requires the
 word-level prosody stage to have already run (the planner enforces
 this).
 

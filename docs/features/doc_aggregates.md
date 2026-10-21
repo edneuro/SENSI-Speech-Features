@@ -3,7 +3,7 @@ key: doc_aggregates
 name: Word-level feature aggregates
 levels: [document]
 gui_toggles: [output_doc_agg_zipf_freq, output_doc_agg_edu_zipf, output_doc_agg_predictability]
-output_columns: [mean_zipf_freq, mean_edu_zipf_K2, mean_edu_zipf_3to5, mean_edu_zipf_6to8, mean_edu_zipf_9to12, mean_edu_zipf_Overall, "mean_<slug>_<metric>"]
+output_columns: [mean_zipf_freq, mean_edu_zipf_k2, mean_edu_zipf_3to5, mean_edu_zipf_6to8, mean_edu_zipf_9to12, mean_edu_zipf_overall, "mean_<slug>_<metric>"]
 libraries: []
 status: implemented
 depth: stub

@@ -18,7 +18,7 @@ Output columns added to the token DataFrame:
     Sem_Categories                          (comma-separated list of matched categories
                                              for each token, "" if no match, NaN if function word)
 
-POS filter: only NOUN, VERB, ADJ, ADV are scored. Other tokens get NaN.
+POS filter: only NOUN, VERB, ADJ, ADV, PROPN (CONTENT_POS) are scored. Other tokens get NaN.
 """
 
 from pathlib import Path

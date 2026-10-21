@@ -20,10 +20,10 @@ stimulus, in the same units as the
 | `doc_volume_min`         | 5th-percentile intensity. |
 | `doc_volume_max`         | 95th-percentile intensity. |
 | `doc_volume_std`         | Standard deviation of intensity. |
-| `doc_volume_delta_mean`  | Mean of the word-level [`Volume_Delta`](prosody_volume.md) column. |
+| `doc_volume_delta_mean`  | Mean of the **absolute** word-level [`Volume_Delta`](prosody_volume.md) values (rises and falls don't cancel). |
 
 The first four operate on the **raw intensity contour** (all frames),
-the last on word-to-word averaged deltas.
+the last on word-to-word deltas (averaged as magnitudes).
 
 ## EEG rationale
 - `doc_volume_mean` is a **gross-level acoustic confound** — sound
@@ -37,7 +37,7 @@ the last on word-to-word averaged deltas.
   matching covariate when comparing studio-quality vs.
   in-the-wild recordings.
 - `doc_volume_delta_mean` is the document-level analogue of the
-  word-level `Volume_Delta` average — captures how much loudness
+  word-level `Volume_Delta` average (unsigned) — captures how much loudness
   *changes* from word to word, a continuous proxy for prosodic
   expressiveness.
 
@@ -45,7 +45,9 @@ the last on word-to-word averaged deltas.
 See [word-level volume features](prosody_volume.md) — the document-level
 columns reuse the same Praat intensity contour, aggregated over the
 full audio. `doc_volume_delta_mean` is the NaN-aware mean of the
-word-level `Volume_Delta` column.
+**absolute** word-level `Volume_Delta` values
+(`word_df["Volume_Delta"].abs().mean()`), so rises and falls don't
+cancel.
 
 ## Papers
 See [`prosody_volume`](prosody_volume.md) — document-level summaries

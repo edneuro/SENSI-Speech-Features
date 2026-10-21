@@ -1,7 +1,7 @@
 ---
 key: feat_phoneme_ipa
 name: IPA phoneme symbol
-levels: [word]
+levels: [phoneme]
 gui_toggles: [feat_phoneme_ipa]
 output_columns: [IPA]
 libraries: []

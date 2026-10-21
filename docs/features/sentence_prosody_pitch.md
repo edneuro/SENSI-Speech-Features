@@ -20,7 +20,7 @@ Five per-sentence summaries of F0 across each sentence's audio window
 | `Pitch_Min`   | 5th-percentile F0 in the sentence (robust min). |
 | `Pitch_Max`   | 95th-percentile F0 in the sentence (robust max). |
 | `Pitch_Std`   | Standard deviation of F0 in the sentence. |
-| `Pitch_Delta` | `Pitch_Mean[i] − Pitch_Mean[i-1]` — sentence-to-sentence pitch change. `NaN` for the first sentence. |
+| `Pitch_Delta` | `Pitch_Mean[i] − Pitch_Mean[j]`, `j` = most recent earlier sentence with a `Pitch_Mean` — sentence-to-sentence pitch change. `NaN` for the first aligned sentence. |
 
 ## EEG rationale
 Sentence-level pitch summaries are the **prosodic counterpart to the
@@ -50,7 +50,9 @@ Source: `extractors/sentence_prosody.py`. Uses the same `Contours`
 object as the word- and document-level prosody extractors; slices to
 `[Onset, End)` per sentence and computes the same `_agg(slice) =
 (mean, p5, p95, std)` tuple as the word-level extractor. `Pitch_Delta`
-is the row-to-row `diff()` of `Pitch_Mean` across sentences.
+is `Pitch_Mean − Pitch_Mean.ffill().shift(1)` across sentences — a
+sentence where no word aligned is skipped rather than turning the next
+sentence's delta into NaN.
 
 `Pitch_Min` / `Pitch_Max` use 5th / 95th percentiles for the same
 robustness reason described in [`prosody_pitch`](prosody_pitch.md) —

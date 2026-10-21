@@ -1,7 +1,7 @@
 ---
 key: g2p_oov
 name: Out-of-dictionary words (MFA G2P)
-levels: [word]
+levels: [syllable, phoneme]
 gui_toggles: [g2p_oov]
 output_columns: [ARPABET, Stress, IPA, Pron_Source]
 libraries: [montreal-forced-aligner]

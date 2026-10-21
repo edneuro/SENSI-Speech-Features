@@ -49,11 +49,14 @@ analyses:
 
 ## Implementation in SensiExtractor
 Source: `extractors/text_parser.py:parse`. `dep_rel` is read directly
-from spaCy's parser (`token.dep_`). `head_token_id` is computed as
-`token.head.i + 1` to convert spaCy's 0-indexed-document position into
-the 1-indexed global [`token_id`](structural_ids.md) convention (the
-extractor's `token_id` counter increments in document order starting at
-1, so a token's `token_id` is exactly `token.i + 1`).
+from spaCy's parser (`token.dep_`). `head_token_id` is resolved
+through a `{token.i → token_id}` map (`id_by_doc_index`) built over the
+emitted tokens, giving the head's 1-indexed global
+[`token_id`](structural_ids.md). It is **not** `token.head.i + 1`:
+whitespace tokens are skipped and never get a `token_id`, so the
+arithmetic form would point past the first skipped token at the wrong
+word (see the ⚠️ note in [`structural_ids`](structural_ids.md)). A head
+that is itself whitespace falls back to the token's own `token_id`.
 
 Parser model is spaCy's `en_core_web_sm` default — a transition-based
 parser trained on OntoNotes 5.

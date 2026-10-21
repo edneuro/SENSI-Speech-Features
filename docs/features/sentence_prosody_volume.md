@@ -19,7 +19,7 @@ as the [word-level volume](prosody_volume.md) columns:
 | `Volume_Min`   | 5th-percentile intensity. |
 | `Volume_Max`   | 95th-percentile intensity. |
 | `Volume_Std`   | Standard deviation of intensity within the sentence. |
-| `Volume_Delta` | Sentence-to-sentence change in `Volume_Mean`. `NaN` for the first sentence. |
+| `Volume_Delta` | Sentence-to-sentence change in `Volume_Mean`, measured back to the most recent sentence with a value (sentences with no aligned word are skipped). `NaN` for the first aligned sentence. |
 
 ## EEG rationale
 Sentence-level volume summaries serve the same purposes as

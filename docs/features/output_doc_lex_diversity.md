@@ -3,7 +3,7 @@ key: output_doc_lex_diversity
 name: Lexical diversity (TTR + MTLD)
 levels: [document]
 gui_toggle: output_doc_lex_diversity
-output_columns: [TTR, MTLD]
+output_columns: [ttr, mtld]
 libraries: [lexicalrichness]
 status: implemented
 depth: deep
@@ -15,10 +15,12 @@ level:
 
 | Column | Formula | Range | Interpretation |
 |---|---|---|---|
-| `TTR`  | unique types / total tokens | (0, 1] | Higher = more lexical variety; *strongly* length-dependent. |
-| `MTLD` | Measure of Textual Lexical Diversity — length-corrected | ≈ 30–200 typical | Higher = more diversity; designed to be stable across text lengths ([McCarthy 2010]). |
+| `ttr`  | unique types / total content-word tokens | (0, 1] | Higher = more lexical variety; *strongly* length-dependent. |
+| `mtld` | Measure of Textual Lexical Diversity — length-corrected | ≈ 30–200 typical | Higher = more diversity; designed to be stable across text lengths ([McCarthy 2010]). |
 
-PUNCT rows are excluded; tokens are lowercased before counting types.
+Both are computed over **content words only** (`upos` in `{NOUN, VERB,
+ADJ, ADV, PROPN}`), so PUNCT and function words are excluded; tokens are
+lowercased before counting types.
 
 ## EEG rationale
 Lexical diversity is a **stimulus-matching covariate** in cross-corpus

@@ -23,9 +23,11 @@ Examples:
 | `running` | `Aspect=Prog\|Tense=Pres\|VerbForm=Part` |
 | `was`     | `Mood=Ind\|Number=Sing\|Person=3\|Tense=Past\|VerbForm=Fin` |
 | `the`     | `Definite=Def\|PronType=Art` |
-| `.`       | `NA` (no morphological features for PUNCT) |
+| `.`       | *(empty)* (no morphological features for PUNCT) |
 
-The `NA` sentinel is used when spaCy returns an empty morphology bag.
+When spaCy returns an empty morphology bag the field is left **empty**
+(a blank CSV cell, read back as `NaN` by `pd.read_csv`). There is no
+`"NA"` sentinel.
 
 ## Usage
 - Filter on specific attributes — e.g. `feats.str.contains("Tense=Past")`
@@ -35,8 +37,9 @@ The `NA` sentinel is used when spaCy returns an empty morphology bag.
 
 ## Implementation in SensiExtractor
 Source: `extractors/text_parser.py:parse`. Emitted from spaCy's
-`token.morph` via `str(token.morph)`, with the literal string `"NA"` as
-fallback when the morph bag is empty. No parsing — the value is a raw
+`token.morph` via `str(token.morph)`, which is already the empty string
+when the morph bag is empty; no `"NA"` sentinel is written, because it
+would collide with pandas' default `na_values` on read. No parsing — the value is a raw
 pipe-separated string suitable for grep/regex filtering.
 
 ## Library
@@ -44,7 +47,7 @@ pipe-separated string suitable for grep/regex filtering.
 import spacy
 nlp = spacy.load("en_core_web_sm")
 for tok in nlp("The cats were running."):
-    print(tok.text, str(tok.morph) or "NA")
+    print(tok.text, str(tok.morph))   # "" when no features
 ```
 
 ## Papers

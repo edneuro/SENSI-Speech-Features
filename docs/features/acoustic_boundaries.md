@@ -3,7 +3,7 @@ key: acoustic_boundaries
 name: Acoustic word boundaries (MFA)
 levels: [word]
 gui_toggles: [feat_acoustic_onset, feat_acoustic_end]
-output_columns: [Onset, End]
+output_columns: [Onset, End, Transcript]
 libraries: [montreal-forced-aligner, kaldi]
 status: implemented
 depth: deep
@@ -18,6 +18,7 @@ against the audio with [Montreal Forced Aligner (MFA)](https://montreal-forced-a
 |---|---|
 | `Onset` | Time the word begins, in seconds from the start of the audio. |
 | `End`   | Time the word ends, in seconds from the start of the audio. |
+| `Transcript` | The word form MFA aligned and this row's `Onset`/`End` came from (MFA's word-tier label, e.g. numbers spelled out). Empty on PUNCT and unaligned rows. Tokens that MFA aligned as one word (e.g. `was` + `n't`) both carry that word (`wasn't`) and the same `Onset`/`End`. No toggle of its own — written whenever alignment runs. |
 
 Words that did not align (silence, OOV, hesitations not in the
 transcript) are dropped — they don't appear as rows in the word-level
