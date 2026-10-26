@@ -1,0 +1,32 @@
+"""Shape checks for the measured Run-tab estimate constants."""
+from extractors.predictability_models import all_specs
+from utils import estimate_constants as K
+from utils.timing_history import STEP_NAMES
+
+
+def test_every_roster_model_has_ram_entries():
+    for spec in all_specs():
+        assert spec.slug in K.RAM_GB, spec.slug
+        assert f"{spec.slug}@cuda" in K.RAM_GB, spec.slug
+    for key in ("baseline", "word2vec", "bert"):
+        assert key in K.RAM_GB
+
+
+def test_every_step_has_a_first_rate():
+    for step in STEP_NAMES:
+        assert step in K.FIRST_ESTIMATE_RATES, step
+
+
+def test_constants_are_positive():
+    for art in ("syllables", "phonemes"):
+        assert K.ROWS_PER_WORD[art] > 0
+    assert K.SENTENCES_PER_WORD > 0
+    for art in ("features", "syllables", "phonemes", "sentences", "documents_summary"):
+        assert K.CSV_BYTES_PER_CELL[art] > 0
+    for table in (K.RAM_GB, K.FIRST_ESTIMATE_RATES):
+        for key, value in table.items():
+            assert value > 0, key
+    lo, hi = K.FIRST_ESTIMATE_SPREAD
+    assert 0 < lo < 1 < hi
+    lo, hi = K.LEARNED_SPREAD
+    assert 0 < lo < 1 < hi
