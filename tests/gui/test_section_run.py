@@ -281,16 +281,28 @@ def test_progress_event_drives_status_strip(qtbot):
     assert ("running", 3, 10, "stim_07") in strip.calls
 
 
-def test_done_event_drives_status_strip_on_success(qtbot):
+def test_done_event_drives_status_strip_on_success(qtbot, tmp_path):
     from gui.section_run import RunSection
+    from utils.preferences import save_preferences
+    audio = tmp_path / "audio"; audio.mkdir()
+    out = tmp_path / "out"; out.mkdir()
+    save_preferences({"shared": {
+        "analyzer_name": "me", "last_audio_folder": str(audio),
+        "last_output_folder": str(out), "last_transcripts_folder": ""}})
+    _enable_only_acoustic(save_preferences)          # a ready config
     strip = _FakeStatusStrip()
     w = RunSection(get_session_api_key=lambda: "", status_strip=strip)
     qtbot.addWidget(w)
     w.run_button.setEnabled(False)
     w._done_event.emit("done")
     assert any(c[0] == "done" for c in strip.calls)
-    # Slot also re-enables the Run button.
+    # Slot re-enables the Run button (it refreshes, so readiness decides).
     assert w.run_button.isEnabled()
+    # Settings broken during the run: the refreshed readiness keeps it off.
+    save_preferences({"shared": {"analyzer_name": ""}})
+    w.run_button.setEnabled(False)
+    w._done_event.emit("done")
+    assert not w.run_button.isEnabled()
 
 
 def test_done_event_drives_status_strip_on_error(qtbot):
