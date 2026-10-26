@@ -44,9 +44,11 @@ Merge strategy (alignment + parse):
 """
 
 import argparse
+import contextlib
 import os
 import re
 import sys
+import time
 from pathlib import Path
 
 # MKL on AMD CPUs (Windows/Ryzen) raises a fatal exception (0xc06d007f) during
@@ -265,6 +267,121 @@ def _reorder(df: pd.DataFrame) -> pd.DataFrame:
 
 
 # ---------------------------------------------------------------------------
+# Per-step timing (Run-tab estimates; utils/timing_history.py)
+# ---------------------------------------------------------------------------
+# The batch runners attach a StageTimer as args._stage_timer; every helper
+# below is a no-op without one (CLI single runs, direct run() callers), so
+# timing never touches what a stage computes or writes.
+
+def _stage(args, step, units, model=None, device='cpu'):
+    """`args._stage_timer.stage(...)` when a batch timer is attached, else a
+    no-op context. `units` may be a zero-arg callable so its cost (e.g. an
+    audio-header read) is paid only when timing; if it fails, the stage just
+    runs untimed."""
+    timer = getattr(args, '_stage_timer', None)
+    if timer is None:
+        return contextlib.nullcontext()
+    try:
+        u = units() if callable(units) else units
+    except Exception:   # noqa: BLE001 — timing must never fail a stimulus
+        return contextlib.nullcontext()
+    return timer.stage(step, u, model=model, device=device)
+
+
+def _preload_timed(args, key, cache, cache_key, load) -> None:
+    """Load a process-cached model up front, timing it into load_seconds, so
+    the first stimulus's sample holds compute only. No-op without a timer or
+    when the model is already cached (the extractor would reuse it anyway)."""
+    timer = getattr(args, '_stage_timer', None)
+    if timer is None or cache_key in cache:
+        return
+    t0 = time.perf_counter()
+    load()
+    timer.load_seconds[key] = time.perf_counter() - t0
+
+
+def _cuda_available() -> bool:
+    try:
+        import torch
+        return bool(torch.cuda.is_available())
+    except Exception:   # noqa: BLE001
+        return False
+
+
+def _timed_predictability(args, df, text, models, metrics, context):
+    """add_predictability one model at a time, each timed as its own sample.
+
+    Same columns, values and order as the single multi-model call (the
+    extractor scores and writes each slug independently, in roster order).
+    A model loaded for the first time is loaded first and timed into
+    load_seconds; a stimulus whose scores are already cached (the doc pass
+    reusing the word pass's scores) records no sample.
+    """
+    from extractors import predictability as _pred
+    from extractors.predictability import add_predictability
+    from extractors.predictability_models import effective_context, spec_for
+    from utils.timing_history import load_key, model_device
+    if not [m for m in metrics if m in _pred._METRIC_COLS]:
+        return add_predictability(df, text, models=models, metrics=metrics,
+                                  context=context)
+    for slug in models:
+        spec_for(slug)   # validate the whole roster first, like the extractor
+    timer = args._stage_timer
+    tokens = [str(t) for t in df['token'].tolist()]
+    digest = _pred._text_tokens_digest(text, tokens)
+    for slug in models:
+        hf_id = spec_for(slug).hf_id
+        eff = effective_context(slug, context or {})
+        if (hf_id, eff, digest) in _pred._SCORE_CACHE:
+            df = add_predictability(df, text, models=[slug], metrics=metrics,
+                                    context=context)
+            continue
+        _preload_timed(args, load_key('predictability', slug),
+                       _pred._BACKEND_CACHE, (hf_id, eff),
+                       lambda: _pred._get_backend(slug, eff))
+        device = model_device('predictability', slug, _cuda_available())
+        with timer.stage('predictability', len(text.split()), model=slug,
+                         device=device):
+            df = add_predictability(df, text, models=[slug], metrics=metrics,
+                                    context=context)
+    return df
+
+
+def _transcript_words(path) -> int:
+    """Whitespace-separated words of a transcript — the unit for text steps."""
+    with open(path, 'r', encoding='utf-8') as f:
+        return len(f.read().split())
+
+
+def _start_pair_timings(args) -> None:
+    timer = getattr(args, '_stage_timer', None)
+    if timer is not None:
+        timer.samples.clear()
+
+
+def _record_pair_timings(args) -> None:
+    """Append this (successful) stimulus's samples to the machine-local
+    timing history. Never raises: history is disposable learning data."""
+    timer = getattr(args, '_stage_timer', None)
+    if timer is None:
+        return
+    samples, timer.samples = timer.samples, []
+    if not samples and not timer.load_seconds:
+        return
+    try:
+        from utils.timing_history import append_samples
+        append_samples(samples, load_seconds=dict(timer.load_seconds))
+        timer.load_seconds.clear()
+    except Exception as exc:   # noqa: BLE001
+        print(f'[timing] could not update timing history: {exc}', file=sys.stderr)
+
+
+def _new_stage_timer():
+    from utils.timing_history import StageTimer
+    return StageTimer()
+
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 
@@ -292,7 +409,8 @@ def run(args) -> pd.DataFrame:
     if not args.no_parse:
         from extractors.text_parser import parse as spacy_parse
         print('[spacy] Running spaCy annotation…')
-        df = spacy_parse(text, doc_id=int(getattr(args, 'doc_id', 1) or 1))
+        with _stage(args, 'spacy_parse', lambda: len(text.split())):
+            df = spacy_parse(text, doc_id=int(getattr(args, 'doc_id', 1) or 1))
 
     if not args.no_freq and df is not None:
         from extractors.word_freq import add_word_freq
@@ -336,8 +454,12 @@ def run(args) -> pd.DataFrame:
     if pred_models and pred_metrics and df is not None:
         from extractors.predictability import add_predictability
         print(f'[predict] {len(pred_models)} model(s) x {len(pred_metrics)} metric(s)…')
-        df = add_predictability(df, text, models=pred_models, metrics=pred_metrics,
-                                context=pconf.get('context'))
+        if getattr(args, '_stage_timer', None) is None:
+            df = add_predictability(df, text, models=pred_models, metrics=pred_metrics,
+                                    context=pconf.get('context'))
+        else:
+            df = _timed_predictability(args, df, text, pred_models, pred_metrics,
+                                       pconf.get('context'))
 
     args._phones_df = None  # reset each run; populated below when alignment runs
     if not args.no_align and args.audio:
@@ -384,15 +506,17 @@ def run(args) -> pd.DataFrame:
             from extractors.audio_features import extract as extract_contours
             from extractors.prosody import add_word_prosody
             print('[prosody] Extracting pitch/intensity contours…')
-            contours = extract_contours(
-                args.audio,
-                pitch_floor_hz=getattr(args, 'pitch_floor', 75.0),
-                pitch_ceiling_hz=getattr(args, 'pitch_ceiling', 500.0),
-            )
-            df = add_word_prosody(
-                df, contours,
-                pitch_units=getattr(args, 'pitch_units', 'semitones'),
-            )
+            with _stage(args, 'prosody_contours',
+                        lambda: _audio_duration(args.audio)):
+                contours = extract_contours(
+                    args.audio,
+                    pitch_floor_hz=getattr(args, 'pitch_floor', 75.0),
+                    pitch_ceiling_hz=getattr(args, 'pitch_ceiling', 500.0),
+                )
+                df = add_word_prosody(
+                    df, contours,
+                    pitch_units=getattr(args, 'pitch_units', 'semitones'),
+                )
             args._contours = contours
         except Exception as exc:
             print(f'[prosody] failed: {exc}', file=sys.stderr)
@@ -775,6 +899,7 @@ def _prealign_batch(run_args, work_items, output_dir, logger=None) -> None:
         # _batch_prealigned False so a cache miss could still run MFA, but
         # none is expected.
         return
+    t0 = time.perf_counter()
     try:
         result = ensure_alignments(items, alignment_dir(output_dir), g2p=g2p) or {}
     except Exception as exc:
@@ -792,7 +917,27 @@ def _prealign_batch(run_args, work_items, output_dir, logger=None) -> None:
                                're-aligned')
         for stem in result.get('failed', []):
             logger.add_warning(f'MFA produced no alignment for {stem}')
+    _record_mfa_timing(run_args, items, result, time.perf_counter() - t0)
     run_args._batch_prealigned = True
+
+
+def _record_mfa_timing(run_args, items, result, seconds) -> None:
+    """One mfa_align sample per MFA invocation: units = audio seconds of the
+    stimuli it actually aligned. Recorded only when every stale stimulus
+    aligned (a run with failures is not a clean rate sample) and at least
+    one was aligned (an all-cached pre-pass did no MFA work)."""
+    if getattr(run_args, '_stage_timer', None) is None:
+        return
+    aligned = set(result.get('aligned', []))
+    if not aligned or result.get('failed'):
+        return
+    try:
+        from extractors.aligner import _stem
+        from utils.timing_history import Sample, append_samples
+        audio_s = sum(_audio_duration(a) for a, _ in items if _stem(a) in aligned)
+        append_samples([Sample('mfa_align', None, 'cpu', audio_s, seconds)])
+    except Exception as exc:   # noqa: BLE001 — timing must never fail a run
+        print(f'[timing] could not record MFA timing: {exc}', file=sys.stderr)
 
 
 def run_word_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None:
@@ -849,12 +994,14 @@ def run_word_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None
         logger.record_unmatched_audio(unmatched)
 
     work_items = _batch_work_items(pairing)
+    args._stage_timer = _new_stage_timer()
     _prealign_batch(args, work_items, output_dir, logger)
     for i, pair in enumerate(work_items):
         if should_cancel and should_cancel():
             logger.add_warning('Run cancelled by user before processing complete')
             break
         start = time.time()
+        _start_pair_timings(args)
         try:
             args.transcript = str(pair.transcript_path)
             args.audio = str(pair.audio_path) if pair.audio_path else ""
@@ -878,7 +1025,9 @@ def run_word_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None
                 from extractors.syllabify import syllabify_pairs
                 from extractors.syllable_prosody import add_syllable_prosody
 
-                syll_df, phon_df = syllabify_pairs(df, phones_df)
+                with _stage(args, 'syllabify',
+                            lambda: _transcript_words(pair.transcript_path)):
+                    syll_df, phon_df = syllabify_pairs(df, phones_df)
 
                 if _want_psr and len(phon_df) > 0:
                     from extractors.phoneme_surprisal import (
@@ -886,11 +1035,13 @@ def run_word_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None
                     _pcfg = getattr(args, 'phoneme_surprisal', {}) or {}
                     _strip_stress = _pcfg.get('strip_stress', True)
                     _primary_only = _pcfg.get('primary_only', True)
-                    phon_df = add_phoneme_surprisal(
-                        phon_df,
-                        strip_stress=_strip_stress,
-                        primary_only=_primary_only,
-                    )
+                    with _stage(args, 'phoneme_surprisal',
+                                lambda: _audio_duration(pair.audio_path)):
+                        phon_df = add_phoneme_surprisal(
+                            phon_df,
+                            strip_stress=_strip_stress,
+                            primary_only=_primary_only,
+                        )
                     if not getattr(args, 'no_phoneme_surprisal_mat', True) and pair.audio_path:
                         import scipy.io
                         sr = float(_pcfg.get('analysis_sr', 128))
@@ -951,11 +1102,13 @@ def run_word_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None
             if not getattr(args, 'no_sentences', False):
                 try:
                     from extractors.sentence_prosody import add_sentence_prosody
-                    sent_df = add_sentence_prosody(
-                        df,
-                        getattr(args, '_contours', None),
-                        pitch_units=getattr(args, 'pitch_units', 'semitones'),
-                    )
+                    with _stage(args, 'sentence_prosody',
+                                lambda: _transcript_words(pair.transcript_path)):
+                        sent_df = add_sentence_prosody(
+                            df,
+                            getattr(args, '_contours', None),
+                            pitch_units=getattr(args, 'pitch_units', 'semitones'),
+                        )
                     if len(sent_df) > 0:
                         drop = _sentence_columns_to_drop(
                             getattr(args, 'feature_toggles', {}) or {})
@@ -979,7 +1132,13 @@ def run_word_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None
                 from extractors.word2vec_embed import embed_word2vec, Word2VecUnavailable
                 try:
                     import scipy.io
-                    w2v_mat, w2v_valid = embed_word2vec(df)
+                    from extractors import word2vec_embed as _w2v
+                    _preload_timed(args, 'word2vec', _w2v._MODEL_CACHE,
+                                   str(Path(_w2v._DEFAULT_MODEL_PATH)),
+                                   lambda: _w2v._load_model(_w2v._DEFAULT_MODEL_PATH))
+                    with _stage(args, 'word2vec',
+                                lambda: _transcript_words(pair.transcript_path)):
+                        w2v_mat, w2v_valid = embed_word2vec(df)
                     mat_path = _level_dir(output_dir, 'word') / f'{pair.stimulus_id}_word2vec.mat'
                     scipy.io.savemat(str(mat_path), _word_embedding_vars(w2v_mat, df, w2v_valid))
                 except Word2VecUnavailable as exc:
@@ -997,8 +1156,14 @@ def run_word_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None
                 try:
                     import scipy.io
                     from extractors.bert_embed import embed_bert_words_and_sentences
-                    word_emb, word_valid, sent_emb, sent_valid = \
-                        embed_bert_words_and_sentences(df)
+                    from extractors import bert_embed as _bert
+                    _preload_timed(args, 'bert', _bert._BERT_CACHE,
+                                   _bert._DEFAULT_MODEL_NAME,
+                                   lambda: _bert._load_bert(_bert._DEFAULT_MODEL_NAME))
+                    with _stage(args, 'bert',
+                                lambda: _transcript_words(pair.transcript_path)):
+                        word_emb, word_valid, sent_emb, sent_valid = \
+                            embed_bert_words_and_sentences(df)
                     if run_bert_word:
                         mat_path = (_level_dir(output_dir, 'word')
                                     / f'{pair.stimulus_id}_bert_word.mat')
@@ -1036,6 +1201,7 @@ def run_word_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None
                 output_csv_path=features_path,
                 output_summary_path=None,
             )
+            _record_pair_timings(args)
         except Exception as exc:
             import traceback
             tb = ''.join(traceback.format_exception_only(type(exc), exc)).strip()
@@ -1179,12 +1345,14 @@ def run_doc_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None:
         extract_args.no_prosody = False
 
     work_items = _batch_work_items(pairing)
+    extract_args._stage_timer = _new_stage_timer()
     _prealign_batch(extract_args, work_items, output_dir, logger)
     for i, pair in enumerate(work_items):
         if should_cancel and should_cancel():
             logger.add_warning('Run cancelled by user before processing complete')
             break
         start = time.time()
+        _start_pair_timings(extract_args)
         try:
             extract_args.transcript = str(pair.transcript_path)
             extract_args.audio = str(pair.audio_path) if pair.audio_path else ""
@@ -1200,15 +1368,16 @@ def run_doc_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None:
             # stimulus_id is the transcript stem (original casing), the same id
             # every per-level output filename uses, so the document table joins
             # to them directly; the full filename stays in transcript_path.
-            summary = build_doc_summary(
-                df, stimulus_id=pair.stimulus_id, dictionary_used=dict_label,
-                text=text, toggles=doc_toggles, liwc_dictionary_path=liwc_path,
-                contours=getattr(extract_args, '_contours', None),
-                pause_threshold_s=getattr(extract_args, 'pause_threshold', 0.25),
-                pitch_units=getattr(extract_args, 'pitch_units', 'semitones'),
-                late_acquired_threshold=getattr(args, 'late_acquired_threshold', 10.0),
-                phones_df=getattr(extract_args, '_phones_df', None),
-            )
+            with _stage(extract_args, 'doc_summary', lambda: len(text.split())):
+                summary = build_doc_summary(
+                    df, stimulus_id=pair.stimulus_id, dictionary_used=dict_label,
+                    text=text, toggles=doc_toggles, liwc_dictionary_path=liwc_path,
+                    contours=getattr(extract_args, '_contours', None),
+                    pause_threshold_s=getattr(extract_args, 'pause_threshold', 0.25),
+                    pitch_units=getattr(extract_args, 'pitch_units', 'semitones'),
+                    late_acquired_threshold=getattr(args, 'late_acquired_threshold', 10.0),
+                    phones_df=getattr(extract_args, '_phones_df', None),
+                )
             summary['transcript_path'] = str(pair.transcript_path)
             summary['audio_path'] = str(pair.audio_path) if pair.audio_path else ""
             summary_rows.append(summary)
@@ -1221,6 +1390,7 @@ def run_doc_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None:
                 output_csv_path=master_path,
                 output_summary_path=None,
             )
+            _record_pair_timings(extract_args)
         except Exception as exc:
             import traceback
             tb = ''.join(traceback.format_exception_only(type(exc), exc)).strip()
@@ -1298,13 +1468,16 @@ def run_acoustic_level_batch(args, *, on_pair_done=None, should_cancel=None) -> 
     )
 
     rate = float(args.acoustic_ts.get('analysis_rate', 128))
+    args._stage_timer = _new_stage_timer()
     for i, audio_path in enumerate(audio_files):
         if should_cancel and should_cancel():
             logger.add_warning('Run cancelled by user before processing complete')
             break
         start = time.time()
+        _start_pair_timings(args)
         try:
-            out = extract_acoustic(str(audio_path), rate, args.acoustic_ts)
+            with _stage(args, 'acoustic_ts', lambda: _audio_duration(audio_path)):
+                out = extract_acoustic(str(audio_path), rate, args.acoustic_ts)
             # Emit the 1-D time series as (N, 1) column vectors so every feature
             # is time-down-rows and stacks directly with logmel (N, n_mels) /
             # mfcc (N, n_mfcc) as a TRF predictor matrix in MATLAB. (The in-memory
@@ -1325,6 +1498,7 @@ def run_acoustic_level_batch(args, *, on_pair_done=None, should_cancel=None) -> 
                 output_csv_path=mat_path,
                 output_summary_path=None,
             )
+            _record_pair_timings(args)
         except Exception as exc:   # noqa: BLE001 — record and continue batch
             import traceback
             tb = ''.join(traceback.format_exception_only(type(exc), exc)).strip()
