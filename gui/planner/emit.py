@@ -102,6 +102,21 @@ def _doc_only_stages(prefs: dict) -> frozenset[str]:
     return frozenset(_close_under_consumes(required))
 
 
+def level_stages(plan: Plan, prefs: dict, level: str) -> frozenset[str]:
+    """The stage set a pass's no_* flags are derived from (to_namespace).
+
+    level "word": _word_only_stages (NOT closed under consumes); "doc":
+    _doc_only_stages (closed); anything else: the whole plan. Public so that
+    consumers outside the planner (utils/run_estimates) read exactly the set
+    the real namespace uses.
+    """
+    if level == "word":
+        return _word_only_stages(plan, prefs)
+    if level == "doc":
+        return _doc_only_stages(prefs)
+    return frozenset(plan.stages_to_run)
+
+
 def _enabled_ewfg_bands(features: dict) -> str | None:
     bands = [
         suf for suf, key in [
@@ -185,12 +200,7 @@ def to_namespace(plan: Plan, prefs: dict, level: str) -> argparse.Namespace:
     # by main.run_doc_level_batch from the doc output toggles, so scoping the
     # doc flags here is safe.
     in_plan = set(plan.stages_to_run)
-    if level == "word":
-        word_stages = _word_only_stages(plan, prefs)
-    elif level == "doc":
-        word_stages = _doc_only_stages(prefs)
-    else:
-        word_stages = in_plan
+    word_stages = level_stages(plan, prefs, level)
     for stage_name, attr in _WORD_STAGE_FLAGS.items():
         if attr is None:
             continue

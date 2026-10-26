@@ -332,6 +332,30 @@ def _parse_textgrid(tg_path: str) -> tuple[pd.DataFrame, pd.DataFrame]:
     return word_df, phone_df
 
 
+def saved_alignment_files(output_folder, audio_path: str) -> tuple[Path, Path]:
+    """(TextGrid, freshness sidecar) paths a run writing to `output_folder`
+    keeps for this stimulus (they may not exist)."""
+    persist_dir = alignment_dir(output_folder)
+    stem = _stem(audio_path)
+    return persist_dir / f'{stem}.TextGrid', persist_dir / f'{stem}.json'
+
+
+def is_alignment_fresh(output_folder, audio_path: str, transcript_text: str,
+                       *, g2p: bool = False) -> bool:
+    """True iff a run writing to `output_folder` would reuse the saved
+    alignment for this stimulus instead of running MFA on it.
+
+    The same test ensure_alignments applies per item (_is_fresh, then
+    _readable) on the folder main._prealign_batch passes it
+    (alignment_dir(output_folder)). Read-only: creates, deletes and writes
+    nothing. Hashes the audio file when a matching sidecar exists.
+    """
+    textgrid, _ = saved_alignment_files(output_folder, audio_path)
+    return (_is_fresh(textgrid.parent, textgrid.stem, audio_path,
+                      transcript_text, g2p=g2p)
+            and _readable(textgrid))
+
+
 def ensure_alignments(items, persist_dir, *, g2p: bool = False) -> dict:
     """Ensure a fresh <stem>.TextGrid exists under persist_dir for each item.
 

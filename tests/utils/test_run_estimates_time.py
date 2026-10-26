@@ -141,3 +141,58 @@ def test_format_duration_examples():
     assert format_duration(5000, 21600) == "≈ 1.4–6 h"
     assert format_duration(5400, 5400) == "≈ 90 min"
     assert format_duration(20, 300) == "≈ 1–5 min"
+
+
+def test_fresh_alignment_not_charged_mfa():
+    # audio_seconds_to_align = 0: every paired stimulus already has a fresh
+    # TextGrid on disk (extractors.aligner.is_alignment_fresh), so the run
+    # never starts MFA; None = unknown, charge every paired audio second.
+    prefs = _all_on()
+    plan = plan_from_prefs(prefs)
+    hist = _history(_every_step(0.0, {"mfa_align": 1.0}))
+    hist["load_seconds"] = {k: 0.0 for k in K.FIRST_LOAD_SECONDS}
+    lo, _ = K.LEARNED_SPREAD
+    unknown = estimate_time(plan, prefs, _stats(), hist, False)
+    assert unknown.low_s == pytest.approx(lo * 600.0)
+    fresh = estimate_time(plan, prefs, _stats(audio_seconds_to_align=0.0),
+                          hist, False)
+    assert fresh.low_s == pytest.approx(0.0)
+    part = estimate_time(plan, prefs, _stats(audio_seconds_to_align=150.0),
+                         hist, False)
+    assert part.low_s == pytest.approx(lo * 150.0)
+
+
+def test_scan_inputs_audio_seconds_to_align(tmp_path, monkeypatch):
+    import numpy as np
+    import soundfile as sf
+    from extractors import aligner
+    from utils.run_estimates import scan_inputs
+
+    tdir, adir, out = tmp_path / "t", tmp_path / "a", tmp_path / "out"
+    for d in (tdir, adir, out):
+        d.mkdir()
+    (tdir / "s1.txt").write_text("hello there", encoding="utf-8")
+    (tdir / "s2.txt").write_text("general kenobi", encoding="utf-8")
+    for name, secs in (("s1", 2.0), ("s2", 3.0)):
+        sf.write(str(adir / f"{name}.wav"),
+                 np.zeros(int(secs * 8000), dtype=np.float32), 8000)
+    # Fake TextGrids aren't parseable; treat them as readable here.
+    monkeypatch.setattr(aligner, "_readable", lambda p: True)
+
+    assert scan_inputs(str(tdir), str(adir)).audio_seconds_to_align is None
+    st = scan_inputs(str(tdir), str(adir), output_folder=str(out))
+    assert st.audio_seconds_to_align == pytest.approx(5.0)   # nothing on disk
+
+    persist = aligner.alignment_dir(out)
+    persist.mkdir()
+    (persist / "s1.TextGrid").write_text("fake tg", encoding="utf-8")
+    aligner._write_sidecar(persist, "s1", str(adir / "s1.wav"), "hello there")
+    st = scan_inputs(str(tdir), str(adir), output_folder=str(out))
+    assert st.audio_seconds_to_align == pytest.approx(3.0)   # s1 fresh
+    # A different g2p setting makes the saved alignment stale.
+    st = scan_inputs(str(tdir), str(adir), output_folder=str(out), g2p=True)
+    assert st.audio_seconds_to_align == pytest.approx(5.0)
+    # Editing the transcript makes it stale too.
+    (tdir / "s1.txt").write_text("hello again", encoding="utf-8")
+    st = scan_inputs(str(tdir), str(adir), output_folder=str(out))
+    assert st.audio_seconds_to_align == pytest.approx(5.0)

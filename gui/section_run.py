@@ -387,8 +387,11 @@ class RunSection(QWidget):
             from utils import run_estimates as re_
             from utils.timing_history import load_history
             shared = prefs["shared"]
-            stats = re_.scan_inputs(shared.get("last_transcripts_folder", ""),
-                                    shared.get("last_audio_folder", ""))
+            stats = re_.scan_inputs(
+                shared.get("last_transcripts_folder", ""),
+                shared.get("last_audio_folder", ""),
+                output_folder=shared.get("last_output_folder", ""),
+                g2p=bool((prefs.get("alignment") or {}).get("g2p_oov", False)))
             if stats is None:
                 return empty
             system = self._get_system_info()

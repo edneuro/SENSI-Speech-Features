@@ -57,6 +57,10 @@ class InputStats:
     # as the paired figures above.
     n_audio_files: int | None = None
     all_audio_seconds: float | None = None
+    # Paired audio seconds whose saved alignment is not fresh, i.e. the part
+    # MFA will actually run on (extractors.aligner.is_alignment_fresh). None =
+    # unknown (no output folder given): charge every paired audio second.
+    audio_seconds_to_align: float | None = None
 
 
 # --- scanning ----------------------------------------------------------------
@@ -76,6 +80,38 @@ def _cached(path: Path, compute) -> float:
         except Exception:
             _FILE_CACHE[key] = 0
     return _FILE_CACHE[key]
+
+
+_FRESH_CACHE: dict[tuple, bool] = {}
+
+
+def _stat_key(path: Path) -> tuple | None:
+    try:
+        st = path.stat()
+    except OSError:
+        return None
+    return (str(path), st.st_size, st.st_mtime_ns)
+
+
+def _alignment_fresh(output_folder: str, transcript: Path, audio: Path,
+                     g2p: bool) -> bool:
+    """aligner.is_alignment_fresh, cached by (path, size, mtime) of the
+    transcript, the audio, the saved TextGrid and its sidecar (+ g2p)."""
+    from extractors import aligner
+    tg, side = aligner.saved_alignment_files(output_folder, str(audio))
+    if not tg.exists() or not side.exists():
+        return False                  # cheap miss: no hashing, no reading
+    key = (_stat_key(transcript), _stat_key(audio), _stat_key(tg),
+           _stat_key(side), bool(g2p))
+    if key not in _FRESH_CACHE:
+        try:
+            with open(transcript, encoding="utf-8") as f:
+                text = f.read()
+            _FRESH_CACHE[key] = aligner.is_alignment_fresh(
+                output_folder, str(audio), text, g2p=g2p)
+        except Exception:
+            _FRESH_CACHE[key] = False
+    return _FRESH_CACHE[key]
 
 
 def _count_words(path: Path) -> int:
@@ -102,8 +138,14 @@ def _all_audio(audio_folder: str, audio_exts) -> tuple[int, float]:
 
 def scan_inputs(transcripts_folder: str, audio_folder: str,
                 text_exts=("txt", "tsv", "md"),
-                audio_exts=("wav", "flac", "mp3")) -> InputStats | None:
+                audio_exts=("wav", "flac", "mp3"), *,
+                output_folder: str = "", g2p: bool = False) -> InputStats | None:
     """Count stimuli, words and audio seconds in the input folders.
+
+    With `output_folder` (the run's shared.last_output_folder) and `g2p`
+    (alignment.g2p_oov), also the paired audio seconds MFA will still align:
+    stimuli whose saved alignment is fresh are reused by the run, not
+    re-aligned.
 
     None when neither folder is usable. With only the audio folder (an
     acoustic-only plan) the text figures are zero and only the audio-folder
@@ -122,15 +164,21 @@ def scan_inputs(transcripts_folder: str, audio_folder: str,
     items += [(t, "") for t in pairs.unmatched_text]
     words = words_audio = n_with_audio = 0
     secs = 0.0
+    to_align = 0.0 if output_folder else None
     for transcript, audio in items:
         w = int(_cached(Path(transcript), _count_words))
         words += w
         if audio:
             n_with_audio += 1
             words_audio += w
-            secs += _cached(Path(audio), _audio_seconds)
+            a_secs = _cached(Path(audio), _audio_seconds)
+            secs += a_secs
+            if to_align is not None and not _alignment_fresh(
+                    output_folder, Path(transcript), Path(audio), g2p):
+                to_align += a_secs
     return InputStats(len(items), n_with_audio, words, words_audio, float(secs),
-                      n_audio, all_secs)
+                      n_audio, all_secs,
+                      None if to_align is None else float(to_align))
 
 
 # --- disk --------------------------------------------------------------------
@@ -370,19 +418,20 @@ def estimate_time(plan: Plan, prefs: dict, stats: InputStats, history: dict,
     """Range for the whole run over the passes the dispatcher will start
     (gui/run_dispatch.run, run.dispatch): word, doc, acoustic.
 
-    Each pass charges the steps its own namespace runs (emit's per-level stage
-    scoping). Reuse across passes, as main.py does it: MFA once per document
-    (_prealign_batch skips _align_cache hits; alignments persist on disk);
-    predictability once while the word pass's scores still sit in
-    extractors.predictability._SCORE_CACHE (FIFO, _SCORE_CACHE_MAX entries of
+    Each pass charges the steps its own namespace runs (emit.level_stages, the
+    set to_namespace derives that pass's no_* flags from). Reuse across
+    passes, as main.py does it: MFA once per document (_prealign_batch skips
+    _align_cache hits), and not at all for a stimulus whose saved alignment is
+    fresh (stats.audio_seconds_to_align, when known); predictability once
+    while the word pass's scores still sit in
+    extractors.predictability._SCORE_CACHE (FIFO, SCORE_CACHE_MAX entries of
     one model x stimulus each); Word2Vec/BERT/sub-word/sentence steps only in
     the word pass; doc_summary only in the doc pass; acoustic_ts only in the
     acoustic pass, over every audio file.
     """
-    from gui.planner.emit import (WORD_BATCH_ARTIFACTS, _doc_only_stages,
-                                  _word_only_stages)
-    from gui.planner.plan import _close_under_consumes
-    from utils.timing_history import load_key, model_device, rate
+    from extractors.predictability import SCORE_CACHE_MAX
+    from gui.planner.emit import WORD_BATCH_ARTIFACTS, level_stages
+    from utils.timing_history import AUDIO_STEPS, load_key, model_device, rate
 
     stages = set(plan.stages_to_run)
     outputs = set(plan.output_csvs)
@@ -390,10 +439,10 @@ def estimate_time(plan: Plan, prefs: dict, stats: InputStats, history: dict,
     doc_pass = "documents_summary" in outputs
     models = list((prefs.get("predictability", {}) or {}).get("models") or [])
 
-    word = (_pass_steps(stages & _close_under_consumes(
-        set(_word_only_stages(plan, prefs)))) if word_pass else set())
-    doc = (_pass_steps(stages & set(_doc_only_stages(prefs))) if doc_pass
-           else set())
+    word = (_pass_steps(stages & level_stages(plan, prefs, "word"))
+            if word_pass else set())
+    doc = (_pass_steps(stages & level_stages(plan, prefs, "doc"))
+           if doc_pass else set())
     word -= {"predictability", "acoustic_ts", "doc_summary"}
     doc -= {"predictability", "acoustic_ts"} | _WORD_PASS_ONLY_STEPS
     if "mfa_align" in word:
@@ -408,21 +457,21 @@ def estimate_time(plan: Plan, prefs: dict, stats: InputStats, history: dict,
     if pred_word:
         charges += [("predictability", m) for m in models]
     if pred_doc:
-        from extractors.predictability import _SCORE_CACHE_MAX
-        if not pred_word or len(models) * stats.n_stimuli > _SCORE_CACHE_MAX:
+        if not pred_word or len(models) * stats.n_stimuli > SCORE_CACHE_MAX:
             charges += [("predictability", m) for m in models]
     if "acoustic" in outputs and "acoustic_ts" in stages:
         charges.append(("acoustic_ts", None))
 
     all_secs = (stats.all_audio_seconds if stats.all_audio_seconds is not None
                 else stats.audio_seconds)
-    units_for = {
-        "mfa_align": stats.audio_seconds,
-        "prosody_contours": stats.audio_seconds,
-        "phoneme_surprisal": stats.audio_seconds,
-        "acoustic_ts": all_secs,
-        "syllabify": stats.words_with_audio,
-    }
+    # Audio steps run on the paired audio, except: acoustic_ts covers every
+    # audio file, and MFA skips stimuli already aligned on disk. syllabify is
+    # a word step over the paired transcripts only.
+    units_for: dict[str, float] = {s: stats.audio_seconds for s in AUDIO_STEPS}
+    units_for["acoustic_ts"] = all_secs
+    if stats.audio_seconds_to_align is not None:
+        units_for["mfa_align"] = stats.audio_seconds_to_align
+    units_for["syllabify"] = stats.words_with_audio
     learned_loads = (history or {}).get("load_seconds", {}) or {}
 
     total = 0.0

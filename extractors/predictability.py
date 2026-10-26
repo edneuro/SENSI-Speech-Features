@@ -66,7 +66,7 @@ def _scored_by_slug(slug: str, text: str, tokens: list[str],
     if scores is None:
         scores = _get_backend(slug, max_context).score(text, tokens)
         _SCORE_CACHE[key] = scores
-        while len(_SCORE_CACHE) > _SCORE_CACHE_MAX:
+        while len(_SCORE_CACHE) > SCORE_CACHE_MAX:
             _SCORE_CACHE.popitem(last=False)
     return scores
 
@@ -511,7 +511,7 @@ def _cached_backend(model_id: str, max_context: int | None = None) -> _Backend:
 # (hf_id/model_id, text/tokens digest) → scores. Sized to hold one GUI
 # dispatch (word pass + doc pass over the same stimuli); FIFO-evicted.
 _SCORE_CACHE: OrderedDict = OrderedDict()
-_SCORE_CACHE_MAX = 256
+SCORE_CACHE_MAX = 256
 
 
 def _text_tokens_digest(text: str, tokens: list[str]) -> str:

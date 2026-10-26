@@ -383,3 +383,22 @@ def test_unreadable_textgrid_with_fresh_sidecar_is_realigned(tmp_path, monkeypat
     res = aligner.ensure_alignments([(str(audio), "hello")], persist)
     assert ran == [1]
     assert res["corrupt"] == ["stim"] and res["aligned"] == ["stim"]
+
+
+def test_is_alignment_fresh_public_query(tmp_path, monkeypatch):
+    out = tmp_path / "out"
+    persist = aligner.alignment_dir(out)
+    audio = _make_audio(tmp_path)
+    assert aligner.is_alignment_fresh(out, audio, "hello world") is False
+    assert not persist.exists()                     # side-effect free
+    persist.mkdir(parents=True)
+    (persist / "stim.TextGrid").write_text("fake tg", encoding="utf-8")
+    aligner._write_sidecar(persist, "stim", audio, "hello world")
+    # A sidecar match with an unparseable TextGrid is re-aligned by
+    # ensure_alignments, so it is not fresh.
+    assert aligner.is_alignment_fresh(out, audio, "hello world") is False
+    monkeypatch.setattr(aligner, "_readable", lambda p: True)
+    assert aligner.is_alignment_fresh(out, audio, "hello world") is True
+    assert aligner.is_alignment_fresh(out, audio, "hello world", g2p=True) is False
+    assert aligner.is_alignment_fresh(out, audio, "other text") is False
+    assert sorted(p.name for p in persist.iterdir()) == ["stim.TextGrid", "stim.json"]
