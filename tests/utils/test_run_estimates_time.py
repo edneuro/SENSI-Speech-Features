@@ -29,14 +29,27 @@ def _stats(**kw) -> InputStats:
     return InputStats(**base)
 
 
+_REAL_STARTUP = K.STARTUP_SECONDS
+
+
+@pytest.fixture(autouse=True)
+def _no_startup(monkeypatch):
+    """Exact-value tests below exclude the fixed start-up allowance
+    (test_startup_allowance_added_once checks it)."""
+    monkeypatch.setattr(K, "STARTUP_SECONDS", 0.0)
+
+
 def _history(rates: dict, device="cpu") -> dict:
-    """3 samples per key at the given s/unit; key = step or (step, model)."""
+    """3 samples per key at the given s/unit; key = step or (step, model).
+    mfa_align gets batch sizes 10 / 100 / 10 audio s, so its overhead+slope
+    fit is learned (overhead 0, slope = the rate)."""
     samples = []
     for key, r in rates.items():
         step, model = key if isinstance(key, tuple) else (key, None)
         dev = device if step == "predictability" else "cpu"
+        sizes = (10.0, 100.0, 10.0) if step == "mfa_align" else (10.0,) * 3
         samples += [{"step": step, "model": model, "device": dev,
-                     "units": 10.0, "seconds": 10.0 * r}] * 3
+                     "units": u, "seconds": u * r} for u in sizes]
     return {"version": 1, "samples": samples, "load_seconds": {}}
 
 
@@ -140,7 +153,7 @@ def test_format_duration_examples():
     assert format_duration(3600, 4 * 3600) == "≈ 1–4 h"
     assert format_duration(5000, 21600) == "≈ 1.4–6 h"
     assert format_duration(5400, 5400) == "≈ 90 min"
-    assert format_duration(20, 300) == "≈ 1–5 min"
+    assert format_duration(20, 300) == "≈ 20 s–5 min"
 
 
 def test_fresh_alignment_not_charged_mfa():
@@ -196,3 +209,78 @@ def test_scan_inputs_audio_seconds_to_align(tmp_path, monkeypatch):
     (tdir / "s1.txt").write_text("hello again", encoding="utf-8")
     st = scan_inputs(str(tdir), str(adir), output_folder=str(out))
     assert st.audio_seconds_to_align == pytest.approx(5.0)
+
+
+# --- MFA: fixed overhead per aligning run + per-audio-second slope ----------
+
+
+def _mfa_hist(points):
+    hist = _history(_every_step(0.0))
+    hist["samples"] = [s for s in hist["samples"] if s["step"] != "mfa_align"]
+    hist["samples"] += [{"step": "mfa_align", "model": None, "device": "cpu",
+                         "units": float(u), "seconds": float(s)} for u, s in points]
+    hist["load_seconds"] = {k: 0.0 for k in K.FIRST_LOAD_SECONDS}
+    return hist
+
+
+def test_small_mfa_batches_do_not_blow_up_large_corpus():
+    # Top-up batches of 5 and 20 s, overhead 80 s + 0.2 s/s: the old median
+    # rate (~8 s per audio s) would charge 10 h of audio ~80 h.
+    hist = _mfa_hist([(5, 81), (20, 84), (5, 81)])
+    prefs = _all_on()
+    e = estimate_time(plan_from_prefs(prefs), prefs,
+                      _stats(audio_seconds=36_000.0,
+                             audio_seconds_to_align=36_000.0), hist, False)
+    assert e.learned
+    lo, _ = K.LEARNED_SPREAD
+    assert e.low_s == pytest.approx(lo * (80.0 + 0.2 * 36_000.0))
+
+
+def test_mfa_overhead_charged_once_for_a_small_run():
+    hist = _mfa_hist([(10, 82), (100, 100)])
+    prefs = _all_on()
+    e = estimate_time(plan_from_prefs(prefs), prefs,
+                      _stats(audio_seconds_to_align=5.0), hist, False)
+    lo, _ = K.LEARNED_SPREAD
+    assert e.learned
+    assert e.low_s == pytest.approx(lo * (80.0 + 0.2 * 5.0))
+
+
+def test_single_size_mfa_history_stays_unlearned():
+    hist = _mfa_hist([(100, 110), (110, 111), (100, 109)])
+    prefs = _all_on()
+    e = estimate_time(plan_from_prefs(prefs), prefs,
+                      _stats(audio_seconds_to_align=100.0), hist, False)
+    assert not e.learned
+    lo, _ = K.FIRST_ESTIMATE_SPREAD
+    assert e.low_s == pytest.approx(lo * (K.FIRST_MFA_OVERHEAD_SECONDS
+                                      + K.FIRST_ESTIMATE_RATES["mfa_align"] * 100.0))
+
+
+def test_unlearned_mfa_not_charged_keeps_learned():
+    hist = _mfa_hist([(100, 110)])
+    e = estimate_time(plan_from_prefs(_all_on()), _all_on(),
+                      _stats(audio_seconds_to_align=0.0), hist, False)
+    assert e.learned
+
+
+def test_startup_allowance_added_once(monkeypatch):
+    monkeypatch.setattr(K, "STARTUP_SECONDS", _REAL_STARTUP)
+    prefs = _all_on()
+    hist = _history(_every_step(0.0))
+    hist["load_seconds"] = {k: 0.0 for k in K.FIRST_LOAD_SECONDS}
+    e = estimate_time(plan_from_prefs(prefs), prefs,
+                      _stats(audio_seconds_to_align=0.0), hist, False)
+    lo, hi = K.LEARNED_SPREAD
+    assert K.STARTUP_SECONDS == pytest.approx(10.0)
+    assert e.low_s == pytest.approx(lo * K.STARTUP_SECONDS)
+    assert e.high_s == pytest.approx(hi * K.STARTUP_SECONDS)
+
+
+def test_format_duration_keeps_range_across_units():
+    assert format_duration(20, 61) == "≈ 20 s–1 min"
+    assert format_duration(59.6, 59.8) == "≈ 1 min"
+    assert format_duration(1800, 6 * 3600) == "≈ 30 min–6 h"
+    assert format_duration(20 * 3600, 3 * 86400) == "≈ 20 h–3 days"
+    assert format_duration(3 * 86400, 5 * 86400) == "≈ 3–5 days"
+    assert format_duration(40 * 3600, 48 * 3600) == "≈ 40–48 h"

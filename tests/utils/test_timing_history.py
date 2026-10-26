@@ -109,3 +109,51 @@ def test_model_device_rule():
         assert th.model_device(step, None, True) == "cpu"
     # Unknown slug: no GPU claim.
     assert th.model_device("predictability", "no-such-model", True) == "cpu"
+
+
+# --- MFA fixed overhead + per-audio-second slope (fit_overhead_slope) -------
+
+def _mfa(units, seconds):
+    return {"step": "mfa_align", "model": None, "device": "cpu",
+            "units": float(units), "seconds": float(seconds)}
+
+
+def test_fit_recovers_known_overhead_and_slope():
+    hist = {"samples": [_mfa(u, 80.0 + 0.25 * u) for u in (10, 40, 120, 400)]}
+    overhead, slope = th.fit_overhead_slope(hist, "mfa_align")
+    assert overhead == pytest.approx(80.0)
+    assert slope == pytest.approx(0.25)
+
+
+def test_fit_needs_two_clearly_different_sizes():
+    one = {"samples": [_mfa(100, 110)]}
+    same = {"samples": [_mfa(100, 110), _mfa(120, 112), _mfa(100, 108)]}
+    assert th.fit_overhead_slope(one, "mfa_align") is None
+    assert th.fit_overhead_slope(same, "mfa_align") is None      # max/min < 2
+    two = {"samples": [_mfa(100, 110), _mfa(200, 135)]}
+    assert th.fit_overhead_slope(two, "mfa_align") == pytest.approx((85.0, 0.25))
+
+
+def test_fit_never_negative():
+    # Noisy history: bigger batch was faster -> slope clamped to 0, overhead
+    # = mean wall time; a negative intercept is clamped to a through-origin fit.
+    neg_slope = {"samples": [_mfa(10, 90), _mfa(100, 80)]}
+    assert th.fit_overhead_slope(neg_slope, "mfa_align") == pytest.approx((85.0, 0.0))
+    neg_icpt = {"samples": [_mfa(10, 1), _mfa(100, 100)]}
+    o, s = th.fit_overhead_slope(neg_icpt, "mfa_align")
+    assert o == 0.0 and s == pytest.approx((10 * 1 + 100 * 100) / (10 ** 2 + 100 ** 2))
+
+
+def test_fit_reads_old_format_history(tmp_path):
+    # Version-1 files (one mfa_align Sample per MFA batch, units = audio s)
+    # load unchanged and feed the fit.
+    path = tmp_path / "h.json"
+    path.write_text(json.dumps({"version": 1, "samples": [
+        _mfa(113.8, 114.4), _mfa(16.0, 90.6)], "load_seconds": {}}),
+        encoding="utf-8")
+    fit = th.fit_overhead_slope(th.load_history(path), "mfa_align")
+    assert fit is not None and fit[0] > 0 and fit[1] > 0
+
+
+def test_count_words_is_raw_whitespace_split():
+    assert th.count_words("I won 1,500   points\n") == 4

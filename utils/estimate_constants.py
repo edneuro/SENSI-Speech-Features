@@ -132,11 +132,9 @@ RAM_GB: dict[str, float] = {
 # audio seconds for mfa_align / prosody_contours / acoustic_ts /
 # phoneme_surprisal, transcript words for every other step.
 FIRST_ESTIMATE_RATES: dict[str, float] = {
-    # One MFA call aligning the whole 10-stimulus batch (113.8 s audio in
-    # 114.4 s). MFA has a large fixed startup, so per audio second this is
-    # batch-size dependent: high for small batches, an overestimate for long
-    # stimuli. Learned history replaces it.
-    "mfa_align": 1.005,
+    # MFA: the per-audio-second SLOPE only; the fixed start-up per aligning
+    # run is FIRST_MFA_OVERHEAD_SECONDS below (fit and sources there).
+    "mfa_align": 0.244,
     "spacy_parse": 0.000714,
     "predictability": 0.00412,      # GPT-2 (cpu)
     "word2vec": 0.0000095,
@@ -159,6 +157,25 @@ for _slug, _params in (("llama32_3b", 3.21e9), ("llama3_8b", 8e9),
     FIRST_ESTIMATE_RATES[f"predictability:{_slug}"] = round(
         FIRST_ESTIMATE_RATES["predictability"] * _params / _GPT2_PARAMS, 4)
 FIRST_ESTIMATE_RATES["predictability:gpt2"] = FIRST_ESTIMATE_RATES["predictability"]
+
+# MFA wall time = fixed start-up per MFA invocation + slope x audio seconds
+# aligned (utils.timing_history.fit_overhead_slope learns both per machine).
+# First estimate: least-squares fit of the three mfa_align samples the
+# calibration run recorded (2026-10-26, jose; each one MFA call):
+#   10-stimulus validation batch  113.8 s audio -> 114.4 s
+#   1_FB_P warm-up child           16.0 s audio ->  90.6 s
+#   LJ002-0321 warm-up child       10.1 s audio ->  88.9 s
+# -> 86.6 s + 0.244 s per audio second. Three points over a narrow size range
+# (10-114 s audio), so the slope is the weak part: a later same-machine run of
+# the 113.8 s batch took 79.7 s, ~30 % under the fit. The first-estimate
+# spread (below) covers that.
+FIRST_MFA_OVERHEAD_SECONDS: float = 86.6
+
+# Fixed, untimed start-up per run (interpreter + torch/spaCy imports, file
+# writes): a real headless run of the validation corpus took 50.4 s wall vs
+# 40.7 s of timed steps + recorded model loads (and 134 s vs ~124 s for the
+# aligning run before it), 2026-10-26, jose. Charged once per estimate.
+STARTUP_SECONDS: float = 10.0
 
 # One-time model loads (seconds), measured on the same run (warm disk cache),
 # keyed by timing_history.load_key. Not per-unit; counted once per run.

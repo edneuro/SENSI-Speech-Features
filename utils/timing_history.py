@@ -7,7 +7,7 @@ SENSI_CONFIG_DIR via utils.preferences.get_config_dir). The estimator reads
 the median seconds-per-unit for each (step, model, device) key with `rate()`.
 
 Units: audio seconds for the audio steps (AUDIO_STEPS), whitespace-separated
-transcript words for every other step. One-time model loads are kept apart in
+words of the raw transcript (`count_words`) for every other step. One-time model loads are kept apart in
 `load_seconds` (keyed by `load_key`: "<step>:<model>") so a first run does not inflate the
 per-stimulus rates.
 
@@ -36,6 +36,9 @@ AUDIO_STEPS: frozenset[str] = frozenset(
 HISTORY_FILENAME = "timing_history.json"
 MAX_SAMPLES_PER_KEY = 200
 MIN_SAMPLES_FOR_RATE = 3
+# fit_overhead_slope needs batch sizes at least this far apart (max/min units)
+# before it separates a fixed start-up cost from the per-unit slope.
+MIN_FIT_SIZE_RATIO = 2.0
 _FORMAT_VERSION = 1
 
 
@@ -63,6 +66,12 @@ class StageTimer:
         self.samples.append(Sample(step=step, model=model, device=device,
                                    units=float(units),
                                    seconds=time.perf_counter() - t0))
+
+
+def count_words(text: str) -> int:
+    """Words of a raw transcript (whitespace split): the unit every text step
+    records (main.py) and the estimator charges (utils.run_estimates)."""
+    return len(text.split())
 
 
 def load_key(step: str, model: str | None = None) -> str:
@@ -163,3 +172,36 @@ def rate(history: dict, step: str, model: str | None, device: str) -> float | No
     if len(per_unit) < MIN_SAMPLES_FOR_RATE:
         return None
     return statistics.median(per_unit)
+
+
+def fit_overhead_slope(history: dict, step: str, model: str | None = None,
+                       device: str = "cpu") -> tuple[float, float] | None:
+    """(fixed seconds, seconds per unit) for a step whose wall time is a fixed
+    start-up plus a per-unit cost (mfa_align: one sample per MFA batch, units
+    = audio seconds aligned). Ordinary least squares on (units, seconds),
+    constrained to non-negative overhead and slope.
+
+    None (unlearned) unless at least two samples exist whose sizes differ by
+    MIN_FIT_SIZE_RATIO or more: same-size batches can't tell overhead from
+    slope.
+    """
+    pts = [(float(d["units"]), float(d["seconds"]))
+           for d in (history or {}).get("samples", [])
+           if _key(d) == (step, model, device) and float(d["units"]) > 0]
+    if len(pts) < 2:
+        return None
+    xs = [x for x, _ in pts]
+    if max(xs) / min(xs) < MIN_FIT_SIZE_RATIO:
+        return None
+    n = len(pts)
+    mx = sum(xs) / n
+    my = sum(y for _, y in pts) / n
+    sxx = sum((x - mx) ** 2 for x in xs)
+    sxy = sum((x - mx) * (y - my) for x, y in pts)
+    slope = sxy / sxx
+    overhead = my - slope * mx
+    if slope < 0:                 # bigger batches not slower: flat cost
+        return my, 0.0
+    if overhead < 0:              # no measurable start-up: line through 0
+        return 0.0, sum(x * y for x, y in pts) / sum(x * x for x in xs)
+    return overhead, slope

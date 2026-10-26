@@ -340,17 +340,24 @@ def _timed_predictability(args, df, text, models, metrics, context):
                        _pred._BACKEND_CACHE, (hf_id, eff),
                        lambda: _pred._get_backend(slug, eff))
         device = model_device('predictability', slug, _cuda_available())
-        with timer.stage('predictability', len(text.split()), model=slug,
+        with timer.stage('predictability', count_words(text), model=slug,
                          device=device):
             df = add_predictability(df, text, models=[slug], metrics=metrics,
                                     context=context)
     return df
 
 
+def count_words(text) -> int:
+    """Words of a raw transcript — the unit for text steps, shared with the
+    Run-tab estimator (utils.timing_history.count_words)."""
+    from utils.timing_history import count_words as _count
+    return _count(text)
+
+
 def _transcript_words(path) -> int:
-    """Whitespace-separated words of a transcript — the unit for text steps."""
+    """count_words of a transcript file."""
     with open(path, 'r', encoding='utf-8') as f:
-        return len(f.read().split())
+        return count_words(f.read())
 
 
 def _start_pair_timings(args) -> None:
@@ -409,7 +416,7 @@ def run(args) -> pd.DataFrame:
     if not args.no_parse:
         from extractors.text_parser import parse as spacy_parse
         print('[spacy] Running spaCy annotation…')
-        with _stage(args, 'spacy_parse', lambda: len(text.split())):
+        with _stage(args, 'spacy_parse', lambda: count_words(text)):
             df = spacy_parse(text, doc_id=int(getattr(args, 'doc_id', 1) or 1))
 
     if not args.no_freq and df is not None:
@@ -1368,7 +1375,7 @@ def run_doc_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None:
             # stimulus_id is the transcript stem (original casing), the same id
             # every per-level output filename uses, so the document table joins
             # to them directly; the full filename stays in transcript_path.
-            with _stage(extract_args, 'doc_summary', lambda: len(text.split())):
+            with _stage(extract_args, 'doc_summary', lambda: count_words(text)):
                 summary = build_doc_summary(
                     df, stimulus_id=pair.stimulus_id, dictionary_used=dict_label,
                     text=text, toggles=doc_toggles, liwc_dictionary_path=liwc_path,

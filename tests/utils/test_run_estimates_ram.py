@@ -57,6 +57,17 @@ def test_llama8b_cpu_only_16gb_warns():
 def test_llama_too_big_for_vram_warns():
     e = estimate_ram(_plan(pred=True), _prefs(["llama3_70b"]), _sys(64, 8))
     assert not e.fits and e.warning
+    assert e.warning.startswith("⚠ Llama")
+    assert "GB of GPU memory; this GPU has 8.0 GB." in e.warning
+    assert "this computer" not in e.warning
+
+
+def test_has_cuda_needs_a_named_gpu_with_memory():
+    from utils.run_estimates import has_cuda
+    assert has_cuda(_sys(64, 8))
+    assert not has_cuda(_sys(64, 0))
+    assert not has_cuda({"gpu": {"name": "GPU", "vram_gb": 0}})
+    assert not has_cuda({})
 
 
 def test_predictability_off_ignores_selected_models():
@@ -81,7 +92,7 @@ def test_stacked_vram_items_warn_as_this_run():
                      _sys(64, 8))
     assert not e.fits
     assert e.warning.startswith("⚠ This run needs ≈ ")
-    assert "this computer has 8.0 GB" in e.warning
+    assert "GB of GPU memory; this GPU has 8.0 GB" in e.warning
 
 
 def test_unknown_machine_memory_does_not_warn():

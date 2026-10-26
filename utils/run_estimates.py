@@ -49,8 +49,8 @@ _DOC_NORM_COLUMNS: dict[str, int] = {
 class InputStats:
     n_stimuli: int            # transcripts (each becomes one word-level item)
     n_with_audio: int         # transcripts with a paired audio file
-    words: int                # whitespace words over all transcripts
-    words_with_audio: int     # whitespace words over the paired transcripts
+    words: int                # raw-transcript words (timing_history.count_words)
+    words_with_audio: int     # the same over the paired transcripts
     audio_seconds: float      # duration of the paired audio files
     # The acoustic level processes every audio file under the audio folder
     # (main.run_acoustic_level_batch, recursive), paired or not. None = same
@@ -115,10 +115,11 @@ def _alignment_fresh(output_folder: str, transcript: Path, audio: Path,
 
 
 def _count_words(path: Path) -> int:
-    from utils.transcript_prep import prepare_for_aligner
+    """Same unit main.py records text-step samples in (count_words on the raw
+    transcript), so learned seconds-per-word apply unchanged."""
+    from utils.timing_history import count_words
     with open(path, encoding="utf-8", errors="replace") as f:
-        text = f.read()
-    return len(prepare_for_aligner(text).split())
+        return count_words(f.read())
 
 
 def _audio_seconds(path: Path) -> float:
@@ -323,6 +324,13 @@ class RamEstimate:
     warning: str | None
 
 
+def has_cuda(system: dict) -> bool:
+    """One rule for "this machine can put models on a GPU": a detected CUDA
+    device with memory (utils.system_info._detect_gpu)."""
+    gpu = (system or {}).get("gpu") or {}
+    return bool(gpu.get("name")) and float(gpu.get("vram_gb") or 0.0) > 0
+
+
 def estimate_ram(plan: Plan, prefs: dict, system: dict) -> RamEstimate:
     """Baseline + the SUM of the heavy items that will run (they stay cached
     for the whole process). A model the extractor would put on the GPU counts
@@ -333,7 +341,7 @@ def estimate_ram(plan: Plan, prefs: dict, system: dict) -> RamEstimate:
     gpu = system.get("gpu") or {}
     machine = float(system.get("system_ram_gb") or 0.0)
     vram = float(gpu.get("vram_gb") or 0.0)
-    cuda = bool(gpu.get("name")) and vram > 0
+    cuda = has_cuda(system)
 
     # (display name, GiB, on_gpu)
     items: list[tuple[str, float, bool]] = []
@@ -362,7 +370,7 @@ def estimate_ram(plan: Plan, prefs: dict, system: dict) -> RamEstimate:
     if machine > 0 and peak > machine:
         warning = _ram_warning(_pool_item(ram_items), peak, machine)
     elif vram > 0 and gpu_total > vram:
-        warning = _ram_warning(_pool_item(gpu_items), gpu_total, vram)
+        warning = _ram_warning(_pool_item(gpu_items), gpu_total, vram, gpu=True)
     return RamEstimate(peak, driver, machine, vram, warning is None, warning)
 
 
@@ -373,8 +381,9 @@ def _pool_item(items: list[tuple[str, float, bool]]) -> str:
     return items[0][0] if len(items) == 1 else "This run"
 
 
-def _ram_warning(item: str, need: float, have: float) -> str:
-    return (f"⚠ {item} needs ≈ {need:.1f} GB of memory; this computer has "
+def _ram_warning(item: str, need: float, have: float, gpu: bool = False) -> str:
+    pool, host = ("GPU memory", "this GPU") if gpu else ("memory", "this computer")
+    return (f"⚠ {item} needs ≈ {need:.1f} GB of {pool}; {host} has "
             f"{have:.1f} GB. The run will likely fail or be extremely slow.")
 
 
@@ -431,7 +440,8 @@ def estimate_time(plan: Plan, prefs: dict, stats: InputStats, history: dict,
     """
     from extractors.predictability import SCORE_CACHE_MAX
     from gui.planner.emit import WORD_BATCH_ARTIFACTS, level_stages
-    from utils.timing_history import AUDIO_STEPS, load_key, model_device, rate
+    from utils.timing_history import (AUDIO_STEPS, fit_overhead_slope,
+                                      load_key, model_device, rate)
 
     stages = set(plan.stages_to_run)
     outputs = set(plan.output_csvs)
@@ -474,12 +484,22 @@ def estimate_time(plan: Plan, prefs: dict, stats: InputStats, history: dict,
     units_for["syllabify"] = stats.words_with_audio
     learned_loads = (history or {}).get("load_seconds", {}) or {}
 
-    total = 0.0
+    total = K.STARTUP_SECONDS if charges else 0.0
     learned = True
     loads: set[str] = set()
     for step, model in charges:
         units = float(units_for.get(step, stats.words))
         if units <= 0:
+            continue
+        if step == "mfa_align":
+            # One MFA invocation per run that aligns anything: fixed start-up
+            # + slope x audio seconds (see FIRST_MFA_OVERHEAD_SECONDS).
+            fit = fit_overhead_slope(history, "mfa_align")
+            if fit is None:
+                learned = False
+                fit = (K.FIRST_MFA_OVERHEAD_SECONDS,
+                       K.FIRST_ESTIMATE_RATES["mfa_align"])
+            total += fit[0] + fit[1] * units
             continue
         device = model_device(step, model, cuda_available)
         r = rate(history, step, model, device)
@@ -498,20 +518,43 @@ def estimate_time(plan: Plan, prefs: dict, stats: InputStats, history: dict,
     return TimeEstimate(total * lo, total * hi, learned)
 
 
+
 def _fmt_hours(h: float) -> str:
     return f"{round(h):.0f}" if h >= 10 or round(h, 1) == round(h) else f"{h:.1f}"
 
 
+def _in_unit(x: float, unit: str) -> str:
+    """x seconds written in `unit` (rounded the way that unit is shown)."""
+    if unit == "s":
+        return f"{round(x)}"
+    if unit == "min":
+        return f"{round(x / 60)}"
+    return _fmt_hours(x / (3600 if unit == "h" else 86400))
+
+
+def _natural_unit(x: float) -> str:
+    """Unit for x seconds, picked AFTER rounding: under 60 s -> s, up to 90
+    min -> min, up to 48 h -> h, else days."""
+    if round(x) < 60:
+        return "s"
+    if round(x / 60) <= 90:
+        return "min"
+    if float(_in_unit(x, "h")) <= 48:
+        return "h"
+    return "days"
+
+
 def format_duration(low_s: float, high_s: float) -> str:
-    """'≈ 10–40 min': seconds under 1 min, hours over 90 min (unit chosen by
-    the upper bound); one value when both ends round to the same."""
+    """'≈ 10–40 min'. The unit follows the (rounded) upper bound; the lower
+    bound keeps that unit unless it would round below 1 there, in which case
+    it gets its own ('≈ 20 s–1 min'), so a wide range never collapses. One
+    value when both ends read the same."""
     high_s = max(high_s, low_s, 0.0)
     low_s = max(low_s, 0.0)
-    if high_s < 60:
-        a, b, unit = f"{round(low_s)}", f"{round(high_s)}", "s"
-    elif high_s <= 90 * 60:
-        a = f"{max(1, round(low_s / 60))}"
-        b, unit = f"{round(high_s / 60)}", "min"
-    else:
-        a, b, unit = _fmt_hours(low_s / 3600), _fmt_hours(high_s / 3600), "h"
+    unit = _natural_unit(high_s)
+    b = _in_unit(high_s, unit)
+    a = _in_unit(low_s, unit)
+    if unit != "s" and float(a) < 1:
+        lo_unit = _natural_unit(low_s)
+        return f"≈ {_in_unit(low_s, lo_unit)} {lo_unit}–{b} {unit}"
     return f"≈ {b} {unit}" if a == b else f"≈ {a}–{b} {unit}"

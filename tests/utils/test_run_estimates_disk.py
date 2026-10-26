@@ -112,7 +112,7 @@ def test_scan_inputs_counts(tmp_path):
     tdir, adir = _corpus(tmp_path)
     st = scan_inputs(str(tdir), str(adir))
     assert (st.n_stimuli, st.n_with_audio) == (2, 1)
-    # "I saw three cats." after number spelling = 4 words; + 3 text-only words.
+    # "I saw 3 cats." = 4 raw whitespace words; + 3 text-only words.
     assert (st.words, st.words_with_audio) == (7, 4)
     assert st.audio_seconds == pytest.approx(2.0)
     assert st.n_audio_files == 2
@@ -147,3 +147,17 @@ def test_cache_invalidated_on_change(tmp_path):
 
 def test_cache_is_module_level():
     assert isinstance(RE._FILE_CACHE, dict)
+
+
+def test_scan_words_match_recorded_units(tmp_path):
+    # The estimator counts words exactly as main.py records them
+    # (utils.timing_history.count_words on the raw transcript), so learned
+    # seconds-per-word apply to the same unit. Number spelling would make
+    # "1,500" four words; the recorder sees one.
+    from utils.timing_history import count_words
+    tdir = tmp_path / "t"
+    tdir.mkdir()
+    text = "He won 1,500 points in 2024.\n"
+    (tdir / "s.txt").write_text(text, encoding="utf-8")
+    st = scan_inputs(str(tdir), "")
+    assert st.words == count_words(text) == 6
