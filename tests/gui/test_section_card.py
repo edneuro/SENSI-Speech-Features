@@ -76,6 +76,7 @@ def test_all_none_links_set_group_only(qtbot, tmp_path, monkeypatch):
 
     links["None"].click()
     assert [b.isChecked() for b in boxes] == [False, False]
+    assert card.tag_label.text() == "Included — nothing selected"
     assert card.master_toggle().is_checked() is True
     assert load_preferences()["features"]["master_predictability"] is True
 

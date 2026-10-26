@@ -8,6 +8,8 @@ from PySide6.QtWidgets import (
     QFileDialog, QWidget, QLayout, QToolTip, QSizePolicy,
 )
 
+from gui.theme import ACCENT_COLOR
+
 
 class SectionHeader(QWidget):
     def __init__(self, title: str, subtitle: str = "", parent=None):
@@ -191,7 +193,7 @@ class Card(QFrame):
 
 
 # Switch colours (Global Constraints): on = SENSI cyan, off = grey.
-_SWITCH_ON = "#00B2D0"   # == gui.theme.ACCENT_COLOR
+_SWITCH_ON = ACCENT_COLOR
 _SWITCH_OFF = "#b9c0c5"
 
 TAG_INCLUDED = "Included"

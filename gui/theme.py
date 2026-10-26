@@ -48,6 +48,10 @@ _ASSETS_DIR = Path(__file__).resolve().parent.parent / "assets"
 _CHECK_URL = "url('" + (_ASSETS_DIR / "check.svg").as_posix() + "')"
 _DASH_URL = "url('" + (_ASSETS_DIR / "dash.svg").as_posix() + "')"
 _DOT_URL = "url('" + (_ASSETS_DIR / "dot.svg").as_posix() + "')"
+_CHEVRON_UP_URL = "url('" + (_ASSETS_DIR / "chevron-up.svg").as_posix() + "')"
+_CHEVRON_DOWN_URL = "url('" + (_ASSETS_DIR / "chevron-down.svg").as_posix() + "')"
+_CHEVRON_UP_DIS_URL = "url('" + (_ASSETS_DIR / "chevron-up-disabled.svg").as_posix() + "')"
+_CHEVRON_DOWN_DIS_URL = "url('" + (_ASSETS_DIR / "chevron-down-disabled.svg").as_posix() + "')"
 
 
 _QSS = f"""
@@ -211,6 +215,11 @@ QComboBox {{
     border-radius: {INPUT_RADIUS}px;
 }}
 QComboBox:focus {{ border-color: {ACCENT_COLOR}; }}
+QComboBox:disabled {{
+    color: {TEXT_DISABLED};
+    background: #F1F3F5;
+    border-color: #E3E6E9;
+}}
 QComboBox::drop-down {{ border: none; width: 24px; }}
 QComboBox QAbstractItemView {{
     background: {BG_PANEL};
@@ -234,6 +243,62 @@ QLineEdit:focus, QPlainTextEdit:focus {{
     border-color: {ACCENT_COLOR};
 }}
 QLineEdit[error="true"] {{ border-color: {ERROR_RED}; }}
+
+/* Spin boxes — styled explicitly so they follow the light theme instead of
+   the native (possibly dark) style, and so a disabled one looks greyed. */
+QSpinBox, QDoubleSpinBox {{
+    padding: 4px 6px;
+    background: {BG_INPUT};
+    color: {TEXT_PRIMARY};
+    border: 1px solid {BORDER_DEFAULT};
+    border-radius: {INPUT_RADIUS}px;
+    selection-background-color: {ACCENT_COLOR};
+    selection-color: white;
+}}
+QSpinBox:focus, QDoubleSpinBox:focus {{ border-color: {ACCENT_COLOR}; }}
+QSpinBox:disabled, QDoubleSpinBox:disabled {{
+    color: {TEXT_DISABLED};
+    background: #F1F3F5;
+    border-color: #E3E6E9;
+}}
+QSpinBox::up-button, QDoubleSpinBox::up-button,
+QSpinBox::down-button, QDoubleSpinBox::down-button {{
+    subcontrol-origin: border;
+    width: 18px;
+    border: none;
+    border-left: 1px solid {BORDER_DEFAULT};
+    background: transparent;
+}}
+QSpinBox::up-button, QDoubleSpinBox::up-button {{
+    subcontrol-position: top right;
+    border-top-right-radius: {INPUT_RADIUS}px;
+}}
+QSpinBox::down-button, QDoubleSpinBox::down-button {{
+    subcontrol-position: bottom right;
+    border-bottom-right-radius: {INPUT_RADIUS}px;
+}}
+QSpinBox::up-button:hover, QDoubleSpinBox::up-button:hover,
+QSpinBox::down-button:hover, QDoubleSpinBox::down-button:hover {{
+    background: {ACCENT_SOFT};
+}}
+QSpinBox::up-arrow, QDoubleSpinBox::up-arrow {{
+    image: {_CHEVRON_UP_URL}; width: 10px; height: 10px;
+}}
+QSpinBox::down-arrow, QDoubleSpinBox::down-arrow {{
+    image: {_CHEVRON_DOWN_URL}; width: 10px; height: 10px;
+}}
+QSpinBox::up-arrow:disabled, QDoubleSpinBox::up-arrow:disabled,
+QSpinBox::up-arrow:off, QDoubleSpinBox::up-arrow:off {{
+    image: {_CHEVRON_UP_DIS_URL};
+}}
+QSpinBox::down-arrow:disabled, QDoubleSpinBox::down-arrow:disabled,
+QSpinBox::down-arrow:off, QDoubleSpinBox::down-arrow:off {{
+    image: {_CHEVRON_DOWN_DIS_URL};
+}}
+QSpinBox::up-button:disabled, QDoubleSpinBox::up-button:disabled,
+QSpinBox::down-button:disabled, QDoubleSpinBox::down-button:disabled {{
+    border-left-color: #E3E6E9;
+}}
 
 /* Checkboxes — explicit indicator styling required, otherwise Qt suppresses
    the native indicator once any QCheckBox property is set in QSS. */
