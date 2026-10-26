@@ -206,6 +206,8 @@ class RunSection(QWidget):
         # Estimates are computed off the GUI thread (scan_inputs may hash
         # audio files). Only the result of the latest request is applied.
         self._est_gen = 0
+        self._est_busy = False
+        self._est_pending = None
         self._est_applied_gen = 0              # generation shown right now
         self._est_last: dict | None = None     # last applied result
         self._est_view: tuple | None = None    # (prefs, plan) of latest refresh
@@ -410,9 +412,20 @@ class RunSection(QWidget):
     def _start_estimates(self, prefs: dict, plan) -> None:
         """Compute estimates on a daemon thread; the result is marshalled back
         through _estimates_event (queued to the GUI thread). A newer request
-        bumps the generation, so a stale result is dropped on arrival."""
+        bumps the generation, so a stale result is dropped on arrival.
+
+        One worker at a time: a request made while one is in flight is parked
+        and started when it returns, so a cold first scan (which hashes the
+        audio) never runs twice side by side."""
         self._est_gen += 1
         gen = self._est_gen
+        if self._est_busy:
+            self._est_pending = (prefs, plan, gen)
+            return
+        self._spawn_estimates(prefs, plan, gen)
+
+    def _spawn_estimates(self, prefs: dict, plan, gen: int) -> None:
+        self._est_busy = True
         level_keys = tuple(self.level_rows)
 
         def _work() -> None:
@@ -434,6 +447,10 @@ class RunSection(QWidget):
 
     def _on_estimates_main(self, gen: int, est: dict) -> None:
         """GUI-thread slot: apply only the latest request's result."""
+        self._est_busy = False
+        if self._est_pending is not None:
+            pending, self._est_pending = self._est_pending, None
+            self._spawn_estimates(*pending)
         if gen != self._est_gen:
             return
         self._est_last = est

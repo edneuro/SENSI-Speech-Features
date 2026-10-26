@@ -55,6 +55,7 @@ def _section(qtbot, settle=True):
 def test_dash_until_folders_set(qtbot):
     w = _section(qtbot)
     w.show()
+    _settled(qtbot, w)  # showEvent starts a newer request
     assert [w.est_values[k].text() for k in ("disk", "ram", "time")] == ["—"] * 3
     assert not w.estimate_warning.isVisible()
     assert not w.level_rows["level_word"].size_label.isVisible()
@@ -65,6 +66,7 @@ def test_level_and_file_sizes_shown(qtbot, tmp_path, monkeypatch):
     _inputs(tmp_path)
     w = _section(qtbot)
     w.show()
+    _settled(qtbot, w)  # showEvent starts a newer request
     row = w.level_rows["level_word"]
     assert row.size_label.isVisible() and row.size_label.text().startswith("≈ ")
     assert w.est_values["disk"].text().startswith("≈ ")
@@ -85,6 +87,7 @@ def test_ram_warning_only_when_it_does_not_fit(qtbot, tmp_path, monkeypatch):
     _fake_system(monkeypatch, 4.0)
     w = _section(qtbot)
     w.show()
+    _settled(qtbot, w)  # showEvent starts a newer request
     assert w.estimate_warning.isVisible()
     assert w.estimate_warning.text().startswith("⚠")
     _fake_system(monkeypatch, 512.0)
@@ -141,6 +144,7 @@ def test_audio_only_inputs_show_dash_for_text_levels(qtbot, tmp_path, monkeypatc
     save_preferences({"shared": {"last_transcripts_folder": ""}})
     w = _section(qtbot)
     w.show()
+    _settled(qtbot, w)  # showEvent starts a newer request
     row = w.level_rows["level_word"]
     assert not row.size_label.isVisible()
     assert not [s for s in row.file_size_labels.values() if s.isVisible()]
@@ -176,6 +180,9 @@ def test_slow_estimate_does_not_block_refresh(qtbot, tmp_path, monkeypatch):
 
 
 def test_stale_estimate_result_is_discarded(qtbot, tmp_path, monkeypatch):
+    # Single flight: request 2 waits for request 1, whose (stale, bogus)
+    # result is dropped; only request 2's result is shown, and the two
+    # scans never run side by side.
     import threading
     import utils.run_estimates as re_
     _fake_system(monkeypatch, 64.0)
@@ -183,21 +190,31 @@ def test_stale_estimate_result_is_discarded(qtbot, tmp_path, monkeypatch):
     w = _section(qtbot)
     release_first = threading.Event()
     real_scan = re_.scan_inputs
-    calls = []
+    calls, live, peak = [], [0], [0]
 
     def scan(*a, **kw):
         calls.append(1)
-        if len(calls) == 1:          # the first (stale) request: slow, bogus
-            release_first.wait(5.0)
-            return None              # would show dashes if applied
-        return real_scan(*a, **kw)
+        live[0] += 1
+        peak[0] = max(peak[0], live[0])
+        try:
+            if len(calls) == 1:      # the first (stale) request: slow, bogus
+                release_first.wait(5.0)
+                return None          # would show dashes if applied
+            return real_scan(*a, **kw)
+        finally:
+            live[0] -= 1
 
     monkeypatch.setattr(re_, "scan_inputs", scan)
+    applied = []
+    real_apply = w._apply_estimates
+    monkeypatch.setattr(w, "_apply_estimates",
+                        lambda est: (applied.append(w._est_applied_gen), real_apply(est)))
     w.refresh()                       # request 1 (slow)
-    w.refresh()                       # request 2 (latest)
+    w.refresh()                       # request 2 (latest) -- parked
+    stale_gen = w._est_gen - 1
+    release_first.set()
     qtbot.waitUntil(lambda: w._est_applied_gen == w._est_gen, timeout=5000)
     assert w.est_values["disk"].text().startswith("≈ ")
-    release_first.set()               # the stale result arrives now
-    _settled(qtbot, w)
-    qtbot.wait(50)
-    assert w.est_values["disk"].text().startswith("≈ ")
+    assert stale_gen not in applied
+    assert peak[0] == 1 and len(calls) == 2
+
