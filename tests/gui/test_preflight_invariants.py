@@ -11,33 +11,24 @@ from gui.preflight import compute_warnings
 
 
 def _no_outputs(features=None):
-    return {"output": {"word_level_csv": False, "document_summary": False,
-                       "syllables_csv": False, "phonemes_csv": False,
-                       "sentences_csv": False,
-                       "word2vec_mat": False, "bert_word_mat": False,
-                       "bert_sentence_mat": False},
+    return {"output": {"level_word": False, "level_document": False, "level_subword": False, "level_sentence": False},
             "features": features or {}}
 
 
 _FEATURE_MATRIX = [
     # Each entry is a (prefs_update, label) pair representing a representative
     # toggle configuration to sweep over.
-    ({"output": {"word_level_csv": True, "syllables_csv": False,
-                  "phonemes_csv": False, "document_summary": False},
+    ({"output": {"level_word": True, "level_subword": False, "level_document": False},
        "features": {"freq_subtlex": True}}, "word_subtlex_only"),
-    ({"output": {"word_level_csv": False, "syllables_csv": True,
-                  "phonemes_csv": True, "document_summary": False},
+    ({"output": {"level_word": False, "level_subword": True, "level_document": False},
        "features": {"feat_syllable_onset": True, "feat_phoneme_arpabet": True}},
      "sidecars_only"),
-    ({"output": {"word_level_csv": True, "syllables_csv": False,
-                  "phonemes_csv": False, "document_summary": False},
+    ({"output": {"level_word": True, "level_subword": False, "level_document": False},
        "features": {"feat_prosody_pitch_mean": True}}, "word_prosody"),
-    ({"output": {"word_level_csv": False, "syllables_csv": False,
-                  "phonemes_csv": False, "document_summary": True,
+    ({"output": {"level_word": False, "level_subword": False, "level_document": True,
                   "doc_agg_zipf_freq": True},
        "features": {"freq_subtlex": True}}, "doc_agg_zipf"),
-    ({"output": {"word_level_csv": True, "syllables_csv": False,
-                  "phonemes_csv": False, "document_summary": False},
+    ({"output": {"level_word": True, "level_subword": False, "level_document": False},
        "features": {"sem_indicators": True},
        "semantic": {"backend": "liwc"}}, "liwc_sem"),
 ]
@@ -68,7 +59,7 @@ def test_mfa_warning_attaches_to_no_toggle(prefs_tmp, monkeypatch):
     not a toggle warning — toggle_key should be None."""
     import gui.preflight as pf
     monkeypatch.setattr(pf, "_mfa_available", False)
-    save_preferences({"output": {"syllables_csv": True},
+    save_preferences({"output": {"level_subword": True},
                       "features": {"feat_syllable_onset": True}})
     warnings = compute_warnings(session_api_key="")
     mfa_warnings = [w for w in warnings if "MFA" in w.message]

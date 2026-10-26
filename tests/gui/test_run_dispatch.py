@@ -62,7 +62,7 @@ def test_dispatcher_runs_both_when_both_outputs_checked(monkeypatch, tmp_path):
     from utils.preferences import save_preferences
     # document_summary needs at least one active doc cluster to actually run
     # (opt-in defaults leave doc features off), so enable doc token counts.
-    save_preferences({"output": {"word_level_csv": True, "document_summary": True,
+    save_preferences({"output": {"level_word": True, "level_document": True,
                                  "out_count_tokens": True}})
 
     called = []
@@ -84,7 +84,7 @@ def test_dispatcher_shares_one_alignment_cache_across_passes(monkeypatch, tmp_pa
     monkeypatch.setenv("SENSI_PREFS_PATH", str(tmp_path / "prefs.json"))
     from utils.preferences import save_preferences
     # Enable a doc feature so the doc batch actually runs (opt-in defaults).
-    save_preferences({"output": {"word_level_csv": True, "document_summary": True,
+    save_preferences({"output": {"level_word": True, "level_document": True,
                                  "out_count_tokens": True}})
 
     seen = {}
@@ -138,7 +138,7 @@ def test_doc_args_forces_alignment_when_doc_prosody_on(prefs_tmp):
     from utils.preferences import save_preferences
     from gui.run_dispatch import build_args_doc_level
     save_preferences({
-        "output": {"document_summary": True},
+        "output": {"level_document": True},
         "features": {
             "feat_doc_prosody_hnr": True,
             "feat_acoustic_onset": False,
@@ -181,7 +181,7 @@ def test_doc_args_predictability_dict_mirrors_prefs_regardless_of_level(prefs_tm
     from utils.preferences import save_preferences
     from gui.run_dispatch import build_args_doc_level
     save_preferences({
-        "output": {"document_summary": True, "doc_agg_predictability": True},
+        "output": {"level_document": True, "doc_agg_predictability": True},
         "predictability": {"models": [],
                             "metrics": {"surprisal": False, "cloze": False, "topmatch": False}},
     })
@@ -201,7 +201,7 @@ def test_doc_args_no_doc_predictability_off_when_aggregate_toggle_off(prefs_tmp)
     from utils.preferences import save_preferences
     from gui.run_dispatch import build_args_doc_level
     save_preferences({
-        "output": {"document_summary": True, "doc_agg_predictability": False},
+        "output": {"level_document": True, "doc_agg_predictability": False},
         "predictability": {"models": ["gpt2"],
                             "metrics": {"surprisal": True, "cloze": False, "topmatch": False}},
     })
@@ -219,7 +219,7 @@ def test_doc_args_predictability_driven_by_doc_aggregate_not_models(prefs_tmp):
     from utils.preferences import save_preferences
     from gui.run_dispatch import build_args_doc_level
     save_preferences({
-        "output": {"document_summary": True, "doc_agg_predictability": True},
+        "output": {"level_document": True, "doc_agg_predictability": True},
         "predictability": {"models": ["llama32_3b"],
                             "metrics": {"surprisal": False, "cloze": True, "topmatch": False}},
     })
@@ -339,7 +339,7 @@ def test_doc_args_skip_freq_when_word_freq_off_and_no_aggregate(prefs_tmp):
 def test_word_args_propagates_subword_master_toggles(prefs_tmp):
     from utils.preferences import save_preferences
     from gui.run_dispatch import build_args_word_level
-    save_preferences({"output": {"syllables_csv": False, "phonemes_csv": True},
+    save_preferences({"output": {"level_subword": True},
                       "features": {"feat_phoneme_arpabet": True}})  # activate phoneme cluster
     args = build_args_word_level()
     assert args.no_syllables is True
@@ -350,7 +350,7 @@ def test_word_args_forces_alignment_on_for_any_subword_feature(prefs_tmp):
     from utils.preferences import save_preferences
     from gui.run_dispatch import build_args_word_level
     save_preferences({
-        "output": {"syllables_csv": True, "phonemes_csv": True},
+        "output": {"level_subword": True},
         "features": {
             "feat_syllable_onset": True,
             # All acoustic_* toggles off
@@ -370,7 +370,7 @@ def test_word_args_forces_parse_when_only_subword_on(prefs_tmp):
     from utils.preferences import save_preferences
     from gui.run_dispatch import build_args_word_level
     save_preferences({
-        "output": {"syllables_csv": True, "phonemes_csv": True},
+        "output": {"level_subword": True},
         "features": {
             # Turn EVERY non-acoustic, non-subword toggle off
             "lexling_tokens": False, "lexling_pos": False,
@@ -414,7 +414,7 @@ def test_word_args_forces_prosody_when_only_syllable_prosody_on(prefs_tmp):
     from utils.preferences import save_preferences
     from gui.run_dispatch import build_args_word_level
     save_preferences({
-        "output": {"syllables_csv": True, "phonemes_csv": False},
+        "output": {"level_subword": True},
         "features": {
             # All word-level prosody keys off
             "feat_prosody_pitch_mean": False, "feat_prosody_pitch_min": False,
@@ -458,11 +458,7 @@ def test_dispatcher_runs_word_batch_for_sidecars_only(prefs_tmp):
     from utils.preferences import save_preferences
     save_preferences({
         "output": {
-            "word_level_csv": False,
-            "syllables_csv": True,
-            "phonemes_csv": False,
-            "document_summary": False,
-        },
+            "level_word": False, "level_subword": True, "level_document": False},
         "features": {"feat_syllable_onset": True},  # activate syllable cluster
     })
 
@@ -499,11 +495,7 @@ def test_dispatcher_passes_no_word_csv_false_when_word_csv_on(prefs_tmp):
     so the features.csv write happens as usual."""
     from utils.preferences import save_preferences
     save_preferences({"output": {
-        "word_level_csv": True,
-        "syllables_csv": True,
-        "phonemes_csv": True,
-        "document_summary": False,
-    }})
+        "level_word": True, "level_subword": True, "level_document": False}})
 
     captured = {}
     def fake_word(args, **kwargs):
@@ -530,8 +522,7 @@ def test_word_args_no_subword_no_align_force(prefs_tmp):
     from utils.preferences import save_preferences
     from gui.run_dispatch import build_args_word_level
     save_preferences({
-        "output": {"syllables_csv": False, "phonemes_csv": False,
-                   "sentences_csv": False},
+        "output": {"level_subword": False, "level_sentence": False},
         "features": {
             # All acoustic toggles off
             "feat_acoustic_onset": False, "feat_acoustic_end": False,
@@ -555,7 +546,7 @@ def test_dispatcher_sets_and_pops_hf_token(monkeypatch, tmp_path):
     monkeypatch.setenv("SENSI_PREFS_PATH", str(tmp_path / "prefs.json"))
     import os
     from utils.preferences import save_preferences
-    save_preferences({"output": {"word_level_csv": True}})
+    save_preferences({"output": {"level_word": True}})
     monkeypatch.delenv("HF_TOKEN", raising=False)
 
     seen = {}
@@ -611,7 +602,7 @@ def test_dispatch_passes_cancel_and_stops_between_passes(monkeypatch, tmp_path):
     import main
     from gui import run_dispatch
     from utils.preferences import save_preferences
-    save_preferences({"output": {"word_level_csv": True, "document_summary": True}})
+    save_preferences({"output": {"level_word": True, "level_document": True}})
     seen = {}
 
     def fake_word(ns, *, on_pair_done=None, should_cancel=None):

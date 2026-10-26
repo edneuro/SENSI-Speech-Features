@@ -23,6 +23,7 @@ _MASTER_DEFAULTS_FEATURES = {
     "master_frequency":          True,
     "master_predictability":     True,
     "master_acoustic":           True,
+    "master_semantic_indicators": True,
 }
 _MASTER_DEFAULTS_OUTPUT = {
     "master_doc_prosody":           True,
@@ -31,6 +32,10 @@ _MASTER_DEFAULTS_OUTPUT = {
     "doc_agg_zipf_freq":            True,
     "doc_agg_edu_zipf":             True,
     "doc_agg_predictability":       True,
+    "master_doc_aggregates":           True,
+    "master_doc_lex_diversity":        True,
+    "master_doc_readability":          True,
+    "master_doc_category_proportions": True,
 }
 
 
@@ -56,8 +61,7 @@ def _prefs(output: dict, features: dict, **kw) -> dict:
 
 def test_word_level_namespace_basic():
     prefs = _prefs(
-        output={"word_level_csv": True, "syllables_csv": False,
-                "phonemes_csv": False, "document_summary": False},
+        output={"level_word": True, "level_subword": False, "level_document": False},
         features={"freq_subtlex": True},
     )
     plan = plan_from_prefs(prefs)
@@ -77,8 +81,7 @@ def test_predictability_namespace_reflects_prefs():
     + metrics dict) so main.py can drive add_predictability without the old
     no_surprisal/no_llm_cloze/llm_model flags."""
     prefs = _prefs(
-        output={"word_level_csv": True, "syllables_csv": False,
-                "phonemes_csv": False, "document_summary": False},
+        output={"level_word": True, "level_subword": False, "level_document": False},
         features={},
         predictability={"models": ["gpt2", "llama3_8b"],
                         "metrics": {"surprisal": True, "cloze": False, "topmatch": True}},
@@ -99,8 +102,7 @@ def test_predictability_namespace_reflects_prefs():
 def test_predictability_namespace_carries_context_map():
     """Per-model context caps (Project B) flow verbatim into ns.predictability."""
     prefs = _prefs(
-        output={"word_level_csv": True, "syllables_csv": False,
-                "phonemes_csv": False, "document_summary": False},
+        output={"level_word": True, "level_subword": False, "level_document": False},
         features={},
         predictability={"models": ["llama3_8b"],
                         "metrics": {"surprisal": True, "cloze": False, "topmatch": False},
@@ -113,8 +115,7 @@ def test_predictability_namespace_carries_context_map():
 def test_sidecars_only_namespace():
     """User config from the recent bug report: word CSV off, sidecars on."""
     prefs = _prefs(
-        output={"word_level_csv": False, "syllables_csv": True,
-                "phonemes_csv": True, "document_summary": False},
+        output={"level_word": False, "level_subword": True, "level_document": False},
         features={"feat_syllable_onset": True, "feat_syllable_label": True,
                   "feat_phoneme_arpabet": True},
     )
@@ -142,7 +143,7 @@ def test_g2p_oov_defaults_off_when_alignment_section_absent():
     """Older-shaped prefs dicts (e.g. this file's `_prefs` helper) lack an
     `alignment` section; the namespace must still default it off, not crash."""
     prefs = _prefs(
-        output={"word_level_csv": True},
+        output={"level_word": True},
         features={},
     )
     ns = to_namespace(plan_from_prefs(prefs), prefs, level="word")
@@ -153,8 +154,7 @@ def test_syllable_prosody_forces_prosody_flag_off():
     """no_prosody must be False so main.py runs praat extract + word prosody
     (contours are then shared with syllable_prosody)."""
     prefs = _prefs(
-        output={"word_level_csv": False, "syllables_csv": True,
-                "phonemes_csv": False, "document_summary": False},
+        output={"level_word": False, "level_subword": True, "level_document": False},
         features={"feat_syllable_pitch_mean": True},
     )
     plan = plan_from_prefs(prefs)
@@ -165,8 +165,7 @@ def test_syllable_prosody_forces_prosody_flag_off():
 
 def test_doc_namespace_separate_no_flags():
     prefs = _prefs(
-        output={"word_level_csv": False, "syllables_csv": False,
-                "phonemes_csv": False, "document_summary": True,
+        output={"level_word": False, "level_subword": False, "level_document": True,
                 "doc_agg_zipf_freq": True, "doc_agg_edu_zipf": False,
                 "doc_agg_predictability": False,
                 "doc_lex_diversity": True, "doc_readability": False,
@@ -196,8 +195,7 @@ def test_feature_toggles_pass_through_verbatim():
     features_in = {"freq_subtlex": True, "feat_struct_doc_id": False,
                    "feat_acoustic_onset": False}
     prefs = _prefs(
-        output={"word_level_csv": True, "syllables_csv": False,
-                "phonemes_csv": False, "document_summary": False},
+        output={"level_word": True, "level_subword": False, "level_document": False},
         features=features_in,
     )
     plan = plan_from_prefs(prefs)
@@ -211,8 +209,7 @@ def test_feature_toggles_pass_through_verbatim():
 
 def test_prosody_config_propagates_to_namespace():
     prefs = _prefs(
-        output={"word_level_csv": True, "syllables_csv": False,
-                "phonemes_csv": False, "document_summary": False},
+        output={"level_word": True, "level_subword": False, "level_document": False},
         features={"feat_prosody_pitch_mean": True},
         prosody={"pitch_units": "Hz", "pitch_floor_hz": 60.0,
                  "pitch_ceiling_hz": 700.0, "pause_threshold_s": 0.4},
@@ -227,8 +224,7 @@ def test_prosody_config_propagates_to_namespace():
 
 def test_edu_bands_string_for_runtime():
     prefs = _prefs(
-        output={"word_level_csv": True, "syllables_csv": False,
-                "phonemes_csv": False, "document_summary": False},
+        output={"level_word": True, "level_subword": False, "level_document": False},
         features={"freq_ewfg_k2": True, "freq_ewfg_overall": True},
     )
     plan = plan_from_prefs(prefs)
@@ -244,8 +240,7 @@ def test_individual_agg_toggles_control_no_doc_mean_flags():
     """Each doc_agg_* output toggle independently controls the corresponding
     no_doc_mean_* flag — they are no longer linked to word-level feature toggles."""
     prefs = _prefs(
-        output={"word_level_csv": False, "document_summary": True,
-                "syllables_csv": False, "phonemes_csv": False,
+        output={"level_word": False, "level_document": True, "level_subword": False,
                 "doc_agg_zipf_freq": True,
                 "doc_agg_edu_zipf": False,
                 "doc_agg_predictability": True},
@@ -262,8 +257,7 @@ def test_sem_categories_unified_key_used_for_both_levels():
     The old split word_/doc_categories_* keys no longer exist in prefs; both
     levels must return the same value from the shared key."""
     prefs = _prefs(
-        output={"word_level_csv": True, "syllables_csv": False,
-                "phonemes_csv": False, "document_summary": True},
+        output={"level_word": True, "level_subword": False, "level_document": True},
         features={"sem_indicators": True},
         semantic={"backend": "empath",
                   "categories_empath": ["positive_emotion", "work", "family"]},
@@ -283,8 +277,7 @@ def test_master_toggle_off_suppresses_word_stage_flags():
     the stage (it honours master_toggle); the word namespace must agree, or
     main.py runs an extractor the user switched off."""
     prefs = _prefs(
-        output={"word_level_csv": True, "syllables_csv": False,
-                "phonemes_csv": False, "document_summary": False},
+        output={"level_word": True, "level_subword": False, "level_document": False},
         features={
             "freq_subtlex": True,
             # Masters OFF (user disabled these), children still ON.
@@ -313,8 +306,7 @@ def test_doc_level_stages_dont_bleed_into_word_namespace():
     The word namespace must NOT then set no_align=False unless a word-level
     cluster also wants alignment."""
     prefs = _prefs(
-        output={"word_level_csv": True, "syllables_csv": False,
-                "phonemes_csv": False, "document_summary": True},
+        output={"level_word": True, "level_subword": False, "level_document": True},
         features={"freq_subtlex": True,                  # word: just SUBTLEX
                   "feat_doc_prosody_pitch_mean": True},  # doc: prosody
     )
@@ -336,8 +328,7 @@ def test_word_level_stages_dont_bleed_into_doc_namespace():
     articulation rate) actually needs alignment. Otherwise the doc batch runs
     MFA even though the user selected no audio-dependent doc feature."""
     prefs = _prefs(
-        output={"word_level_csv": True, "syllables_csv": False,
-                "phonemes_csv": False, "document_summary": True,
+        output={"level_word": True, "level_subword": False, "level_document": True,
                 # Doc audio features OFF (output-keyed masters).
                 "master_doc_prosody": False,
                 "master_doc_articulation_rate": False,
@@ -360,8 +351,7 @@ def test_doc_articulation_rate_follows_doc_prosody_master():
     master_doc_articulation_rate) and pulls MFA into the doc batch even though
     the user disabled the whole doc-prosody group."""
     prefs = _prefs(
-        output={"word_level_csv": False, "syllables_csv": False,
-                "phonemes_csv": False, "document_summary": True,
+        output={"level_word": False, "level_subword": False, "level_document": True,
                 "master_doc_prosody": False,           # doc-prosody card OFF
                 "master_doc_articulation_rate": True,  # vestigial, stays on
                 "master_doc_counts": True, "out_count_tokens": True},
@@ -376,10 +366,10 @@ def test_doc_articulation_rate_follows_doc_prosody_master():
 
 def test_namespace_enables_phoneme_surprisal_when_active():
     prefs = copy.deepcopy(DEFAULT_PREFS)
-    prefs["output"]["phonemes_csv"] = True
+    prefs["output"]["level_subword"] = True
     prefs["features"]["master_phoneme_surprisal"] = True
     prefs["features"]["feat_phoneme_surprisal"] = True
-    prefs["output"]["phoneme_surprisal_mat"] = True
+    prefs["features"]["feat_phoneme_surprisal_mat"] = True
     ns = to_namespace(plan_from_prefs(prefs), prefs, "word")
     assert ns.no_phoneme_surprisal is False
     assert ns.no_phoneme_surprisal_mat is False

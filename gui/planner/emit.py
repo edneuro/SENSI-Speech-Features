@@ -255,16 +255,24 @@ def to_namespace(plan: Plan, prefs: dict, level: str) -> argparse.Namespace:
             ns.no_prosody = False
 
         ns.no_doc_counts          = "doc_counts" not in in_plan
-        # Each aggregate family has its own output toggle; the extractor
-        # does not re-run — it aggregates whatever columns word_df already has.
-        ns.no_doc_mean_zipf       = not output.get("doc_agg_zipf_freq", False)
-        ns.no_doc_mean_edu_zipf   = not output.get("doc_agg_edu_zipf", False) or ns.edu_bands is None
-        ns.no_doc_predictability  = not output.get("doc_agg_predictability", False)
+        # Each aggregate family has its own cluster (its output toggle gated
+        # by the Aggregates section switch, master_doc_aggregates); the
+        # extractor does not re-run — it aggregates whatever columns word_df
+        # already has. Read cluster activation from the planner so the
+        # section switch gates these like every other doc section.
+        from gui.planner.plan import _active_clusters, _active_output_csvs
+        doc_active = {
+            c.name for c in _active_clusters(prefs, _active_output_csvs(prefs))
+            if c.output_csv in _DOC_LEVEL_CSVS
+        }
+        ns.no_doc_mean_zipf       = "doc agg zipf freq" not in doc_active
+        ns.no_doc_mean_edu_zipf   = "doc agg edu zipf" not in doc_active or ns.edu_bands is None
+        ns.no_doc_predictability  = "doc agg predictability" not in doc_active
         ns.no_doc_ttr             = "doc_lex_diversity" not in in_plan
         ns.no_doc_mtld            = "doc_lex_diversity" not in in_plan
         ns.no_doc_flesch_ease     = "doc_readability"   not in in_plan
         ns.no_doc_fk_grade        = "doc_readability"   not in in_plan
-        ns.no_doc_lexical_norms   = not output.get("doc_agg_lexical_norms", False)
+        ns.no_doc_lexical_norms   = "doc lexical norms" not in doc_active
         ns.no_doc_psych_authentic = "doc_psych"         not in in_plan
         ns.no_doc_psych_analytic  = "doc_psych"         not in in_plan
         ns.no_doc_psych_tone      = "doc_psych"         not in in_plan

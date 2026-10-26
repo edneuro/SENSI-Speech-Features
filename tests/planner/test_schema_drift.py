@@ -22,9 +22,7 @@ _INTENTIONALLY_UNROUTED_FEATURES: set[str] = {
     "master_syllable_labels",
     "master_syllable_prosody",
     "master_phoneme_intervals",
-    # master_syllable_pcenter kept in prefs schema for migration compat but is
-    # no longer wired to a ClusterCard master toggle (P-center has only one
-    # toggle so the master is redundant; see gui/section_subword_features.py).
+    # v21: the P-center section switch gates the p-center cluster (master_toggle).
     "master_syllable_pcenter",
     # Word-level card-group masters
     "master_structural",
@@ -35,9 +33,12 @@ _INTENTIONALLY_UNROUTED_FEATURES: set[str] = {
     "master_lexical_norms",     # routes via master_toggle field
     "master_sentence_timing",   # routes via master_toggle field
     "master_sentence_prosody",  # routes via master_toggle field
-    "master_word2vec",          # routes via master_toggle field
-    "master_bert_word",         # routes via master_toggle field
-    "master_bert_sentence",     # routes via master_toggle field
+    # v21 section switches — route via master_toggle. (master_word2vec /
+    # master_bert_word / master_bert_sentence are now the embedding clusters'
+    # toggle_keys, under these masters.)
+    "master_semantic_indicators",
+    "master_semantic_similarity",
+    "master_sentence_similarity",
     # v13 acoustic level: master_acoustic_ts is vestigial — the acoustic level is
     # gated solely by the acoustic_ts_mat output key (Run tab), not a cluster
     # master. Kept in the schema for migration compat (cf. master_syllable_pcenter).
@@ -46,15 +47,12 @@ _INTENTIONALLY_UNROUTED_FEATURES: set[str] = {
     "master_phoneme_surprisal",
 }
 
-# Output keys NOT routed via clusters (the master output toggles that
-# select which CSV gets written are handled by _OUTPUT_CSV_MAP in
-# plan.py, not by clusters).
+# Output keys NOT routed via cluster toggle_keys (the v21 Run-tab level
+# switches that select which artifacts get written are handled by
+# LEVEL_ARTIFACTS in plan.py, not by clusters).
 _OUTPUT_KEYS_VIA_CSV_MAP: set[str] = {
-    "word_level_csv", "syllables_csv", "phonemes_csv", "document_summary",
-    "sentences_csv",       # routed via _OUTPUT_CSV_MAP
-    "word2vec_mat",        # routed via _OUTPUT_CSV_MAP
-    "bert_word_mat",       # routed via _OUTPUT_CSV_MAP
-    "bert_sentence_mat",   # routed via _OUTPUT_CSV_MAP
+    "level_word", "level_document", "level_subword", "level_sentence",
+    "level_acoustic",      # also the acoustic cluster's master_toggle
     # Cluster master switches in the output section — routed via
     # FeatureCluster.master_toggle, not toggle_keys.
     "master_doc_prosody",
@@ -63,8 +61,11 @@ _OUTPUT_KEYS_VIA_CSV_MAP: set[str] = {
     # compat only (cf. master_acoustic_ts).
     "master_doc_articulation_rate",
     "master_doc_counts",
-    "acoustic_ts_mat",       # routed via _OUTPUT_CSV_MAP
-    "phoneme_surprisal_mat",  # routed via _OUTPUT_CSV_MAP
+    # v21 document section switches — route via master_toggle.
+    "master_doc_aggregates",
+    "master_doc_lex_diversity",
+    "master_doc_readability",
+    "master_doc_category_proportions",
 }
 
 
@@ -116,15 +117,26 @@ def test_every_master_toggle_key_exists_in_v10_prefs_schema():
     )
 
 
+def test_level_artifacts_cover_every_level_key():
+    """LEVEL_ARTIFACTS keys are exactly the output level_* keys, and every
+    artifact id belongs to exactly one level."""
+    from gui.planner.plan import LEVEL_ARTIFACTS
+    level_keys = {k for k in _OUTPUT_DEFAULT_V10 if k.startswith("level_")}
+    assert set(LEVEL_ARTIFACTS) == level_keys
+    arts = [a for v in LEVEL_ARTIFACTS.values() for a in v]
+    assert len(arts) == len(set(arts))
+    assert {c.output_csv for c in CLUSTERS} <= set(arts)
+
+
 def test_acoustic_level_routed_when_output_on():
-    # The acoustic level is gated by the acoustic_ts_mat output key (Run-tab
-    # toggle) plus a feature toggle. Under opt-in defaults the features are off,
+    # The acoustic level is gated by the level_acoustic output key (Run-tab
+    # level switch) plus a feature toggle. Under opt-in defaults the features are off,
     # so enable envelope explicitly.
     from gui.planner.plan import plan_from_prefs
     from utils.preferences import DEFAULT_PREFS
     import copy
     prefs = copy.deepcopy(DEFAULT_PREFS)
-    prefs["output"]["acoustic_ts_mat"] = True
+    prefs["output"]["level_acoustic"] = True
     prefs["features"]["feat_acoustic_ts_envelope"] = True
     plan = plan_from_prefs(prefs)
     assert "acoustic" in plan.output_csvs
@@ -135,7 +147,7 @@ def test_acoustic_level_off_by_default():
     from gui.planner.plan import plan_from_prefs
     from utils.preferences import DEFAULT_PREFS
     plan = plan_from_prefs(DEFAULT_PREFS)
-    assert "acoustic" not in plan.output_csvs   # acoustic_ts_mat defaults OFF
+    assert "acoustic" not in plan.output_csvs   # level_acoustic defaults OFF
 
 
 def test_acoustic_level_off_when_all_features_off():
@@ -144,7 +156,7 @@ def test_acoustic_level_off_when_all_features_off():
     from utils.preferences import DEFAULT_PREFS
     import copy
     prefs = copy.deepcopy(DEFAULT_PREFS)
-    prefs["output"]["acoustic_ts_mat"] = True
+    prefs["output"]["level_acoustic"] = True
     for k in ("feat_acoustic_ts_envelope", "feat_acoustic_ts_onset_env",
               "feat_acoustic_ts_logmel", "feat_acoustic_ts_mfcc"):
         prefs["features"][k] = False

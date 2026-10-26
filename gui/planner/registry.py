@@ -311,6 +311,7 @@ CLUSTERS: list[FeatureCluster] = [
         output_csv="features",
         requires_stages=("spacy_parse", "sem_domain"),
         emits_columns=("Sem_Categories",),  # plus dynamic Sem_<Backend>_<cat> columns
+        master_toggle="master_semantic_indicators",
     ),
 
     # §1.7b Lexical norms — user-supplied AoA / concreteness / imageability /
@@ -422,6 +423,7 @@ CLUSTERS: list[FeatureCluster] = [
         output_csv="syllables",
         requires_stages=("spacy_parse", "mfa_align", "syllabify_pairs", "pcenter"),
         emits_columns=("P_Center",),
+        master_toggle="master_syllable_pcenter",
     ),
 
     # §2.5 Phoneme surprisal (CSV columns) — Brodbeck/Gillis cohort model
@@ -434,14 +436,15 @@ CLUSTERS: list[FeatureCluster] = [
         master_toggle="master_phoneme_surprisal",
     ),
 
-    # §2.5b Phoneme surprisal (.mat impulse trains) — gated by the output key
-    # phoneme_surprisal_mat (Run tab), like the acoustic level. No master.
+    # §2.5b Phoneme surprisal (.mat impulse trains) — a Sub-word-level artifact
+    # gated by the Phoneme-surprisal section switch + its .mat toggle (v21).
     FeatureCluster(
         name="phoneme surprisal mat",
-        toggle_keys=(),
+        toggle_keys=("feat_phoneme_surprisal_mat",),
         output_csv="phoneme_surprisal_mat",
         requires_stages=("spacy_parse", "mfa_align", "syllabify_pairs", "phoneme_surprisal"),
         emits_columns=(),
+        master_toggle="master_phoneme_surprisal",
     ),
 
     # --- Sentence level (§3) ---
@@ -480,35 +483,35 @@ CLUSTERS: list[FeatureCluster] = [
 
     FeatureCluster(
         name="word2vec",
-        toggle_keys=(),
+        toggle_keys=("master_word2vec",),
         output_csv="word2vec",
         requires_stages=("spacy_parse", "word2vec_embed"),
         emits_columns=(),
-        master_toggle="master_word2vec",
+        master_toggle="master_semantic_similarity",
     ),
 
     FeatureCluster(
         name="bert word embeddings",
-        toggle_keys=(),
+        toggle_keys=("master_bert_word",),
         output_csv="bert_word",
         requires_stages=("spacy_parse", "bert_embed"),
         emits_columns=(),
-        master_toggle="master_bert_word",
+        master_toggle="master_semantic_similarity",
     ),
 
     FeatureCluster(
         name="bert sentence embeddings",
-        toggle_keys=(),
+        toggle_keys=("master_bert_sentence",),
         output_csv="bert_sentence",
         requires_stages=("spacy_parse", "bert_embed"),
         emits_columns=(),
-        master_toggle="master_bert_sentence",
+        master_toggle="master_sentence_similarity",
     ),
 
     # --- Acoustic level (§6) ---
-    # Gated solely by the acoustic_ts_mat output key (Run-tab toggle) + at least
-    # one feature toggle. No master_toggle: the acoustic level is one cluster, so
-    # a separate master would just duplicate the output-key switch.
+    # Gated by the Acoustic level switch (output.level_acoustic, Run tab) + at
+    # least one feature toggle. The level key doubles as the master: the
+    # acoustic level is one cluster, so a separate master would duplicate it.
     FeatureCluster(
         name="acoustic time-series",
         toggle_keys=("feat_acoustic_ts_envelope", "feat_acoustic_ts_onset_env",
@@ -516,6 +519,7 @@ CLUSTERS: list[FeatureCluster] = [
         output_csv="acoustic",
         requires_stages=("acoustic_ts",),
         emits_columns=(),
+        master_toggle="level_acoustic",
     ),
 
     # --- Document level (§4 of feature_dependencies.md) ---
@@ -539,6 +543,7 @@ CLUSTERS: list[FeatureCluster] = [
         output_csv="documents_summary",
         requires_stages=("spacy_parse", "doc_aggregates"),
         emits_columns=("mean_zipf_freq",),
+        master_toggle="master_doc_aggregates",
     ),
     FeatureCluster(
         name="doc agg edu zipf",
@@ -548,6 +553,7 @@ CLUSTERS: list[FeatureCluster] = [
         emits_columns=("mean_edu_zipf_k2", "mean_edu_zipf_3to5",
                        "mean_edu_zipf_6to8", "mean_edu_zipf_9to12",
                        "mean_edu_zipf_overall"),
+        master_toggle="master_doc_aggregates",
     ),
     # Doc-level predictability aggregates (v18) — single toggle mirroring the
     # word-level Predictability cluster's roster-driven shape. Unlike that
@@ -566,6 +572,7 @@ CLUSTERS: list[FeatureCluster] = [
         output_csv="documents_summary",
         requires_stages=("spacy_parse", "doc_aggregates"),
         emits_columns=(),
+        master_toggle="master_doc_aggregates",
     ),
 
     # §4.3 Lex diversity
@@ -575,6 +582,7 @@ CLUSTERS: list[FeatureCluster] = [
         output_csv="documents_summary",
         requires_stages=("spacy_parse", "doc_lex_diversity"),
         emits_columns=("ttr", "mtld"),
+        master_toggle="master_doc_lex_diversity",
     ),
 
     # §4.4 Readability
@@ -584,6 +592,7 @@ CLUSTERS: list[FeatureCluster] = [
         output_csv="documents_summary",
         requires_stages=("doc_readability",),
         emits_columns=("flesch_reading_ease", "flesch_kincaid_grade"),
+        master_toggle="master_doc_readability",
     ),
 
     # §4.5 Composite psychological scores (license-clean, spaCy + VADER).
@@ -607,6 +616,7 @@ CLUSTERS: list[FeatureCluster] = [
         output_csv="documents_summary",
         requires_stages=("spacy_parse", "lexical_norms", "doc_aggregates"),
         emits_columns=(),  # dynamic — means + coverage columns
+        master_toggle="master_doc_aggregates",
     ),
 
     # §4.6 Category proportions
@@ -616,6 +626,7 @@ CLUSTERS: list[FeatureCluster] = [
         output_csv="documents_summary",
         requires_stages=("spacy_parse", "sem_domain", "doc_category_proportions"),
         emits_columns=(),  # dynamic — count_<cat>, prop_<cat>
+        master_toggle="master_doc_category_proportions",
     ),
 
     # §4.7 Doc prosody

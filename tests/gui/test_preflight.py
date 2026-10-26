@@ -26,7 +26,7 @@ def test_preflight_warns_on_missing_ewfg(prefs_tmp):
     from gui.preflight import compute_warnings
     # Need ewfg_freq in plan: word_level_csv + an EWFG band toggle on.
     save_preferences({
-        "output": {"word_level_csv": True},
+        "output": {"level_word": True},
         "features": {"freq_ewfg_k2": True},
     })
     warnings = compute_warnings()
@@ -43,7 +43,7 @@ def test_preflight_ignores_unrecognized_model_slug(prefs_tmp):
     from utils.preferences import save_preferences
     from gui.preflight import compute_warnings
     save_preferences({
-        "output": {"word_level_csv": True},
+        "output": {"level_word": True},
         "predictability": {"models": ["gpt-4o-mini"],
                             "metrics": {"surprisal": True, "cloze": False, "topmatch": False}},
     })
@@ -57,7 +57,7 @@ def test_preflight_warns_on_gated_model_without_token(prefs_tmp, monkeypatch):
     from utils.preferences import save_preferences
     from gui.preflight import compute_warnings
     save_preferences({
-        "output": {"word_level_csv": True},
+        "output": {"level_word": True},
         "predictability": {"models": ["llama3_8b"],
                             "metrics": {"surprisal": True, "cloze": False, "topmatch": False}},
     })
@@ -71,7 +71,7 @@ def test_preflight_no_gated_warning_when_token_present(prefs_tmp, monkeypatch):
     from utils.preferences import save_preferences
     from gui.preflight import compute_warnings
     save_preferences({
-        "output": {"word_level_csv": True},
+        "output": {"level_word": True},
         "predictability": {"models": ["llama3_8b"],
                             "metrics": {"surprisal": True, "cloze": False, "topmatch": False}},
     })
@@ -85,7 +85,7 @@ def test_preflight_no_gated_warning_when_session_token_pasted(prefs_tmp, monkeyp
     from utils.preferences import save_preferences
     from gui.preflight import compute_warnings
     save_preferences({
-        "output": {"word_level_csv": True},
+        "output": {"level_word": True},
         "predictability": {"models": ["llama3_8b"],
                             "metrics": {"surprisal": True, "cloze": False, "topmatch": False}},
     })
@@ -101,7 +101,7 @@ def test_preflight_no_gated_warning_for_free_model(prefs_tmp, monkeypatch):
     from utils.preferences import save_preferences
     from gui.preflight import compute_warnings
     save_preferences({
-        "output": {"word_level_csv": True},
+        "output": {"level_word": True},
         "predictability": {"models": ["gpt2"],
                             "metrics": {"surprisal": True, "cloze": False, "topmatch": False}},
     })
@@ -115,7 +115,7 @@ def test_preflight_warns_models_without_metrics(prefs_tmp):
     from utils.preferences import save_preferences
     from gui.preflight import compute_warnings
     save_preferences({
-        "output": {"word_level_csv": True},
+        "output": {"level_word": True},
         "predictability": {"models": ["gpt2"],
                             "metrics": {"surprisal": False, "cloze": False, "topmatch": False}},
     })
@@ -128,7 +128,7 @@ def test_preflight_warns_metrics_without_models(prefs_tmp):
     from utils.preferences import save_preferences
     from gui.preflight import compute_warnings
     save_preferences({
-        "output": {"word_level_csv": True},
+        "output": {"level_word": True},
         "predictability": {"models": [],
                             "metrics": {"surprisal": True, "cloze": False, "topmatch": False}},
     })
@@ -142,7 +142,7 @@ def test_preflight_no_predictability_warnings_when_fully_configured(prefs_tmp, m
     from utils.preferences import save_preferences
     from gui.preflight import compute_warnings
     save_preferences({
-        "output": {"word_level_csv": True},
+        "output": {"level_word": True},
         "predictability": {"models": ["gpt2"],
                             "metrics": {"surprisal": True, "cloze": False, "topmatch": False}},
     })
@@ -159,7 +159,7 @@ def test_no_prosody_alignment_warning_anymore(prefs_tmp):
     from utils.preferences import save_preferences
     from gui.preflight import compute_warnings
     save_preferences({
-        "output": {"word_level_csv": True},
+        "output": {"level_word": True},
         "features": {
             "feat_acoustic_onset": False,
             "feat_acoustic_end": False,
@@ -180,7 +180,7 @@ def test_prosody_warns_when_parselmouth_missing(prefs_tmp, monkeypatch):
     from gui.preflight import compute_warnings
     # Need a prosody stage in plan: word_level_csv + prosody toggle on.
     save_preferences({
-        "output": {"word_level_csv": True},
+        "output": {"level_word": True},
         "features": {"feat_prosody_pitch_mean": True},
     })
     warnings = compute_warnings()
@@ -194,7 +194,7 @@ def test_no_subword_alignment_warning_anymore(prefs_tmp):
     from utils.preferences import save_preferences
     from gui.preflight import compute_warnings
     save_preferences({
-        "output": {"syllables_csv": True},
+        "output": {"level_subword": True},
         "features": {
             "feat_syllable_onset": True,
             "feat_acoustic_onset": False,
@@ -219,7 +219,7 @@ def test_warns_when_g2p_oov_on_but_model_missing(prefs_tmp, monkeypatch):
     from utils.preferences import save_preferences
     from gui.preflight import compute_warnings
     save_preferences({
-        "output": {"word_level_csv": True},
+        "output": {"level_word": True},
         "features": {"feat_acoustic_onset": True},
         "alignment": {"g2p_oov": True},
     })
@@ -234,7 +234,7 @@ def test_no_g2p_warning_when_model_present(prefs_tmp, monkeypatch):
     from utils.preferences import save_preferences
     from gui.preflight import compute_warnings
     save_preferences({
-        "output": {"word_level_csv": True},
+        "output": {"level_word": True},
         "features": {"feat_acoustic_onset": True},
         "alignment": {"g2p_oov": True},
     })
@@ -248,7 +248,7 @@ def test_no_g2p_warning_when_toggle_off(prefs_tmp, monkeypatch):
     from utils.preferences import save_preferences
     from gui.preflight import compute_warnings
     save_preferences({
-        "output": {"word_level_csv": True},
+        "output": {"level_word": True},
         "features": {"feat_acoustic_onset": True},
         "alignment": {"g2p_oov": False},
     })
@@ -263,7 +263,7 @@ def test_warns_when_pyphen_missing_and_syllable_label_on(prefs_tmp, monkeypatch)
     from gui.preflight import compute_warnings
     # Need syllabify_pairs in plan: syllables_csv + syllable label toggle on.
     save_preferences({
-        "output": {"syllables_csv": True},
+        "output": {"level_subword": True},
         "features": {"feat_syllable_label": True},
     })
     warnings = compute_warnings()

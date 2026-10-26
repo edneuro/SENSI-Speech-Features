@@ -27,11 +27,16 @@ _MASTER_DEFAULTS_FEATURES = {
     "master_syllable_labels":    True,
     "master_syllable_prosody":   True,
     "master_phoneme_intervals":  True,
+    "master_semantic_indicators": True,
 }
 _MASTER_DEFAULTS_OUTPUT = {
     "master_doc_prosody":           True,
     "master_doc_articulation_rate": True,
     "master_doc_counts":            True,
+    "master_doc_aggregates":           True,
+    "master_doc_lex_diversity":        True,
+    "master_doc_readability":          True,
+    "master_doc_category_proportions": True,
 }
 
 
@@ -59,8 +64,7 @@ def _prefs(output: dict, features: dict, *, semantic=None, prosody=None,
 def test_empty_selection_produces_empty_plan():
     """All output toggles off → no stages, no CSVs, no work."""
     p = plan_from_prefs(_prefs(
-        output={"word_level_csv": False, "document_summary": False,
-                "syllables_csv": False, "phonemes_csv": False,
+        output={"level_word": False, "level_document": False, "level_subword": False,
                 "doc_category_proportions": False, "doc_lex_diversity": False,
                 "doc_readability": False, "doc_aggregates": False,
                 "out_count_tokens": False, "out_count_content_tokens": False,
@@ -74,8 +78,7 @@ def test_empty_selection_produces_empty_plan():
 def test_subtlex_only_word_run():
     """Word CSV + SUBTLEX toggle on → spacy_parse + word_freq."""
     p = plan_from_prefs(_prefs(
-        output={"word_level_csv": True, "syllables_csv": False, "phonemes_csv": False,
-                "document_summary": False},
+        output={"level_word": True, "level_subword": False, "level_document": False},
         features={"freq_subtlex": True},
     ))
     assert "spacy_parse" in p.stages_to_run
@@ -89,8 +92,7 @@ def test_subword_features_force_parse_and_align():
     → spacy_parse and mfa_align must fire so syllabify_pairs has the columns
     it needs. (This is exactly the bug that shipped without a test before.)"""
     p = plan_from_prefs(_prefs(
-        output={"word_level_csv": False, "syllables_csv": True, "phonemes_csv": True,
-                "document_summary": False},
+        output={"level_word": False, "level_subword": True, "level_document": False},
         features={"feat_syllable_onset": True, "feat_syllable_end": True,
                   "feat_phoneme_arpabet": True,
                   # All struct + acoustic OFF (matches the user's reported config)
@@ -110,8 +112,7 @@ def test_subword_features_force_parse_and_align():
 def test_syllable_prosody_forces_contours():
     """Regression: enabling syllable prosody must pull praat_contours into the plan."""
     p = plan_from_prefs(_prefs(
-        output={"word_level_csv": False, "syllables_csv": True, "phonemes_csv": False,
-                "document_summary": False},
+        output={"level_word": False, "level_subword": True, "level_document": False},
         features={"feat_syllable_pitch_mean": True},
     ))
     assert "praat_contours" in p.stages_to_run
@@ -120,8 +121,7 @@ def test_syllable_prosody_forces_contours():
 
 def test_word_prosody_forces_align_and_contours():
     p = plan_from_prefs(_prefs(
-        output={"word_level_csv": True, "syllables_csv": False, "phonemes_csv": False,
-                "document_summary": False},
+        output={"level_word": True, "level_subword": False, "level_document": False},
         features={"feat_prosody_pitch_mean": True},
     ))
     assert "mfa_align" in p.stages_to_run
@@ -131,8 +131,7 @@ def test_word_prosody_forces_align_and_contours():
 
 def test_doc_prosody_pulls_align_and_contours_only_for_doc():
     p = plan_from_prefs(_prefs(
-        output={"word_level_csv": False, "syllables_csv": False, "phonemes_csv": False,
-                "document_summary": True},
+        output={"level_word": False, "level_subword": False, "level_document": True},
         features={"feat_doc_prosody_pitch_mean": True},
     ))
     assert "mfa_align" in p.stages_to_run
@@ -146,8 +145,7 @@ def test_inactive_cluster_doesnt_pull_its_stage():
     the stages it would have required are not pulled unless some OTHER
     active cluster also needs them."""
     p = plan_from_prefs(_prefs(
-        output={"word_level_csv": False, "syllables_csv": False, "phonemes_csv": False,
-                "document_summary": True,
+        output={"level_word": False, "level_subword": False, "level_document": True,
                 "doc_lex_diversity": True},  # output-keyed toggle; only lex diversity on
         features={},
     ))
@@ -162,8 +160,7 @@ def test_topological_order_dependencies_first():
     """If both spacy_parse and word_freq are in stages_to_run, spacy_parse
     must come before word_freq (because word_freq consumes word_df)."""
     p = plan_from_prefs(_prefs(
-        output={"word_level_csv": True, "syllables_csv": False, "phonemes_csv": False,
-                "document_summary": False},
+        output={"level_word": True, "level_subword": False, "level_document": False},
         features={"freq_subtlex": True},
     ))
     order = list(p.stages_to_run)
@@ -174,8 +171,7 @@ def test_column_drops_for_inactive_cluster_columns_in_active_csv():
     """If features.csv is wanted and SUBTLEX is on but prosody is off,
     column_drops['features'] should include all prosody columns."""
     p = plan_from_prefs(_prefs(
-        output={"word_level_csv": True, "syllables_csv": False, "phonemes_csv": False,
-                "document_summary": False},
+        output={"level_word": True, "level_subword": False, "level_document": False},
         features={"freq_subtlex": True},  # prosody all off (default)
     ))
     drops = p.column_drops.get("features", frozenset())
@@ -186,8 +182,7 @@ def test_column_drops_for_inactive_cluster_columns_in_active_csv():
 
 def test_stage_configs_carries_prosody_params():
     p = plan_from_prefs(_prefs(
-        output={"word_level_csv": True, "syllables_csv": False, "phonemes_csv": False,
-                "document_summary": False},
+        output={"level_word": True, "level_subword": False, "level_document": False},
         features={"feat_prosody_pitch_mean": True},
         prosody={"pitch_units": "Hz", "pitch_floor_hz": 50.0,
                  "pitch_ceiling_hz": 600.0, "pause_threshold_s": 0.3},
@@ -204,8 +199,7 @@ def test_stage_configs_carries_prosody_params():
 
 def test_stage_configs_carries_predictability_models_and_metrics():
     p = plan_from_prefs(_prefs(
-        output={"word_level_csv": True, "syllables_csv": False, "phonemes_csv": False,
-                "document_summary": False},
+        output={"level_word": True, "level_subword": False, "level_document": False},
         features={},
         predictability={"models": ["gpt2"],
                         "metrics": {"surprisal": True, "cloze": True, "topmatch": False}},
@@ -240,7 +234,7 @@ def test_master_toggle_gates_cluster_inactive_when_false(monkeypatch):
     )
     _install_test_cluster(monkeypatch, cluster)
     p = plan_from_prefs({
-        "output": {"word_level_csv": True},
+        "output": {"level_word": True},
         "features": {"child": True, "master_t": False},  # child on, master off
     })
     assert p.stages_to_run == ()  # master off = cluster inactive
@@ -254,7 +248,7 @@ def test_master_toggle_active_when_true(monkeypatch):
     )
     _install_test_cluster(monkeypatch, cluster)
     p = plan_from_prefs({
-        "output": {"word_level_csv": True},
+        "output": {"level_word": True},
         "features": {"child": True, "master_t": True},
     })
     assert "t_stage" in p.stages_to_run
@@ -268,7 +262,7 @@ def test_available_when_gates_cluster_inactive_on_mismatch(monkeypatch):
     )
     _install_test_cluster(monkeypatch, cluster)
     p = plan_from_prefs({
-        "output": {"word_level_csv": True},
+        "output": {"level_word": True},
         "features": {"child": True},
         "semantic": {"backend": "empath"},  # mismatch
     })
@@ -283,7 +277,7 @@ def test_available_when_active_on_match(monkeypatch):
     )
     _install_test_cluster(monkeypatch, cluster)
     p = plan_from_prefs({
-        "output": {"word_level_csv": True},
+        "output": {"level_word": True},
         "features": {"child": True},
         "semantic": {"backend": "liwc"},
     })
@@ -301,21 +295,21 @@ def test_master_and_available_when_both_required(monkeypatch):
     _install_test_cluster(monkeypatch, cluster)
     # master True, available_when False
     p = plan_from_prefs({
-        "output": {"word_level_csv": True},
+        "output": {"level_word": True},
         "features": {"child": True, "master_t": True},
         "semantic": {"backend": "empath"},
     })
     assert p.stages_to_run == ()
     # master False, available_when True
     p = plan_from_prefs({
-        "output": {"word_level_csv": True},
+        "output": {"level_word": True},
         "features": {"child": True, "master_t": False},
         "semantic": {"backend": "liwc"},
     })
     assert p.stages_to_run == ()
     # both pass
     p = plan_from_prefs({
-        "output": {"word_level_csv": True},
+        "output": {"level_word": True},
         "features": {"child": True, "master_t": True},
         "semantic": {"backend": "liwc"},
     })
@@ -324,7 +318,7 @@ def test_master_and_available_when_both_required(monkeypatch):
 
 def test_phoneme_surprisal_csv_cluster_activates_stage():
     prefs = copy.deepcopy(DEFAULT_PREFS)
-    prefs["output"]["phonemes_csv"] = True
+    prefs["output"]["level_subword"] = True
     prefs["features"]["master_phoneme_surprisal"] = True
     prefs["features"]["feat_phoneme_surprisal"] = True
     plan = plan_from_prefs(prefs)
@@ -334,7 +328,9 @@ def test_phoneme_surprisal_csv_cluster_activates_stage():
 
 def test_phoneme_surprisal_mat_output_activates_stage():
     prefs = copy.deepcopy(DEFAULT_PREFS)
-    prefs["output"]["phoneme_surprisal_mat"] = True
+    prefs["output"]["level_subword"] = True
+    prefs["features"]["master_phoneme_surprisal"] = True
+    prefs["features"]["feat_phoneme_surprisal_mat"] = True
     plan = plan_from_prefs(prefs)
     assert "phoneme_surprisal_mat" in plan.output_csvs
     assert "phoneme_surprisal" in plan.stages_to_run
@@ -356,7 +352,7 @@ def test_predictability_stage_active_and_columns(monkeypatch):
     import copy
     prefs = copy.deepcopy(DEFAULT_PREFS)
     prefs["features"]["master_predictability"] = True
-    prefs["output"]["word_level_csv"] = True
+    prefs["output"]["level_word"] = True
     prefs["predictability"] = {"models": ["gpt2", "llama3_8b"],
                                "metrics": {"surprisal": True, "cloze": True,
                                            "topmatch": False}}
@@ -372,7 +368,7 @@ def test_predictability_inactive_when_no_metric(monkeypatch):
     import copy
     prefs = copy.deepcopy(DEFAULT_PREFS)
     prefs["features"]["master_predictability"] = True
-    prefs["output"]["word_level_csv"] = True
+    prefs["output"]["level_word"] = True
     prefs["predictability"] = {"models": ["gpt2"],
                                "metrics": {"surprisal": False, "cloze": False,
                                            "topmatch": False}}
@@ -387,7 +383,7 @@ def test_predictability_inactive_when_master_off(monkeypatch):
     import copy
     prefs = copy.deepcopy(DEFAULT_PREFS)
     prefs["features"]["master_predictability"] = False
-    prefs["output"]["word_level_csv"] = True
+    prefs["output"]["level_word"] = True
     prefs["predictability"] = {"models": ["gpt2"],
                                "metrics": {"surprisal": True, "cloze": False,
                                            "topmatch": False}}

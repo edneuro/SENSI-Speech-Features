@@ -3,7 +3,8 @@
 Pure function: deterministic, no I/O.
 
 Algorithm (see spec §6):
-  1. Determine active output CSVs from prefs["output"].
+  1. Determine active output artifacts from prefs["output"]["level_*"]
+     (LEVEL_ARTIFACTS).
   2. For each cluster, mark active iff its output_csv is wanted AND any
      of its toggle_keys is True in prefs["features"] (or prefs["output"]
      for output-keyed clusters like doc_counts, doc_lex_diversity, etc).
@@ -20,6 +21,8 @@ from typing import Any
 from gui.planner.registry import STAGES, CLUSTERS, PREDICTABILITY_CLUSTER_NAME
 from gui.planner.stages import Stage
 from gui.planner.stages import Plan, FeatureCluster
+
+DOC_AGG_PREDICTABILITY_CLUSTER_NAME = "doc agg predictability"
 
 
 # Toggle keys that live in prefs["output"] rather than prefs["features"]:
@@ -39,19 +42,22 @@ OUTPUT_KEYED_TOGGLES = frozenset({
     "doc_category_proportions",
     "master_doc_prosody", "master_doc_articulation_rate",
     "master_doc_counts",
+    # v21 section switches + the acoustic level (doubles as the acoustic
+    # cluster's master; see registry.py "acoustic time-series").
+    "level_acoustic",
+    "master_doc_aggregates", "master_doc_lex_diversity",
+    "master_doc_readability", "master_doc_category_proportions",
 })
 
-_OUTPUT_CSV_MAP = {
-    "word_level_csv":    "features",
-    "syllables_csv":     "syllables",
-    "phonemes_csv":      "phonemes",
-    "sentences_csv":     "sentences",
-    "word2vec_mat":      "word2vec",
-    "bert_word_mat":     "bert_word",
-    "bert_sentence_mat": "bert_sentence",
-    "document_summary":  "documents_summary",
-    "acoustic_ts_mat":   "acoustic",
-    "phoneme_surprisal_mat": "phoneme_surprisal_mat",
+# Run-tab output levels (prefs["output"]["level_*"], v21) -> the artifact ids
+# each level writes. plan.output_csvs is a subset of the union of the levels
+# that are on (only artifacts with at least one active cluster are live).
+LEVEL_ARTIFACTS: dict[str, tuple[str, ...]] = {
+    "level_word":     ("features", "word2vec", "bert_word"),
+    "level_document": ("documents_summary",),
+    "level_subword":  ("syllables", "phonemes", "phoneme_surprisal_mat"),
+    "level_sentence": ("sentences", "bert_sentence"),
+    "level_acoustic": ("acoustic",),
 }
 
 
@@ -68,8 +74,8 @@ def _get_dotted(prefs: dict, path: str):
 def _active_output_csvs(prefs: dict) -> frozenset[str]:
     out = prefs.get("output", {})
     return frozenset(
-        csv for prefs_key, csv in _OUTPUT_CSV_MAP.items()
-        if out.get(prefs_key, False)
+        art for level, arts in LEVEL_ARTIFACTS.items()
+        if out.get(level, False) for art in arts
     )
 
 
@@ -102,18 +108,27 @@ def _predictability_columns(models: list[str], metrics: list[str]) -> tuple[str,
     )
 
 
-def _predictability_active(prefs: dict, active_csvs: frozenset[str]) -> bool:
-    """The predictability stage/cluster's true activation predicate (spec §12
+def _predictability_active(prefs: dict,
+                           active_csvs: frozenset[str]) -> tuple[bool, bool]:
+    """The predictability stage's true activation predicate (spec §12
     fallback — see the "Predictability" FeatureCluster's docstring in
-    registry.py). Not expressible via toggle_keys because it depends on two
-    dynamic prefs['predictability'] fields (models list, metrics dict), not a
-    fixed set of boolean feature-toggle keys."""
-    if "features" not in active_csvs:
-        return False
-    if not _toggle_value(prefs, "master_predictability"):
-        return False
+    registry.py), as ``(word_path, doc_path)``. Not expressible via
+    toggle_keys because it depends on two dynamic prefs['predictability']
+    fields (models list, metrics dict), not a fixed set of boolean keys.
+
+    word_path: the word CSV is wanted and the word-level Predictability
+    section is on -> word-level <slug>_<Metric> columns.
+    doc_path: the document summary is wanted and its "doc agg predictability"
+    cluster is active -> the stage runs so the doc means can be computed,
+    independent of master_predictability (the word section switch)."""
     models, metrics = _predictability_config(prefs)
-    return bool(models) and bool(metrics)
+    configured = bool(models) and bool(metrics)
+    word_path = (configured and "features" in active_csvs
+                 and _toggle_value(prefs, "master_predictability"))
+    doc_path = (configured and "documents_summary" in active_csvs
+                and any(c.name == DOC_AGG_PREDICTABILITY_CLUSTER_NAME
+                        for c in _active_clusters(prefs, active_csvs)))
+    return word_path, doc_path
 
 
 def _active_clusters(prefs: dict, active_csvs: frozenset[str]) -> list[FeatureCluster]:
@@ -270,7 +285,7 @@ def plan_from_prefs(prefs: dict) -> Plan:
     active = _active_clusters(prefs, active_csvs)
     # Restrict output_csvs to only those CSVs that have at least one active
     # cluster — avoids writing empty files when the master toggle is off but
-    # the output key is on (e.g. acoustic_ts_mat=True with master_acoustic_ts=False).
+    # the level is on (e.g. level_acoustic=True with every acoustic feature off).
     live_csvs = frozenset(c.output_csv for c in active)
     required: set[str] = set()
     for c in active:
@@ -278,13 +293,12 @@ def plan_from_prefs(prefs: dict) -> Plan:
 
     # Predictability: dynamic activation, handled outside the declarative
     # cluster loop above (see _predictability_active's docstring).
-    pred_active = _predictability_active(prefs, active_csvs)
-    pred_models, pred_metrics = (
-        _predictability_config(prefs) if pred_active else ([], [])
-    )
-    pred_columns = _predictability_columns(pred_models, pred_metrics) if pred_active else ()
-    if pred_active:
+    word_pred, doc_pred = _predictability_active(prefs, active_csvs)
+    if word_pred or doc_pred:
         required.update({"spacy_parse", "predictability"})
+    pred_columns: tuple[str, ...] = ()
+    if word_pred:
+        pred_columns = _predictability_columns(*_predictability_config(prefs))
         live_csvs = live_csvs | {"features"}
 
     closed = _close_under_consumes(required)
