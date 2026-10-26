@@ -62,3 +62,4 @@ sherlock/*.sif
 # Apptainer build scratch (writable sandbox dirs + interrupted-build leftovers)
 sherlock/build-temp-*/
 sherlock/*_sandbox/
+SensiExtractor.app/

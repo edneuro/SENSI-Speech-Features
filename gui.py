@@ -30,6 +30,23 @@ from gui.theme import (
 
 _ICON_PATH = _HERE / "assets" / "icon.svg"
 
+# Windows picks the taskbar button's icon by the process's AppUserModelID, not
+# by the window. Without an explicit ID the GUI runs as plain python.exe, gets
+# grouped with Python, and the taskbar can show Python's icon instead of ours.
+_APP_USER_MODEL_ID = "edneuro.SensiExtractor.GUI"
+
+
+def _set_windows_app_id() -> None:
+    """Give the process its own taskbar identity. Must run before QApplication."""
+    if sys.platform != "win32":
+        return
+    import ctypes
+    try:
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(
+            _APP_USER_MODEL_ID)
+    except (AttributeError, OSError):
+        pass  # cosmetic only; never block startup
+
 
 def _apply_palette(app: "QApplication") -> None:
     """Set a fallback palette so any widget not covered by QSS still renders
@@ -53,6 +70,7 @@ def _apply_palette(app: "QApplication") -> None:
 
 
 def main() -> int:
+    _set_windows_app_id()
     app = QApplication(sys.argv)
     app.setApplicationName("SENSI-FeatureExtractor")
     if _ICON_PATH.exists():

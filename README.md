@@ -117,7 +117,7 @@ intentional — close the GUI and press a key to dismiss it).
 
 - **Windows:** double-click **`SensiExtractor`** (a shortcut with the app icon; it runs `runGUI.bat`).
 - **Linux:** double-click **`SensiExtractor`** (a `.desktop` entry with the app icon; it runs `runGUI.sh`).
-- **macOS:** double-click **`runGUI.command`** (functional launcher; a custom icon needs Mac-only tooling).
+- **macOS:** double-click **`SensiExtractor`** (`SensiExtractor.app`, with the app icon). It opens no Terminal window; its log goes to `~/Library/Logs/SensiExtractor.log`. For live logs in Terminal, double-click **`runGUI.command`** instead.
 
 Or launch from a terminal:
 ```bash
@@ -133,8 +133,8 @@ python gui.py
 
 ### GUI (recommended)
 
-Double-click the launcher created by setup (**`SensiExtractor`** — the
-app-icon shortcut — on Windows/Linux, `runGUI.command` on macOS), or from a
+Double-click the launcher created by setup (**`SensiExtractor`**, the
+app-icon shortcut on Windows/Linux and `SensiExtractor.app` on macOS), or from a
 terminal:
 
 ```bash

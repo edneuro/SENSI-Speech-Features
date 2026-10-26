@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 """Render assets/icon.svg into raster icon files used by the double-click
-launchers: assets/icon.png (Linux .desktop) and assets/icon.ico (Windows
-shortcut). Committed artifacts — re-run this only if icon.svg changes:
+launchers: assets/icon.png (Linux .desktop), assets/icon.ico (Windows
+shortcut) and assets/icon.icns (macOS SensiExtractor.app). Committed
+artifacts — re-run this only if icon.svg changes:
 
     conda run -p ./env python scripts/make_icons.py
 
@@ -52,8 +53,13 @@ def main() -> int:
     ico_path = ROOT / "assets" / "icon.ico"
     pil.save(png_path)
     pil.save(ico_path, sizes=[(16, 16), (32, 32), (48, 48), (64, 64), (128, 128), (256, 256)])
+    # macOS wants sizes up to 1024 px (512@2x); render the SVG at full size so
+    # the large Finder/Dock icons are sharp, and Pillow derives the smaller ones.
+    icns_path = ROOT / "assets" / "icon.icns"
+    qimage_to_pil(render_png(1024)).save(icns_path, format="ICNS")
     print(f"wrote {png_path}")
     print(f"wrote {ico_path}")
+    print(f"wrote {icns_path}")
     return 0
 
 

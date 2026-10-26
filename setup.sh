@@ -59,10 +59,14 @@ echo ""
 LAUNCH
 chmod +x "$REPO_DIR/$LAUNCHER"
 
+# macOS: also build SensiExtractor.app, which carries the app icon (a .command
+# can't). runGUI.command stays as the launcher that shows live logs in Terminal.
+if [ "$(uname -s)" = "Darwin" ]; then
+    bash "$REPO_DIR/scripts/make_mac_app.sh" "$REPO_DIR" "$CONDA_BASE"
+fi
+
 # Linux: also drop a .desktop entry so it shows the app icon (an icon can't
-# attach to a bare .sh). Terminal=true keeps the log window open. macOS custom
-# icons need Mac-only tooling, so on macOS the .command above is the launcher
-# (functional, no custom icon).
+# attach to a bare .sh). Terminal=true keeps the log window open.
 if [ "$(uname -s)" = "Linux" ]; then
     cat > "$REPO_DIR/SensiExtractor.desktop" <<DESK
 [Desktop Entry]
@@ -83,6 +87,9 @@ echo "============================================================"
 echo " Setup complete!"
 echo ""
 echo " To launch the app, either:"
-echo "   - double-click  $LAUNCHER   (in your file browser), or"
+if [ "$(uname -s)" = "Darwin" ]; then
+    echo "   - double-click  SensiExtractor   (the app icon in Finder), or"
+fi
+echo "   - double-click  $LAUNCHER   (in your file browser; shows live logs), or"
 echo "   - run:  conda activate ./env  &&  python gui.py"
 echo "============================================================"
