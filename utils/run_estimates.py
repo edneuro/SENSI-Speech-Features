@@ -260,3 +260,65 @@ def format_bytes(n: int) -> str:
     else:
         s = f"{v:.1f}"
     return f"≈ {s} {_UNITS[i]}"
+
+
+# --- peak memory -------------------------------------------------------------
+
+@dataclass
+class RamEstimate:
+    peak_gb: float       # system RAM needed (GPU-resident models excluded)
+    driver: str          # display name of the heaviest item, or "the pipeline"
+    machine_gb: float
+    gpu_vram_gb: float
+    fits: bool
+    warning: str | None
+
+
+def estimate_ram(plan: Plan, prefs: dict, system: dict) -> RamEstimate:
+    """Baseline + the SUM of the heavy items that will run (they stay cached
+    for the whole process). A model the extractor would put on the GPU counts
+    its "<slug>@cuda" value against VRAM instead of RAM."""
+    from extractors.predictability_models import spec_for
+    from utils.timing_history import model_device
+
+    gpu = system.get("gpu") or {}
+    machine = float(system.get("system_ram_gb") or 0.0)
+    vram = float(gpu.get("vram_gb") or 0.0)
+    cuda = bool(gpu.get("name")) and vram > 0
+
+    # (display name, GiB, on_gpu)
+    items: list[tuple[str, float, bool]] = []
+    if "word2vec" in plan.output_csvs:
+        items.append(("Word2Vec", K.RAM_GB["word2vec"], False))
+    if {"bert_word", "bert_sentence"} & set(plan.output_csvs):
+        items.append(("BERT", K.RAM_GB["bert"], False))
+    if plan.predictability_word or plan.predictability_doc:
+        for slug in (prefs.get("predictability", {}) or {}).get("models") or []:
+            on_gpu = model_device("predictability", slug, cuda) == "cuda"
+            try:
+                name = spec_for(slug).label
+            except KeyError:
+                name = slug
+            gb = K.RAM_GB.get(f"{slug}@cuda" if on_gpu else slug)
+            if gb is not None:
+                items.append((name, gb, on_gpu))
+
+    ram_items = [i for i in items if not i[2]]
+    gpu_items = [i for i in items if i[2]]
+    peak = K.RAM_GB["baseline"] + sum(i[1] for i in ram_items)
+    gpu_total = sum(i[1] for i in gpu_items)
+    driver = max(items, key=lambda i: i[1])[0] if items else "the pipeline"
+
+    warning = None
+    if peak > machine:
+        heavy = max(ram_items, key=lambda i: i[1])[0] if ram_items else "the pipeline"
+        warning = _ram_warning(heavy, peak, machine)
+    elif gpu_total > vram:
+        heavy = max(gpu_items, key=lambda i: i[1])[0]
+        warning = _ram_warning(heavy, gpu_total, vram)
+    return RamEstimate(peak, driver, machine, vram, warning is None, warning)
+
+
+def _ram_warning(item: str, need: float, have: float) -> str:
+    return (f"⚠ {item} needs ≈ {need:.1f} GB of memory; this computer has "
+            f"{have:.0f} GB. The run will likely fail or be extremely slow.")
