@@ -173,6 +173,19 @@ FIRST_LOAD_SECONDS: dict[str, float] = {
     "phoneme_surprisal": 5.9,
 }
 
+# Llama loads: NOT measured (gated models). Scaled from the measured GPT-2 load
+# by weight bytes read: seconds per byte = 7.8 s / (124M params x 4 B, fp32 —
+# GPT-2 loads full precision, see RAM_GB), times the Llama weight size =
+# params (as in _LLAMA / RAM_GB) x 2 B (bfloat16, the config.json dtype cited
+# above). Every device tier reads the same bf16 weights from disk. Like the
+# GPT-2 figure this is a warm-disk-cache load; a cold first download/read is
+# slower.
+_GPT2_WEIGHT_BYTES = _GPT2_PARAMS * 4
+for _slug, (_params, *_rest) in _LLAMA.items():
+    FIRST_LOAD_SECONDS[f"predictability:{_slug}"] = round(
+        FIRST_LOAD_SECONDS["predictability:gpt2"] * _params * 2
+        / _GPT2_WEIGHT_BYTES, 1)
+
 # Range multipliers around the point estimate: wide before this machine has
 # history (built-in rates come from one other machine), narrow after.
 FIRST_ESTIMATE_SPREAD: tuple[float, float] = (0.33, 3.0)

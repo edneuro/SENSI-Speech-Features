@@ -40,3 +40,14 @@ def test_load_seconds_positive_and_llama_4bit_below_cpu():
         if spec.gated:
             # 4-bit body + fp16 embeddings is still far below the BF16 CPU load.
             assert K.RAM_GB[f"{spec.slug}@cuda"] < K.RAM_GB[spec.slug] / 2
+
+
+def test_every_roster_model_has_a_first_load_time():
+    for spec in all_specs():
+        key = f"predictability:{spec.slug}"
+        assert K.FIRST_LOAD_SECONDS.get(key, 0) > 0, key
+    # Scaled by weight bytes read: every Llama reads more than GPT-2.
+    gpt2 = K.FIRST_LOAD_SECONDS["predictability:gpt2"]
+    for spec in all_specs():
+        if spec.gated:
+            assert K.FIRST_LOAD_SECONDS[f"predictability:{spec.slug}"] > gpt2
