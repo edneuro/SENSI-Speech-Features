@@ -170,9 +170,13 @@ inputs and settings:
 
 The time range starts as a wide first estimate (marked as such on the page).
 Each run records how long each step took on this computer, and once a step has
-a few timings the range narrows to one learned for this machine. A few seconds
-of start-up (loading Python libraries and the spaCy model) are not counted, so
-very short runs can finish slightly after the range. The timings are kept in
+a few timings the range narrows to one learned for this machine. MFA is
+counted as a fixed start-up each time it runs plus a cost per second of audio;
+that part is learned once two runs have aligned clearly different amounts of
+audio. Model loads are timed too (the spaCy model loads during the first
+parse and is timed as part of it). Starting the run itself (loading Python
+libraries, writing files) is not timed; the estimate adds a fixed 10 seconds
+for it, measured on a real run. The timings are kept in
 `config/timing_history.json` (next to `features.yaml` / `run.yaml`, or in the
 folder `SENSI_CONFIG_DIR` points to). The file is specific to this computer and
 is not shared through git; delete it to reset the time estimates to first
