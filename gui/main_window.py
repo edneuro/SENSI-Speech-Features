@@ -152,6 +152,9 @@ class MainWindow(QMainWindow):
         # must also refresh aggregate warnings on the doc-level page.
         self.doc_features.settings_changed.connect(self.doc_features.refresh_from_prefs)
         self.run_section.settings_changed.connect(self.doc_features.refresh_from_prefs)
+        # The Acoustic page's card switch and the Run tab's Acoustic level
+        # switch are one setting (output.level_acoustic): mirror Run → page.
+        self.run_section.settings_changed.connect(self.acoustic_section.refresh_from_prefs)
         # Sidebar footer follows the analyzer-name field in Inputs
         self.inputs_section.settings_changed.connect(self._refresh_sidebar_footer)
         # Logs tab live-tails the active run; stop on completion.

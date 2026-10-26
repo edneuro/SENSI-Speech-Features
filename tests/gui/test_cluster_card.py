@@ -7,8 +7,7 @@ from gui.widgets import ClusterCard, ToggleRow
 def test_cluster_card_disables_children_when_master_off(qtbot, prefs_tmp):
     save_preferences({"features": {"master_word_prosody": False}})
     card = ClusterCard("Prosody", "Word-level prosody",
-                       master_key="master_word_prosody",
-                       master_label="Enable word prosody")
+                       master_key="master_word_prosody")
     qtbot.addWidget(card)
     child = ToggleRow(label="Pitch_Mean")
     card.add_child(child)
@@ -18,8 +17,7 @@ def test_cluster_card_disables_children_when_master_off(qtbot, prefs_tmp):
 def test_cluster_card_enables_children_when_master_on(qtbot, prefs_tmp):
     save_preferences({"features": {"master_word_prosody": True}})
     card = ClusterCard("Prosody", "Word-level prosody",
-                       master_key="master_word_prosody",
-                       master_label="Enable word prosody")
+                       master_key="master_word_prosody")
     qtbot.addWidget(card)
     child = ToggleRow(label="Pitch_Mean")
     card.add_child(child)
@@ -29,8 +27,7 @@ def test_cluster_card_enables_children_when_master_on(qtbot, prefs_tmp):
 def test_cluster_card_master_toggle_persists(qtbot, prefs_tmp):
     save_preferences({"features": {"master_word_prosody": True}})
     card = ClusterCard("Prosody", "Word-level prosody",
-                       master_key="master_word_prosody",
-                       master_label="Enable word prosody")
+                       master_key="master_word_prosody")
     qtbot.addWidget(card)
     card.master_toggle().set_checked(False)
     # set_checked emits toggled; the slot calls save_preferences
@@ -43,7 +40,6 @@ def test_cluster_card_unavailable_disables_master(qtbot, prefs_tmp):
                       "semantic": {"backend": "empath"}})
     card = ClusterCard("Psych", "LIWC psych composite",
                        master_key="master_psych_composite",
-                       master_label="Enable psych composite",
                        available=False,
                        disabled_subtitle="Requires LIWC backend")
     qtbot.addWidget(card)
@@ -56,7 +52,6 @@ def test_cluster_card_output_section_persists_correctly(qtbot, prefs_tmp):
     save_preferences({"output": {"master_doc_prosody": True}})
     card = ClusterCard("Doc prosody", "Document prosody",
                        master_key="master_doc_prosody",
-                       master_label="Enable doc prosody",
                        master_section="output")
     qtbot.addWidget(card)
     card.master_toggle().set_checked(False)

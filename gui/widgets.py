@@ -4,7 +4,7 @@ from PySide6.QtCore import Signal, QEvent, Qt, QSize, QRectF
 from PySide6.QtGui import QCursor, QPainter, QColor, QPen
 from PySide6.QtWidgets import (
     QFrame, QHBoxLayout, QVBoxLayout,
-    QLabel, QLineEdit, QPushButton, QCheckBox, QAbstractButton,
+    QLabel, QLineEdit, QPushButton, QCheckBox, QRadioButton, QAbstractButton,
     QFileDialog, QWidget, QLayout, QToolTip, QSizePolicy,
 )
 
@@ -300,11 +300,7 @@ class ClusterCard(Card):
                  *, master_section: str = "features",
                  available: bool = True,
                  disabled_subtitle: str | None = None,
-                 master_label: str | None = None,
                  parent=None):
-        # `master_label` is accepted and ignored: the "Enable all …" master
-        # row is gone. Task 5 removes the remaining callers that pass it.
-        del master_label
         self._master_key = master_key
         self._master_section = master_section
         self._available = available
@@ -458,8 +454,11 @@ class ClusterCard(Card):
     def tag_text(self) -> str:
         if not self._gate_open():
             return TAG_LEFT_OUT
+        # Radio buttons are settings (one is always checked), not feature
+        # ticks, so they never make a section count as "something selected".
         for seg in self._segments:
-            if any(b.isChecked() for b in _checkables_in(seg)):
+            if any(b.isChecked() and not isinstance(b, QRadioButton)
+                   for b in _checkables_in(seg)):
                 return TAG_INCLUDED
         return TAG_EMPTY
 

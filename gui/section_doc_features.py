@@ -7,7 +7,7 @@ from PySide6.QtWidgets import (
     QDoubleSpinBox,
 )
 
-from gui.widgets import Card, ClusterCard, ToggleRow
+from gui.widgets import ClusterCard, ToggleRow
 from gui.planner import plan_from_prefs
 from utils.preferences import load_preferences, save_preferences
 
@@ -19,20 +19,20 @@ _AGG_STAGE_REQ: dict[str, tuple[str, str]] = {
         "word_freq",
         "<b>Will output NaN</b> — corpus frequency is not in the run plan.<br>"
         "• Enable corpus frequency (wordfreq) on the Word-level features page<br>"
-        "• Ensure Word-level CSVs output is on (Run tab)",
+        "• Ensure the Word level is on (Run tab)",
     ),
     "output_doc_agg_edu_zipf": (
         "ewfg_freq",
         "<b>Will output NaN</b> — EWFG grade-band frequency is not in the run plan.<br>"
         "• Enable at least one EWFG band on the Word-level features page<br>"
-        "• Ensure Word-level CSVs output is on (Run tab)",
+        "• Ensure the Word level is on (Run tab)",
     ),
     "output_doc_agg_predictability": (
         "predictability",
         "<b>Will output NaN</b> — predictability is not in the run plan.<br>"
         "• Select at least one model and one metric in the Predictability "
         "card on the Word-level features page<br>"
-        "• Ensure Word-level CSVs output is on (Run tab)",
+        "• Ensure the Word level is on (Run tab)",
     ),
 }
 
@@ -51,16 +51,15 @@ class DocFeaturesSection(QWidget):
         layout.setContentsMargins(24, 16, 24, 16)
         layout.setSpacing(12)
 
-        # Output toggle ("Document-level summary") lives on the Run page —
-        # single source of truth for what to emit. This page is purely
-        # about configuring WHICH columns appear in that summary CSV.
+        # The Document level switch lives on the Run page. Each card here
+        # has a section switch plus its column ticks; the planner decides
+        # what runs from those prefs.
 
         # --- Counts (per-column) ---
         counts_card = ClusterCard(
             "Counts",
             "Aggregate counts for the document-level summary CSV.",
             master_key="master_doc_counts",
-            master_label="Enable all counts",
             master_section="output",
         )
         counts_card.settings_changed.connect(self.settings_changed)
@@ -76,11 +75,17 @@ class DocFeaturesSection(QWidget):
                 self._make_toggle(key, label, o[key[len("output_"):]], "output"),
                 i // 2, i % 2,
             )
-        counts_card.add_child_layout(counts_grid)
+        counts_card.add_group("Columns", counts_grid)
         layout.addWidget(counts_card)
 
         # --- Aggregates (individual per-family toggle) ---
-        agg_card = Card("Aggregates", "Means of word-level metrics.")
+        agg_card = ClusterCard(
+            "Aggregates", "Means of word-level metrics.",
+            master_key="master_doc_aggregates",
+            master_section="output",
+        )
+        agg_card.settings_changed.connect(self.settings_changed)
+        agg_box = QVBoxLayout()
         for key, label in [
             ("output_doc_agg_zipf_freq",
              "mean_zipf_freq  (corpus-frequency mean, wordfreq)"),
@@ -92,8 +97,9 @@ class DocFeaturesSection(QWidget):
             ("output_doc_agg_lexical_norms",
              "Lexical-norm aggregates (mean AoA/concreteness/…, prop_late_acquired, coverage)"),
         ]:
-            agg_card.add_widget(
+            agg_box.addWidget(
                 self._make_toggle(key, label, o[key[len("output_"):]], "output"))
+        agg_card.add_group("Means", agg_box)
         # EWFG is unavailable (source only in print; see Word-level features),
         # so its document-level aggregate has nothing to aggregate — disable it.
         self._toggles["output_doc_agg_edu_zipf"].set_permanently_disabled(
@@ -108,7 +114,7 @@ class DocFeaturesSection(QWidget):
         )
         edu_agg_note.setObjectName("Subtitle")
         edu_agg_note.setWordWrap(True)
-        agg_card.add_widget(edu_agg_note)
+        agg_card.add_child(edu_agg_note)
         # Late-acquired AoA threshold (used by prop_late_acquired in the
         # lexical-norm aggregates). Configurable here.
         thr_row = QHBoxLayout()
@@ -125,30 +131,44 @@ class DocFeaturesSection(QWidget):
         thr_row.addWidget(self._late_aoa_spin)
         thr_row.addStretch(1)
         thr_w = QWidget(); thr_w.setLayout(thr_row)
-        agg_card.add_widget(thr_w)
+        agg_card.add_child(thr_w)
         layout.addWidget(agg_card)
 
         # --- Lexical diversity ---
-        ld_card = Card("Lexical diversity")
-        ld_card.add_widget(self._make_toggle(
+        ld_card = ClusterCard(
+            "Lexical diversity", "",
+            master_key="master_doc_lex_diversity",
+            master_section="output",
+        )
+        ld_card.settings_changed.connect(self.settings_changed)
+        ld_card.add_child(self._make_toggle(
             "output_doc_lex_diversity",
             "Type-token ratio (TTR) and MTLD",
             o["doc_lex_diversity"], "output"))
         layout.addWidget(ld_card)
 
         # --- Readability ---
-        rd_card = Card("Readability")
-        rd_card.add_widget(self._make_toggle(
+        rd_card = ClusterCard(
+            "Readability", "",
+            master_key="master_doc_readability",
+            master_section="output",
+        )
+        rd_card.settings_changed.connect(self.settings_changed)
+        rd_card.add_child(self._make_toggle(
             "output_doc_readability",
             "Flesch reading ease + Flesch-Kincaid grade level",
             o["doc_readability"], "output"))
         layout.addWidget(rd_card)
 
         # --- Category proportions ---
-        cat_card = Card(
+        cat_card = ClusterCard(
             "Category proportions",
-            "Per-category count and proportion in the document.")
-        cat_card.add_widget(self._make_toggle(
+            "Per-category count and proportion in the document.",
+            master_key="master_doc_category_proportions",
+            master_section="output",
+        )
+        cat_card.settings_changed.connect(self.settings_changed)
+        cat_card.add_child(self._make_toggle(
             "output_doc_category_proportions",
             "Compute count_<cat>, prop_<cat> for each active category",
             o["doc_category_proportions"], "output"))
@@ -157,8 +177,8 @@ class DocFeaturesSection(QWidget):
         hint = QLabel("Edit categories on the Word-level features page — the selection is shared between levels.")
         hint.setObjectName("Subtitle")
         hint.setWordWrap(True)
-        cat_card.add_widget(self.cats_count_label)
-        cat_card.add_widget(hint)
+        cat_card.add_child(self.cats_count_label)
+        cat_card.add_child(hint)
         layout.addWidget(cat_card)
 
         # --- Composite psychological scores (per-column) ---
@@ -168,7 +188,6 @@ class DocFeaturesSection(QWidget):
             "POS/morphology + VADER valence. Approximations, not official "
             "LIWC-22 outputs.",
             master_key="master_psych_composite",
-            master_label="Enable composite psych scores",
         )
         self._psych_card = psych_card
         psych_card.settings_changed.connect(self.settings_changed)
@@ -184,7 +203,7 @@ class DocFeaturesSection(QWidget):
                 self._make_toggle(key, label, f[key], "features"),
                 i // 2, i % 2,
             )
-        psych_card.add_child_layout(psych_grid)
+        psych_card.add_group("Columns", psych_grid)
         layout.addWidget(psych_card)
 
         # --- Prosody (per-column, 16 toggles) ---
@@ -194,7 +213,6 @@ class DocFeaturesSection(QWidget):
             "Document-level pitch/volume aggregates, HNR, articulation rate, "
             "and pause statistics. Requires alignment.",
             master_key="master_doc_prosody",
-            master_label="Enable doc prosody",
             master_section="output",
         )
         pros_card.settings_changed.connect(self.settings_changed)
@@ -228,7 +246,7 @@ class DocFeaturesSection(QWidget):
                 self._make_toggle(key, label, f[key], "features"),
                 i // 2, i % 2,
             )
-        pros_card.add_child_layout(pros_grid)
+        pros_card.add_group("Columns", pros_grid)
 
         # Pause threshold spinbox — config UI, greys with master
         prosody_prefs = prefs.get("prosody", {})
@@ -283,7 +301,7 @@ class DocFeaturesSection(QWidget):
 
         A warning appears when the aggregate is enabled but the word-level
         stage it depends on is not in the current run plan (either because
-        the feature toggle is off or Word-level CSVs output is off).
+        the feature toggle is off or the Word level is off).
         """
         prefs = load_preferences()
         plan = plan_from_prefs(prefs)

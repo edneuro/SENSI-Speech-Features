@@ -261,10 +261,12 @@ def test_context_spin_range_capped_at_native(qtbot, prefs_tmp):
     assert spin.minimum() == FLOOR_CONTEXT
 
 
-def test_context_spin_always_enabled(qtbot, prefs_tmp):
+def test_context_spin_not_greyed_by_model_checkbox(qtbot, prefs_tmp):
     # Discoverability (same lesson as the HF-token box): a greyed spinner
-    # reads as "broken". The spinner is always editable; the value simply
-    # takes effect whenever its model is selected.
+    # reads as "broken". While Predictability is included, the spinner is
+    # editable whether or not its model is ticked; the value simply takes
+    # effect whenever its model is selected. (It greys out with the card
+    # when the section is left out — see test_feature_pages_switches.py.)
     from gui.section_word_features import WordFeaturesSection
     w = WordFeaturesSection(); qtbot.addWidget(w)
     assert w.context_spins["gpt2"].isEnabled() is True    # even unchecked

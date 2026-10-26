@@ -25,7 +25,6 @@ class SubwordFeaturesSection(QWidget):
             "Syllable timing",
             "Onset/End/Duration of each syllable",
             master_key="master_syllable_intervals",
-            master_label="Emit syllable interval columns",
         )
         syll_timing_grid = QGridLayout()
         syll_timing_keys = [
@@ -38,7 +37,7 @@ class SubwordFeaturesSection(QWidget):
                 self._make_toggle(key, label, f[key]),
                 i // 2, i % 2,
             )
-        syll_timing_card.add_child_layout(syll_timing_grid)
+        syll_timing_card.add_group("Columns", syll_timing_grid)
         syll_timing_card.settings_changed.connect(self.settings_changed)
         layout.addWidget(syll_timing_card)
 
@@ -47,7 +46,6 @@ class SubwordFeaturesSection(QWidget):
             "Syllable labels",
             "Orthographic + ARPABET labels",
             master_key="master_syllable_labels",
-            master_label="Emit syllable label columns",
         )
         syll_labels_grid = QGridLayout()
         syll_labels_keys = [
@@ -60,7 +58,7 @@ class SubwordFeaturesSection(QWidget):
                 self._make_toggle(key, label, f[key]),
                 i // 2, i % 2,
             )
-        syll_labels_card.add_child_layout(syll_labels_grid)
+        syll_labels_card.add_group("Columns", syll_labels_grid)
         syll_labels_card.settings_changed.connect(self.settings_changed)
         layout.addWidget(syll_labels_card)
 
@@ -69,7 +67,6 @@ class SubwordFeaturesSection(QWidget):
             "Syllable prosody",
             "Pitch/Volume means and deltas per syllable",
             master_key="master_syllable_prosody",
-            master_label="Emit syllable prosody columns",
         )
         syll_pros_grid = QGridLayout()
         syll_pros_keys = [
@@ -83,17 +80,19 @@ class SubwordFeaturesSection(QWidget):
                 self._make_toggle(key, label, f[key]),
                 i // 2, i % 2,
             )
-        syll_pros_card.add_child_layout(syll_pros_grid)
+        syll_pros_card.add_group("Columns", syll_pros_grid)
         syll_pros_card.settings_changed.connect(self.settings_changed)
         layout.addWidget(syll_pros_card)
 
         # --- P-center ---
-        pcenter_card = Card(
+        pcenter_card = ClusterCard(
             "P-center",
             "Perceptual onset of each syllable (Scott 1993). "
             "Requires MFA alignment.",
+            master_key="master_syllable_pcenter",
         )
-        pcenter_card.add_widget(
+        pcenter_card.settings_changed.connect(self.settings_changed)
+        pcenter_card.add_child(
             self._make_toggle(
                 "feat_syllable_pcenter",
                 "P_Center (seconds from audio start)",
@@ -115,7 +114,7 @@ class SubwordFeaturesSection(QWidget):
         k_row.addStretch(1)
         k_w = QWidget()
         k_w.setLayout(k_row)
-        pcenter_card.add_widget(k_w)
+        pcenter_card.add_child(k_w)
         layout.addWidget(pcenter_card)
 
         # --- Phonemes ---
@@ -123,7 +122,6 @@ class SubwordFeaturesSection(QWidget):
             "Phonemes",
             "One row per phoneme. Requires MFA alignment.",
             master_key="master_phoneme_intervals",
-            master_label="Emit phoneme columns",
         )
         phon_grid = QGridLayout()
         phon_keys = [
@@ -140,11 +138,13 @@ class SubwordFeaturesSection(QWidget):
                 self._make_toggle(key, label, f[key]),
                 i // 2, i % 2,
             )
-        phon_card.add_child_layout(phon_grid)
+        phon_card.add_group("Columns", phon_grid)
         phon_card.settings_changed.connect(self.settings_changed)
         layout.addWidget(phon_card)
 
         # --- Out-of-dictionary words (MFA G2P) ---
+        # A plain Card with no section switch (owner decision): G2P writes no
+        # columns of its own; it changes how MFA aligns every word.
         g2p_card = Card(
             "Out-of-dictionary words",
             "MFA aligns words missing from its dictionary (unusual names) to a "
@@ -167,10 +167,9 @@ class SubwordFeaturesSection(QWidget):
         psr_card = ClusterCard(
             "Phoneme surprisal",
             "Context-independent cohort surprisal + entropy per phoneme. "
-            "Requires MFA alignment. Also emits a .mat impulse-train sidecar "
-            "when enabled on the Run page.",
+            "Requires MFA alignment. Can also save a .mat impulse-train "
+            "sidecar.",
             master_key="master_phoneme_surprisal",
-            master_label="Emit phoneme surprisal columns",
         )
         psr_grid = QGridLayout()
         psr_keys = [
@@ -182,11 +181,15 @@ class SubwordFeaturesSection(QWidget):
                 self._make_toggle(key, label, f[key]),
                 i // 2, i % 2,
             )
-        psr_card.add_child_layout(psr_grid)
+        psr_card.add_group("Columns", psr_grid)
+        psr_card.add_child(self._make_toggle(
+            "feat_phoneme_surprisal_mat",
+            "Impulse-train .mat (<stim>_phoneme_surprisal.mat)",
+            f["feat_phoneme_surprisal_mat"]))
 
         # Analysis rate, saved directly to the phoneme_surprisal section (like
-        # pcenter_k -> prosody above). It's a config value rather than a
-        # feature toggle, so it is not gated by the master. strip_stress /
+        # pcenter_k -> prosody above). A section-only setting, so it greys
+        # out with the card when phoneme surprisal is left out. strip_stress /
         # primary_only are left at their prefs defaults (still functional
         # through emit) to keep the card minimal — analysis_sr is the param
         # researchers change most.
@@ -203,7 +206,7 @@ class SubwordFeaturesSection(QWidget):
         psr_sr_row.addStretch(1)
         psr_sr_w = QWidget()
         psr_sr_w.setLayout(psr_sr_row)
-        psr_card.add_widget(psr_sr_w)
+        psr_card.add_child(psr_sr_w)
         psr_card.settings_changed.connect(self.settings_changed)
         layout.addWidget(psr_card)
 
@@ -213,8 +216,7 @@ class SubwordFeaturesSection(QWidget):
 
     # Note: sibling pages (section_word_features, section_doc_features) take a
     # `section` arg here to route saves to "features" vs "output". This page
-    # mostly carries `features` keys (sidecar master toggles live on the Run
-    # page) but also the standalone `alignment.g2p_oov` toggle, hence the
+    # mostly carries `features` keys but also the standalone `alignment.g2p_oov` toggle, hence the
     # `section` parameter (mirrors the P-center `k` spinbox writing directly
     # to `prefs["prosody"]` above).
     def _make_toggle(self, key, label, initial, section="features"):

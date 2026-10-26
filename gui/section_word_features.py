@@ -8,7 +8,7 @@ from PySide6.QtWidgets import (
     QDoubleSpinBox, QSpinBox, QCheckBox,
 )
 
-from gui.widgets import Card, ClusterCard, ToggleRow
+from gui.widgets import ClusterCard, ToggleRow
 from utils.preferences import load_preferences, save_preferences
 from extractors.predictability_models import (
     all_specs, is_gated, spec_for, FLOOR_CONTEXT,
@@ -35,9 +35,9 @@ class WordFeaturesSection(QWidget):
         layout.setContentsMargins(24, 16, 24, 16)
         layout.setSpacing(12)
 
-        # Output toggle ("Word-level CSV") lives on the Run page — single
-        # source of truth for what to emit. This page is purely about
-        # configuring WHICH columns appear in that CSV.
+        # The Word level switch lives on the Run page. Each card here has a
+        # section switch (Included / Left out of outputs) plus its feature
+        # ticks; the planner decides what runs from those prefs.
 
         # --- Structural (per-column) ---
         struct_card = ClusterCard(
@@ -45,7 +45,6 @@ class WordFeaturesSection(QWidget):
             "Document position and offsets — from spaCy. "
             "Pick which columns appear in the word-level CSV.",
             master_key="master_structural",
-            master_label="Enable all structural columns",
         )
         struct_card.settings_changed.connect(self.settings_changed)
         struct_grid = QGridLayout()
@@ -64,7 +63,7 @@ class WordFeaturesSection(QWidget):
                 self._make_toggle(key, label, f[key], "features"),
                 i // 2, i % 2,
             )
-        struct_card.add_child_layout(struct_grid)
+        struct_card.add_group("Columns", struct_grid)
         layout.addWidget(struct_card)
 
         # --- Lexical-linguistic ---
@@ -72,32 +71,29 @@ class WordFeaturesSection(QWidget):
             "Lexical–linguistic",
             "Linguistic annotation from spaCy (en_core_web_sm).",
             master_key="master_lexling",
-            master_label="Enable all lex-ling columns",
         )
         lex_card.settings_changed.connect(self.settings_changed)
+        lex_box = QVBoxLayout()
         for key, label in [
             ("lexling_tokens", "Tokenization & lemmatization (token, lemma)"),
             ("lexling_pos",    "Part-of-speech tags (upos, xpos)"),
             ("lexling_morph",  "Morphological features (feats)"),
             ("lexling_dep",    "Dependency parse (dep_rel, head_token_id)"),
         ]:
-            lex_card.add_child(self._make_toggle(key, label, f[key], "features"))
+            lex_box.addWidget(self._make_toggle(key, label, f[key], "features"))
+        lex_card.add_group("Annotations", lex_box)
         layout.addWidget(lex_card)
 
         # --- Frequency ---
         freq_card = ClusterCard(
             "Frequency", "Lexical-corpus frequency lookups.",
             master_key="master_frequency",
-            master_label="Enable all frequency columns",
         )
         freq_card.settings_changed.connect(self.settings_changed)
         freq_card.add_child(self._make_toggle(
             "freq_subtlex",
             "General-corpus frequency (wordfreq blend, Zipf scale) → Zipf_Freq",
             f["freq_subtlex"], "features"))
-        ewfg_label = QLabel("Grade-banded (EWFG):")
-        ewfg_label.setObjectName("Subtitle")
-        freq_card.add_child(ewfg_label)
         ewfg_grid = QGridLayout()
         ewfg_keys = [
             ("freq_ewfg_k2", "K–2 → Edu_Zipf_K2"),
@@ -111,7 +107,7 @@ class WordFeaturesSection(QWidget):
                 self._make_toggle(key, label, f[key], "features"),
                 i // 2, i % 2,
             )
-        freq_card.add_child_layout(ewfg_grid)
+        freq_card.add_group("Grade-banded (EWFG)", ewfg_grid)
         # EWFG grade-band frequencies are unavailable: the source — The
         # Educator's Word Frequency Guide (Zeno et al. 1995) — exists only in
         # print and has not been digitized, so there is no lookup data. Disable
@@ -135,16 +131,17 @@ class WordFeaturesSection(QWidget):
         ewfg_note.setObjectName("Subtitle")
         ewfg_note.setWordWrap(True)
         ewfg_note.setOpenExternalLinks(True)
-        freq_card.add_widget(ewfg_note)
+        freq_card.add_child(ewfg_note)
         layout.addWidget(freq_card)
 
         # --- Predictability ---
-        # Model + metric selectors are configuration widgets added via
-        # add_widget (non-gated path) so they remain accessible even when
-        # the master is off — mirrors the old model-picker/credentials rows.
-        # There are no more per-column feature toggles here: every
-        # <slug>_<Metric> word column is produced dynamically from the
-        # models x metrics selection (see extractors/predictability.py and
+        # Model + metric pickers are section-only settings: they are gated
+        # (greyed with the card when it is left out). Document-level means
+        # still use the greyed picks (owner decision 2026-10-26). The
+        # HuggingFace token box is a credential, not a feature control, so
+        # it is added ungated and stays editable. There are no more
+        # per-column feature toggles here: every <slug>_<Metric> word column
+        # is produced dynamically from the models x metrics selection (see extractors/predictability.py and
         # gui/planner/plan.py's _predictability_columns).
         pred_card = ClusterCard(
             "Predictability",
@@ -152,7 +149,6 @@ class WordFeaturesSection(QWidget):
             "is scored once per stimulus; each selected metric is emitted "
             "as a <slug>_<Metric> column per model (e.g. gpt2_Surprisal).",
             master_key="master_predictability",
-            master_label="Enable all predictability columns",
         )
         pred_card.settings_changed.connect(self.settings_changed)
 
@@ -160,9 +156,8 @@ class WordFeaturesSection(QWidget):
         saved_models = set(pred_prefs.get("models") or [])
         saved_metrics = pred_prefs.get("metrics") or {}
 
-        models_label = QLabel("Models:")
-        models_label.setObjectName("Subtitle")
-        pred_card.add_widget(models_label)
+        models_box = QVBoxLayout()
+        models_box.setContentsMargins(0, 0, 0, 0)
         saved_context = pred_prefs.get("context") or {}
         from gui.widgets import _ClickToToggleLabel
         self.model_checkboxes: dict[str, QCheckBox] = {}
@@ -183,9 +178,10 @@ class WordFeaturesSection(QWidget):
             row.addWidget(lbl, 1)
             # Per-model context cap (Project B). Range [FLOOR, native]; the
             # value defaults to native (= uncapped, stored as absence).
-            # Always editable — greying it until the model is checked read as
-            # "broken" (same discoverability lesson as the HF-token box); a
-            # value set here simply takes effect whenever the model runs.
+            # Not greyed until the model is checked — that read as "broken"
+            # (same discoverability lesson as the HF-token box); a value set
+            # here takes effect whenever the model runs. It does grey out
+            # with the whole card when Predictability is left out.
             row.addWidget(QLabel("context:"))
             spin = QSpinBox()
             spin.setRange(FLOOR_CONTEXT, spec.native_ctx)
@@ -208,11 +204,11 @@ class WordFeaturesSection(QWidget):
             self.context_spins[spec.slug] = spin
             row.addWidget(spin)
             row_w = QWidget(); row_w.setLayout(row)
-            pred_card.add_widget(row_w)
+            models_box.addWidget(row_w)
+        pred_card.add_group("Models", models_box)
 
-        metrics_label = QLabel("Metrics:")
-        metrics_label.setObjectName("Subtitle")
-        pred_card.add_widget(metrics_label)
+        metrics_box = QVBoxLayout()
+        metrics_box.setContentsMargins(0, 0, 0, 0)
         from gui.info_popup import InfoIcon
         self.metric_checkboxes: dict[str, QCheckBox] = {}
         self.metric_labels: dict[str, QLabel] = {}
@@ -242,7 +238,8 @@ class WordFeaturesSection(QWidget):
             self.metric_info_icons[key] = icon
             mrow.addWidget(icon)
             mrow_w = QWidget(); mrow_w.setLayout(mrow)
-            pred_card.add_widget(mrow_w)
+            metrics_box.addWidget(mrow_w)
+        pred_card.add_group("Metrics", metrics_box)
 
         # Credentials help — text + the same blue ⓘ info-icon used by feature
         # toggles, opening the shared setup doc (gated Llama license + HF
@@ -305,9 +302,12 @@ class WordFeaturesSection(QWidget):
         layout.addWidget(pred_card)
 
         # --- Semantic indicators ---
-        sem_card = Card(
+        sem_card = ClusterCard(
             "Semantic indicators",
-            "Per-word category indicators from a dictionary backend (content POS only).")
+            "Per-word category indicators from a dictionary backend (content POS only).",
+            master_key="master_semantic_indicators",
+        )
+        sem_card.settings_changed.connect(self.settings_changed)
         backend_row = QHBoxLayout()
         backend_row.addWidget(QLabel("Backend:"))
         self._backend_group = QButtonGroup(self)
@@ -333,7 +333,7 @@ class WordFeaturesSection(QWidget):
             backend_row.addWidget(rb)
         backend_row.addStretch(1)
         br_w = QWidget(); br_w.setLayout(backend_row)
-        sem_card.add_widget(br_w)
+        sem_card.add_child(br_w)
         liwc_note = QLabel(
             "LIWC backend removed due to its license agreement. Empath (free, "
             "open-source) is the default. Click the ⓘ next to “Per-word category "
@@ -341,8 +341,8 @@ class WordFeaturesSection(QWidget):
         )
         liwc_note.setObjectName("Subtitle")
         liwc_note.setWordWrap(True)
-        sem_card.add_widget(liwc_note)
-        sem_card.add_widget(self._make_toggle(
+        sem_card.add_child(liwc_note)
+        sem_card.add_child(self._make_toggle(
             "sem_indicators", "Per-word category indicators",
             f["sem_indicators"], "features"))
 
@@ -355,24 +355,26 @@ class WordFeaturesSection(QWidget):
         cats_row.addWidget(self.cats_count_label, 1)
         cats_row.addWidget(self.configure_cats_button)
         cats_w = QWidget(); cats_w.setLayout(cats_row)
-        sem_card.add_widget(cats_w)
+        sem_card.add_child(cats_w)
         layout.addWidget(sem_card)
 
         # --- Semantic similarity (embeddings) ---
-        sim_card = Card(
+        sim_card = ClusterCard(
             "Semantic similarity",
             "Pretrained word embeddings saved as .mat sidecars in word/. "
             "Word2Vec requires a one-time manual download — see utils/download_models.py.",
+            master_key="master_semantic_similarity",
         )
-        sim_card.add_widget(self._make_embed_toggle(
+        sim_card.settings_changed.connect(self.settings_changed)
+        sim_box = QVBoxLayout()
+        sim_box.addWidget(self._make_toggle(
             "master_word2vec", "Word2Vec — Google News 300-d → <stim>_word2vec.mat",
-            f.get("master_word2vec", True), "word2vec_mat",
-        ))
-        sim_card.add_widget(self._make_embed_toggle(
+            f.get("master_word2vec", True), "features"))
+        sim_box.addWidget(self._make_toggle(
             "master_bert_word",
             "BERT — bert-base-uncased, 12 layers × 768 d → <stim>_bert_word.mat",
-            f.get("master_bert_word", True), "bert_word_mat",
-        ))
+            f.get("master_bert_word", True), "features"))
+        sim_card.add_group("Embeddings", sim_box)
         layout.addWidget(sim_card)
 
         # --- Lexical norms (per-column; user-supplied data) ---
@@ -383,7 +385,6 @@ class WordFeaturesSection(QWidget):
             "acquisition, concreteness, imageability, familiarity, and "
             "valence/arousal/dominance.",
             master_key="master_lexical_norms",
-            master_label="Enable lexical norms",
         )
         norms_card.settings_changed.connect(self.settings_changed)
         norms_grid = QGridLayout()
@@ -402,7 +403,7 @@ class WordFeaturesSection(QWidget):
                 self._make_toggle(key, label, f[key], "features"),
                 i // 2, i % 2,
             )
-        norms_card.add_child_layout(norms_grid)
+        norms_card.add_group("Columns", norms_grid)
         layout.addWidget(norms_card)
 
         # --- Acoustic (per-column) ---
@@ -410,7 +411,6 @@ class WordFeaturesSection(QWidget):
             "Acoustic",
             "True acoustic word boundaries from audio (forced alignment, MFA).",
             master_key="master_acoustic",
-            master_label="Enable all acoustic columns",
         )
         ac_card.settings_changed.connect(self.settings_changed)
         ac_grid = QGridLayout()
@@ -425,7 +425,7 @@ class WordFeaturesSection(QWidget):
                 self._make_toggle(key, label, f[key], "features"),
                 i // 2, i % 2,
             )
-        ac_card.add_child_layout(ac_grid)
+        ac_card.add_group("Columns", ac_grid)
         layout.addWidget(ac_card)
 
         # --- Prosody (per-column) ---
@@ -434,7 +434,6 @@ class WordFeaturesSection(QWidget):
             "Pitch and volume summaries within each MFA word interval. "
             "Requires alignment.",
             master_key="master_word_prosody",
-            master_label="Enable word prosody",
         )
         pros_card.settings_changed.connect(self.settings_changed)
         # 2×5 toggle grid (pitch row, volume row)
@@ -459,10 +458,16 @@ class WordFeaturesSection(QWidget):
                 self._make_toggle(key, label, f[key], "features"),
                 i % 5, i // 5,
             )
-        pros_card.add_child_layout(pros_grid)
+        pros_card.add_group("Columns", pros_grid)
 
         # Pitch config — two rows (units; floor/ceiling): a single long row
-        # forced the page wider than the window (horizontal scrollbar).
+        # forced the page wider than the window (horizontal scrollbar). These
+        # are shared with syllable, sentence and document prosody, so they sit
+        # in an ungated "shared settings" box that stays editable when word
+        # prosody is left out.
+        pitch_box = QWidget()
+        pitch_lay = QVBoxLayout(pitch_box)
+        pitch_lay.setContentsMargins(0, 0, 0, 0)
         prosody_prefs = prefs.get("prosody", {})
         units_row = QHBoxLayout()
         units_row.addWidget(QLabel("Pitch units:"))
@@ -473,7 +478,7 @@ class WordFeaturesSection(QWidget):
         self.pitch_units_combo.currentTextChanged.connect(self._on_pitch_units_change)
         units_row.addWidget(self.pitch_units_combo, 1)
         units_w = QWidget(); units_w.setLayout(units_row)
-        pros_card.add_child(units_w)
+        pitch_lay.addWidget(units_w)
         cfg_row = QHBoxLayout()
         cfg_row.addWidget(QLabel("Pitch floor (Hz):"))
         self.pitch_floor_spin = QDoubleSpinBox()
@@ -491,7 +496,9 @@ class WordFeaturesSection(QWidget):
         cfg_row.addWidget(self.pitch_ceiling_spin)
         cfg_row.addStretch(1)
         cfg_w = QWidget(); cfg_w.setLayout(cfg_row)
-        pros_card.add_child(cfg_w)
+        pitch_lay.addWidget(cfg_w)
+        pros_card.add_shared(
+            pitch_box, "Pitch settings (used by all prosody sections)")
         layout.addWidget(pros_card)
 
         layout.addStretch(1)
@@ -534,22 +541,6 @@ class WordFeaturesSection(QWidget):
             save_preferences({"output": {key[len(prefix):]: value}})
         else:
             save_preferences({section: {key: value}})
-        self.settings_changed.emit()
-
-    def _make_embed_toggle(self, feat_key: str, label: str, initial: bool,
-                           out_key: str) -> ToggleRow:
-        """Embedding master toggles drive both a feature flag and an output flag
-        (the same value), so the planner master switch and the .mat sidecar
-        emission stay in lockstep."""
-        row = ToggleRow(label=label, info_key=feat_key)
-        row.set_checked(initial)
-        row.toggled.connect(
-            lambda v, fk=feat_key, ok=out_key: self._on_embed_toggle(fk, v, ok))
-        self._toggles[feat_key] = row
-        return row
-
-    def _on_embed_toggle(self, feat_key: str, value: bool, out_key: str) -> None:
-        save_preferences({"features": {feat_key: value}, "output": {out_key: value}})
         self.settings_changed.emit()
 
     def refresh_warnings(self, session_api_key: str = "", session_hf_token: str = "") -> None:

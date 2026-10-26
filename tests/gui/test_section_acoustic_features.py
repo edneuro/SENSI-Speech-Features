@@ -24,6 +24,10 @@ def test_rate_change_persists(qtbot, tmp_path, monkeypatch):
 
 def test_param_greying_follows_feature_toggles(qtbot, tmp_path, monkeypatch):
     monkeypatch.setenv("SENSI_PREFS_PATH", str(tmp_path / "preferences.json"))
+    from utils.preferences import save_preferences
+    # The card (and so every param) is greyed while the Acoustic level is
+    # off — the fresh-install default. Include it to test per-feature greying.
+    save_preferences({"output": {"level_acoustic": True}})
     sec = AcousticFeaturesSection()
     qtbot.addWidget(sec)
 
@@ -54,3 +58,18 @@ def test_param_greying_follows_feature_toggles(qtbot, tmp_path, monkeypatch):
     # Both log-mel and MFCC off -> mel params disabled.
     sec._toggles["feat_acoustic_ts_logmel"].set_checked(False)
     assert not sec._mel_params_w.isEnabled()
+
+
+def test_refresh_from_prefs_mirrors_run_tab_level_switch(qtbot, tmp_path, monkeypatch):
+    monkeypatch.setenv("SENSI_PREFS_PATH", str(tmp_path / "preferences.json"))
+    from utils.preferences import save_preferences
+    save_preferences({"output": {"level_acoustic": False}})
+    sec = AcousticFeaturesSection()
+    qtbot.addWidget(sec)
+    assert not sec._card.master_toggle().is_checked()
+    assert not sec._rate_spin.isEnabled()
+    # The Run tab writes the same key; the page mirrors it on refresh.
+    save_preferences({"output": {"level_acoustic": True}})
+    sec.refresh_from_prefs()
+    assert sec._card.master_toggle().is_checked()
+    assert sec._rate_spin.isEnabled()
