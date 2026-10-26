@@ -93,12 +93,12 @@ def test_validate_features_yaml_flags_unknown_and_bad_type():
     features, _ = split_prefs(DEFAULT_PREFS)
     features["features"]["not_a_real_toggle"] = True
     key = next(iter(DEFAULT_PREFS["features"]))
-    features["output"]["word_level_csv"] = "yes"          # not a bool
+    features["output"]["level_word"] = "yes"          # not a bool
     features["prosody"]["not_a_setting"] = 1
     features["bogus_section"] = {}
     errs = validate_features_yaml(features)
     assert any("not_a_real_toggle" in e for e in errs)
-    assert any("word_level_csv" in e and "true/false" in e for e in errs)
+    assert any("level_word" in e and "true/false" in e for e in errs)
     assert any("prosody.not_a_setting" in e for e in errs)
     assert any("bogus_section" in e for e in errs)
 

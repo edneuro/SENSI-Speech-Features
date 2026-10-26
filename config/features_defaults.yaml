@@ -9,7 +9,7 @@
 # Comments are regenerated on every save; hand-added comments do not survive.
 
 # Config schema version — managed by the app; do not edit.
-schema_version: 20
+schema_version: 21
 
 # Per-feature toggles (feat_* / master_* / freq_* / sem_* / lexling_*).
 features:
@@ -132,6 +132,10 @@ features:
   feat_phoneme_ipa: false
   feat_phoneme_pron_source: false
   feat_syllable_ipa: false
+  master_semantic_indicators: true
+  master_semantic_similarity: true
+  master_sentence_similarity: true
+  feat_phoneme_surprisal_mat: false
 
 # Predictability roster: models (slugs), metrics, per-model context caps.
 predictability:
@@ -178,8 +182,11 @@ semantic:
 
 # Output artifacts: per-level CSV/.mat toggles + doc-level column groups.
 output:
-  word_level_csv: true
-  document_summary: false
+  level_word: true
+  level_document: false
+  level_subword: false
+  level_sentence: false
+  level_acoustic: false
   out_count_tokens: false
   out_count_content_tokens: false
   out_count_sentences: false
@@ -187,21 +194,17 @@ output:
   doc_lex_diversity: false
   doc_readability: false
   doc_category_proportions: false
-  syllables_csv: false
-  phonemes_csv: false
   doc_agg_zipf_freq: false
   doc_agg_edu_zipf: false
   doc_agg_predictability: false
   master_doc_prosody: true
   master_doc_articulation_rate: true
   master_doc_counts: true
-  sentences_csv: false
-  word2vec_mat: false
-  bert_word_mat: false
-  bert_sentence_mat: false
   doc_agg_lexical_norms: false
-  acoustic_ts_mat: false
-  phoneme_surprisal_mat: false
+  master_doc_aggregates: true
+  master_doc_lex_diversity: true
+  master_doc_readability: true
+  master_doc_category_proportions: true
 
 # Praat pitch/pause parameters + p-center k.
 prosody:

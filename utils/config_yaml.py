@@ -67,6 +67,11 @@ _SECTION_COMMENTS = {
 # load_preferences() gets a chance to migrate it away. A genuinely unknown
 # key (typo or hand-edit) is still an error.
 RETIRED_FEATURE_KEYS = frozenset({
+    # v21 (section `output`): the ten per-file output toggles, replaced by
+    # output.level_* switches + section switches (_migrate_outputs_to_levels).
+    "word_level_csv", "document_summary", "syllables_csv", "phonemes_csv",
+    "sentences_csv", "acoustic_ts_mat", "phoneme_surprisal_mat",
+    "word2vec_mat", "bert_word_mat", "bert_sentence_mat",
     "feat_phoneme_label",   # v20: split into 4 feat_phoneme_* column toggles
     "pred_surprisal_gpt2",  # v18: unified into predictability.models/metrics
     "pred_surprisal_llm",   # v18

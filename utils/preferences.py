@@ -32,6 +32,9 @@ Migration chain (all paths terminate at the current version):
     v14 recovers the struct-id rename, v17 upgrades the old rounded
     acoustic_ts.env_comp default (0.3) to the exact mTRF constant log10(2)
     and coerces stored OpenAI (gpt-*) llm_model to "" (auto).
+    Later removal-migrations: v18 predictability unification, v20 phoneme
+    label split, v21 per-file output toggles → output.level_* switches
+    (_migrate_outputs_to_levels).
   Later additive versions (v12 lexical-norms, v13 acoustic_ts, v15 opt-in
     defaults, v16 phoneme surprisal, v17 above) only add keys / correct
     defaults; missing keys are filled from the current defaults.
@@ -915,11 +918,119 @@ DEFAULT_PREFS_V20: dict[str, Any] = {
 }
 
 # ---------------------------------------------------------------------------
+# v21 constants
+#
+# Output switches. REMOVAL-migration (precedent: v14, v18, v20): the ten
+# per-file output toggles (word_level_csv, document_summary, syllables_csv,
+# phonemes_csv, sentences_csv, acoustic_ts_mat, phoneme_surprisal_mat,
+# word2vec_mat, bert_word_mat, bert_sentence_mat) are replaced by five
+# per-level switches (output.level_*). What used to be a file toggle becomes
+# a section switch on the level's page: new section masters for the doc page
+# (output.master_doc_*), the word page's semantic cards, the sentence page's
+# BERT card, and a per-file `feat_phoneme_surprisal_mat` toggle (the .mat is
+# a separate file within the sub-word level). The migration
+# (_migrate_outputs_to_levels) maps a v20 file onto these so the files a run
+# writes stay identical.
+# ---------------------------------------------------------------------------
+
+SCHEMA_VERSION_V21 = 21
+
+# The v20 output keys retired by v21 (also listed in
+# utils.config_yaml.RETIRED_FEATURE_KEYS so a stale features.yaml validates).
+RETIRED_OUTPUT_KEYS_V21 = (
+    "word_level_csv", "document_summary", "syllables_csv", "phonemes_csv",
+    "sentences_csv", "acoustic_ts_mat", "phoneme_surprisal_mat",
+    "word2vec_mat", "bert_word_mat", "bert_sentence_mat",
+)
+
+_OUTPUT_DEFAULT_V21 = {
+    # v15 opt-in policy: only the word level is on for a fresh install.
+    "level_word":     True,
+    "level_document": False,
+    "level_subword":  False,
+    "level_sentence": False,
+    "level_acoustic": False,
+    **{k: v for k, v in DEFAULT_PREFS_V20["output"].items()
+       if k not in RETIRED_OUTPUT_KEYS_V21},
+    # Doc-page section switches (card masters: ON, children off).
+    "master_doc_aggregates":           True,
+    "master_doc_lex_diversity":        True,
+    "master_doc_readability":          True,
+    "master_doc_category_proportions": True,
+}
+
+_FEATURES_DEFAULT_V21 = {
+    **_FEATURES_DEFAULT_V20,
+    "master_semantic_indicators": True,
+    "master_semantic_similarity": True,
+    "master_sentence_similarity": True,
+    "feat_phoneme_surprisal_mat": False,
+}
+
+DEFAULT_PREFS_V21: dict[str, Any] = {
+    **DEFAULT_PREFS_V20,
+    "schema_version": SCHEMA_VERSION_V21,
+    "features": dict(_FEATURES_DEFAULT_V21),
+    "output":   dict(_OUTPUT_DEFAULT_V21),
+}
+
+
+def _migrate_outputs_to_levels(merged: dict, old_output: dict) -> None:
+    """v20 → v21: map the ten retired per-file output toggles onto the five
+    output.level_* switches + section switches, so a migrated config writes
+    exactly the files it wrote before. Mutates `merged`; a key missing from
+    `old_output` takes its v20 default. Removes the retired keys.
+    """
+    v20_out = DEFAULT_PREFS_V20["output"]
+
+    def old(key: str) -> bool:
+        return bool(old_output.get(key, v20_out[key]))
+
+    wl, ds = old("word_level_csv"), old("document_summary")
+    syl, ph = old("syllables_csv"), old("phonemes_csv")
+    psrm, sent = old("phoneme_surprisal_mat"), old("sentences_csv")
+    ac = old("acoustic_ts_mat")
+    w2v, bw, bs = old("word2vec_mat"), old("bert_word_mat"), old("bert_sentence_mat")
+
+    o = merged.setdefault("output", {})
+    f = merged.setdefault("features", {})
+    o["level_word"] = wl or w2v or bw
+    o["level_document"] = ds
+    o["level_subword"] = syl or ph or psrm
+    o["level_sentence"] = sent or bs
+    o["level_acoustic"] = ac
+
+    f["master_word2vec"] = bool(f.get("master_word2vec", False)) and w2v
+    f["master_bert_word"] = bool(f.get("master_bert_word", False)) and bw
+    f["master_bert_sentence"] = bool(f.get("master_bert_sentence", False)) and bs
+    f["feat_phoneme_surprisal_mat"] = psrm
+
+    off: list[str] = []
+    if o["level_word"] and not wl:
+        off += ["master_structural", "master_lexling", "master_frequency",
+                "master_predictability", "master_lexical_norms",
+                "master_acoustic", "master_word_prosody",
+                "master_semantic_indicators"]
+    if o["level_subword"] and not syl:
+        off += ["master_syllable_intervals", "master_syllable_labels",
+                "master_syllable_prosody", "master_syllable_pcenter"]
+    if o["level_subword"] and not ph:
+        off += ["master_phoneme_intervals", "feat_phoneme_surprisal",
+                "feat_phoneme_cohort_entropy"]
+    if o["level_sentence"] and not sent:
+        off += ["master_sentence_timing", "master_sentence_prosody"]
+    for key in off:
+        f[key] = False
+
+    for key in RETIRED_OUTPUT_KEYS_V21:
+        o.pop(key, None)
+
+# ---------------------------------------------------------------------------
 # Active schema aliases
 # ---------------------------------------------------------------------------
 
-SCHEMA_VERSION = SCHEMA_VERSION_V20  # active version
-DEFAULT_PREFS: dict[str, Any] = DEFAULT_PREFS_V20  # active defaults
+SCHEMA_VERSION = SCHEMA_VERSION_V21  # active version
+DEFAULT_PREFS: dict[str, Any] = DEFAULT_PREFS_V21  # active defaults
 
 
 # ---------------------------------------------------------------------------
@@ -963,7 +1074,7 @@ def get_run_yaml_path() -> Path:
 # ---------------------------------------------------------------------------
 
 def _merged_from_user(user: dict[str, Any]) -> tuple[dict[str, Any], bool]:
-    """Run the full v1->v20 migration/merge/finalize chain on a parsed prefs dict.
+    """Run the full v1->v21 migration/merge/finalize chain on a parsed prefs dict.
 
     Pure: performs no disk I/O. Returns (merged, changed) where `changed` is
     True iff the source `schema_version` differed from SCHEMA_VERSION (i.e.
@@ -986,7 +1097,8 @@ def _merged_from_user(user: dict[str, Any]) -> tuple[dict[str, Any], bool]:
     if version in (SCHEMA_VERSION_V10, SCHEMA_VERSION_V11,
                    SCHEMA_VERSION_V12, SCHEMA_VERSION_V13, SCHEMA_VERSION_V14,
                    SCHEMA_VERSION_V15, SCHEMA_VERSION_V16, SCHEMA_VERSION_V17,
-                   SCHEMA_VERSION_V18, SCHEMA_VERSION_V19, SCHEMA_VERSION_V20):
+                   SCHEMA_VERSION_V18, SCHEMA_VERSION_V19, SCHEMA_VERSION_V20,
+                   SCHEMA_VERSION_V21):
         # v10–v15 are additive: missing keys are filled from the current
         # defaults (merged starts as DEFAULT_PREFS). v11's backend coercion and
         # the version stamp are applied in the finalize step below, which
@@ -1175,6 +1287,14 @@ def _merged_from_user(user: dict[str, Any]) -> tuple[dict[str, Any], bool]:
             for key in ("feat_phoneme_arpabet", "feat_phoneme_stress",
                         "feat_phoneme_ipa", "feat_phoneme_pron_source"):
                 f[key] = bool(label_on)
+
+    # v21 finalize (pre-v21 sources only — post-v21 values are the user's):
+    # the ten per-file output toggles become five output.level_* switches +
+    # section switches. Every merge above copies the source's output keys
+    # wholesale, so the old toggles sit in merged["output"] here (a key the
+    # source never had takes its v20 default inside the helper).
+    if isinstance(version, int) and version < SCHEMA_VERSION_V21:
+        _migrate_outputs_to_levels(merged, dict(merged.get("output", {})))
 
     changed = merged.get("schema_version") != SCHEMA_VERSION
     merged["schema_version"] = SCHEMA_VERSION

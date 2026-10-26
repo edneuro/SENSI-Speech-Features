@@ -320,7 +320,9 @@ def test_v2_migration_rewrites_file_as_v4(v2_prefs_file):
     assert "prosody" in on_disk
     # v6-specific keys also present
     assert "feat_syllable_onset" in on_disk["features"]
-    assert "syllables_csv" in on_disk["output"]
+    # v21: per-file output toggles became output.level_* switches
+    assert "level_subword" in on_disk["output"]
+    assert "syllables_csv" not in on_disk["output"]
     # v7-specific master toggle keys present
     assert "master_word_prosody" in on_disk["features"]
     assert "master_doc_prosody" in on_disk["output"]
@@ -550,8 +552,9 @@ def test_v5_to_v6_adds_subword_defaults(tmp_path, monkeypatch):
     for key in ("feat_phoneme_arpabet", "feat_phoneme_stress",
                 "feat_phoneme_ipa", "feat_phoneme_pron_source"):
         assert prefs["features"][key] is True, key
-    assert prefs["output"]["syllables_csv"] is True
-    assert prefs["output"]["phonemes_csv"] is True
+    # v21: the v6 syllables/phonemes outputs (default on) map to the
+    # sub-word level switch.
+    assert prefs["output"]["level_subword"] is True
     # Pre-existing v5 setting preserved
     assert prefs["features"]["feat_prosody_pitch_mean"] is False
 
@@ -569,7 +572,7 @@ def test_v4_to_v6_chain_carries_keys_through(tmp_path, monkeypatch):
     assert prefs["schema_version"] == SCHEMA_VERSION
     assert prefs["features"]["feat_psych_clout"] is False
     assert "feat_syllable_onset" in prefs["features"]
-    assert "syllables_csv" in prefs["output"]
+    assert "level_subword" in prefs["output"]
 
 
 # ---------------------------------------------------------------------------
@@ -762,7 +765,7 @@ def test_load_v8_prefs_file_migrates_to_current(tmp_path, monkeypatch):
     loaded = load_preferences()
     assert loaded['schema_version'] == SCHEMA_VERSION
     assert loaded['features']['feat_sentence_onset'] is True
-    assert loaded['output']['sentences_csv'] is True
+    assert loaded['output']['level_sentence'] is True  # v21: was sentences_csv
     on_disk = _yaml_on_disk(prefs_path)
     assert on_disk['schema_version'] == SCHEMA_VERSION
 
@@ -814,7 +817,7 @@ def test_load_v9_prefs_file_migrates_to_current(tmp_path, monkeypatch):
     assert loaded['schema_version'] == SCHEMA_VERSION
     # Embedding keys are added by the migration; under opt-in defaults both the
     # output and the embedding master (which is the feature on/off) default off.
-    assert loaded['output']['word2vec_mat'] is False
+    assert 'word2vec_mat' not in loaded['output']  # v21: retired
     assert loaded['features']['master_word2vec'] is False
     on_disk = _yaml_on_disk(prefs_path)
     assert on_disk['schema_version'] == SCHEMA_VERSION
@@ -873,7 +876,7 @@ def test_v12_prefs_migrate_to_v13_additively(tmp_path, monkeypatch):
     # Opt-in defaults: acoustic features + output default off (added by migration).
     assert f["feat_acoustic_ts_envelope"] is False
     assert f["feat_acoustic_ts_mfcc"] is False
-    assert prefs["output"]["acoustic_ts_mat"] is False   # opt-in; gated from Run tab
+    assert prefs["output"]["level_acoustic"] is False   # opt-in (v21: was acoustic_ts_mat)
     a = prefs["acoustic_ts"]
     assert a["analysis_rate"] == 128 and a["env_method"] == "rms"
     assert a["mel_preset"] == "speech"
@@ -934,7 +937,7 @@ def test_v15_prefs_migrate_to_v16_additively(tmp_path, monkeypatch):
     assert prefs["features"]["master_phoneme_surprisal"] is True
     assert prefs["features"]["feat_phoneme_surprisal"] is False
     assert prefs["features"]["feat_phoneme_cohort_entropy"] is False
-    assert prefs["output"]["phoneme_surprisal_mat"] is False
+    assert prefs["features"]["feat_phoneme_surprisal_mat"] is False  # v21: was output.phoneme_surprisal_mat
     assert prefs["phoneme_surprisal"]["analysis_sr"] == 128
     assert prefs["phoneme_surprisal"]["strip_stress"] is True
     assert prefs["phoneme_surprisal"]["primary_only"] is True
@@ -1184,9 +1187,10 @@ def _load_from(tmp_path, monkeypatch, stored: dict) -> dict:
     return load_preferences()
 
 
-def test_active_version_is_20():
-    assert SCHEMA_VERSION == SCHEMA_VERSION_V20 == 20
-    assert DEFAULT_PREFS['schema_version'] == 20
+def test_v20_version_constant():
+    assert SCHEMA_VERSION_V20 == 20
+    assert SCHEMA_VERSION > SCHEMA_VERSION_V20
+    assert DEFAULT_PREFS['schema_version'] == SCHEMA_VERSION
 
 
 def test_defaults_drop_label_and_add_the_split_keys():
@@ -1208,7 +1212,7 @@ def test_v19_label_on_migrates_all_four_replacements_on(tmp_path, monkeypatch):
         'schema_version': 19,
         'features': {'feat_phoneme_label': True},
     })
-    assert prefs['schema_version'] == 20
+    assert prefs['schema_version'] == SCHEMA_VERSION
     assert 'feat_phoneme_label' not in prefs['features']
     for key in _NEW_PHONEME_KEYS:
         assert prefs['features'][key] is True, key
