@@ -90,19 +90,48 @@ def test_acoustic_card_switch_is_level_acoustic(qtbot):
     assert load_preferences()["output"]["level_acoustic"] is start
 
 
-def test_embedding_ticks_write_feature_keys_only(qtbot):
-    from utils.preferences import load_preferences
+def test_embedding_ticks_write_feature_keys_only(qtbot, monkeypatch):
+    import gui.section_sentence_features as sent_mod
+    import gui.section_word_features as word_mod
+    from utils.preferences import load_preferences, save_preferences
     word = WordFeaturesSection()
     qtbot.addWidget(word)
     sent = SentenceFeaturesSection()
     qtbot.addWidget(sent)
+    payloads: list[dict] = []
+
+    def spy(update):
+        payloads.append(update)
+        save_preferences(update)
+
+    monkeypatch.setattr(word_mod, "save_preferences", spy)
+    monkeypatch.setattr(sent_mod, "save_preferences", spy)
     for page, key in ((word, "master_word2vec"), (word, "master_bert_word"),
                       (sent, "master_bert_sentence")):
+        payloads.clear()
         row = page._toggles[key]
         row.set_checked(not row.is_checked())
-        prefs = load_preferences()
-        assert prefs["features"][key] is row.is_checked()
-        assert not any(k.endswith("_mat") for k in prefs["output"]), key
+        assert payloads == [{"features": {key: row.is_checked()}}], key
+        assert load_preferences()["features"][key] is row.is_checked()
+
+
+def test_semantic_categories_stay_editable(qtbot):
+    from PySide6.QtWidgets import QRadioButton
+    page = WordFeaturesSection()
+    qtbot.addWidget(page)
+    card = _card_titled(page, "Semantic indicators")
+    card.master_toggle().set_checked(False)
+    from utils.preferences import load_preferences
+    assert load_preferences()["features"]["master_semantic_indicators"] is False
+    assert page.configure_cats_button.isEnabled()
+    radios = card.findChildren(QRadioButton)
+    assert radios
+    for rb in radios:
+        if rb.text() == "LIWC":
+            assert not rb.isEnabled()   # permanently disabled (license)
+        else:
+            assert rb.isEnabled(), rb.text()
+    assert not page.toggle("sem_indicators").check.isEnabled()
 
 
 def test_phoneme_surprisal_mat_tick(qtbot):
@@ -111,6 +140,8 @@ def test_phoneme_surprisal_mat_tick(qtbot):
     qtbot.addWidget(page)
     row = page.toggle("feat_phoneme_surprisal_mat")
     assert "_phoneme_surprisal.mat" in row.label.text()
+    from gui.info_popup import InfoIcon
+    assert row.findChildren(InfoIcon), "the .mat tick should have an info icon"
     row.set_checked(True)
     assert load_preferences()["features"]["feat_phoneme_surprisal_mat"] is True
     card = _card_titled(page, "Phoneme surprisal")

@@ -333,7 +333,6 @@ class WordFeaturesSection(QWidget):
             backend_row.addWidget(rb)
         backend_row.addStretch(1)
         br_w = QWidget(); br_w.setLayout(backend_row)
-        sem_card.add_child(br_w)
         liwc_note = QLabel(
             "LIWC backend removed due to its license agreement. Empath (free, "
             "open-source) is the default. Click the ⓘ next to “Per-word category "
@@ -341,7 +340,6 @@ class WordFeaturesSection(QWidget):
         )
         liwc_note.setObjectName("Subtitle")
         liwc_note.setWordWrap(True)
-        sem_card.add_child(liwc_note)
         sem_card.add_child(self._make_toggle(
             "sem_indicators", "Per-word category indicators",
             f["sem_indicators"], "features"))
@@ -355,7 +353,19 @@ class WordFeaturesSection(QWidget):
         cats_row.addWidget(self.cats_count_label, 1)
         cats_row.addWidget(self.configure_cats_button)
         cats_w = QWidget(); cats_w.setLayout(cats_row)
-        sem_card.add_child(cats_w)
+        # Backend + category selection are shared with the Document page's
+        # category proportions, so they stay editable when this section is
+        # left out (shared settings are never greyed). Only the per-word tick
+        # and the LIWC note are gated.
+        shared_cats = QWidget()
+        sc_lay = QVBoxLayout(shared_cats)
+        sc_lay.setContentsMargins(0, 0, 0, 0)
+        sc_lay.addWidget(br_w)
+        sc_lay.addWidget(cats_w)
+        sem_card.add_shared(
+            shared_cats,
+            "Categories (also used by document-level category proportions)")
+        sem_card.add_child(liwc_note)
         layout.addWidget(sem_card)
 
         # --- Semantic similarity (embeddings) ---
