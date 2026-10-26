@@ -1,0 +1,54 @@
+<style>
+  .rt { max-width:760px; background:#fff; color:#1e2326; border:1px solid #d9dde1; border-radius:10px; padding:16px 18px; font:14px/1.45 "Segoe UI",system-ui,sans-serif; }
+  .rt h4 { margin:0 0 8px; font-size:13px; color:#6b747a; text-transform:uppercase; letter-spacing:.05em; }
+  .lvl { display:flex; gap:12px; align-items:flex-start; padding:9px 0; border-top:1px solid #eef0f2; }
+  .lvl:first-of-type { border-top:none; }
+  .pill { width:38px; height:20px; border-radius:10px; background:#00B2D0; position:relative; flex:none; margin-top:2px; }
+  .pill::after { content:""; position:absolute; top:2px; right:2px; width:16px; height:16px; border-radius:50%; background:#fff; box-shadow:0 1px 2px rgba(0,0,0,.25); }
+  .pill.off { background:#b9c0c5; } .pill.off::after { right:auto; left:2px; }
+  .name { font-weight:600; } .what { color:#4c555a; font-size:13px; }
+  .files { margin-top:3px; font:12px ui-monospace,Consolas,monospace; color:#4c555a; }
+  .files span { display:block; } .files .no { color:#a3abb0; text-decoration:line-through; }
+  .off .name, .off .what { color:#9aa2a7; }
+  .ready { margin-top:12px; padding:8px 10px; border-radius:6px; background:#e9f7ee; color:#256b3c; font-size:13px; }
+  .tag { font-size:11px; font-weight:600; padding:1px 7px; border-radius:9px; background:#e0f6fa; color:#00737f; margin-left:6px; }
+  .tag.off { background:#e6e8ea; color:#5b6368; }
+</style>
+
+<h2>Run tab: one switch per level</h2>
+<p class="subtitle">One switch per feature page, named after the page. Under each, the files that level will write with your current ticks (struck-through = a file type in that level that nothing ticked will produce). Example settings shown.</p>
+
+<div class="rt">
+ <h4>Outputs</h4>
+
+ <div class="lvl"><span class="pill"></span><div>
+  <div class="name">Word level <span class="tag">3 files per stimulus</span></div>
+  <div class="what">Everything ticked on the Word features page.</div>
+  <div class="files"><span>word/&lt;stim&gt;_features.csv</span><span>word/&lt;stim&gt;_word2vec.mat</span><span>word/&lt;stim&gt;_bert_word.mat</span></div>
+ </div></div>
+
+ <div class="lvl"><span class="pill"></span><div>
+  <div class="name">Document level <span class="tag">1 file for the whole run</span></div>
+  <div class="what">Everything ticked on the Document features page.</div>
+  <div class="files"><span>document/documents_summary_&lt;timestamp&gt;.csv</span></div>
+ </div></div>
+
+ <div class="lvl"><span class="pill"></span><div>
+  <div class="name">Sub-word level <span class="tag">2 files per stimulus</span></div>
+  <div class="what">Everything ticked on the Sub-word features page (syllables and phonemes).</div>
+  <div class="files"><span>syllable/&lt;stim&gt;_syllables.csv</span><span>phoneme/&lt;stim&gt;_phonemes.csv</span><span class="no">phoneme/&lt;stim&gt;_phoneme_surprisal.mat</span></div>
+ </div></div>
+
+ <div class="lvl off"><span class="pill off"></span><div>
+  <div class="name">Sentence level <span class="tag off">Left out</span></div>
+  <div class="what">Everything ticked on the Sentence features page.</div>
+ </div></div>
+
+ <div class="lvl"><span class="pill"></span><div>
+  <div class="name">Acoustic level <span class="tag">1 file per audio file</span></div>
+  <div class="what">Audio-only time series from the Acoustic features page; doesn't need transcripts.</div>
+  <div class="files"><span>acoustic/&lt;stim&gt;_acoustic.mat</span></div>
+ </div></div>
+
+ <div class="ready">✓ Ready to run.</div>
+</div>

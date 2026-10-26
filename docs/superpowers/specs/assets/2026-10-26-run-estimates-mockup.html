@@ -1,0 +1,69 @@
+<style>
+  .rt { max-width:780px; background:#fff; color:#1e2326; border:1px solid #d9dde1; border-radius:10px; padding:16px 18px; font:14px/1.45 "Segoe UI",system-ui,sans-serif; }
+  .rt h4 { margin:12px 0 8px; font-size:13px; color:#6b747a; text-transform:uppercase; letter-spacing:.05em; }
+  .lvl { display:flex; gap:12px; align-items:flex-start; padding:9px 0; border-top:1px solid #eef0f2; }
+  .lvl:first-of-type { border-top:none; }
+  .pill { width:38px; height:20px; border-radius:10px; background:#00B2D0; position:relative; flex:none; margin-top:2px; }
+  .pill::after { content:""; position:absolute; top:2px; right:2px; width:16px; height:16px; border-radius:50%; background:#fff; box-shadow:0 1px 2px rgba(0,0,0,.25); }
+  .pill.off { background:#b9c0c5; } .pill.off::after { right:auto; left:2px; }
+  .name { font-weight:600; } .what { color:#4c555a; font-size:13px; }
+  .files { margin-top:3px; font:12px ui-monospace,Consolas,monospace; color:#4c555a; }
+  .files span { display:block; } .files .no { color:#a3abb0; text-decoration:line-through; }
+  .files .sz { color:#00737f; }
+  .off .name, .off .what { color:#9aa2a7; }
+  .tag { font-size:11px; font-weight:600; padding:1px 7px; border-radius:9px; background:#e0f6fa; color:#00737f; margin-left:6px; }
+  .tag.off { background:#e6e8ea; color:#5b6368; }
+  .size { font-size:12px; font-weight:600; color:#1e2326; margin-left:6px; }
+  .sum { margin-top:6px; border:1px solid #d9dde1; border-radius:8px; padding:10px 12px; background:#fafbfc; }
+  .sum .row { display:flex; justify-content:space-between; padding:3px 0; }
+  .sum .k { color:#4c555a; } .sum .v { font-weight:600; }
+  .sum .note { font-size:12px; color:#6b747a; margin-top:4px; }
+  .warn { margin-top:8px; padding:7px 10px; border-radius:6px; background:#fff4e0; color:#8a5a00; font-size:13px; }
+  .ready { margin-top:8px; padding:8px 10px; border-radius:6px; background:#e9f7ee; color:#256b3c; font-size:13px; }
+</style>
+
+<h2>Run tab with estimates</h2>
+<p class="subtitle">Example numbers for 10 stimuli, about 5 minutes of audio in total. Disk size per level (and per file), then a summary under Readiness with total disk, peak memory compared with this computer, and expected time.</p>
+
+<div class="rt">
+ <h4>Outputs</h4>
+
+ <div class="lvl"><span class="pill"></span><div>
+  <div class="name">Word level <span class="tag">3 files per stimulus</span><span class="size">≈ 410 MB</span></div>
+  <div class="what">Everything ticked on the Word features page.</div>
+  <div class="files"><span>word/&lt;stim&gt;_features.csv <span class="sz">≈ 2 MB</span></span><span>word/&lt;stim&gt;_word2vec.mat <span class="sz">≈ 9 MB</span></span><span>word/&lt;stim&gt;_bert_word.mat <span class="sz">≈ 400 MB</span></span></div>
+ </div></div>
+
+ <div class="lvl"><span class="pill"></span><div>
+  <div class="name">Document level <span class="tag">1 file for the whole run</span><span class="size">≈ 10 KB</span></div>
+  <div class="what">Everything ticked on the Document features page.</div>
+  <div class="files"><span>document/documents_summary_&lt;timestamp&gt;.csv <span class="sz">≈ 10 KB</span></span></div>
+ </div></div>
+
+ <div class="lvl"><span class="pill"></span><div>
+  <div class="name">Sub-word level <span class="tag">1 file per stimulus</span><span class="size">≈ 1 MB</span></div>
+  <div class="what">Everything ticked on the Sub-word features page.</div>
+  <div class="files"><span>syllable/&lt;stim&gt;_syllables.csv <span class="sz">≈ 1 MB</span></span><span class="no">phoneme/&lt;stim&gt;_phonemes.csv</span><span class="no">phoneme/&lt;stim&gt;_phoneme_surprisal.mat</span></div>
+ </div></div>
+
+ <div class="lvl off"><span class="pill off"></span><div>
+  <div class="name">Sentence level <span class="tag off">Left out</span></div>
+  <div class="what">Everything ticked on the Sentence features page.</div>
+ </div></div>
+
+ <div class="lvl off"><span class="pill off"></span><div>
+  <div class="name">Acoustic level <span class="tag off">Left out</span></div>
+  <div class="what">Audio-only time series from the Acoustic features page; doesn't need transcripts.</div>
+ </div></div>
+
+ <h4>Readiness</h4>
+ <div class="sum">
+  <div class="row"><span class="k">Disk space for outputs</span><span class="v">≈ 410 MB</span></div>
+  <div class="row"><span class="k">Peak memory (RAM)</span><span class="v">≈ 5 GB &nbsp;<span style="font-weight:400;color:#6b747a">this computer: 31 GB</span></span></div>
+  <div class="row"><span class="k">Expected time</span><span class="v">≈ 10–40 min</span></div>
+  <div class="note">First estimate. It gets more precise as the app learns from runs on this computer.</div>
+ </div>
+ <div class="warn">⚠ Llama-3-70B needs ≈ 140 GB of memory; this computer has 31 GB. The run will likely fail or be extremely slow.</div>
+ <div class="ready">✓ Ready to run.</div>
+</div>
+<p class="subtitle" style="margin-top:10px">The orange warning only appears when a choice won't fit; it's shown here as an example.</p>
