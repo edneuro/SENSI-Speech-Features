@@ -40,8 +40,8 @@ _INTENTIONALLY_UNROUTED_FEATURES: set[str] = {
     "master_semantic_similarity",
     "master_sentence_similarity",
     # v13 acoustic level: master_acoustic_ts is vestigial — the acoustic level is
-    # gated solely by the acoustic_ts_mat output key (Run tab), not a cluster
-    # master. Kept in the schema for migration compat (cf. master_syllable_pcenter).
+    # gated solely by the output.level_acoustic switch (Run tab; it doubles as
+    # the acoustic cluster's master_toggle), not by this key. Kept in the schema for migration compat (cf. master_syllable_pcenter).
     "master_acoustic_ts",
     # v16 phoneme surprisal — routes via FeatureCluster.master_toggle
     "master_phoneme_surprisal",

@@ -541,7 +541,10 @@ CLUSTERS: list[FeatureCluster] = [
         name="doc agg zipf freq",
         toggle_keys=("doc_agg_zipf_freq",),
         output_csv="documents_summary",
-        requires_stages=("spacy_parse", "doc_aggregates"),
+        # The source extractor is pulled in so the mean is computed even when
+        # the word-level Frequency section / Word level is off (the doc pass
+        # forces it on; its columns never reach the word CSV).
+        requires_stages=("spacy_parse", "word_freq", "doc_aggregates"),
         emits_columns=("mean_zipf_freq",),
         master_toggle="master_doc_aggregates",
     ),
@@ -549,7 +552,9 @@ CLUSTERS: list[FeatureCluster] = [
         name="doc agg edu zipf",
         toggle_keys=("doc_agg_edu_zipf",),
         output_csv="documents_summary",
-        requires_stages=("spacy_parse", "doc_aggregates"),
+        # Source extractor pulled in like word_freq above; the grade bands
+        # themselves are the shared freq_ewfg_* ticks (no band = no means).
+        requires_stages=("spacy_parse", "ewfg_freq", "doc_aggregates"),
         emits_columns=("mean_edu_zipf_k2", "mean_edu_zipf_3to5",
                        "mean_edu_zipf_6to8", "mean_edu_zipf_9to12",
                        "mean_edu_zipf_overall"),

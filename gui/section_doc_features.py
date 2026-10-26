@@ -9,30 +9,19 @@ from PySide6.QtWidgets import (
 
 from gui.widgets import ClusterCard, ToggleRow
 from gui.planner import plan_from_prefs
+from gui.planner.plan import _active_clusters, _active_output_csvs
 from utils.preferences import load_preferences, save_preferences
 
-# Maps each doc-aggregate output toggle to (required_stage, hover_tooltip).
-# If the aggregate is enabled but the required stage is absent from the plan,
-# a warning indicator is shown on that toggle row.
-_AGG_STAGE_REQ: dict[str, tuple[str, str]] = {
-    "output_doc_agg_zipf_freq": (
-        "word_freq",
-        "<b>Will output NaN</b> — corpus frequency is not in the run plan.<br>"
-        "• Enable corpus frequency (wordfreq) on the Word-level features page<br>"
-        "• Ensure the Word level is on (Run tab)",
-    ),
-    "output_doc_agg_edu_zipf": (
-        "ewfg_freq",
-        "<b>Will output NaN</b> — EWFG grade-band frequency is not in the run plan.<br>"
-        "• Enable at least one EWFG band on the Word-level features page<br>"
-        "• Ensure the Word level is on (Run tab)",
-    ),
+# Doc-aggregate output toggles whose means can come out NaN, with the hover
+# tooltip shown when that happens. The source extractors themselves always run
+# for an active aggregate (the planner pulls them into the document pass even
+# when the word-level section or Word level is off); what can still be missing
+# is the shared predictability model/metric selection (the EWFG mean is
+# permanently disabled, see below). See _refresh_agg_warnings.
+_AGG_NAN_HINTS: dict[str, str] = {
     "output_doc_agg_predictability": (
-        "predictability",
-        "<b>Will output NaN</b> — predictability is not in the run plan.<br>"
-        "• Select at least one model and one metric in the Predictability "
-        "card on the Word-level features page<br>"
-        "• Ensure the Word level is on (Run tab)",
+        "<b>Will output NaN</b> — no predictability model/metric is selected.<br>"
+        "• Select a model and a metric in Word features &gt; Predictability"
     ),
 }
 
@@ -299,23 +288,24 @@ class DocFeaturesSection(QWidget):
     def _refresh_agg_warnings(self) -> None:
         """Show/hide warning indicators on doc-aggregate toggles.
 
-        A warning appears when the aggregate is enabled but the word-level
-        stage it depends on is not in the current run plan (either because
-        the feature toggle is off or the Word level is off).
+        A warning appears when the aggregate will be computed (its cluster is
+        active: Document level + Aggregates section + toggle on) but the
+        shared configuration it reads is empty, so the means would be NaN.
         """
         prefs = load_preferences()
         plan = plan_from_prefs(prefs)
-        in_plan = plan.stages_to_run
-        o = prefs["output"]
-        for toggle_key, (stage, msg) in _AGG_STAGE_REQ.items():
+        active = {c.name for c in
+                  _active_clusters(prefs, _active_output_csvs(prefs))}
+        nan = {
+            "output_doc_agg_predictability": (
+                "doc agg predictability" in active
+                and not plan.predictability_doc),
+        }
+        for toggle_key, msg in _AGG_NAN_HINTS.items():
             row = self._toggles.get(toggle_key)
             if row is None:
                 continue
-            agg_key = toggle_key[len("output_"):]
-            if o.get(agg_key, False) and stage not in in_plan:
-                row.set_warning(msg)
-            else:
-                row.set_warning(None)
+            row.set_warning(msg if nan[toggle_key] else None)
 
     def _cats_count_text(self) -> str:
         prefs = load_preferences()

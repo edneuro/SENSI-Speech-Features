@@ -1,4 +1,6 @@
 """Tests for gui.run_dispatch — background-thread orchestration."""
+import pytest
+
 
 
 def test_build_args_word_only_includes_correct_flags(monkeypatch, tmp_path):
@@ -169,11 +171,13 @@ def test_doc_args_no_prosody_when_all_doc_toggles_off(prefs_tmp):
 def test_doc_args_predictability_dict_mirrors_prefs_regardless_of_level(prefs_tmp):
     """v18: the old no_llm_cloze/no_surprisal word-extractor flags and the
     no_doc_mean_llm_cloze/no_doc_mean_surprisal aggregate flags are gone,
-    replaced by a single dynamic ns.predictability = {models, metrics} dict
-    (mirrors prefs verbatim — see gui/planner/emit.py) plus one aggregate
-    flag, ns.no_doc_predictability, driven purely by the doc_agg_predictability
-    output toggle. An empty models list must not crash and must not force
-    the aggregate flag on.
+    replaced by a single dynamic ns.predictability = {models, metrics, context}
+    dict plus one aggregate flag, ns.no_doc_predictability, driven by the
+    doc-means cluster (doc_agg_predictability under the Aggregates section
+    switch). The pass gets the prefs roster only when its planner path is
+    active (plan.predictability_doc, which needs a model and a metric); here
+    none is configured, so it gets the empty roster. An empty models list
+    must not crash and must not turn the aggregate flag off.
     Regression for the 2026-05-12 'OpenAIError: Missing credentials' bug
     (the underlying concern — no accidental paid-extractor invocation — now
     expressed via the empty-models-list case below).
@@ -196,8 +200,9 @@ def test_doc_args_predictability_dict_mirrors_prefs_regardless_of_level(prefs_tm
 
 
 def test_doc_args_no_doc_predictability_off_when_aggregate_toggle_off(prefs_tmp):
-    """The doc aggregate flag is driven by the doc_agg_predictability output
-    toggle, independent of which models/metrics are selected. With the
+    """The doc aggregate flag is driven by the doc-means cluster
+    (doc_agg_predictability), independent of which models/metrics are
+    selected. With the
     aggregate off the doc pass is not on the predictability doc path, so it
     gets no models and every metric off (no language model is loaded)."""
     from utils.preferences import save_preferences
@@ -216,8 +221,9 @@ def test_doc_args_no_doc_predictability_off_when_aggregate_toggle_off(prefs_tmp)
 
 def test_doc_args_predictability_driven_by_doc_aggregate_not_models(prefs_tmp):
     """Mirror of the old llm-vs-word-toggle regression: the doc aggregate
-    flag is independently controlled by doc_agg_predictability, not by which
-    word-level models/metrics happen to be selected."""
+    flag is controlled by the doc-means cluster (doc_agg_predictability), not
+    by which models/metrics happen to be selected; with a model and a metric
+    configured the doc pass also receives the roster."""
     from utils.preferences import save_preferences
     from gui.run_dispatch import build_args_doc_level
     save_preferences({
@@ -624,3 +630,50 @@ def test_dispatch_passes_cancel_and_stops_between_passes(monkeypatch, tmp_path):
     assert callable(seen["word"])
     assert "doc" not in seen
     assert statuses == ["cancelled"]
+
+
+# Sidecar-only levels: every artifact main.run_word_level_batch writes (not
+# just features/syllables/phonemes) must start the word batch. Shared with
+# tests/test_run_py.py, which runs the same scenarios through run.dispatch.
+SIDECAR_ONLY_SCENARIOS = {
+    "sentence_timing_word_off": (
+        {"output": {"level_word": False, "level_sentence": True},
+         "features": {"feat_sentence_onset": True}},
+        "sentences", "no_sentences"),
+    "phoneme_surprisal_mat_only": (
+        {"output": {"level_word": False, "level_subword": True},
+         "features": {"feat_phoneme_surprisal_mat": True}},
+        "phoneme_surprisal_mat", "no_phoneme_surprisal_mat"),
+    "word2vec_only": (
+        {"output": {"level_word": True},
+         "features": {"master_structural": False, "master_word2vec": True}},
+        "word2vec", "no_word2vec"),
+    "bert_sentence_only": (
+        {"output": {"level_word": False, "level_sentence": True},
+         "features": {"master_bert_sentence": True}},
+        "bert_sentence", "no_bert_sentence"),
+}
+
+
+@pytest.mark.parametrize("name", sorted(SIDECAR_ONLY_SCENARIOS))
+def test_dispatcher_runs_word_batch_for_sidecar_only_levels(prefs_tmp, monkeypatch, name):
+    prefs_over, artifact, flag = SIDECAR_ONLY_SCENARIOS[name]
+    from utils.preferences import load_preferences, save_preferences
+    from gui.planner import plan_from_prefs
+    save_preferences(prefs_over)
+    plan = plan_from_prefs(load_preferences())
+    assert plan.output_csvs == {artifact}  # the scenario is sidecar-only
+
+    captured = {}
+    def fake_word(args, **kwargs):
+        captured["word"] = args
+    monkeypatch.setattr("main.run_word_level_batch", fake_word)
+    monkeypatch.setattr("main.run_doc_level_batch",
+                        lambda *a, **k: captured.setdefault("doc", True))
+    from gui.run_dispatch import run
+    run(progress_cb=lambda *a: None, done_cb=lambda *a: None,
+        session_api_key="", in_thread=False)
+    assert "word" in captured, "word batch must run for a sidecar-only level"
+    assert captured["word"].no_word_csv is True
+    assert getattr(captured["word"], flag) is False
+    assert "doc" not in captured

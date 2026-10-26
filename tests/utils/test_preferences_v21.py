@@ -59,6 +59,24 @@ def test_defaults_v21_levels():
     assert f["feat_phoneme_surprisal_mat"] is False
 
 
+# Expected (word, document, sub-word, sentence, acoustic) level values per
+# snapshot case: a level is on iff the v20 config wrote any of its files.
+_EXPECTED_LEVELS = {
+    "defaults":                    (True, False, False, False, False),
+    "all_on":                      (True, True, True, True, True),
+    "embeddings_without_word_csv": (True, False, False, False, False),
+    "syllables_not_phonemes":      (True, False, True, False, False),
+    "psr_mat_without_phonemes":    (True, False, True, False, False),
+    "bert_sentence_without_csv":   (True, False, False, True, False),
+    "acoustic_only":               (False, False, False, False, True),
+    "doc_only_with_pred_means":    (False, True, False, False, False),
+}
+
+
+def test_expected_levels_cover_every_case():
+    assert set(_EXPECTED_LEVELS) == set(_CASE_BY_NAME)
+
+
 @pytest.mark.parametrize("case", _CASES, ids=[c["name"] for c in _CASES])
 def test_v20_file_migrates_to_levels(case):
     features_data, _ = split_prefs(_v20_prefs(case))
@@ -66,8 +84,7 @@ def test_v20_file_migrates_to_levels(case):
     prefs = load_preferences()
     assert prefs["schema_version"] == 21
     assert not set(RETIRED_OUTPUT_KEYS_V21) & set(prefs["output"])
-    for lvl in _LEVELS:
-        assert isinstance(prefs["output"][lvl], bool)
+    assert tuple(prefs["output"][lvl] for lvl in _LEVELS) ==         _EXPECTED_LEVELS[case["name"]]
     # Persisted: the rewritten file is already v21 and has no retired key.
     reread = load_preferences()
     assert reread == prefs

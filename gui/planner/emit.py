@@ -12,13 +12,16 @@ import argparse
 from gui.planner.stages import Plan
 from extractors.acoustic_ts import MTRF_COMP
 
-# Word-level output CSVs — used to filter which stages are relevant for the
-# word-level namespace (so doc-level stage requirements don't bleed into
-# word-level no_* flags like no_align).
-_WORD_LEVEL_CSVS = frozenset({
+# Artifacts written by main.run_word_level_batch (the word CSV plus every
+# sub-word / sentence / embedding sidecar). The dispatchers (gui/run_dispatch,
+# run.py) start the word batch iff the plan has any of these live; the word
+# namespace also uses them to filter which stages are relevant (so doc-level
+# stage requirements don't bleed into word-level no_* flags like no_align).
+WORD_BATCH_ARTIFACTS = frozenset({
     "features", "syllables", "phonemes", "sentences",
     "word2vec", "bert_word", "bert_sentence", "phoneme_surprisal_mat",
 })
+_WORD_LEVEL_CSVS = WORD_BATCH_ARTIFACTS
 
 # Doc-level output CSVs — used to scope the doc namespace's word-stage flags
 # to only what *doc-level* clusters require, so word-level stage requirements
@@ -79,11 +82,12 @@ def _doc_only_stages(prefs: dict) -> frozenset[str]:
     contours — pulls in mfa_align / praat_contours *only when it is active*.
     That closure is exactly what makes no_align False for the doc batch iff a
     doc-level feature (doc prosody / articulation rate) actually needs it.
-    Because doc aggregate stages consume the base word_df (not its dotted
-    columns like word_df.Surprisal), the underlying word extractors
-    (freq / surprisal / sem / norms) are NOT pulled in here; they are
-    (re)enabled independently by main.run_doc_level_batch from the doc output
-    toggles.
+    The word extractors that feed doc aggregates (word_freq / ewfg_freq /
+    lexical_norms / sem_domain) are listed in those doc clusters'
+    requires_stages, so they appear here whenever the aggregate is active,
+    independent of the word-level sections; main.run_doc_level_batch also
+    forces them on from the doc toggles. Predictability is carried on
+    ns.predictability (plan.predictability_doc), not via a stage flag.
     """
     from gui.planner.plan import (
         _active_clusters, _active_output_csvs, _close_under_consumes,
@@ -274,6 +278,10 @@ def to_namespace(plan: Plan, prefs: dict, level: str) -> argparse.Namespace:
         }
         ns.no_doc_mean_zipf       = "doc agg zipf freq" not in doc_active
         ns.no_doc_mean_edu_zipf   = "doc agg edu zipf" not in doc_active or ns.edu_bands is None
+        if ns.no_doc_mean_edu_zipf:
+            # ewfg_freq is in the doc pass only to feed these means; with no
+            # band ticked there is nothing to compute, so don't run it.
+            ns.no_edu_freq = True
         ns.no_doc_predictability  = "doc agg predictability" not in doc_active
         ns.no_doc_ttr             = "doc_lex_diversity" not in in_plan
         ns.no_doc_mtld            = "doc_lex_diversity" not in in_plan

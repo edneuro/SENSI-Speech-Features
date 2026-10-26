@@ -16,6 +16,9 @@ from pathlib import Path
 
 from utils.preferences import load_preferences
 from gui.planner import plan_from_prefs
+from gui.planner.plan import (
+    DOC_AGG_PREDICTABILITY_CLUSTER_NAME, _active_clusters, _active_output_csvs,
+)
 # Imported as a module (not `from ... import has_hf_token`) so that tests can
 # monkeypatch `extractors.predictability.has_hf_token` and have it take
 # effect here — a direct-name import would bind a stale reference at
@@ -102,13 +105,20 @@ def compute_warnings(session_api_key: str = "", session_hf_token: str = "") -> l
 
     # Predictability (v18: models/metrics, not a single llm_model). Local
     # HuggingFace models only — OpenAI is no longer offered, so there is no
-    # API-key warning here. Relevant only when the word-level CSV — the only
-    # place <slug>_<Metric> columns land — is actually being produced.
-    if "features" in plan.output_csvs:
-        pred = prefs.get("predictability", {}) or {}
-        models = list(pred.get("models") or [])
-        metrics_on = pred.get("metrics", {}) or {}
-        metrics = [m for m in ("surprisal", "cloze", "topmatch") if metrics_on.get(m)]
+    # API-key warning here. Relevant when either predictability path is in
+    # play: the word-level Predictability section (Word level on) or the
+    # document predictability means (Document level, Aggregates section).
+    _active_csvs = _active_output_csvs(prefs)
+    pred_section_on = (
+        ("features" in _active_csvs
+         and bool(prefs["features"].get("master_predictability", False)))
+        or any(c.name == DOC_AGG_PREDICTABILITY_CLUSTER_NAME
+               for c in _active_clusters(prefs, _active_csvs)))
+    pred = prefs.get("predictability", {}) or {}
+    models = list(pred.get("models") or [])
+    metrics_on = pred.get("metrics", {}) or {}
+    metrics = [m for m in ("surprisal", "cloze", "topmatch") if metrics_on.get(m)]
+    if plan.predictability_word or plan.predictability_doc:
         _valid_slugs = {spec.slug for spec in all_specs()}
         for slug in models:
             # Skip unrecognized slugs (e.g. a stale/hand-edited prefs file) —
@@ -123,6 +133,7 @@ def compute_warnings(session_api_key: str = "", session_hf_token: str = "") -> l
                     message=f"Model '{slug}' is gated and needs a HuggingFace "
                             "token + accepted license — paste a token in "
                             "Predictability or run `hf auth login`."))
+    if pred_section_on:
         if models and not metrics:
             out.append(Warning(
                 toggle_key=None, severity="amber",

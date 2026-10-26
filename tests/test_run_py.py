@@ -173,3 +173,26 @@ def test_main_still_exits_on_a_genuine_typo_not_a_retired_key(
         run.main()
     assert ei.value.code == 1
     assert "feat_phoneme_arpabetX" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize("name", [
+    "sentence_timing_word_off", "phoneme_surprisal_mat_only",
+    "word2vec_only", "bert_sentence_only"])
+def test_dispatch_runs_word_batch_for_sidecar_only_levels(tmp_path, monkeypatch, name):
+    """run.dispatch starts the word batch for every artifact it writes, not
+    only the word / syllable / phoneme CSVs (scenarios shared with
+    tests/gui/test_run_dispatch.py)."""
+    import run
+    from tests.gui.test_run_dispatch import SIDECAR_ONLY_SCENARIOS
+    prefs_over, artifact, flag = SIDECAR_ONLY_SCENARIOS[name]
+    calls = {}
+    monkeypatch.setattr("main.run_word_level_batch",
+                        lambda ns, **kw: calls.setdefault("word", ns))
+    monkeypatch.setattr("main.run_doc_level_batch",
+                        lambda *a, **k: calls.setdefault("doc", True))
+    prefs = _write_pair(tmp_path, monkeypatch, features_overrides=prefs_over)
+    run.dispatch(prefs)
+    assert "word" in calls
+    assert calls["word"].no_word_csv is True
+    assert getattr(calls["word"], flag) is False
+    assert "doc" not in calls

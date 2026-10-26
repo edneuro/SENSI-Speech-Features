@@ -261,7 +261,7 @@ class RunSection(QWidget):
             missing.append("the audio folder in Inputs doesn't exist")
         if needs_transcripts and not transcripts_ok:
             missing.append("pick a transcripts folder (needed for word / document "
-                           "/ sub-word / sentence / embedding outputs)")
+                           "/ sub-word / sentence outputs)")
         elif needs_transcripts and not any(
                 p.is_file() and p.suffix.lower() in _TEXT_EXTS
                 for p in Path(shared["last_transcripts_folder"]).iterdir()):

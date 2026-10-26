@@ -85,7 +85,7 @@ def run(progress_cb: Callable[[int, int, str], None],
         # per document regardless of which tabs/features are on.
         align_cache: dict = {}
         try:
-            word_outputs = {"features", "syllables", "phonemes"} & plan.output_csvs
+            word_outputs = planner.WORD_BATCH_ARTIFACTS & plan.output_csvs
             if word_outputs:
                 from main import run_word_level_batch
                 ns = _prepare_runtime_args(planner.to_namespace(plan, prefs, level="word"))

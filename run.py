@@ -36,7 +36,7 @@ def dispatch(prefs: dict) -> None:
     outputs = plan.output_csvs
     align_cache: dict = {}
 
-    word_outputs = {"features", "syllables", "phonemes"} & outputs
+    word_outputs = planner.WORD_BATCH_ARTIFACTS & outputs
     if word_outputs:
         from main import run_word_level_batch
         ns = _prepare(planner.to_namespace(plan, prefs, level="word"))

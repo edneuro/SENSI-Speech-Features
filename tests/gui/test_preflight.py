@@ -269,3 +269,54 @@ def test_warns_when_pyphen_missing_and_syllable_label_on(prefs_tmp, monkeypatch)
     warnings = compute_warnings()
     msgs = " ".join(w.message for w in warnings)
     assert "pyphen not installed" in msgs
+
+
+def test_gated_warning_for_doc_predictability_means_only(prefs_tmp, monkeypatch):
+    """Word level off, document predictability means on: the model still
+    runs (doc path), so the gated-model warning must fire."""
+    import extractors.predictability as m
+    monkeypatch.setattr(m, 'has_hf_token', lambda: False)
+    from utils.preferences import save_preferences
+    from gui.preflight import compute_warnings
+    save_preferences({
+        "output": {"level_word": False, "level_document": True,
+                   "doc_agg_predictability": True},
+        "predictability": {"models": ["llama3_8b"],
+                            "metrics": {"surprisal": True, "cloze": False, "topmatch": False}},
+    })
+    warnings = compute_warnings(session_hf_token="")
+    assert any("HuggingFace token" in w.message for w in warnings)
+
+
+def test_no_predictability_warnings_when_section_off(prefs_tmp, monkeypatch):
+    """Word level on but the Predictability section off and no doc means:
+    nothing loads a model, so no token or mismatch warning."""
+    import extractors.predictability as m
+    monkeypatch.setattr(m, 'has_hf_token', lambda: False)
+    from utils.preferences import save_preferences
+    from gui.preflight import compute_warnings
+    save_preferences({
+        "output": {"level_word": True},
+        "features": {"master_predictability": False},
+        "predictability": {"models": ["llama3_8b"],
+                            "metrics": {"surprisal": False, "cloze": False, "topmatch": False}},
+    })
+    warnings = compute_warnings(session_hf_token="")
+    assert not any(
+        "nothing will be produced" in w.message.lower() or "HuggingFace token" in w.message
+        for w in warnings)
+
+
+def test_mismatch_warning_for_doc_predictability_means_only(prefs_tmp):
+    """Doc means on (Word level off) with a model but no metric: the doc
+    means would be empty, so the mismatch warning fires."""
+    from utils.preferences import save_preferences
+    from gui.preflight import compute_warnings
+    save_preferences({
+        "output": {"level_word": False, "level_document": True,
+                   "doc_agg_predictability": True},
+        "predictability": {"models": ["gpt2"],
+                            "metrics": {"surprisal": False, "cloze": False, "topmatch": False}},
+    })
+    warnings = compute_warnings()
+    assert any("nothing will be produced" in w.message.lower() for w in warnings)

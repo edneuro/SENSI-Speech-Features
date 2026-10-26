@@ -63,3 +63,29 @@ def test_pause_threshold_spinbox_persists(qtbot, prefs_tmp):
     qtbot.addWidget(section)
     section.pause_threshold_spin.setValue(0.5)
     assert load_preferences()['prosody']['pause_threshold_s'] == 0.5
+
+
+def test_agg_nan_warnings_track_shared_config(qtbot, prefs_tmp):
+    """Doc means compute without the word-level section, so the only NaN
+    warning left is an empty predictability roster; mean Zipf frequency
+    never warns (word_freq is pulled in)."""
+    from utils.preferences import save_preferences
+    from gui.section_doc_features import DocFeaturesSection
+    save_preferences({
+        "output": {"level_word": False, "level_document": True,
+                   "doc_agg_zipf_freq": True, "doc_agg_predictability": True},
+        "predictability": {"models": [], "metrics": {"surprisal": False}},
+    })
+    w = DocFeaturesSection()
+    qtbot.addWidget(w)
+    w.refresh_from_prefs()
+    assert w._toggles["output_doc_agg_zipf_freq"].warning is None
+    assert w._toggles["output_doc_agg_predictability"].warning is not None
+
+    save_preferences({
+        "output": {"level_word": False, "level_document": True,
+                   "doc_agg_zipf_freq": True, "doc_agg_predictability": True},
+        "predictability": {"models": ["gpt2"], "metrics": {"surprisal": True}},
+    })
+    w.refresh_from_prefs()
+    assert w._toggles["output_doc_agg_predictability"].warning is None

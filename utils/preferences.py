@@ -1,28 +1,25 @@
 """Load and save user preferences.
 
-Schema (v13 — active):
+Schema (v21 — active; DEFAULT_PREFS_V21 is the authoritative key set):
     {
-      "schema_version": 13,
-      "shared":  {analyzer_name, last_*_folder, theme},
-      "features": {feat_struct_*, lexling_*, freq_*, pred_*, sem_*,
-                   feat_acoustic_*, feat_psych_*,
-                   feat_prosody_* (10 word-level), feat_doc_prosody_* (16 doc-level),
-                   feat_syllable_* (9 syllable), feat_syllable_pcenter,
-                   feat_phoneme_* (4 phoneme),
-                   feat_sentence_* (14 sentence-level),
-                   master_* (6 cluster master toggles), master_syllable_pcenter,
-                   master_sentence_timing, master_sentence_prosody,
-                   master_word2vec, master_bert_word, master_bert_sentence,
-                   master_acoustic_ts, feat_acoustic_ts_* (4 acoustic-TS toggles)},
-      "predictability": {llm_model},
+      "schema_version": 21,
+      "shared":  {analyzer_name, last_*_folder, theme, hf_token_file},
+      "features": {per-column toggles (feat_*, lexling_*, freq_*, sem_*),
+                   master_* section switches (one per feature card, incl.
+                   master_semantic_indicators / _similarity,
+                   master_sentence_similarity), master_word2vec /
+                   master_bert_word / master_bert_sentence (embedding ticks),
+                   feat_phoneme_surprisal_mat, vestigial master_acoustic_ts},
+      "predictability": {models, metrics, context},
       "semantic": {backend, categories_liwc, categories_empath},
-      "output":   {word_level_csv, document_summary, out_count_*, doc_*,
-                   syllables_csv, phonemes_csv, sentences_csv,
-                   word2vec_mat, bert_word_mat, bert_sentence_mat,
-                   master_doc_prosody, master_doc_articulation_rate,
-                   acoustic_ts_mat},
+      "output":   {level_word, level_document, level_subword, level_sentence,
+                   level_acoustic (Run-tab level switches), out_count_*,
+                   doc_* toggles, master_doc_* section switches},
       "prosody":  {pitch_units, pitch_floor_hz, pitch_ceiling_hz, pause_threshold_s, pcenter_k},
-      "acoustic_ts": {analysis_rate, env_method, env_comp, n_mels, n_mfcc, mel_preset}
+      "lexical_norms": {paths, late_acquired_threshold},
+      "acoustic_ts": {analysis_rate, env_method, env_comp, env_window, n_mels, n_mfcc, mel_preset},
+      "phoneme_surprisal": {analysis_sr, strip_stress, primary_only},
+      "alignment": {g2p_oov}
     }
 
 Migration chain (all paths terminate at the current version):
@@ -641,8 +638,8 @@ DEFAULT_PREFS_V12: dict[str, Any] = {
 SCHEMA_VERSION_V13 = 13
 
 _ACOUSTIC_TS_FEATURE_KEYS = {
-    # master_acoustic_ts is vestigial: the acoustic level is gated solely by the
-    # acoustic_ts_mat output key (Run tab). Kept in the schema for v13 migration
+    # master_acoustic_ts is vestigial: the acoustic level is gated solely by its
+    # Run-tab level switch (output.level_acoustic since v21; acoustic_ts_mat before). Kept in the schema for v13 migration
     # compatibility and exempted in the schema-drift guard (cf. master_syllable_pcenter).
     "master_acoustic_ts":         False,
     "feat_acoustic_ts_envelope":  True,
@@ -714,7 +711,8 @@ DEFAULT_PREFS_V14: dict[str, Any] = {
 # fresh install or via the Run-tab "Reset settings" button.
 #
 # Exception: master_acoustic_ts stays OFF — it is vestigial (no UI master; the
-# acoustic level is gated solely by the acoustic_ts_mat output toggle), so
+# acoustic level is gated solely by its Run-tab level switch,
+# output.level_acoustic since v21 / acoustic_ts_mat before), so
 # flipping it on would be a no-op that contradicts its documented default.
 # ---------------------------------------------------------------------------
 
@@ -726,7 +724,7 @@ SCHEMA_VERSION_V15 = 15
 # toggle whose output is off (nothing runs), which is exactly the confusing
 # "BERT looks on but doesn't run" state.
 _V15_FEATURE_MASTERS_OFF = frozenset({
-    "master_acoustic_ts",   # vestigial: acoustic gated by the acoustic_ts_mat output
+    "master_acoustic_ts",   # vestigial: acoustic gated by output.level_acoustic
     "master_word2vec",      # embedding on/off (no child toggles)
     "master_bert_word",     # embedding on/off
     "master_bert_sentence", # embedding on/off
@@ -1004,6 +1002,20 @@ def _migrate_outputs_to_levels(merged: dict, old_output: dict) -> None:
     f["master_bert_word"] = bool(f.get("master_bert_word", False)) and bw
     f["master_bert_sentence"] = bool(f.get("master_bert_sentence", False)) and bs
     f["feat_phoneme_surprisal_mat"] = psrm
+    # v20's P-center and phoneme-surprisal .mat clusters had no section
+    # master (P_Center rode on the syllables CSV, the .mat on its output key
+    # alone); v21 gates both on a section switch, so force it on where the
+    # v20 config wrote the artifact.
+    if syl:
+        f["master_syllable_pcenter"] = True
+    psr_master_was_off = not bool(f.get("master_phoneme_surprisal", True))
+    if psrm and psr_master_was_off:
+        # The .mat was written although the CSV-column section was off:
+        # turn the section on for the .mat, untick its CSV columns so the
+        # phonemes CSV still omits them.
+        f["master_phoneme_surprisal"] = True
+        f["feat_phoneme_surprisal"] = False
+        f["feat_phoneme_cohort_entropy"] = False
 
     off: list[str] = []
     if o["level_word"] and not wl:
@@ -1015,8 +1027,13 @@ def _migrate_outputs_to_levels(merged: dict, old_output: dict) -> None:
         off += ["master_syllable_intervals", "master_syllable_labels",
                 "master_syllable_prosody", "master_syllable_pcenter"]
     if o["level_subword"] and not ph:
-        off += ["master_phoneme_intervals", "feat_phoneme_surprisal",
-                "feat_phoneme_cohort_entropy"]
+        off.append("master_phoneme_intervals")
+        if psrm:
+            # The section stays on for the .mat; its CSV-column ticks would
+            # otherwise make the (unwanted) phonemes CSV live.
+            off += ["feat_phoneme_surprisal", "feat_phoneme_cohort_entropy"]
+        else:
+            off.append("master_phoneme_surprisal")  # keep the user's ticks
     if o["level_sentence"] and not sent:
         off += ["master_sentence_timing", "master_sentence_prosody"]
     for key in off:
