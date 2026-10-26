@@ -1,0 +1,378 @@
+[
+  {
+    "name": "defaults",
+    "output_csvs": [
+      "features"
+    ],
+    "prefs_overrides": {},
+    "stages_to_run": [
+      "spacy_parse"
+    ]
+  },
+  {
+    "name": "all_on",
+    "output_csvs": [
+      "acoustic",
+      "bert_sentence",
+      "bert_word",
+      "documents_summary",
+      "features",
+      "phoneme_surprisal_mat",
+      "phonemes",
+      "sentences",
+      "syllables",
+      "word2vec"
+    ],
+    "prefs_overrides": {
+      "features": {
+        "feat_acoustic_end": true,
+        "feat_acoustic_onset": true,
+        "feat_acoustic_ts_envelope": true,
+        "feat_acoustic_ts_logmel": true,
+        "feat_acoustic_ts_mfcc": true,
+        "feat_acoustic_ts_onset_env": true,
+        "feat_acoustic_word_duration": true,
+        "feat_acoustic_word_gap": true,
+        "feat_doc_prosody_articulation_rate": true,
+        "feat_doc_prosody_hnr": true,
+        "feat_doc_prosody_pause_count": true,
+        "feat_doc_prosody_pause_mean_duration": true,
+        "feat_doc_prosody_pause_pct_silence": true,
+        "feat_doc_prosody_pause_total_duration": true,
+        "feat_doc_prosody_pitch_delta_mean": true,
+        "feat_doc_prosody_pitch_max": true,
+        "feat_doc_prosody_pitch_mean": true,
+        "feat_doc_prosody_pitch_min": true,
+        "feat_doc_prosody_pitch_std": true,
+        "feat_doc_prosody_volume_delta_mean": true,
+        "feat_doc_prosody_volume_max": true,
+        "feat_doc_prosody_volume_mean": true,
+        "feat_doc_prosody_volume_min": true,
+        "feat_doc_prosody_volume_std": true,
+        "feat_norm_aoa_mean": true,
+        "feat_norm_aoa_sd": true,
+        "feat_norm_arousal": true,
+        "feat_norm_concreteness": true,
+        "feat_norm_dominance": true,
+        "feat_norm_familiarity": true,
+        "feat_norm_imageability": true,
+        "feat_norm_valence": true,
+        "feat_phoneme_arpabet": true,
+        "feat_phoneme_cohort_entropy": true,
+        "feat_phoneme_duration": true,
+        "feat_phoneme_end": true,
+        "feat_phoneme_ipa": true,
+        "feat_phoneme_onset": true,
+        "feat_phoneme_pron_source": true,
+        "feat_phoneme_stress": true,
+        "feat_phoneme_surprisal": true,
+        "feat_prosody_pitch_delta": true,
+        "feat_prosody_pitch_max": true,
+        "feat_prosody_pitch_mean": true,
+        "feat_prosody_pitch_min": true,
+        "feat_prosody_pitch_std": true,
+        "feat_prosody_volume_delta": true,
+        "feat_prosody_volume_max": true,
+        "feat_prosody_volume_mean": true,
+        "feat_prosody_volume_min": true,
+        "feat_prosody_volume_std": true,
+        "feat_psych_analytic": true,
+        "feat_psych_authentic": true,
+        "feat_psych_clout": true,
+        "feat_psych_tone": true,
+        "feat_sentence_end": true,
+        "feat_sentence_hnr": true,
+        "feat_sentence_onset": true,
+        "feat_sentence_pitch_delta": true,
+        "feat_sentence_pitch_max": true,
+        "feat_sentence_pitch_mean": true,
+        "feat_sentence_pitch_min": true,
+        "feat_sentence_pitch_std": true,
+        "feat_sentence_text": true,
+        "feat_sentence_volume_delta": true,
+        "feat_sentence_volume_max": true,
+        "feat_sentence_volume_mean": true,
+        "feat_sentence_volume_min": true,
+        "feat_sentence_volume_std": true,
+        "feat_struct_char_end": true,
+        "feat_struct_char_start": true,
+        "feat_struct_doc_id": true,
+        "feat_struct_paragraph_id": true,
+        "feat_struct_sentence_id": true,
+        "feat_struct_sentence_text": true,
+        "feat_struct_token_id": true,
+        "feat_struct_token_in_sentence_id": true,
+        "feat_syllable_arpabet": true,
+        "feat_syllable_duration": true,
+        "feat_syllable_end": true,
+        "feat_syllable_ipa": true,
+        "feat_syllable_label": true,
+        "feat_syllable_onset": true,
+        "feat_syllable_pcenter": true,
+        "feat_syllable_pitch_delta": true,
+        "feat_syllable_pitch_mean": true,
+        "feat_syllable_volume_delta": true,
+        "feat_syllable_volume_mean": true,
+        "freq_ewfg_3to5": true,
+        "freq_ewfg_6to8": true,
+        "freq_ewfg_9to12": true,
+        "freq_ewfg_k2": true,
+        "freq_ewfg_overall": true,
+        "freq_subtlex": true,
+        "lexling_dep": true,
+        "lexling_morph": true,
+        "lexling_pos": true,
+        "lexling_tokens": true,
+        "master_acoustic": true,
+        "master_acoustic_ts": true,
+        "master_bert_sentence": true,
+        "master_bert_word": true,
+        "master_frequency": true,
+        "master_lexical_norms": true,
+        "master_lexling": true,
+        "master_phoneme_intervals": true,
+        "master_phoneme_surprisal": true,
+        "master_predictability": true,
+        "master_psych_composite": true,
+        "master_sentence_prosody": true,
+        "master_sentence_timing": true,
+        "master_structural": true,
+        "master_syllable_intervals": true,
+        "master_syllable_labels": true,
+        "master_syllable_pcenter": true,
+        "master_syllable_prosody": true,
+        "master_word2vec": true,
+        "master_word_prosody": true,
+        "sem_indicators": true
+      },
+      "output": {
+        "acoustic_ts_mat": true,
+        "bert_sentence_mat": true,
+        "bert_word_mat": true,
+        "doc_agg_edu_zipf": true,
+        "doc_agg_lexical_norms": true,
+        "doc_agg_predictability": true,
+        "doc_agg_zipf_freq": true,
+        "doc_category_proportions": true,
+        "doc_lex_diversity": true,
+        "doc_readability": true,
+        "document_summary": true,
+        "master_doc_articulation_rate": true,
+        "master_doc_counts": true,
+        "master_doc_prosody": true,
+        "out_count_content_tokens": true,
+        "out_count_paragraphs": true,
+        "out_count_sentences": true,
+        "out_count_tokens": true,
+        "phoneme_surprisal_mat": true,
+        "phonemes_csv": true,
+        "sentences_csv": true,
+        "syllables_csv": true,
+        "word2vec_mat": true,
+        "word_level_csv": true
+      },
+      "predictability": {
+        "metrics": {
+          "cloze": true,
+          "surprisal": true
+        },
+        "models": [
+          "gpt2"
+        ]
+      }
+    },
+    "stages_to_run": [
+      "spacy_parse",
+      "mfa_align",
+      "praat_contours",
+      "acoustic_ts",
+      "doc_readability",
+      "word_freq",
+      "ewfg_freq",
+      "predictability",
+      "sem_domain",
+      "lexical_norms",
+      "word_timing",
+      "word_prosody",
+      "syllabify_pairs",
+      "sentence_prosody",
+      "word2vec_embed",
+      "bert_embed",
+      "doc_counts",
+      "doc_aggregates",
+      "doc_lex_diversity",
+      "doc_psych",
+      "doc_category_proportions",
+      "doc_prosody",
+      "doc_articulation_rate",
+      "syllable_prosody",
+      "pcenter",
+      "phoneme_surprisal"
+    ]
+  },
+  {
+    "name": "embeddings_without_word_csv",
+    "output_csvs": [
+      "bert_word",
+      "word2vec"
+    ],
+    "prefs_overrides": {
+      "features": {
+        "master_bert_word": true,
+        "master_word2vec": true
+      },
+      "output": {
+        "bert_word_mat": true,
+        "word2vec_mat": true,
+        "word_level_csv": false
+      }
+    },
+    "stages_to_run": [
+      "spacy_parse",
+      "word2vec_embed",
+      "bert_embed"
+    ]
+  },
+  {
+    "name": "syllables_not_phonemes",
+    "output_csvs": [
+      "features",
+      "syllables"
+    ],
+    "prefs_overrides": {
+      "features": {
+        "feat_phoneme_arpabet": true,
+        "feat_phoneme_cohort_entropy": true,
+        "feat_phoneme_duration": true,
+        "feat_phoneme_end": true,
+        "feat_phoneme_ipa": true,
+        "feat_phoneme_onset": true,
+        "feat_phoneme_pron_source": true,
+        "feat_phoneme_stress": true,
+        "feat_phoneme_surprisal": true,
+        "feat_syllable_arpabet": true,
+        "feat_syllable_duration": true,
+        "feat_syllable_end": true,
+        "feat_syllable_ipa": true,
+        "feat_syllable_label": true,
+        "feat_syllable_onset": true,
+        "feat_syllable_pcenter": true,
+        "feat_syllable_pitch_delta": true,
+        "feat_syllable_pitch_mean": true,
+        "feat_syllable_volume_delta": true,
+        "feat_syllable_volume_mean": true
+      },
+      "output": {
+        "phonemes_csv": false,
+        "syllables_csv": true
+      }
+    },
+    "stages_to_run": [
+      "spacy_parse",
+      "mfa_align",
+      "praat_contours",
+      "syllabify_pairs",
+      "syllable_prosody",
+      "pcenter"
+    ]
+  },
+  {
+    "name": "psr_mat_without_phonemes",
+    "output_csvs": [
+      "features",
+      "phoneme_surprisal_mat"
+    ],
+    "prefs_overrides": {
+      "features": {
+        "feat_phoneme_surprisal": true
+      },
+      "output": {
+        "phoneme_surprisal_mat": true,
+        "phonemes_csv": false
+      }
+    },
+    "stages_to_run": [
+      "spacy_parse",
+      "mfa_align",
+      "syllabify_pairs",
+      "phoneme_surprisal"
+    ]
+  },
+  {
+    "name": "bert_sentence_without_csv",
+    "output_csvs": [
+      "bert_sentence",
+      "features"
+    ],
+    "prefs_overrides": {
+      "features": {
+        "feat_sentence_end": true,
+        "feat_sentence_hnr": true,
+        "feat_sentence_onset": true,
+        "feat_sentence_pitch_delta": true,
+        "feat_sentence_pitch_max": true,
+        "feat_sentence_pitch_mean": true,
+        "feat_sentence_pitch_min": true,
+        "feat_sentence_pitch_std": true,
+        "feat_sentence_text": true,
+        "feat_sentence_volume_delta": true,
+        "feat_sentence_volume_max": true,
+        "feat_sentence_volume_mean": true,
+        "feat_sentence_volume_min": true,
+        "feat_sentence_volume_std": true,
+        "master_bert_sentence": true
+      },
+      "output": {
+        "bert_sentence_mat": true,
+        "sentences_csv": false
+      }
+    },
+    "stages_to_run": [
+      "spacy_parse",
+      "bert_embed"
+    ]
+  },
+  {
+    "name": "acoustic_only",
+    "output_csvs": [
+      "acoustic"
+    ],
+    "prefs_overrides": {
+      "features": {
+        "feat_acoustic_ts_envelope": true
+      },
+      "output": {
+        "acoustic_ts_mat": true,
+        "word_level_csv": false
+      }
+    },
+    "stages_to_run": [
+      "acoustic_ts"
+    ]
+  },
+  {
+    "name": "doc_only_with_pred_means",
+    "output_csvs": [
+      "documents_summary"
+    ],
+    "prefs_overrides": {
+      "output": {
+        "doc_agg_predictability": true,
+        "document_summary": true,
+        "word_level_csv": false
+      },
+      "predictability": {
+        "metrics": {
+          "surprisal": true
+        },
+        "models": [
+          "gpt2"
+        ]
+      }
+    },
+    "stages_to_run": [
+      "spacy_parse",
+      "doc_aggregates"
+    ]
+  }
+]
