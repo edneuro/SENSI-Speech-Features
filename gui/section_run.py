@@ -20,6 +20,23 @@ from utils.preferences import load_preferences, save_preferences
 
 _log = logging.getLogger(__name__)
 
+# Live estimate workers (see RunSection._start_estimates). Module-level so
+# tests (and shutdown code) can wait for them: wait_for_estimate_threads.
+_ESTIMATE_THREADS: set[threading.Thread] = set()
+_ESTIMATE_THREADS_LOCK = threading.Lock()
+
+_EMPTY_ESTIMATES = {"file_sizes": {}, "level_sizes": {}, "disk": "—",
+                    "ram": "—", "time": "—", "warning": None, "learned": True}
+
+
+def wait_for_estimate_threads(timeout: float = 10.0) -> bool:
+    """Join every running estimate worker; True when none is left alive."""
+    with _ESTIMATE_THREADS_LOCK:
+        threads = list(_ESTIMATE_THREADS)
+    for t in threads:
+        t.join(timeout)
+    return not any(t.is_alive() for t in threads)
+
 # Transcript extensions the batch runners pair (gui/planner/emit.py).
 _TEXT_EXTS = (".txt", ".tsv", ".md")
 
@@ -172,6 +189,8 @@ class RunSection(QWidget):
     # Not part of the public RunSection contract — hence the leading underscore.
     _progress_event = Signal(int, int, str)
     _done_event = Signal(str)
+    # Estimate worker -> main thread: (generation, estimates dict).
+    _estimates_event = Signal(int, object)
 
     def __init__(self, get_session_api_key, status_strip, parent=None,
                  get_session_hf_token=None):
@@ -183,6 +202,14 @@ class RunSection(QWidget):
         # creation that might cause them to fire.
         self._progress_event.connect(self._on_progress_main)
         self._done_event.connect(self._on_done_main)
+        self._estimates_event.connect(self._on_estimates_main)
+        # Estimates are computed off the GUI thread (scan_inputs may hash
+        # audio files). Only the result of the latest request is applied.
+        self._est_gen = 0
+        self._est_applied_gen = 0              # generation shown right now
+        self._est_last: dict | None = None     # last applied result
+        self._est_view: tuple | None = None    # (prefs, plan) of latest refresh
+        self._system_info_lock = threading.Lock()
         # Cancel: the status strip's button sets this; the batch runners poll
         # it between documents (main.py should_cancel), so the file in progress
         # finishes and the rest are skipped.
@@ -293,12 +320,11 @@ class RunSection(QWidget):
         # Level rows: switch state from prefs (the Acoustic card edits
         # output.level_acoustic too); files struck through unless the plan
         # will write them.
-        est = self._compute_estimates(prefs, plan)
-        for key, row in self.level_rows.items():
-            row.update_from(bool(prefs["output"].get(key, False)),
-                            plan.output_csvs,
-                            est["file_sizes"], est["level_sizes"].get(key, ""))
-        self._show_estimates(est)
+        # Estimates come from a background worker: show the previous values
+        # (dashes before the first result) until the new ones arrive.
+        self._est_view = (prefs, plan)
+        self._apply_estimates(self._est_last or _EMPTY_ESTIMATES)
+        self._start_estimates(prefs, plan)
 
         # Required inputs depend on which outputs are actually selected. The
         # acoustic level is audio-only: its runner globs the audio folder and
@@ -373,16 +399,61 @@ class RunSection(QWidget):
         self.cost_panel.setVisible(False)
 
     def _get_system_info(self) -> dict:
-        """Hardware facts, gathered once per RunSection (imports torch lazily)."""
-        if self._system_info is None:
-            from utils.system_info import gather_system_info
-            self._system_info = gather_system_info()
-        return self._system_info
+        """Hardware facts, gathered once per RunSection (imports torch lazily).
+        Called from estimate workers, hence the lock."""
+        with self._system_info_lock:
+            if self._system_info is None:
+                from utils.system_info import gather_system_info
+                self._system_info = gather_system_info()
+            return self._system_info
 
-    def _compute_estimates(self, prefs: dict, plan) -> dict:
-        """Run the estimators; any failure degrades to dashes, never an error."""
-        empty = {"file_sizes": {}, "level_sizes": {}, "disk": "—", "ram": "—",
-                 "time": "—", "warning": None, "learned": True}
+    def _start_estimates(self, prefs: dict, plan) -> None:
+        """Compute estimates on a daemon thread; the result is marshalled back
+        through _estimates_event (queued to the GUI thread). A newer request
+        bumps the generation, so a stale result is dropped on arrival."""
+        self._est_gen += 1
+        gen = self._est_gen
+        level_keys = tuple(self.level_rows)
+
+        def _work() -> None:
+            try:
+                est = self._compute_estimates(prefs, plan, level_keys)
+                try:
+                    self._estimates_event.emit(gen, est)
+                except RuntimeError:
+                    pass      # the widget was deleted while we computed
+            finally:
+                with _ESTIMATE_THREADS_LOCK:
+                    _ESTIMATE_THREADS.discard(threading.current_thread())
+
+        t = threading.Thread(target=_work, daemon=True,
+                             name=f"run-estimates-{gen}")
+        with _ESTIMATE_THREADS_LOCK:
+            _ESTIMATE_THREADS.add(t)
+        t.start()
+
+    def _on_estimates_main(self, gen: int, est: dict) -> None:
+        """GUI-thread slot: apply only the latest request's result."""
+        if gen != self._est_gen:
+            return
+        self._est_last = est
+        self._est_applied_gen = gen
+        self._apply_estimates(est)
+
+    def _apply_estimates(self, est: dict) -> None:
+        if self._est_view is None:
+            return
+        prefs, plan = self._est_view
+        for key, row in self.level_rows.items():
+            row.update_from(bool(prefs["output"].get(key, False)),
+                            plan.output_csvs,
+                            est["file_sizes"], est["level_sizes"].get(key, ""))
+        self._show_estimates(est)
+
+    def _compute_estimates(self, prefs: dict, plan, level_keys) -> dict:
+        """Run the estimators (worker thread; touches no widget). Any failure
+        degrades to dashes, never an error."""
+        empty = _EMPTY_ESTIMATES
         try:
             from utils import run_estimates as re_
             from utils.timing_history import load_history
@@ -405,7 +476,7 @@ class RunSection(QWidget):
                      if has_text or a == "acoustic"}
             level_sizes = {
                 key: "≈ " + re_.format_bytes(re_.level_bytes(shown, key))
-                for key in self.level_rows
+                for key in level_keys
                 if has_text or key == "level_acoustic"}
             return {
                 "file_sizes": {a: "≈ " + re_.format_bytes(b) for a, b in shown.items()},

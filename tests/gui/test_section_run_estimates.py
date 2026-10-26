@@ -36,10 +36,19 @@ def _fake_system(monkeypatch, ram, vram=0.0):
         "gpu": {"name": "GPU" if vram else None, "vram_gb": vram}})
 
 
-def _section(qtbot):
+def _settled(qtbot, w):
+    """Wait until the latest estimate request has been applied."""
+    from gui.section_run import wait_for_estimate_threads
+    assert wait_for_estimate_threads(10.0)
+    qtbot.waitUntil(lambda: w._est_applied_gen == w._est_gen, timeout=5000)
+
+
+def _section(qtbot, settle=True):
     from gui.section_run import RunSection
     w = RunSection(get_session_api_key=lambda: "", status_strip=None)
     qtbot.addWidget(w)
+    if settle:
+        _settled(qtbot, w)
     return w
 
 
@@ -97,6 +106,7 @@ def test_estimates_never_disable_run(qtbot, tmp_path, monkeypatch):
     monkeypatch.setattr(re_, "estimate_disk",
                         lambda *a, **k: (_ for _ in ()).throw(RuntimeError("x")))
     w.refresh()
+    _settled(qtbot, w)
     assert w.est_values["disk"].text() == "—"
     assert w.run_button.isEnabled()
 
@@ -120,6 +130,7 @@ def test_first_estimate_note_hidden_when_learned(qtbot, tmp_path, monkeypatch):
         json.dumps({"version": 1, "samples": samples, "load_seconds": {}}),
         encoding="utf-8")
     w.refresh()
+    _settled(qtbot, w)
     assert not w.estimate_note.isVisibleTo(w)
 
 
@@ -135,3 +146,58 @@ def test_audio_only_inputs_show_dash_for_text_levels(qtbot, tmp_path, monkeypatc
     assert not [s for s in row.file_size_labels.values() if s.isVisible()]
     assert w.est_values["disk"].text() == "—"
     assert w.est_values["ram"].text().startswith("≈ ")  # stats came back (audio-only)
+
+
+def test_slow_estimate_does_not_block_refresh(qtbot, tmp_path, monkeypatch):
+    import threading
+    import time
+    import utils.run_estimates as re_
+    _fake_system(monkeypatch, 64.0)
+    _inputs(tmp_path)
+    w = _section(qtbot)
+    before = w.est_values["disk"].text()
+    assert before.startswith("≈ ")
+    release = threading.Event()
+    real_scan = re_.scan_inputs
+
+    def slow_scan(*a, **kw):
+        release.wait(5.0)
+        return real_scan(*a, **kw)
+
+    monkeypatch.setattr(re_, "scan_inputs", slow_scan)
+    t0 = time.perf_counter()
+    w.refresh()
+    assert time.perf_counter() - t0 < 1.0          # returned while pending
+    assert w.est_values["disk"].text() == before   # previous values kept
+    assert w.run_button.isEnabled()
+    release.set()
+    _settled(qtbot, w)
+    assert w.est_values["disk"].text().startswith("≈ ")
+
+
+def test_stale_estimate_result_is_discarded(qtbot, tmp_path, monkeypatch):
+    import threading
+    import utils.run_estimates as re_
+    _fake_system(monkeypatch, 64.0)
+    _inputs(tmp_path)
+    w = _section(qtbot)
+    release_first = threading.Event()
+    real_scan = re_.scan_inputs
+    calls = []
+
+    def scan(*a, **kw):
+        calls.append(1)
+        if len(calls) == 1:          # the first (stale) request: slow, bogus
+            release_first.wait(5.0)
+            return None              # would show dashes if applied
+        return real_scan(*a, **kw)
+
+    monkeypatch.setattr(re_, "scan_inputs", scan)
+    w.refresh()                       # request 1 (slow)
+    w.refresh()                       # request 2 (latest)
+    qtbot.waitUntil(lambda: w._est_applied_gen == w._est_gen, timeout=5000)
+    assert w.est_values["disk"].text().startswith("≈ ")
+    release_first.set()               # the stale result arrives now
+    _settled(qtbot, w)
+    qtbot.wait(50)
+    assert w.est_values["disk"].text().startswith("≈ ")

@@ -177,7 +177,8 @@ FIRST_LOAD_SECONDS: dict[str, float] = {
 # by weight bytes read: seconds per byte = 7.8 s / (124M params x 4 B, fp32 —
 # GPT-2 loads full precision, see RAM_GB), times the Llama weight size =
 # params (as in _LLAMA / RAM_GB) x 2 B (bfloat16, the config.json dtype cited
-# above). Every device tier reads the same bf16 weights from disk. Like the
+# above). Every device tier reads the same bf16 weights from disk; the figure
+# excludes 4-bit quantization time on the CUDA tier. Like the
 # GPT-2 figure this is a warm-disk-cache load; a cold first download/read is
 # slower.
 _GPT2_WEIGHT_BYTES = _GPT2_PARAMS * 4

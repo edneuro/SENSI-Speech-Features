@@ -14,6 +14,17 @@ def _isolated_prefs(tmp_path, monkeypatch):
     yield
 
 
+@pytest.fixture(autouse=True)
+def _join_run_estimate_workers():
+    """Any RunSection starts background estimate workers (gui/section_run);
+    wait for them so no test leaves a thread running into the next one."""
+    yield
+    import sys
+    mod = sys.modules.get("gui.section_run")
+    if mod is not None:
+        assert mod.wait_for_estimate_threads(10.0), "estimate worker left running"
+
+
 @pytest.fixture
 def prefs_tmp(tmp_path, monkeypatch):
     """Named alias used by tests that want an explicit handle on prefs isolation.
