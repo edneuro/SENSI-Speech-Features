@@ -172,8 +172,9 @@ The time range starts as a wide first estimate (marked as such on the page).
 Each run records how long each step took on this computer, and once a step has
 a few timings the range narrows to one learned for this machine. MFA is
 counted as a fixed start-up each time it runs plus a cost per second of audio;
-that part is learned once two runs have aligned clearly different amounts of
-audio. Model loads are timed too (the spaCy model loads during the first
+that part is learned once three runs have aligned clearly different amounts of
+audio, and the range stays wide for a corpus much larger than any batch aligned
+so far. Model loads are timed too (the spaCy model loads during the first
 parse and is timed as part of it). Starting the run itself (loading Python
 libraries, writing files) is not timed; the estimate adds a fixed 10 seconds
 for it, measured on a real run. The timings are kept in

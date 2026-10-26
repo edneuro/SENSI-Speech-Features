@@ -39,6 +39,9 @@ MIN_SAMPLES_FOR_RATE = 3
 # fit_overhead_slope needs batch sizes at least this far apart (max/min units)
 # before it separates a fixed start-up cost from the per-unit slope.
 MIN_FIT_SIZE_RATIO = 2.0
+# An MFA fit is trusted only up to this many times the largest batch it saw;
+# beyond that the estimate uses it but keeps the wide first-estimate spread.
+MAX_FIT_EXTRAPOLATION = 2.0
 _FORMAT_VERSION = 1
 
 
@@ -181,14 +184,16 @@ def fit_overhead_slope(history: dict, step: str, model: str | None = None,
     = audio seconds aligned). Ordinary least squares on (units, seconds),
     constrained to non-negative overhead and slope.
 
-    None (unlearned) unless at least two samples exist whose sizes differ by
-    MIN_FIT_SIZE_RATIO or more: same-size batches can't tell overhead from
-    slope.
+    None (unlearned) unless at least MIN_SAMPLES_FOR_RATE samples exist whose
+    sizes differ by MIN_FIT_SIZE_RATIO or more (same-size batches can't tell
+    overhead from slope), and when the fit would need clamping (negative slope
+    or overhead): MFA start-up varies by tens of seconds between identical
+    batches, so a clamped fit on small top-ups is noise, not a rate.
     """
     pts = [(float(d["units"]), float(d["seconds"]))
            for d in (history or {}).get("samples", [])
            if _key(d) == (step, model, device) and float(d["units"]) > 0]
-    if len(pts) < 2:
+    if len(pts) < MIN_SAMPLES_FOR_RATE:
         return None
     xs = [x for x, _ in pts]
     if max(xs) / min(xs) < MIN_FIT_SIZE_RATIO:
@@ -200,8 +205,13 @@ def fit_overhead_slope(history: dict, step: str, model: str | None = None,
     sxy = sum((x - mx) * (y - my) for x, y in pts)
     slope = sxy / sxx
     overhead = my - slope * mx
-    if slope < 0:                 # bigger batches not slower: flat cost
-        return my, 0.0
-    if overhead < 0:              # no measurable start-up: line through 0
-        return 0.0, sum(x * y for x, y in pts) / sum(x * x for x in xs)
-    return overhead, slope
+    if slope <= 0 or overhead < -1.0:     # within 1 s of 0 = no start-up
+        return None
+    return max(overhead, 0.0), slope
+
+
+def max_units(history: dict, step: str, model: str | None = None,
+              device: str = "cpu") -> float:
+    """Largest recorded batch size (units) for a step; 0 when none."""
+    return max((float(d["units"]) for d in (history or {}).get("samples", [])
+                if _key(d) == (step, model, device)), default=0.0)

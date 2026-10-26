@@ -122,6 +122,10 @@ when needed; the existing ready/not-ready line stays.
    scores counted once (reused across passes by the score cache); Word2Vec/BERT only in the
    word pass. Verify these reuse claims against the code before relying on them.
 7. **Mockup** copied into the repo at the path above; the prose stays authoritative where they differ.
+8. **MFA time** (CORRECTED 2026-10-26, final review): MFA's wall time is mostly fixed start-up, so it
+   is modelled as one overhead per aligning run + seconds per audio second, not a flat per-second
+   rate. It is learned only from ≥ 3 batches of clearly different sizes whose fit needs no clamping,
+   and stays at the wide first-estimate spread when the corpus is more than 2× the largest batch seen.
 
 ## Left to the builder
 

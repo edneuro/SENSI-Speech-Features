@@ -41,13 +41,13 @@ def _no_startup(monkeypatch):
 
 def _history(rates: dict, device="cpu") -> dict:
     """3 samples per key at the given s/unit; key = step or (step, model).
-    mfa_align gets batch sizes 10 / 100 / 10 audio s, so its overhead+slope
-    fit is learned (overhead 0, slope = the rate)."""
+    mfa_align gets batch sizes 10 / 1000 / 10 audio s, so its overhead+slope
+    fit is learned (overhead 0, slope = the rate) and covers the test corpora."""
     samples = []
     for key, r in rates.items():
         step, model = key if isinstance(key, tuple) else (key, None)
         dev = device if step == "predictability" else "cpu"
-        sizes = (10.0, 100.0, 10.0) if step == "mfa_align" else (10.0,) * 3
+        sizes = (10.0, 1000.0, 10.0) if step == "mfa_align" else (10.0,) * 3
         samples += [{"step": step, "model": model, "device": dev,
                      "units": u, "seconds": u * r} for u in sizes]
     return {"version": 1, "samples": samples, "load_seconds": {}}
@@ -115,7 +115,8 @@ def test_doc_pass_recharges_predictability_past_score_cache():
     no_doc["output"]["level_document"] = False
     hist = _history(_every_step(0.0, {("predictability", "gpt2"): 1.0}))
     hist["load_seconds"] = {k: 0.0 for k in K.FIRST_LOAD_SECONDS}
-    s = _stats(n_stimuli=300, n_with_audio=300)
+    s = _stats(n_stimuli=300, n_with_audio=300,
+               audio_seconds_to_align=0.0)    # MFA cost is not the point here
     with_doc = estimate_time(plan_from_prefs(prefs), prefs, s, hist, False)
     without = estimate_time(plan_from_prefs(no_doc), no_doc, s, hist, False)
     assert with_doc.low_s == pytest.approx(2 * without.low_s)
@@ -225,19 +226,20 @@ def _mfa_hist(points):
 
 def test_small_mfa_batches_do_not_blow_up_large_corpus():
     # Top-up batches of 5 and 20 s, overhead 80 s + 0.2 s/s: the old median
-    # rate (~8 s per audio s) would charge 10 h of audio ~80 h.
+    # rate (~8 s per audio s) would charge 10 h of audio ~80 h. 10 h is far
+    # beyond the 20 s batches the fit saw, so the range stays wide.
     hist = _mfa_hist([(5, 81), (20, 84), (5, 81)])
     prefs = _all_on()
     e = estimate_time(plan_from_prefs(prefs), prefs,
                       _stats(audio_seconds=36_000.0,
                              audio_seconds_to_align=36_000.0), hist, False)
-    assert e.learned
-    lo, _ = K.LEARNED_SPREAD
+    assert not e.learned
+    lo, _ = K.FIRST_ESTIMATE_SPREAD
     assert e.low_s == pytest.approx(lo * (80.0 + 0.2 * 36_000.0))
 
 
 def test_mfa_overhead_charged_once_for_a_small_run():
-    hist = _mfa_hist([(10, 82), (100, 100)])
+    hist = _mfa_hist([(10, 82), (100, 100), (50, 90)])
     prefs = _all_on()
     e = estimate_time(plan_from_prefs(prefs), prefs,
                       _stats(audio_seconds_to_align=5.0), hist, False)

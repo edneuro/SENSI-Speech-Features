@@ -304,3 +304,20 @@ def test_failed_emit_does_not_stick_busy(qtbot, tmp_path, monkeypatch):
     w.refresh()
     _settled(qtbot, w)
     assert _approx(w.est_values["disk"].text())
+
+
+def test_refresh_mid_run_keeps_run_disabled(qtbot, tmp_path, monkeypatch):
+    # A tab switch or level toggle during a run refreshes readiness; Run must
+    # stay disabled until the run reports done.
+    import gui.section_run as sr
+    _fake_system(monkeypatch, 64.0)
+    _inputs(tmp_path)
+    monkeypatch.setattr(sr, "dispatch_run", lambda **kw: None)
+    w = _section(qtbot)
+    assert w.run_button.isEnabled()
+    w._on_run()
+    w.refresh()
+    assert not w.run_button.isEnabled()
+    w._on_done_main("done")
+    assert w.run_button.isEnabled()
+    _settled(qtbot, w)

@@ -440,7 +440,8 @@ def estimate_time(plan: Plan, prefs: dict, stats: InputStats, history: dict,
     """
     from extractors.predictability import SCORE_CACHE_MAX
     from gui.planner.emit import WORD_BATCH_ARTIFACTS, level_stages
-    from utils.timing_history import (AUDIO_STEPS, fit_overhead_slope,
+    from utils.timing_history import (AUDIO_STEPS, MAX_FIT_EXTRAPOLATION,
+                                      fit_overhead_slope, max_units,
                                       load_key, model_device, rate)
 
     stages = set(plan.stages_to_run)
@@ -495,6 +496,9 @@ def estimate_time(plan: Plan, prefs: dict, stats: InputStats, history: dict,
             # One MFA invocation per run that aligns anything: fixed start-up
             # + slope x audio seconds (see FIRST_MFA_OVERHEAD_SECONDS).
             fit = fit_overhead_slope(history, "mfa_align")
+            if fit is not None and units > (MAX_FIT_EXTRAPOLATION
+                                            * max_units(history, "mfa_align")):
+                learned = False       # far beyond the batches it was fit on
             if fit is None:
                 learned = False
                 fit = (K.FIRST_MFA_OVERHEAD_SECONDS,

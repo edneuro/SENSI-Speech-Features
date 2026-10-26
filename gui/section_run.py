@@ -206,6 +206,7 @@ class RunSection(QWidget):
         # Estimates are computed off the GUI thread (scan_inputs may hash
         # audio files). Only the result of the latest request is applied.
         self._est_gen = 0
+        self._running = False
         self._est_busy = False
         self._est_pending = None
         self._est_applied_gen = 0              # generation shown right now
@@ -375,7 +376,8 @@ class RunSection(QWidget):
         missing += value_errors(prefs)
 
         ok = not missing
-        self.run_button.setEnabled(ok)
+        # Never re-enable Run mid-run (a tab switch or toggle refreshes too).
+        self.run_button.setEnabled(ok and not self._running)
 
         warnings = compute_warnings(session_api_key=self._get_api_key(),
                                     session_hf_token=self._get_hf_token())
@@ -548,6 +550,7 @@ class RunSection(QWidget):
         else:
             if self._status_strip:
                 self._status_strip.set_errored(1)
+        self._running = False
         self.run_finished.emit(status)
         self.run_button.setEnabled(True)
         # The run just added timing history and saved alignments: re-estimate
@@ -556,6 +559,7 @@ class RunSection(QWidget):
 
     def _on_run(self) -> None:
         self._cancel.clear()
+        self._running = True
         self.run_button.setEnabled(False)
         self.run_started.emit()
         if self._status_strip:
