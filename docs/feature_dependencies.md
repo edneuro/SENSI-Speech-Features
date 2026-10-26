@@ -141,7 +141,7 @@ Emits `<stim>_features.csv` (one row per token).
 
 ## 2. Sub-word level
 
-Emits `<stim>_syllables.csv` and `<stim>_phonemes.csv`. **Always emitted as sidecars** — they live alongside the word CSV, joined back via `doc_id/sentence_id/token_in_sentence_id`.
+Emits `<stim>_syllables.csv` and `<stim>_phonemes.csv`. **Emitted when the Sub-word level is on** (Run tab) — they live alongside the word CSV, joined back via `doc_id/sentence_id/token_in_sentence_id`.
 
 ### 2.1 Phoneme intervals — `extractors/syllabify.py:syllabify_pairs` (phoneme half)
 
@@ -213,7 +213,7 @@ Emits a single master `documents_summary_<timestamp>.csv` with one row per stimu
 - **Library:** pure pandas
 - **Inputs:** whichever word-level clusters from §1 ran — this is a **derived** cluster; it only emits a `mean_X` if `X` is present on the word df
 - **Master toggle:** `doc_aggregates`
-- **Notes:** Each mean has an implicit dependency on the matching word-level cluster. Per the bug history, the dispatcher must NOT request `mean_surprisal` while leaving `feat_pred_surprisal_gpt2` off — main.py will then force the extractor back on and silently re-pay its cost.
+- **Notes:** Each mean depends on its source word extractor, and that extractor runs for the document pass even when the word-level section or the Word level is left out (v21; data needed by an included section is still computed): `doc agg zipf freq` requires `word_freq`, `doc agg edu zipf` requires `ewfg_freq`, `doc lexical norms` requires `lexical_norms`, and the predictability means run the predictability stage on the doc path (`Plan.predictability_doc`). The source columns are not written to the word CSV unless the Word level and that section are on.
 
 ### 4.3 Lexical diversity — `extractors/lexical_diversity.py`
 
