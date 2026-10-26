@@ -143,9 +143,13 @@ python gui.py
 ```
 
 The window has a sidebar — **Inputs, Word-level, Document-level, Sub-word,
-Sentence, Acoustic, Run, Logs**. Pick your input files/folders, toggle the
-features you want on each page, then go to **Run** to choose which output files
-to write and start the job. The Run page shows readiness warnings (e.g. a
+Sentence, Acoustic, Run, Logs**. Pick your input files/folders, then tick the
+features you want on each page. Each feature section has an on/off switch next to
+its title: switched off, the section is **left out of outputs** (its controls
+grey out, your ticks are kept for when you switch it back on). Then go to
+**Run**, switch on the output levels you want (Word, Document, Sub-word,
+Sentence, Acoustic — one switch per feature page; each lists the files it will
+write) and start the job. The Run page also shows readiness warnings (e.g. a
 missing HuggingFace token for a selected gated Llama model); the **Logs** page
 live-tails the run.
 
@@ -242,6 +246,12 @@ output/
 ├── Montreal Forced Alignment/                      # cached MFA alignments, reused across runs
 └── logs/       run_<ts>.log, run_<ts>_manifest.json, ...
 ```
+
+For GUI and `run.py` runs, each folder is written only when its level is
+switched on in `config/features.yaml`'s `output` block (`level_word`,
+`level_document`, `level_subword`, `level_sentence`, `level_acoustic`; the
+Run page's level switches) and at least one included section ticks something
+for that file.
 
 Single-file mode writes only the one CSV given by `--output`.
 

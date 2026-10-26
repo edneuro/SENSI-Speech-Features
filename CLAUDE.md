@@ -43,7 +43,7 @@ SensiExtractor/
 │   │   ├── registry.py       # STAGES + CLUSTERS registry (lazy-bound extractor callables); add a feature here
 │   │   ├── plan.py           # plan_from_prefs: DAG closure + topo sort over enabled clusters
 │   │   └── emit.py           # to_namespace: plan → the argparse.Namespace main.py consumes
-│   ├── section_run.py        # Run page (output checkboxes, readiness, Run button)
+│   ├── section_run.py        # Run page (one switch per output level + its file list, readiness, Run button)
 │   ├── section_logs.py       # Logs page (live viewer, past runs)
 │   ├── status_strip.py       # Persistent bottom status strip
 │   ├── category_picker.py    # Category picker widget (level-aware: word vs document)

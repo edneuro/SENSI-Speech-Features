@@ -149,7 +149,7 @@ Emits `<stim>_syllables.csv` and `<stim>_phonemes.csv`. **Always emitted as side
 - **Library:** pure pandas (consumes MFA phones tier directly) + `extractors/arpabet_ipa.py` (dependency-free ARPABET→IPA lookup) for `IPA`
 - **Inputs:** §0.1 spaCy parse (for `doc_id/sentence_id/token_in_sentence_id/token` FK columns) + §0.2 MFA phones_df + §0.2 MFA word tier merged into word df (for `Onset/End` interval bounds **and** `Transcript`, which `Pron_Source` is derived from)
 - **Per-column toggles:** `feat_phoneme_arpabet, feat_phoneme_stress, feat_phoneme_ipa, feat_phoneme_pron_source, feat_phoneme_onset, feat_phoneme_end, feat_phoneme_duration`
-- **Master sidecar toggle:** `output.phonemes_csv`
+- **Level + section switches:** `output.level_subword` (Run-page Sub-word level) + `master_phoneme_intervals` (section switch)
 - **Alignment option consumed:** `alignment.g2p_oov` (§0.2) — changes which phones exist for out-of-dictionary words, and hence `Pron_Source`
 - **Notes:** The fused `Label` column (`EY2`) was replaced on 2026-07-27 by `ARPABET` (bare code) + `Stress` (nullable `Int64`: `0/1/2` on vowels, **empty** on consonants) + `IPA`. `IPA` is a function of `ARPABET` **and** `Stress` (`AH0`→`ə` vs `AH1`→`ʌ`; `ER0`→`ɚ` vs `ER1`→`ɝ`). `Pron_Source` ∈ `{dictionary, g2p, oov_unresolved}`. Phonemes whose `[onset, offset]` falls fully within a word's `[Onset, End]` are assigned to that word; phones outside any word are silently dropped. Tokens sharing an identical `[Onset, End]` with a preceding token (the `align_merge` *join* case: `was` + `n't` → MFA `wasn't`) emit rows **once**, under the first token. MFA's unknown-word phone `spn` is **not** filtered as silence, so an out-of-dictionary word yields one syllable + one phoneme row rather than vanishing.
 
@@ -159,7 +159,7 @@ Emits `<stim>_syllables.csv` and `<stim>_phonemes.csv`. **Always emitted as side
 - **Library:** `pyphen` (optional, for orthographic syllable labels in `Label` column); falls back to ARPABET-without-stress if pyphen is missing. `extractors/arpabet_ipa.py:syllable_to_ipa` for `IPA`
 - **Inputs:** §0.1 spaCy parse + §0.2 MFA word + phones tiers + per-word phone grouping (Maximum Onset Principle implemented in `syllabify_word`)
 - **Per-column toggles:** `feat_syllable_onset, feat_syllable_end, feat_syllable_duration, feat_syllable_label, feat_syllable_arpabet, feat_syllable_ipa`
-- **Master sidecar toggle:** `output.syllables_csv`
+- **Level + section switches:** `output.level_subword` (Run-page Sub-word level) + `master_syllable_intervals` / `master_syllable_labels` (section switches)
 - **Notes:** `IPA` (added 2026-07-27) is dash-joined over the syllable's phonemes, e.g. `d-ɹ-i`, with no `ˈ`/`ˌ` stress marks. Unlike the phoneme level, the syllable-level `ARPABET` **still carries stress digits** (`D-R-IY0`) — deliberately unchanged, so the two CSVs encode stress differently. There is no syllable-level `Stress` column.
 
 ### 2.3 Syllable prosody — `extractors/syllable_prosody.py`

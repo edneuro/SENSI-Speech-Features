@@ -57,9 +57,10 @@ apptainer build sherlock/sensiextractor.sif sherlock/Apptainer.def
 ```
 
 ## 2 · Configure the extraction — [local]
-From the repo root: set your feature toggles / model choices in the GUI, then close
-it. The GUI saves them straight to `config/features.yaml` — that file **is** the
-shareable config now, no export step needed:
+From the repo root: set your feature toggles / model choices (and the output levels
+on the Run page) in the GUI, then close it. The GUI saves them straight to
+`config/features.yaml` — that file **is** the shareable config now, no export
+step needed:
 ```bash
 conda activate ./env
 python gui.py
