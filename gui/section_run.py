@@ -14,6 +14,7 @@ from gui.preflight import compute_warnings
 from gui.run_dispatch import run as dispatch_run
 from gui.planner import plan_from_prefs
 from gui.planner.plan import LEVEL_ARTIFACTS
+from gui.theme import TEXT_MUTED
 from utils.config_checks import value_errors
 from utils.preferences import load_preferences, save_preferences
 
@@ -156,6 +157,11 @@ class _LevelRow(QWidget):
             sz.setVisible(on and bool(text))
 
 
+def _gb(x: float) -> str:
+    """One decimal under 10 GB (so 0.9 GB doesn't read as 1 or 0), whole GB above."""
+    return f"{x:.1f}" if x < 10 else f"{x:.0f}"
+
+
 class RunSection(QWidget):
     run_started = Signal()
     run_finished = Signal(str)
@@ -221,7 +227,9 @@ class RunSection(QWidget):
             k.setObjectName("EstimateKey")
             v = QLabel("—")
             v.setObjectName("EstimateValue")
-            v.setTextFormat(Qt.TextFormat.PlainText)
+            # RAM carries a lighter "this computer: N GB" span (mockup).
+            v.setTextFormat(Qt.TextFormat.RichText if key == "ram"
+                            else Qt.TextFormat.PlainText)
             row.addWidget(k)
             row.addStretch(1)
             row.addWidget(v)
@@ -399,9 +407,11 @@ class RunSection(QWidget):
             return {
                 "file_sizes": {a: "≈ " + re_.format_bytes(b) for a, b in shown.items()},
                 "level_sizes": level_sizes,
-                "disk": "≈ " + re_.format_bytes(sum(shown.values())),
-                "ram": (f"≈ {ram.peak_gb:.0f} GB   this computer: "
-                        f"{ram.machine_gb:.0f} GB"),
+                "disk": ("≈ " + re_.format_bytes(sum(shown.values()))
+                         if shown else "—"),
+                "ram": (f"≈ {_gb(ram.peak_gb)} GB&nbsp;&nbsp;<span style="
+                        f"'font-weight:400;color:{TEXT_MUTED}'>this computer: "
+                        f"{ram.machine_gb:.0f} GB</span>"),
                 "time": "≈ " + re_.format_duration(tm.low_s, tm.high_s),
                 "warning": ram.warning, "learned": tm.learned,
             }

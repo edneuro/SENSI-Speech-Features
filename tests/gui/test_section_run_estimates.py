@@ -121,3 +121,17 @@ def test_first_estimate_note_hidden_when_learned(qtbot, tmp_path, monkeypatch):
         encoding="utf-8")
     w.refresh()
     assert not w.estimate_note.isVisibleTo(w)
+
+
+def test_audio_only_inputs_show_dash_for_text_levels(qtbot, tmp_path, monkeypatch):
+    # Only the audio folder is usable: transcript-based levels get "—", not "0 B".
+    _fake_system(monkeypatch, 64)
+    _inputs(tmp_path, levels=("level_word",))
+    save_preferences({"shared": {"last_transcripts_folder": ""}})
+    w = _section(qtbot)
+    w.show()
+    row = w.level_rows["level_word"]
+    assert not row.size_label.isVisible()
+    assert not [s for s in row.file_size_labels.values() if s.isVisible()]
+    assert w.est_values["disk"].text() == "—"
+    assert w.est_values["ram"].text().startswith("≈ ")  # stats came back (audio-only)
