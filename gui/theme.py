@@ -25,6 +25,7 @@ DIVIDER_COLOR = "#C9CED4"      # section dividers — needs to be visible
 TEXT_PRIMARY = "#1F2328"
 TEXT_SECONDARY = "#5B6370"
 TEXT_MUTED = "#8A8F98"
+TEXT_DISABLED = "#B4B9BF"      # greyed controls (left-out section bodies)
 
 ERROR_RED = "#B0312A"
 AMBER = "#C77A00"
@@ -137,6 +138,66 @@ QLabel#SectionHeader {{
 QLabel#Subtitle {{
     color: {TEXT_SECONDARY};
     font-size: 11px;
+}}
+/* Greyed (disabled) text — the generic QLabel colour rule above would
+   otherwise override Qt's disabled palette, leaving labels looking live. */
+QLabel:disabled, QLabel#Subtitle:disabled, QLabel#GroupLabel:disabled,
+QLabel#GroupLinkSep:disabled {{ color: {TEXT_DISABLED}; }}
+
+/* Section card (ClusterCard): title → switch → tag header. 4 px left edge
+   cyan when included, grey (+ grey header) when left out. */
+QFrame#SectionCardHeader {{
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid #ECEFF1;
+    border-left: 4px solid {ACCENT_COLOR};
+    border-top-left-radius: {CARD_RADIUS - 1}px;
+}}
+QFrame#SectionCardHeader[included="false"] {{
+    background: #F4F5F6;
+    border-left: 4px solid #B9C0C5;
+}}
+QLabel#SectionCardTitle {{
+    font-size: 14px;
+    font-weight: 700;
+    color: {TEXT_PRIMARY};
+}}
+QLabel#SectionTag {{
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 9px;
+    background: #E0F6FA;
+    color: #00737F;
+}}
+QLabel#SectionTag[state="off"] {{
+    background: #E6E8EA;
+    color: #5B6368;
+}}
+QLabel#GroupLabel {{
+    color: {TEXT_SECONDARY};
+    font-size: 11px;
+    font-weight: 600;
+}}
+QLabel#GroupLinkSep {{ color: {TEXT_MUTED}; font-size: 11px; }}
+QPushButton#GroupLink {{
+    background: transparent;
+    border: none;
+    padding: 0 2px;
+    color: #00838F;
+    font-size: 11px;
+}}
+QPushButton#GroupLink:hover {{ text-decoration: underline; background: transparent; }}
+QPushButton#GroupLink:disabled {{ color: {TEXT_DISABLED}; }}
+QFrame#SharedSettings {{
+    background: {BG_PAGE};
+    border: 1px solid {BORDER_DEFAULT};
+    border-radius: {INPUT_RADIUS}px;
+}}
+QLabel#SharedNote {{
+    color: {TEXT_SECONDARY};
+    font-size: 11px;
+    font-weight: 600;
 }}
 
 /* QComboBox — needs both the button face AND the popup view styled.
