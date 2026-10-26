@@ -231,8 +231,20 @@ def _subset(stem: str, root: Path) -> tuple[Path, Path]:
     return t, a
 
 
-def measure_memory(root: Path, stems: list[str]) -> dict:
-    """Peak working set per variant, one fresh subprocess each."""
+MEMORY_VARIANTS = [("warmup", set()), ("baseline", set()),
+                   ("word2vec", {"word2vec"}), ("bert", {"bert"}),
+                   ("gpt2", {"gpt2"}),
+                   # All heavy items together: they are process-cached (and
+                   # preloaded by main.py), so they add up rather than overlap.
+                   ("all", {"word2vec", "bert", "gpt2"})]
+
+
+def measure_memory(root: Path, stems: list[str],
+                   only: list[str] | None = None) -> dict:
+    """Peak working set per variant, one fresh subprocess each.
+
+    `only` restricts to the named variants (e.g. ["all"]); the warm-up is then
+    skipped, so the stimulus should already be aligned under --scratch."""
     res: dict = {}
     for stem in stems:
         t, a = _subset(stem, root)
@@ -240,9 +252,8 @@ def measure_memory(root: Path, stems: list[str]) -> dict:
         res[stem] = {}
         # Warm-up: align once so every measured child reuses the alignment
         # (MFA is a separate subprocess anyway; this just saves time).
-        variants = [("warmup", set()), ("baseline", set()),
-                    ("word2vec", {"word2vec"}), ("bert", {"bert"}),
-                    ("gpt2", {"gpt2"})]
+        variants = [(n, h) for n, h in MEMORY_VARIANTS
+                    if only is None or n in only]
         for name, heavy in variants:
             cfg = root / f"cfg_mem_{stem}_{name}"
             build_config(cfg, t, a, out, heavy=heavy)
@@ -264,6 +275,9 @@ def main() -> None:
     ap.add_argument("--skip-full", action="store_true",
                     help="reuse an existing full run under --scratch")
     ap.add_argument("--skip-memory", action="store_true")
+    ap.add_argument("--memory-variants", nargs="+", default=None,
+                    choices=[n for n, _ in MEMORY_VARIANTS],
+                    help="run only these memory variants (default: all)")
     args = ap.parse_args()
     root = args.scratch.resolve()
     if REPO in root.parents or root == REPO:
@@ -314,17 +328,19 @@ def main() -> None:
 
     if not args.skip_memory:
         print("\n== peak memory (fresh subprocess per item) ==", flush=True)
-        mem = measure_memory(root, args.memory_stimulus)
+        mem = measure_memory(root, args.memory_stimulus, args.memory_variants)
         result["memory"] = mem
         for stem, d in mem.items():
-            base = d["baseline"]
-            print(f"  [{stem}] baseline {base / 2**30:.3f} GiB")
-            for k in ("word2vec", "bert", "gpt2"):
-                print(f"  [{stem}] {k:9s} {d[k] / 2**30:.3f} GiB "
-                      f"(+{(d[k] - base) / 2**30:.3f} GiB over baseline)")
+            base = d.get("baseline")
+            for k, v in d.items():
+                extra = (f" (+{(v - base) / 2**30:.3f} GiB over baseline)"
+                         if base is not None and k != "baseline" else "")
+                print(f"  [{stem}] {k:9s} {v / 2**30:.3f} GiB{extra}")
 
-    (root / "calibration.json").write_text(json.dumps(result, indent=1), encoding="utf-8")
-    print(f"\nraw results: {root / 'calibration.json'}")
+    out_json = root / ("calibration.json" if args.memory_variants is None
+                       and not args.skip_full else "calibration_partial.json")
+    out_json.write_text(json.dumps(result, indent=1), encoding="utf-8")
+    print(f"\nraw results: {out_json}")
 
 
 if __name__ == "__main__":

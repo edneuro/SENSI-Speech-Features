@@ -1,8 +1,9 @@
 """Fixed constants behind the Run-tab estimates (disk, peak memory, time).
 
-Measured values come from `python scripts/calibrate_estimates.py` (raw output
-in .superpowers/sdd/2026-10-26-run-estimates/task-2-report.md). "Validation
-corpus" below means: validation/data, 10 paired stimuli, 301 whitespace words,
+Measured values come from `python scripts/calibrate_estimates.py --scratch
+<dir outside the repo>`, run 2026-10-26 (the "all" memory variant re-run the
+same day with `--skip-full --memory-variants all`). "Validation corpus" below
+means: validation/data, 10 paired stimuli, 301 whitespace words,
 113.8 s audio, every CPU-feasible feature on (predictability: GPT-2 only),
 run 2026-10-26 on "jose" (AMD Ryzen AI 9 HX 370, 24 threads, 31.1 GiB RAM,
 Windows 11, CPU-only torch 2.7.1, transformers 5.13.0). Values that the
@@ -35,18 +36,73 @@ CSV_BYTES_PER_CELL: dict[str, float] = {
 
 
 # --- Peak RAM (GiB) ----------------------------------------------------------
-# Peak = RAM_GB["baseline"] + the single largest ticked heavy item (stages run
-# one after another in one process; MFA is a separate subprocess). Measured
-# items: peak working set (psutil peak_wset) of a fresh run.py subprocess on one
-# stimulus with only that heavy item on, minus the baseline subprocess (same
-# config, no heavy models). Validation corpus, 2026-10-26, jose; largest of the
-# two measured stimuli (1_FB_P, 32 s audio; LJ002-0321, 10 s audio).
+# Peak = RAM_GB["baseline"] + the SUM of the heavy items that will run. Word2Vec
+# (_MODEL_CACHE), BERT (_BERT_CACHE) and the predictability backends
+# (_BACKEND_CACHE, several models at once) stay cached for the whole process
+# and main.py preloads them, so they add up. (MFA is a separate subprocess.)
+# Measured items: peak working set (psutil peak_wset) of a fresh run.py
+# subprocess on one stimulus with only that heavy item on, minus the baseline
+# subprocess (same config, no heavy models). Validation corpus, 2026-10-26,
+# jose; largest of the two measured stimuli (1_FB_P, 32 s audio; LJ002-0321,
+# 10 s audio).
+# Check of the sum rule ("all" variant: Word2Vec + BERT + GPT-2 together in one
+# subprocess): measured 5.73 GiB on 1_FB_P (5.69 on LJ002-0321) vs baseline +
+# sum of the per-item entries = 0.87 + 3.85 + 0.48 + 0.70 = 5.90 GiB, i.e. the
+# sum overestimates by ~3 % (some shared torch/runtime memory is counted twice).
 
 def _gib(n_bytes: float) -> float:
     return round(n_bytes / 2 ** 30, 2)
 
 
 _OVERHEAD = 1.2   # +20 % over the raw weights for activations, buffers, CUDA context
+
+# Llama (params, vocab_size, hidden_size, tie_word_embeddings).
+# Params from the model cards:
+#   llama32_3b  3.21B ("Params: 3B (3.21B)"), https://huggingface.co/meta-llama/Llama-3.2-3B
+#   llama3_8b   8B (card and safetensors widget both say "8B"),
+#               https://huggingface.co/meta-llama/Meta-Llama-3-8B
+#   llama3_70b  71B (safetensors "Model size: 71B params"; the card table says
+#               "70B" - the larger figure is used),
+#               https://huggingface.co/meta-llama/Meta-Llama-3-70B
+# vocab/hidden/tie: the official meta-llama config.json files are gated (HTTP
+# 401 without a token), so they are read from public ungated mirrors of the
+# same checkpoints:
+#   https://huggingface.co/unsloth/Llama-3.2-3B/raw/main/config.json
+#       (vocab 128256, hidden 3072, tie_word_embeddings true, bfloat16)
+#   https://huggingface.co/unsloth/llama-3-8b/raw/main/config.json
+#       (vocab 128256, hidden 4096, tie_word_embeddings false, bfloat16)
+#   https://huggingface.co/NousResearch/Meta-Llama-3-70B/raw/main/config.json
+#       (vocab 128256, hidden 8192, tie_word_embeddings false, bfloat16)
+_LLAMA: dict[str, tuple[float, int, int, bool]] = {
+    "llama32_3b": (3.21e9, 128256, 3072, True),
+    "llama3_8b": (8e9, 128256, 4096, False),
+    "llama3_70b": (71e9, 128256, 8192, False),
+}
+
+
+def _cpu_gib(spec: tuple[float, int, int, bool]) -> float:
+    """CPU tier: from_pretrained(model_id) with no dtype. In transformers 5.13.0
+    (the version pinned in conda-lock.yml) `dtype` "defaults to "auto"", which
+    uses the config.json dtype (bfloat16 for all three) = 2 B/param:
+    https://huggingface.co/docs/transformers/v5.13.0/en/main_classes/model#transformers.PreTrainedModel.from_pretrained
+    """
+    params = spec[0]
+    return _gib(params * 2 * _OVERHEAD)
+
+
+def _cuda_4bit_gib(spec: tuple[float, int, int, bool]) -> float:
+    """@cuda tier: the extractor's first GPU tier, 4-bit bitsandbytes. Only
+    nn.Linear layers become 4-bit (~0.5 B/param); "all other modules ... are
+    converted to torch.float16", and transformers leaves lm_head unquantized,
+    so embed_tokens + lm_head stay fp16 (2 B/param), counted once when
+    tie_word_embeddings is true:
+    https://huggingface.co/docs/transformers/v5.13.0/en/quantization/bitsandbytes
+    If the 4-bit load fails the extractor falls back to fp16 on the GPU, which
+    needs about the CPU figure instead.
+    """
+    params, vocab, hidden, tied = spec
+    embed = vocab * hidden * (1 if tied else 2)
+    return _gib(((params - embed) * 0.5 + embed * 2) * _OVERHEAD)
 
 RAM_GB: dict[str, float] = {
     # 0.87 GiB on 1_FB_P vs 0.84 GiB on LJ002-0321: no input-length term at
@@ -59,21 +115,14 @@ RAM_GB: dict[str, float] = {
     "gpt2": 0.70,
     # ...so its "@cuda" tier is the same CPU load, never VRAM.
     "gpt2@cuda": 0.70,
-    # Llama, CPU tier: from_pretrained with no dtype; transformers 5.x defaults
-    # to dtype="auto", i.e. the checkpoint's BF16 = 2 B/param.
-    # @cuda: the extractor's first GPU tier is 4-bit (bitsandbytes) ~ 0.5 B/param;
-    # if 4-bit fails it falls back to fp16 (2 B/param, the CPU figure).
-    # 3.21B params ("Params: 3B (3.21B)"), https://huggingface.co/meta-llama/Llama-3.2-3B
-    "llama32_3b": _gib(3.21e9 * 2 * _OVERHEAD),
-    "llama32_3b@cuda": _gib(3.21e9 * 0.5 * _OVERHEAD),
-    # 8B params (card and safetensors widget both say "8B"),
-    # https://huggingface.co/meta-llama/Meta-Llama-3-8B
-    "llama3_8b": _gib(8e9 * 2 * _OVERHEAD),
-    "llama3_8b@cuda": _gib(8e9 * 0.5 * _OVERHEAD),
-    # 71B params (safetensors "Model size: 71B params"; card table says "70B" -
-    # the larger figure is used), https://huggingface.co/meta-llama/Meta-Llama-3-70B
-    "llama3_70b": _gib(71e9 * 2 * _OVERHEAD),
-    "llama3_70b@cuda": _gib(71e9 * 0.5 * _OVERHEAD),
+    # Llama entries are computed (gated models, not measured): see _cpu_gib /
+    # _cuda_4bit_gib below for the rule and sources.
+    "llama32_3b": _cpu_gib(_LLAMA["llama32_3b"]),
+    "llama32_3b@cuda": _cuda_4bit_gib(_LLAMA["llama32_3b"]),
+    "llama3_8b": _cpu_gib(_LLAMA["llama3_8b"]),
+    "llama3_8b@cuda": _cuda_4bit_gib(_LLAMA["llama3_8b"]),
+    "llama3_70b": _cpu_gib(_LLAMA["llama3_70b"]),
+    "llama3_70b@cuda": _cuda_4bit_gib(_LLAMA["llama3_70b"]),
 }
 
 
@@ -117,6 +166,11 @@ FIRST_LOAD_SECONDS: dict[str, float] = {
     "predictability:gpt2": 7.8,
     "word2vec": 36.5,
     "bert": 0.7,
+    # Not a model load: the first phoneme_surprisal stimulus took 5.88 s vs
+    # 0.002-0.004 s for each later one (the cohort trie is built once per
+    # process, extractors/phoneme_surprisal._TRIE_CACHE). Read from the
+    # timing_history.json samples of the same run.
+    "phoneme_surprisal": 5.9,
 }
 
 # Range multipliers around the point estimate: wide before this machine has

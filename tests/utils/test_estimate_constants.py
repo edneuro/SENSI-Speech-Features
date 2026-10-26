@@ -30,3 +30,13 @@ def test_constants_are_positive():
     assert 0 < lo < 1 < hi
     lo, hi = K.LEARNED_SPREAD
     assert 0 < lo < 1 < hi
+
+
+def test_load_seconds_positive_and_llama_4bit_below_cpu():
+    assert K.FIRST_LOAD_SECONDS["phoneme_surprisal"] > 0
+    for key, value in K.FIRST_LOAD_SECONDS.items():
+        assert value > 0, key
+    for spec in all_specs():
+        if spec.gated:
+            # 4-bit body + fp16 embeddings is still far below the BF16 CPU load.
+            assert K.RAM_GB[f"{spec.slug}@cuda"] < K.RAM_GB[spec.slug] / 2
