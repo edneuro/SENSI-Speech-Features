@@ -196,8 +196,10 @@ def test_doc_args_predictability_dict_mirrors_prefs_regardless_of_level(prefs_tm
 
 
 def test_doc_args_no_doc_predictability_off_when_aggregate_toggle_off(prefs_tmp):
-    """The doc aggregate flag is driven purely by the doc_agg_predictability
-    output toggle, independent of which models/metrics are selected."""
+    """The doc aggregate flag is driven by the doc_agg_predictability output
+    toggle, independent of which models/metrics are selected. With the
+    aggregate off the doc pass is not on the predictability doc path, so it
+    gets no models and every metric off (no language model is loaded)."""
     from utils.preferences import save_preferences
     from gui.run_dispatch import build_args_doc_level
     save_preferences({
@@ -207,7 +209,7 @@ def test_doc_args_no_doc_predictability_off_when_aggregate_toggle_off(prefs_tmp)
     })
     args = build_args_doc_level()
     assert args.predictability == {
-        "models": ["gpt2"], "metrics": {"surprisal": True, "cloze": False, "topmatch": False},
+        "models": [], "metrics": {"surprisal": False, "cloze": False, "topmatch": False},
         "context": {}}
     assert args.no_doc_predictability is True
 

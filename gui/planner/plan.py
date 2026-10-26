@@ -307,4 +307,6 @@ def plan_from_prefs(prefs: dict) -> Plan:
     configs = _stage_configs(prefs, ordered)
     return Plan(stages_to_run=ordered, output_csvs=live_csvs,
                 column_drops=drops, stage_configs=configs,
-                predictability_columns=pred_columns)
+                predictability_columns=pred_columns,
+                predictability_word=bool(word_pred),
+                predictability_doc=bool(doc_pred))

@@ -80,3 +80,33 @@ def test_level_off_drops_all_its_artifacts():
     prefs["output"]["level_word"] = False
     out = plan_from_prefs(prefs).output_csvs
     assert not out & {"features", "word2vec", "bert_word"}
+
+
+def _word_pred_prefs(master_on: bool) -> dict:
+    prefs = deepcopy(DEFAULT_PREFS)
+    prefs["output"]["level_word"] = True
+    prefs["features"]["master_predictability"] = master_on
+    prefs["predictability"]["models"] = ["gpt2"]
+    prefs["predictability"]["metrics"] = {"surprisal": True}
+    return prefs
+
+
+def test_word_namespace_has_no_models_when_predictability_off():
+    prefs = _word_pred_prefs(master_on=False)
+    ns = to_namespace(plan_from_prefs(prefs), prefs, level="word")
+    assert ns.predictability["models"] == []
+    assert not any(ns.predictability["metrics"].values())
+
+
+def test_doc_namespace_has_models_on_doc_path():
+    prefs = _doc_means_prefs()
+    plan = plan_from_prefs(prefs)
+    assert to_namespace(plan, prefs, level="doc").predictability["models"] == ["gpt2"]
+    assert to_namespace(plan, prefs, level="word").predictability["models"] == []
+
+
+def test_word_namespace_has_models_on_word_path():
+    prefs = _word_pred_prefs(master_on=True)
+    ns = to_namespace(plan_from_prefs(prefs), prefs, level="word")
+    assert ns.predictability["models"] == ["gpt2"]
+    assert ns.predictability["metrics"]["surprisal"] is True

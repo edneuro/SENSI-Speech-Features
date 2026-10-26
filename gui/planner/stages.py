@@ -54,6 +54,12 @@ class Plan:
     # _predictability_columns / _predictability_active and the "Predictability"
     # cluster's docstring in gui/planner/registry.py.
     predictability_columns: tuple[str, ...] = ()
+    # Which batch pass needs the predictability models (plan.py
+    # _predictability_active): the word pass for <slug>_<Metric> word-CSV
+    # columns, the doc pass for the mean_<slug>_<metric> doc means. emit.py
+    # hands the models/metrics only to the namespace whose path is active.
+    predictability_word: bool = False
+    predictability_doc: bool = False
 
     def emitted_columns_for(self, name: str) -> tuple[str, ...]:
         """Look up a dynamic-column group by name. Only 'predictability' is

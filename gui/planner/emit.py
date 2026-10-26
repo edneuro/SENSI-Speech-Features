@@ -222,10 +222,17 @@ def to_namespace(plan: Plan, prefs: dict, level: str) -> argparse.Namespace:
     ns.edu_bands       = _enabled_ewfg_bands(features)
     ns.sem_dict        = prefs.get("semantic", {}).get("backend", "auto")
     ns.sem_categories  = _categories_for_level(prefs, level)
+    # Predictability models/metrics go only to the pass whose planner path is
+    # active (word pass: word-CSV columns; doc pass: doc means). Otherwise the
+    # pass gets no models and every metric off, so main.run never loads a
+    # language model for a section that is switched off. context is unchanged.
     _p = prefs.get("predictability", {})
+    _pred_on = (plan.predictability_word if level == "word"
+                else plan.predictability_doc if level == "doc" else False)
+    _metrics = dict(_p.get("metrics") or {})
     ns.predictability = {
-        "models": list(_p.get("models") or []),
-        "metrics": dict(_p.get("metrics") or {}),
+        "models": list(_p.get("models") or []) if _pred_on else [],
+        "metrics": _metrics if _pred_on else {m: False for m in _metrics},
         "context": dict(_p.get("context") or {}),
     }
     ns.edu_freq_lookup = None
