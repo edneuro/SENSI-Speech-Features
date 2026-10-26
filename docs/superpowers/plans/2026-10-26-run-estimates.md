@@ -207,7 +207,8 @@ validation corpus and kept in `utils/estimate_constants.py` with their provenanc
     ("Llama-3-70B", "Word2Vec", "BERT", or "the pipeline").
   - `estimate_ram(plan: Plan, prefs: dict, system: dict) -> RamEstimate` — `system` is
     `utils.system_info.gather_system_info()` output (callers cache it per session).
-  - Rule: peak = `RAM_GB["baseline"]` + the largest heavy item that will run (Word2Vec if
+  - Rule (corrected: heavy models stay cached for the whole process, so they add up):
+    peak = `RAM_GB["baseline"]` + the SUM of the heavy items that will run (Word2Vec if
     `"word2vec"` live; BERT if `"bert_word"` or `"bert_sentence"` live; each model in
     `prefs["predictability"]["models"]` if `plan.predictability_word or plan.predictability_doc`).
     A model that would load on the GPU (same rule as Task 1) counts its `@cuda` value against
@@ -215,7 +216,7 @@ validation corpus and kept in `utils/estimate_constants.py` with their provenanc
     `warning` uses the Global Constraints copy.
 
 - [ ] **Step 1: Failing tests:** `test_baseline_only_without_heavy_items`,
-  `test_largest_item_wins_not_sum`, `test_llama8b_on_big_gpu_does_not_warn`
+  `test_heavy_items_add_up` (Word2Vec + BERT + gpt2 → baseline + all three), `test_llama8b_on_big_gpu_does_not_warn`
   (system ram 16, vram 24, models ["llama3_8b"] → fits, warning None),
   `test_llama8b_cpu_only_16gb_warns`, `test_predictability_off_ignores_selected_models`
   (master off and no doc means → models don't count).

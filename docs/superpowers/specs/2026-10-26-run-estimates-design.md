@@ -108,9 +108,10 @@ when needed; the existing ready/not-ready line stays.
    torch lazily). A model counts against VRAM instead of RAM exactly when the extractor would
    put it on the GPU (`extractors/predictability.py` loads on CUDA when available via
    `device_map='auto'`; mirror that rule rather than duplicating a different one).
-4. **RAM model:** stages run one after another in one process (MFA runs earlier as a
-   subprocess), so peak = baseline (pipeline without heavy models, measured on the validation
-   run) + the single largest heavy item; no input-length term unless the validation run shows
+4. **RAM model:** CORRECTED 2026-10-26 (task review): Word2Vec, BERT and every predictability
+   model stay loaded for the rest of the process (module-level caches, never evicted), so
+   peak = baseline (pipeline without heavy models, measured on the validation run) + the SUM
+   of the heavy items that will run (MFA runs earlier as a subprocess and is not added); no input-length term unless the validation run shows
    one matters (e.g. acoustic time series), in which case add it for that item only.
 5. **Timing history:** one rate per (step, model slug if any, device cpu/cuda); recorded by the
    batch runners in `main.py`, so GUI, `run.py` and CLI batch runs all contribute; only
