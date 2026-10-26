@@ -1,4 +1,5 @@
-"""Run-tab estimates: input statistics and disk size per output artifact.
+"""Run-tab estimates: input statistics, disk size per output artifact, peak
+memory and run time.
 
 Pure functions over (Plan, prefs, InputStats); the only I/O is scan_inputs,
 which reads the input folders once and caches per-file results by
@@ -327,3 +328,141 @@ def _pool_item(items: list[tuple[str, float, bool]]) -> str:
 def _ram_warning(item: str, need: float, have: float) -> str:
     return (f"⚠ {item} needs ≈ {need:.1f} GB of memory; this computer has "
             f"{have:.1f} GB. The run will likely fail or be extremely slow.")
+
+
+# --- time --------------------------------------------------------------------
+
+@dataclass
+class TimeEstimate:
+    low_s: float
+    high_s: float
+    learned: bool        # every charged step had a rate learned on this machine
+
+
+STAGE_TO_STEP: dict[str, str] = {
+    "mfa_align": "mfa_align", "spacy_parse": "spacy_parse",
+    "predictability": "predictability", "word2vec_embed": "word2vec",
+    "bert_embed": "bert", "praat_contours": "prosody_contours",
+    "syllabify_pairs": "syllabify", "phoneme_surprisal": "phoneme_surprisal",
+    "sentence_prosody": "sentence_prosody", "acoustic_ts": "acoustic_ts",
+}
+
+# Steps timed inside run_word_level_batch's own loop (not main.run()), so the
+# doc pass never repeats them.
+_WORD_PASS_ONLY_STEPS = frozenset(
+    {"syllabify", "phoneme_surprisal", "sentence_prosody", "word2vec", "bert"})
+# One-time cost per process, keyed by timing_history.load_key.
+_LOADED_STEPS = frozenset({"word2vec", "bert", "phoneme_surprisal"})
+
+
+def _stage_step(stage: str) -> str | None:
+    if stage.startswith("doc_"):
+        return "doc_summary"
+    return STAGE_TO_STEP.get(stage)
+
+
+def _pass_steps(stages) -> set[str]:
+    return {s for s in map(_stage_step, stages) if s}
+
+
+def estimate_time(plan: Plan, prefs: dict, stats: InputStats, history: dict,
+                  cuda_available: bool) -> TimeEstimate:
+    """Range for the whole run over the passes the dispatcher will start
+    (gui/run_dispatch.run, run.dispatch): word, doc, acoustic.
+
+    Each pass charges the steps its own namespace runs (emit's per-level stage
+    scoping). Reuse across passes, as main.py does it: MFA once per document
+    (_prealign_batch skips _align_cache hits; alignments persist on disk);
+    predictability once while the word pass's scores still sit in
+    extractors.predictability._SCORE_CACHE (FIFO, _SCORE_CACHE_MAX entries of
+    one model x stimulus each); Word2Vec/BERT/sub-word/sentence steps only in
+    the word pass; doc_summary only in the doc pass; acoustic_ts only in the
+    acoustic pass, over every audio file.
+    """
+    from gui.planner.emit import (WORD_BATCH_ARTIFACTS, _doc_only_stages,
+                                  _word_only_stages)
+    from gui.planner.plan import _close_under_consumes
+    from utils.timing_history import load_key, model_device, rate
+
+    stages = set(plan.stages_to_run)
+    outputs = set(plan.output_csvs)
+    word_pass = bool(WORD_BATCH_ARTIFACTS & outputs)
+    doc_pass = "documents_summary" in outputs
+    models = list((prefs.get("predictability", {}) or {}).get("models") or [])
+
+    word = (_pass_steps(stages & _close_under_consumes(
+        set(_word_only_stages(plan, prefs)))) if word_pass else set())
+    doc = (_pass_steps(stages & set(_doc_only_stages(prefs))) if doc_pass
+           else set())
+    word -= {"predictability", "acoustic_ts", "doc_summary"}
+    doc -= {"predictability", "acoustic_ts"} | _WORD_PASS_ONLY_STEPS
+    if "mfa_align" in word:
+        doc.discard("mfa_align")          # cached: MFA at most once per doc
+
+    # (step, model) charged once per pass that runs it.
+    charges: list[tuple[str, str | None]] = []
+    charges += [(s, None) for s in sorted(word)]
+    charges += [(s, None) for s in sorted(doc)]
+    pred_word = word_pass and plan.predictability_word
+    pred_doc = doc_pass and plan.predictability_doc
+    if pred_word:
+        charges += [("predictability", m) for m in models]
+    if pred_doc:
+        from extractors.predictability import _SCORE_CACHE_MAX
+        if not pred_word or len(models) * stats.n_stimuli > _SCORE_CACHE_MAX:
+            charges += [("predictability", m) for m in models]
+    if "acoustic" in outputs and "acoustic_ts" in stages:
+        charges.append(("acoustic_ts", None))
+
+    all_secs = (stats.all_audio_seconds if stats.all_audio_seconds is not None
+                else stats.audio_seconds)
+    units_for = {
+        "mfa_align": stats.audio_seconds,
+        "prosody_contours": stats.audio_seconds,
+        "phoneme_surprisal": stats.audio_seconds,
+        "acoustic_ts": all_secs,
+        "syllabify": stats.words_with_audio,
+    }
+    learned_loads = (history or {}).get("load_seconds", {}) or {}
+
+    total = 0.0
+    learned = True
+    loads: set[str] = set()
+    for step, model in charges:
+        units = float(units_for.get(step, stats.words))
+        if units <= 0:
+            continue
+        device = model_device(step, model, cuda_available)
+        r = rate(history, step, model, device)
+        if r is None:
+            learned = False
+            r = K.FIRST_ESTIMATE_RATES.get(
+                f"{step}:{model}" if model else step,
+                K.FIRST_ESTIMATE_RATES[step])
+        total += units * r
+        if model or step in _LOADED_STEPS:
+            loads.add(load_key(step, model))
+    for key in loads:
+        total += float(learned_loads.get(key, K.FIRST_LOAD_SECONDS.get(key, 0.0)))
+
+    lo, hi = K.LEARNED_SPREAD if learned else K.FIRST_ESTIMATE_SPREAD
+    return TimeEstimate(total * lo, total * hi, learned)
+
+
+def _fmt_hours(h: float) -> str:
+    return f"{round(h):.0f}" if h >= 10 or round(h, 1) == round(h) else f"{h:.1f}"
+
+
+def format_duration(low_s: float, high_s: float) -> str:
+    """'≈ 10–40 min': seconds under 1 min, hours over 90 min (unit chosen by
+    the upper bound); one value when both ends round to the same."""
+    high_s = max(high_s, low_s, 0.0)
+    low_s = max(low_s, 0.0)
+    if high_s < 60:
+        a, b, unit = f"{round(low_s)}", f"{round(high_s)}", "s"
+    elif high_s <= 90 * 60:
+        a = f"{max(1, round(low_s / 60))}"
+        b, unit = f"{round(high_s / 60)}", "min"
+    else:
+        a, b, unit = _fmt_hours(low_s / 3600), _fmt_hours(high_s / 3600), "h"
+    return f"≈ {b} {unit}" if a == b else f"≈ {a}–{b} {unit}"
