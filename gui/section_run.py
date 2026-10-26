@@ -429,13 +429,22 @@ class RunSection(QWidget):
         level_keys = tuple(self.level_rows)
 
         def _work() -> None:
+            # Every exit path hands a result (dashes on failure) back to the
+            # GUI thread, whose slot clears _est_busy; otherwise one failure
+            # would stop estimates updating for the rest of the session.
+            est = _EMPTY_ESTIMATES
             try:
                 est = self._compute_estimates(prefs, plan, level_keys)
+            except Exception:
+                _log.exception("Run-tab estimates failed; showing dashes")
+            finally:
                 try:
                     self._estimates_event.emit(gen, est)
-                except RuntimeError:
-                    pass      # the widget was deleted while we computed
-            finally:
+                except Exception:
+                    # Widget deleted mid-compute, or the bridge itself failed:
+                    # no slot will run, so release the single-flight guard
+                    # here (the next refresh() starts a new worker).
+                    self._est_busy = False
                 with _ESTIMATE_THREADS_LOCK:
                     _ESTIMATE_THREADS.discard(threading.current_thread())
 
@@ -485,25 +494,26 @@ class RunSection(QWidget):
             system = self._get_system_info()
             disk = re_.estimate_disk(plan, prefs, stats)
             ram = re_.estimate_ram(plan, prefs, system)
-            cuda = bool((system.get("gpu") or {}).get("name"))
+            cuda = re_.has_cuda(system)       # same rule as estimate_ram
             tm = re_.estimate_time(plan, prefs, stats, load_history(), cuda)
             # Audio-only inputs: no transcript figures, so text levels show "—".
+            # format_bytes / format_duration already carry the leading "≈ ".
             has_text = stats.n_stimuli > 0
             shown = {a: b for a, b in disk.items()
                      if has_text or a == "acoustic"}
             level_sizes = {
-                key: "≈ " + re_.format_bytes(re_.level_bytes(shown, key))
+                key: re_.format_bytes(re_.level_bytes(shown, key))
                 for key in level_keys
                 if has_text or key == "level_acoustic"}
             return {
-                "file_sizes": {a: "≈ " + re_.format_bytes(b) for a, b in shown.items()},
+                "file_sizes": {a: re_.format_bytes(b) for a, b in shown.items()},
                 "level_sizes": level_sizes,
-                "disk": ("≈ " + re_.format_bytes(sum(shown.values()))
+                "disk": (re_.format_bytes(sum(shown.values()))
                          if shown else "—"),
                 "ram": (f"≈ {_gb(ram.peak_gb)} GB&nbsp;&nbsp;<span style="
                         f"'font-weight:400;color:{TEXT_MUTED}'>this computer: "
                         f"{ram.machine_gb:.0f} GB</span>"),
-                "time": "≈ " + re_.format_duration(tm.low_s, tm.high_s),
+                "time": re_.format_duration(tm.low_s, tm.high_s),
                 "warning": ram.warning, "learned": tm.learned,
             }
         except Exception:
@@ -540,6 +550,9 @@ class RunSection(QWidget):
                 self._status_strip.set_errored(1)
         self.run_finished.emit(status)
         self.run_button.setEnabled(True)
+        # The run just added timing history and saved alignments: re-estimate
+        # so the learned range / fresh-alignment skip show right away.
+        self.refresh()
 
     def _on_run(self) -> None:
         self._cancel.clear()

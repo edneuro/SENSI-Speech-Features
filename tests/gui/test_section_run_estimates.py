@@ -1,5 +1,6 @@
 """Run tab shows disk / memory / time estimates (display only)."""
 import json
+import re
 
 import numpy as np
 import pytest
@@ -27,6 +28,14 @@ def _inputs(tmp_path, levels=("level_word",), pred=None):
     if pred:
         prefs["predictability"] = pred
     save_preferences(prefs)
+
+
+_APPROX = re.compile(r"^≈ [0-9]")
+
+
+def _approx(text: str) -> bool:
+    """One leading "≈ " then a number (never "≈ ≈ ...")."""
+    return bool(_APPROX.match(text)) and "≈ ≈" not in text
 
 
 def _fake_system(monkeypatch, ram, vram=0.0):
@@ -68,12 +77,16 @@ def test_level_and_file_sizes_shown(qtbot, tmp_path, monkeypatch):
     w.show()
     _settled(qtbot, w)  # showEvent starts a newer request
     row = w.level_rows["level_word"]
-    assert row.size_label.isVisible() and row.size_label.text().startswith("≈ ")
-    assert w.est_values["disk"].text().startswith("≈ ")
+    assert row.size_label.isVisible() and _approx(row.size_label.text())
+    assert _approx(w.est_values["disk"].text())
+    assert _approx(w.est_values["ram"].text())
     assert "this computer: 64 GB" in w.est_values["ram"].text()
-    assert w.est_values["time"].text().startswith("≈ ")
+    assert _approx(w.est_values["time"].text())
     shown = [s for s in row.file_size_labels.values() if s.isVisible()]
-    assert shown and all(s.text().startswith("≈ ") for s in shown)
+    assert shown and all(_approx(s.text()) for s in shown)
+    # Exactly what the formatter returns, not re-prefixed.
+    assert row.size_label.text() == w._est_last["level_sizes"]["level_word"]
+    assert re.fullmatch(r"≈ [0-9.]+ (B|KB|MB|GB|TB|PB)", w.est_values["disk"].text())
     # Levels left out show no size.
     assert not w.level_rows["level_document"].size_label.isVisible()
 
@@ -149,7 +162,7 @@ def test_audio_only_inputs_show_dash_for_text_levels(qtbot, tmp_path, monkeypatc
     assert not row.size_label.isVisible()
     assert not [s for s in row.file_size_labels.values() if s.isVisible()]
     assert w.est_values["disk"].text() == "—"
-    assert w.est_values["ram"].text().startswith("≈ ")  # stats came back (audio-only)
+    assert _approx(w.est_values["ram"].text())  # stats came back (audio-only)
 
 
 def test_slow_estimate_does_not_block_refresh(qtbot, tmp_path, monkeypatch):
@@ -160,7 +173,7 @@ def test_slow_estimate_does_not_block_refresh(qtbot, tmp_path, monkeypatch):
     _inputs(tmp_path)
     w = _section(qtbot)
     before = w.est_values["disk"].text()
-    assert before.startswith("≈ ")
+    assert _approx(before)
     release = threading.Event()
     real_scan = re_.scan_inputs
 
@@ -176,7 +189,7 @@ def test_slow_estimate_does_not_block_refresh(qtbot, tmp_path, monkeypatch):
     assert w.run_button.isEnabled()
     release.set()
     _settled(qtbot, w)
-    assert w.est_values["disk"].text().startswith("≈ ")
+    assert _approx(w.est_values["disk"].text())
 
 
 def test_stale_estimate_result_is_discarded(qtbot, tmp_path, monkeypatch):
@@ -214,7 +227,80 @@ def test_stale_estimate_result_is_discarded(qtbot, tmp_path, monkeypatch):
     stale_gen = w._est_gen - 1
     release_first.set()
     qtbot.waitUntil(lambda: w._est_applied_gen == w._est_gen, timeout=5000)
-    assert w.est_values["disk"].text().startswith("≈ ")
+    assert _approx(w.est_values["disk"].text())
     assert stale_gen not in applied
     assert peak[0] == 1 and len(calls) == 2
 
+
+
+def _learned_history_for(plan):
+    from utils import run_estimates as re_
+    from utils.preferences import get_config_dir
+    from utils.timing_history import MIN_SAMPLES_FOR_RATE
+    steps = {re_.STAGE_TO_STEP[s] for s in plan.stages_to_run
+             if s in re_.STAGE_TO_STEP}
+    samples = []
+    for st in steps:
+        sizes = ([10.0, 100.0] if st == "mfa_align"
+                 else [100.0] * (MIN_SAMPLES_FOR_RATE + 1))
+        samples += [{"step": st, "model": None, "device": "cpu", "units": u,
+                     "seconds": u / 10} for u in sizes]
+    (get_config_dir() / "timing_history.json").write_text(
+        json.dumps({"version": 1, "samples": samples, "load_seconds": {}}),
+        encoding="utf-8")
+
+
+def test_finished_run_refreshes_estimates(qtbot, tmp_path, monkeypatch):
+    # A run writes timing history; when it ends the tab re-estimates without
+    # the user leaving and re-entering it.
+    _fake_system(monkeypatch, 64.0)
+    _inputs(tmp_path)
+    w = _section(qtbot)
+    assert w.estimate_note.isVisibleTo(w)
+    from gui.planner import plan_from_prefs
+    _learned_history_for(plan_from_prefs(load_preferences()))
+    gen = w._est_gen
+    w._on_done_main("done")
+    assert w._est_gen > gen
+    _settled(qtbot, w)
+    assert not w.estimate_note.isVisibleTo(w)
+
+
+def test_failed_compute_does_not_stick_busy(qtbot, tmp_path, monkeypatch):
+    _fake_system(monkeypatch, 64.0)
+    _inputs(tmp_path)
+    w = _section(qtbot)
+    real = type(w)._compute_estimates
+
+    def boom(self, *a, **kw):
+        raise RuntimeError("estimator bug")
+
+    monkeypatch.setattr(type(w), "_compute_estimates", boom)
+    w.refresh()
+    _settled(qtbot, w)
+    assert not w._est_busy
+    assert w.est_values["disk"].text() == "—"
+    monkeypatch.setattr(type(w), "_compute_estimates", real)
+    w.refresh()
+    _settled(qtbot, w)
+    assert _approx(w.est_values["disk"].text())
+
+
+def test_failed_emit_does_not_stick_busy(qtbot, tmp_path, monkeypatch):
+    _fake_system(monkeypatch, 64.0)
+    _inputs(tmp_path)
+    w = _section(qtbot)
+
+    class _Broken:
+        def emit(self, *a):
+            raise TypeError("bridge broke")
+
+    w._estimates_event = _Broken()
+    w.refresh()
+    from gui.section_run import wait_for_estimate_threads
+    assert wait_for_estimate_threads(10.0)
+    assert not w._est_busy
+    del w._estimates_event               # back to the real signal
+    w.refresh()
+    _settled(qtbot, w)
+    assert _approx(w.est_values["disk"].text())
