@@ -1,17 +1,18 @@
-"""Run section: output checkboxes, readiness summary, cost estimate, Run button."""
+"""Run section: one switch per output level, readiness summary, cost estimate, Run button."""
 
 import threading
 from pathlib import Path
 
-from PySide6.QtCore import Signal
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QFrame,
 )
 
-from gui.widgets import SectionHeader, ToggleRow
+from gui.widgets import SectionHeader, SectionSwitch, _set_state_property
 from gui.preflight import compute_warnings
 from gui.run_dispatch import run as dispatch_run
 from gui.planner import plan_from_prefs
+from gui.planner.plan import LEVEL_ARTIFACTS
 from utils.config_checks import value_errors
 from utils.preferences import load_preferences, save_preferences
 
@@ -19,29 +20,117 @@ from utils.preferences import load_preferences, save_preferences
 _TEXT_EXTS = (".txt", ".tsv", ".md")
 
 
-# Maps a plan output-CSV id -> the artifact it actually writes (path template +
-# format), in display order. Drives the read-only "Will produce" summary so the
-# Run tab shows the true output set (CSV *and* .mat) for the current settings,
-# including the embedding .mat files that are toggled on the feature pages rather
-# than the Run tab. Kept next to plan._OUTPUT_CSV_MAP conceptually.
-_ARTIFACT_DESC: list[tuple[str, str]] = [
-    ("features",          "word/<stim>_features.csv"),
-    ("word2vec",          "word/<stim>_word2vec.mat   (Word page)"),
-    ("bert_word",         "word/<stim>_bert_word.mat   (Word page)"),
-    ("sentences",         "sentence/<stim>_sentences.csv"),
-    ("bert_sentence",     "sentence/<stim>_bert_sentence.mat   (Sentence page)"),
-    ("syllables",         "syllable/<stim>_syllables.csv"),
-    ("phonemes",          "phoneme/<stim>_phonemes.csv"),
-    ("acoustic",          "acoustic/<stim>_acoustic.mat   (audio-only)"),
-    ("phoneme_surprisal_mat", "phoneme/<stim>_phoneme_surprisal.mat   (impulse trains)"),
-    ("documents_summary", "document/documents_summary_<ts>.csv   (single file, all stimuli)"),
+# Run-tab level rows, in display order: (prefs output key, name, plain line).
+# Each level's files come from gui.planner.plan.LEVEL_ARTIFACTS, so the rows
+# can never disagree with what the planner writes.
+_LEVEL_ROWS: list[tuple[str, str, str]] = [
+    ("level_word", "Word level",
+     "Everything ticked on the Word features page."),
+    ("level_document", "Document level",
+     "Everything ticked on the Document features page."),
+    ("level_subword", "Sub-word level",
+     "Everything ticked on the Sub-word features page."),
+    ("level_sentence", "Sentence level",
+     "Everything ticked on the Sentence features page."),
+    ("level_acoustic", "Acoustic level",
+     "Audio-only time series from the Acoustic features page; "
+     "doesn't need transcripts."),
 ]
+
+# Plan artifact id -> the file it writes (path template).
+_ARTIFACT_PATHS: dict[str, str] = {
+    "features":              "word/<stim>_features.csv",
+    "word2vec":              "word/<stim>_word2vec.mat",
+    "bert_word":             "word/<stim>_bert_word.mat",
+    "documents_summary":     "document/documents_summary_<timestamp>.csv",
+    "syllables":             "syllable/<stim>_syllables.csv",
+    "phonemes":              "phoneme/<stim>_phonemes.csv",
+    "phoneme_surprisal_mat": "phoneme/<stim>_phoneme_surprisal.mat",
+    "sentences":             "sentence/<stim>_sentences.csv",
+    "bert_sentence":         "sentence/<stim>_bert_sentence.mat",
+    "acoustic":              "acoustic/<stim>_acoustic.mat",
+}
+
+
+def _count_tag(level_key: str, on: bool, n_live: int) -> str:
+    """Count tag text for a level row."""
+    if not on:
+        return "Left out"
+    if n_live == 0:
+        return "Nothing selected"
+    if level_key == "level_document":
+        return "1 file for the whole run"
+    if level_key == "level_acoustic":
+        return "1 file per audio file"
+    return f"{n_live} file{'' if n_live == 1 else 's'} per stimulus"
+
+
+class _LevelRow(QWidget):
+    """One Run-tab level: switch, bold name + count tag, plain line, files."""
+
+    def __init__(self, key: str, name: str, desc: str, parent=None):
+        super().__init__(parent)
+        self.key = key
+        outer = QHBoxLayout(self)
+        outer.setContentsMargins(0, 4, 0, 4)
+        outer.setSpacing(12)
+        self.switch = SectionSwitch()
+        self.switch.setAccessibleName(f"Include the {name.lower()} in the outputs")
+        self.switch.setToolTip(f"Include the {name.lower()} in the outputs")
+        outer.addWidget(self.switch, 0, Qt.AlignmentFlag.AlignTop)
+
+        body = QVBoxLayout()
+        body.setContentsMargins(0, 0, 0, 0)
+        body.setSpacing(2)
+        head = QHBoxLayout()
+        head.setSpacing(6)
+        self.name_label = QLabel(name)
+        self.name_label.setObjectName("LevelName")
+        head.addWidget(self.name_label)
+        self.tag_label = QLabel()
+        self.tag_label.setObjectName("SectionTag")
+        head.addWidget(self.tag_label, 0, Qt.AlignmentFlag.AlignVCenter)
+        head.addStretch(1)
+        body.addLayout(head)
+        self.desc_label = QLabel(desc)
+        self.desc_label.setObjectName("LevelDesc")
+        self.desc_label.setWordWrap(True)
+        body.addWidget(self.desc_label)
+        self.file_labels: dict[str, QLabel] = {}
+        for art in LEVEL_ARTIFACTS[key]:
+            lbl = QLabel(_ARTIFACT_PATHS[art])
+            lbl.setObjectName("LevelFile")
+            lbl.setTextFormat(Qt.TextFormat.PlainText)
+            body.addWidget(lbl)
+            self.file_labels[art] = lbl
+        outer.addLayout(body, 1)
+
+    def update_from(self, on: bool, live) -> None:
+        """Sync the switch (without re-saving), the tag and the file lines."""
+        self.switch.blockSignals(True)
+        self.switch.setChecked(on)
+        self.switch.blockSignals(False)
+        self.switch.update()
+        n_live = sum(1 for a in self.file_labels if a in live)
+        self.tag_label.setText(_count_tag(self.key, on, n_live))
+        state = "on" if on else "off"
+        for w in (self.tag_label, self.name_label, self.desc_label):
+            _set_state_property(w, "state", state)
+        for art, lbl in self.file_labels.items():
+            # A left-out level lists no files (mockup); an included level
+            # strikes through the file types nothing ticked will produce.
+            lbl.setVisible(on)
+            produced = art in live
+            f = lbl.font()
+            f.setStrikeOut(not produced)
+            lbl.setFont(f)
+            _set_state_property(lbl, "state", "on" if produced else "no")
 
 
 class RunSection(QWidget):
     run_started = Signal()
     run_finished = Signal(str)
-    settings_changed = Signal()   # emitted when output toggles change
+    settings_changed = Signal()   # emitted when a level switch changes
     # Internal cross-thread bridges. dispatch_run invokes its progress/done
     # callbacks from a worker thread; emitting a Qt signal auto-upgrades to
     # QueuedConnection so the connected slots run on the main (GUI) thread.
@@ -70,52 +159,15 @@ class RunSection(QWidget):
         layout.setContentsMargins(24, 16, 24, 16)
         layout.setSpacing(16)
 
-        # Output
-        layout.addWidget(SectionHeader("Output"))
-        prefs = load_preferences()
-        self.word_csv_toggle = ToggleRow("Word-level CSVs (one per stimulus)")
-        self.word_csv_toggle.set_checked(prefs["output"]["word_level_csv"])
-        self.word_csv_toggle.toggled.connect(
-            lambda v: [save_preferences({"output": {"word_level_csv": v}}), self.refresh(), self.settings_changed.emit()])
-        layout.addWidget(self.word_csv_toggle)
-        self.doc_sum_toggle = ToggleRow("Document-level summary (single CSV)")
-        self.doc_sum_toggle.set_checked(prefs["output"]["document_summary"])
-        self.doc_sum_toggle.toggled.connect(
-            lambda v: [save_preferences({"output": {"document_summary": v}}), self.refresh(), self.settings_changed.emit()])
-        layout.addWidget(self.doc_sum_toggle)
-        self.syllables_csv_toggle = ToggleRow("Syllables CSV (one per stimulus)")
-        self.syllables_csv_toggle.set_checked(prefs["output"]["syllables_csv"])
-        self.syllables_csv_toggle.toggled.connect(
-            lambda v: [save_preferences({"output": {"syllables_csv": v}}), self.refresh(), self.settings_changed.emit()])
-        layout.addWidget(self.syllables_csv_toggle)
-        self.phonemes_csv_toggle = ToggleRow("Phonemes CSV (one per stimulus)")
-        self.phonemes_csv_toggle.set_checked(prefs["output"]["phonemes_csv"])
-        self.phonemes_csv_toggle.toggled.connect(
-            lambda v: [save_preferences({"output": {"phonemes_csv": v}}), self.refresh(), self.settings_changed.emit()])
-        layout.addWidget(self.phonemes_csv_toggle)
-        self.sentences_csv_toggle = ToggleRow("Sentence-level CSV (one per stimulus)")
-        self.sentences_csv_toggle.set_checked(prefs["output"]["sentences_csv"])
-        self.sentences_csv_toggle.toggled.connect(
-            lambda v: [save_preferences({"output": {"sentences_csv": v}}), self.refresh(), self.settings_changed.emit()])
-        layout.addWidget(self.sentences_csv_toggle)
-        self.acoustic_mat_toggle = ToggleRow("Acoustic .mat (audio-only, one per stimulus)")
-        self.acoustic_mat_toggle.set_checked(prefs["output"]["acoustic_ts_mat"])
-        self.acoustic_mat_toggle.toggled.connect(
-            lambda v: [save_preferences({"output": {"acoustic_ts_mat": v}}), self.refresh(), self.settings_changed.emit()])
-        layout.addWidget(self.acoustic_mat_toggle)
-        self.phoneme_surprisal_mat_toggle = ToggleRow("Phoneme surprisal .mat (impulse trains)")
-        self.phoneme_surprisal_mat_toggle.set_checked(prefs["output"]["phoneme_surprisal_mat"])
-        self.phoneme_surprisal_mat_toggle.toggled.connect(
-            lambda v: [save_preferences({"output": {"phoneme_surprisal_mat": v}}), self.refresh(), self.settings_changed.emit()])
-        layout.addWidget(self.phoneme_surprisal_mat_toggle)
-
-        # Read-only "what will actually be written" summary (CSV + .mat), derived
-        # from the plan so it stays accurate and includes outputs whose toggles
-        # live on the feature pages (embeddings).
-        self.will_produce_label = QLabel("")
-        self.will_produce_label.setWordWrap(True)
-        self.will_produce_label.setObjectName("Subtitle")
-        layout.addWidget(self.will_produce_label)
+        # Outputs: one switch per level.
+        layout.addWidget(SectionHeader("Outputs"))
+        self.level_rows: dict[str, _LevelRow] = {}
+        for key, name, desc in _LEVEL_ROWS:
+            row = _LevelRow(key, name, desc)
+            row.switch.toggled.connect(
+                lambda v, k=key: self._on_level_toggled(k, v))
+            layout.addWidget(row)
+            self.level_rows[key] = row
 
         # Readiness
         layout.addWidget(SectionHeader("Readiness"))
@@ -145,6 +197,11 @@ class RunSection(QWidget):
 
         self.refresh()
 
+    def _on_level_toggled(self, key: str, value: bool) -> None:
+        save_preferences({"output": {key: value}})
+        self.refresh()
+        self.settings_changed.emit()
+
     def showEvent(self, event) -> None:
         # Readiness/cost depend on prefs edited on OTHER pages (Inputs folders,
         # analyzer name, feature toggles). Those pages don't all push a refresh
@@ -158,17 +215,12 @@ class RunSection(QWidget):
         prefs = load_preferences()
         plan = plan_from_prefs(prefs)
 
-        # "Will produce" summary — exactly the files this run will write.
-        produced = [desc for csv_id, desc in _ARTIFACT_DESC
-                    if csv_id in plan.output_csvs]
-        if produced:
-            self.will_produce_label.setText(
-                "Will produce (one per stimulus unless noted):\n"
-                + "\n".join(f"   • {d}" for d in produced))
-        else:
-            self.will_produce_label.setText(
-                "Will produce: nothing yet — enable an output above "
-                "(or a feature on its page).")
+        # Level rows: switch state from prefs (the Acoustic card edits
+        # output.level_acoustic too); files struck through unless the plan
+        # will write them.
+        for key, row in self.level_rows.items():
+            row.update_from(bool(prefs["output"].get(key, False)),
+                            plan.output_csvs)
 
         # Required inputs depend on which outputs are actually selected. The
         # acoustic level is audio-only: its runner globs the audio folder and
@@ -198,7 +250,7 @@ class RunSection(QWidget):
 
         missing = []
         if not has_output:
-            missing.append("select at least one output")
+            missing.append("turn on at least one level and tick a feature on its page")
         if not analyzer_ok:
             missing.append("enter an analyzer name (Inputs)")
         if not output_ok:

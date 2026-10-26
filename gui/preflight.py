@@ -86,7 +86,8 @@ def compute_warnings(session_api_key: str = "", session_hf_token: str = "") -> l
     if not plan.output_csvs:
         out.append(Warning(
             toggle_key=None, severity="info",
-            message="No outputs selected — pick at least one CSV in the Outputs section."))
+            message="Nothing will be written — turn on at least one level on the Run "
+                    "page, and tick a feature on that level's page."))
         return out
 
     # EWFG dictionary

@@ -178,6 +178,17 @@ QLabel#SectionTag[state="off"] {{
     background: #E6E8EA;
     color: #5B6368;
 }}
+/* Run-tab level rows: bold name, plain line, monospace file list; a file
+   type nothing ticked will produce is struck through (font) and faded. */
+QLabel#LevelName {{ font-weight: 600; color: {TEXT_PRIMARY}; }}
+QLabel#LevelDesc {{ color: {TEXT_SECONDARY}; }}
+QLabel#LevelName[state="off"], QLabel#LevelDesc[state="off"] {{ color: {TEXT_MUTED}; }}
+QLabel#LevelFile {{
+    font-family: Consolas, "Cascadia Mono", monospace;
+    font-size: 11px;
+    color: {TEXT_SECONDARY};
+}}
+QLabel#LevelFile[state="no"] {{ color: {TEXT_DISABLED}; }}
 QLabel#GroupLabel {{
     color: {TEXT_SECONDARY};
     font-size: 11px;

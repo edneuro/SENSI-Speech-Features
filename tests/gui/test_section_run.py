@@ -42,57 +42,112 @@ def test_run_tab_refreshes_on_show_after_inputs_filled(qtbot, tmp_path, monkeypa
     assert w.run_button.isEnabled()
 
 
-def test_run_tab_has_acoustic_and_sentence_output_toggles(qtbot, tmp_path, monkeypatch):
-    """The Run tab is the run/save selector for every level — acoustic and
-    sentence must be selectable there alongside word/doc/syllables/phonemes."""
+def test_run_tab_has_five_level_switches(qtbot, tmp_path, monkeypatch):
+    """One switch per level, named after the feature page, in page order."""
     monkeypatch.setenv("SENSI_PREFS_PATH", str(tmp_path / "prefs.json"))
-    from gui.section_run import RunSection
+    from gui.section_run import RunSection, _LEVEL_ROWS
     w = RunSection(get_session_api_key=lambda: "", status_strip=None)
     qtbot.addWidget(w)
-    assert w.acoustic_mat_toggle is not None
-    assert w.sentences_csv_toggle is not None
+    names = [row.name_label.text() for row in w.level_rows.values()]
+    assert names == ["Word level", "Document level", "Sub-word level",
+                     "Sentence level", "Acoustic level"]
+    assert list(w.level_rows) == ["level_word", "level_document",
+                                  "level_subword", "level_sentence",
+                                  "level_acoustic"]
+    assert [n for _, n, _ in _LEVEL_ROWS] == names
+    # Defaults: Word level on, the rest left out.
+    assert w.level_rows["level_word"].switch.is_checked()
+    for key in ("level_document", "level_subword", "level_sentence",
+                "level_acoustic"):
+        assert not w.level_rows[key].switch.is_checked()
+        assert w.level_rows[key].tag_label.text() == "Left out"
 
 
-def test_acoustic_toggle_persists_output_key(qtbot, tmp_path, monkeypatch):
+def test_level_row_strikes_unproduced_files(qtbot, tmp_path, monkeypatch):
+    """Sub-word on with only syllable features ticked: the phoneme files are
+    struck through and the tag counts the one live file."""
+    monkeypatch.setenv("SENSI_PREFS_PATH", str(tmp_path / "prefs.json"))
+    from utils.preferences import load_preferences, save_preferences
+    from gui.section_run import RunSection
+    feats = {k: False for k in load_preferences()["features"]
+             if k.startswith(("feat_syllable", "feat_phoneme"))}
+    feats.update({"feat_syllable_onset": True,
+                  "master_syllable_intervals": True})
+    save_preferences({"output": {"level_subword": True}, "features": feats})
+    w = RunSection(get_session_api_key=lambda: "", status_strip=None)
+    qtbot.addWidget(w)
+    row = w.level_rows["level_subword"]
+    assert row.tag_label.text() == "1 file per stimulus"
+    files = row.file_labels
+    assert files["syllables"].text() == "syllable/<stim>_syllables.csv"
+    assert not files["syllables"].font().strikeOut()
+    assert files["phonemes"].font().strikeOut()
+    assert files["phoneme_surprisal_mat"].font().strikeOut()
+
+
+def test_level_count_tag_wording():
+    from gui.section_run import _count_tag
+    assert _count_tag("level_word", False, 3) == "Left out"
+    assert _count_tag("level_word", True, 0) == "Nothing selected"
+    assert _count_tag("level_word", True, 1) == "1 file per stimulus"
+    assert _count_tag("level_word", True, 3) == "3 files per stimulus"
+    assert _count_tag("level_document", True, 1) == "1 file for the whole run"
+    assert _count_tag("level_acoustic", True, 1) == "1 file per audio file"
+
+
+def test_level_switch_persists_and_emits(qtbot, tmp_path, monkeypatch):
     monkeypatch.setenv("SENSI_PREFS_PATH", str(tmp_path / "prefs.json"))
     from utils.preferences import load_preferences
     from gui.section_run import RunSection
     w = RunSection(get_session_api_key=lambda: "", status_strip=None)
     qtbot.addWidget(w)
-    assert load_preferences()["output"]["acoustic_ts_mat"] is False  # opt-in default
-    w.acoustic_mat_toggle.set_checked(True)
-    assert load_preferences()["output"]["acoustic_ts_mat"] is True
+    assert load_preferences()["output"]["level_sentence"] is False
+    with qtbot.waitSignal(w.settings_changed, timeout=1000):
+        w.level_rows["level_sentence"].switch.set_checked(True)
+    assert load_preferences()["output"]["level_sentence"] is True
+    assert w.level_rows["level_sentence"].tag_label.text() != "Left out"
 
 
-def test_phoneme_surprisal_mat_toggle_persists_output_key(qtbot, tmp_path, monkeypatch):
+def test_acoustic_level_syncs_card(qtbot, tmp_path, monkeypatch):
+    """The Run-tab Acoustic level and the Acoustic page's card switch are one
+    setting: a Run-tab toggle shows on the card after settings_changed, and a
+    card toggle shows on the Run tab after refresh."""
     monkeypatch.setenv("SENSI_PREFS_PATH", str(tmp_path / "prefs.json"))
     from utils.preferences import load_preferences
     from gui.section_run import RunSection
-    w = RunSection(get_session_api_key=lambda: "", status_strip=None)
-    qtbot.addWidget(w)
-    assert w.phoneme_surprisal_mat_toggle is not None
-    assert load_preferences()["output"]["phoneme_surprisal_mat"] is False  # opt-in default
-    w.phoneme_surprisal_mat_toggle.set_checked(True)
-    assert load_preferences()["output"]["phoneme_surprisal_mat"] is True
+    from gui.section_acoustic_features import AcousticFeaturesSection
+    run = RunSection(get_session_api_key=lambda: "", status_strip=None)
+    acoustic = AcousticFeaturesSection()
+    qtbot.addWidget(run); qtbot.addWidget(acoustic)
+    run.settings_changed.connect(acoustic.refresh_from_prefs)
+    acoustic.settings_changed.connect(run.refresh)
+    assert not acoustic._card.master_toggle().is_checked()
+
+    run.level_rows["level_acoustic"].switch.set_checked(True)
+    assert load_preferences()["output"]["level_acoustic"] is True
+    assert acoustic._card.master_toggle().is_checked()
+
+    acoustic._card.master_toggle().set_checked(False)
+    assert load_preferences()["output"]["level_acoustic"] is False
+    assert not run.level_rows["level_acoustic"].switch.is_checked()
+    assert run.level_rows["level_acoustic"].tag_label.text() == "Left out"
 
 
 def _enable_only_acoustic(save_preferences):
-    """Select the acoustic .mat as the ONLY output (audio-only run)."""
+    """Select the Acoustic level as the ONLY output (audio-only run)."""
     save_preferences({
         "output": {
-            "word_level_csv": False, "document_summary": False,
-            "syllables_csv": False, "phonemes_csv": False,
-            "sentences_csv": False, "word2vec_mat": False,
-            "bert_word_mat": False, "bert_sentence_mat": False,
-            "acoustic_ts_mat": True,
+            "level_word": False, "level_document": False,
+            "level_subword": False, "level_sentence": False,
+            "level_acoustic": True,
         },
-        "features": {"master_acoustic_ts": True, "feat_acoustic_ts_envelope": True},
+        "features": {"feat_acoustic_ts_envelope": True},
     })
 
 
-def test_will_produce_summary_reflects_plan(qtbot, tmp_path, monkeypatch):
-    """The read-only 'Will produce' summary lists the actual artifacts (CSV/.mat)
-    for the current settings, derived from the plan."""
+def test_level_rows_reflect_plan_for_audio_only_run(qtbot, tmp_path, monkeypatch):
+    """The level rows show the files the plan will write: an audio-only run
+    lists the acoustic .mat and leaves the Word level out."""
     monkeypatch.setenv("SENSI_PREFS_PATH", str(tmp_path / "prefs.json"))
     from utils.preferences import save_preferences
     from gui.section_run import RunSection
@@ -100,9 +155,11 @@ def test_will_produce_summary_reflects_plan(qtbot, tmp_path, monkeypatch):
     w = RunSection(get_session_api_key=lambda: "", status_strip=None)
     qtbot.addWidget(w)
     w.refresh()
-    text = w.will_produce_label.text()
-    assert "acoustic/<stim>_acoustic.mat" in text
-    assert "features.csv" not in text   # word CSV is off in an audio-only run
+    ac = w.level_rows["level_acoustic"]
+    assert ac.tag_label.text() == "1 file per audio file"
+    assert ac.file_labels["acoustic"].text() == "acoustic/<stim>_acoustic.mat"
+    assert not ac.file_labels["acoustic"].font().strikeOut()
+    assert w.level_rows["level_word"].tag_label.text() == "Left out"
 
 
 def test_run_button_enabled_for_audio_only_acoustic_without_transcripts(
@@ -136,7 +193,7 @@ def test_run_button_disabled_when_text_output_lacks_transcripts(
     save_preferences({
         "shared": {"analyzer_name": "me", "last_audio_folder": str(audio),
                    "last_output_folder": str(out), "last_transcripts_folder": ""},
-        "output": {"word_level_csv": True},
+        "output": {"level_word": True},
         "features": {"master_structural": True, "feat_struct_token_id": True},
     })
     from gui.section_run import RunSection
@@ -316,9 +373,9 @@ def _word_only(tmp_path, save_preferences, transcripts):
         "shared": {"analyzer_name": "me", "last_audio_folder": "",
                    "last_output_folder": str(out),
                    "last_transcripts_folder": str(transcripts)},
-        "output": {"word_level_csv": True, "document_summary": False,
-                   "syllables_csv": False, "phonemes_csv": False,
-                   "sentences_csv": False, "acoustic_ts_mat": False},
+        "output": {"level_word": True, "level_document": False,
+                   "level_subword": False, "level_sentence": False,
+                   "level_acoustic": False},
     })
 
 

@@ -51,7 +51,9 @@ def test_empty_plan_yields_single_info_hint(prefs_tmp):
     assert len(warnings) == 1
     assert warnings[0].severity == "info"
     assert warnings[0].toggle_key is None
-    assert "No outputs selected" in warnings[0].message
+    assert warnings[0].message == (
+        "Nothing will be written — turn on at least one level on the Run "
+        "page, and tick a feature on that level's page.")
 
 
 def test_mfa_warning_attaches_to_no_toggle(prefs_tmp, monkeypatch):

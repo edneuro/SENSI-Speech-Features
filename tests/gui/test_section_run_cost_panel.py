@@ -24,7 +24,7 @@ def test_cost_panel_stays_hidden_with_models_and_metrics_selected(qtbot, prefs_t
     real, free, local computation) must not surface the cost panel — there
     is no paid backend left for it to estimate."""
     save_preferences({
-        "output": {"word_level_csv": True},
+        "output": {"level_word": True},
         "predictability": {
             "models": ["gpt2", "llama3_8b"],
             "metrics": {"surprisal": True, "cloze": True, "topmatch": True},
