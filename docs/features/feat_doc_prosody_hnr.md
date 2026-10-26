@@ -13,13 +13,12 @@ depth: deep
 Mean **Harmonics-to-Noise Ratio**, in dB, across all voiced frames in
 the audio. HNR measures how much of the signal energy is periodic
 (harmonics: glottal-pulse-driven) versus aperiodic (noise: breath,
-turbulence). The often-quoted **10–25 dB** range for clean voices
-⚠️ comes from sustained-vowel measurements; running speech (consonants,
-transitions, and onsets inside the voiced frames) typically scores
-lower, so treat values somewhat below 10 dB on connected speech as
-normal rather than as a sign of a breathy or hoarse voice. Observed on
-our 10-stimulus validation corpus (running speech):
-`doc_hnr` 8.97–13.01 dB.
+turbulence). Reference values come from **sustained vowels**: a healthy
+speaker's sustained [a] or [i] is around 20 dB and an [u] around 40 dB,
+while hoarse voices give an [a] much lower than 20 dB ([Boersma 2003]).
+`doc_hnr` is measured over running speech instead, so those vowel
+figures are not a threshold for it; compare it between stimuli. Observed
+on our 10-stimulus validation corpus: `doc_hnr` 8.97–13.01 dB.
 
 A single value per stimulus.
 
@@ -72,10 +71,12 @@ hnr_mean = hnr_per_frame[hnr_per_frame > -100].mean()  # mask unvoiced sentinels
 
 ## Papers
 - <a name="boersma-1993"></a>**[Boersma 1993]** Boersma. *Accurate short-term analysis of the fundamental frequency and the harmonics-to-noise ratio of a sampled sound.* IFA Proceedings. [PDF](https://www.fon.hum.uva.nl/paul/papers/Proceedings_1993.pdf) — the HNR algorithm Praat uses.
+- <a name="boersma-2003"></a>**[Boersma 2003]** Boersma. *Harmonicity* (Praat manual page, rev. 2003-06-10). [fon.hum.uva.nl/praat/manual/Harmonicity.html](https://www.fon.hum.uva.nl/praat/manual/Harmonicity.html) — a healthy speaker's sustained [a] or [i] is around 20 dB, [u] around 40 dB; hoarse voices much lower than 20 dB for [a].
 - <a name="banse-1996"></a>**[Banse 1996]** Banse & Scherer. *Acoustic profiles in vocal emotion expression.* J. Personality and Social Psychology. [doi:10.1037/0022-3514.70.3.614](https://doi.org/10.1037/0022-3514.70.3.614)
 - <a name="patel-2018"></a>**[Patel 2018]** Patel, Awan, Barkmeier-Kraemer, et al. *Recommended protocols for instrumental assessment of voice.* American J. Speech-Language Pathology. [doi:10.1044/2018_AJSLP-17-0009](https://doi.org/10.1044/2018_AJSLP-17-0009)
 
 [Boersma 1993]: #boersma-1993
+[Boersma 2003]: #boersma-2003
 [Banse 1996]: #banse-1996
 [Patel 2018]: #patel-2018
 

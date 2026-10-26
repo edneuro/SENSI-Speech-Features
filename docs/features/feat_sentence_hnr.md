@@ -16,11 +16,11 @@ inside each sentence's audio window. See
 and interpretation — `feat_sentence_hnr` is the same quantity
 computed over a sentence-length window rather than the whole document.
 
-The often-quoted **10–25 dB** range for clean voices ⚠️ comes from
-sustained-vowel measurements; running speech typically scores lower,
-and a sentence window is short enough to vary more than the whole-document
-value. Observed on our 10-stimulus validation corpus (running
-speech): sentence `HNR` 6.97–13.78 dB, about a
+As with the document value, the published reference figures (around
+20 dB for a healthy sustained [a] or [i]) describe sustained vowels, not
+running speech, so they are not a threshold for this column (see
+[`feat_doc_prosody_hnr`](feat_doc_prosody_hnr.md)). Observed on our
+10-stimulus validation corpus: sentence `HNR` 6.97–13.78 dB, about a
 quarter of sentences below 10 dB. Within a stimulus, lower values
 indicate breathier or noisier phonation.
 
@@ -46,4 +46,4 @@ the unvoiced sentinel (−200 dB) masked out, identical to the
 ## Papers
 See [`feat_doc_prosody_hnr`](feat_doc_prosody_hnr.md) — the
 sentence-level column inherits the same foundational references
-(Boersma 1993, Banse 1996, Patel 2018).
+(Boersma 1993, Boersma 2003, Banse 1996, Patel 2018).

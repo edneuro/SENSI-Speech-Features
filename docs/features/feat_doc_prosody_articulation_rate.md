@@ -49,17 +49,17 @@ Where:
 - `total_pause_duration` is the sum of inter-word gaps **longer than**
   the pause threshold (default 0.25 s; the same threshold as
   [`doc_pause_*`](doc_prosody_pauses.md)). Shorter gaps between words
-  count as speaking time, which is the standard definition and is what
-  makes the threshold matter.
+  count as speaking time, as in [Chon 2012], who keep silent gaps up to
+  250 ms as part of the utterance and remove longer ones; this is also
+  what makes the threshold matter.
 - `total_syllables` counts every aligned word (all parts of speech,
   punctuation excluded), from the pronunciation MFA aligned: one
   syllable per vowel phone. A word MFA could not pronounce (aligned to
   a single `spn` "spoken noise" phone, see [g2p_oov](g2p_oov.md)) is
   counted with the `pyphen` spelling-based estimate instead.
 
-Counting from MFA's phones follows the pronunciation actually used
-(e.g. "every" as 2 or 3 syllables, depending on the dictionary entry
-MFA chose) rather than the spelling, and counts a contraction that MFA
+Counting from MFA's phones follows the pronunciation MFA aligned
+rather than the spelling, and counts a contraction that MFA
 aligns as one stretch ("wasn't") once.
 
 ## Implementation in SensiExtractor
@@ -104,11 +104,13 @@ n_syllables_in_unbelievable = dic.inserted("unbelievable").count("-") + 1
 ## Papers
 - <a name="tauroza-1990"></a>**[Tauroza 1990]** Tauroza & Allison. *Speech Rates in British English.* Applied Linguistics 11(1), 90–105. [doi:10.1093/applin/11.1.90](https://doi.org/10.1093/applin/11.1.90) — establishes typical conversational ranges.
 - <a name="ding-2014"></a>**[Ding 2014]** Ding & Simon. *Cortical entrainment to continuous speech: functional roles and interpretations.* Frontiers in Human Neuroscience 8, 311. [doi:10.3389/fnhum.2014.00311](https://doi.org/10.3389/fnhum.2014.00311) — rate as a modulator of cortical tracking.
+- <a name="chon-2012"></a>**[Chon 2012]** Chon, Sawyer, Ambrose. *Differences of articulation rate and utterance length in fluent and disfluent utterances of preschool children who stutter.* J. Communication Disorders 45(6), 455–467. [doi:10.1016/j.jcomdis.2012.08.003](https://doi.org/10.1016/j.jcomdis.2012.08.003) — defines articulation rate as syllables per second of fluent speech, keeping silent gaps up to 250 ms in the duration and deleting longer pauses (§2.3.2).
 - <a name="kayser-2015"></a>**[Kayser 2015]** Kayser, Ince, Gross, Kayser. *Irregular speech rate dissociates auditory cortical entrainment, evoked responses, and frontal alpha.* J. Neuroscience 35(44), 14691–14701. [doi:10.1523/JNEUROSCI.2243-15.2015](https://doi.org/10.1523/JNEUROSCI.2243-15.2015) — speech-rate manipulations and cortical entrainment.
 
 [Tauroza 1990]: #tauroza-1990
 [Ding 2014]: #ding-2014
 [Kayser 2015]: #kayser-2015
+[Chon 2012]: #chon-2012
 
 ## Datasets
 <!-- auto-populated from docs/datasets/*.md once the dataset registry exists -->

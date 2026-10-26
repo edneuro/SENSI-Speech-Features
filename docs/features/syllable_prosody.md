@@ -23,8 +23,8 @@ analogues of the word-level [pitch](prosody_pitch.md) and
 
 The deltas run across word boundaries: the first syllable of "day" in
 "beautiful day" is compared with "ful". A within-word-only delta would
-be blank for every one-syllable word (about 70 % of rows in running
-speech); if you want it, drop the rows where `syllable_id == 1` before
+be blank for every one-syllable word (about 71 % of rows on the
+validation corpus); if you want it, drop the rows where `syllable_id == 1` before
 analysis. An unvoiced or empty syllable (no pitch frames) gets a blank
 `Pitch_Mean`, and the next syllable is compared with the last one that
 had a value instead of going blank too.

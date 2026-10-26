@@ -50,6 +50,8 @@ full audio. `doc_volume_delta_mean` is the NaN-aware mean of the
 cancel.
 
 ## Papers
+[Zelger 2024]: prosody_volume.md#zelger-2024
+
 See [`prosody_volume`](prosody_volume.md) — document-level summaries
 inherit the same foundational references (Boersma 2018, Zelger 2024,
 Cole 2019).
