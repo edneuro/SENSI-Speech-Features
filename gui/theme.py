@@ -189,6 +189,27 @@ QLabel#LevelFile {{
     color: {TEXT_SECONDARY};
 }}
 QLabel#LevelFile[state="no"] {{ color: {TEXT_DISABLED}; }}
+QLabel#LevelSize {{ font-size: 12px; font-weight: 600; color: {TEXT_PRIMARY}; }}
+QLabel#LevelFileSize {{
+    font-family: Consolas, "Cascadia Mono", monospace;
+    font-size: 11px;
+    color: #00737F;
+}}
+/* Run-tab estimates summary (disk / memory / time) + fit warning. */
+QFrame#EstimatesBox {{
+    border: 1px solid #D9DDE1;
+    border-radius: 8px;
+    background: #FAFBFC;
+}}
+QLabel#EstimateKey {{ color: {TEXT_SECONDARY}; }}
+QLabel#EstimateValue {{ font-weight: 600; color: {TEXT_PRIMARY}; }}
+QLabel#EstimateNote {{ font-size: 12px; color: {TEXT_MUTED}; }}
+QLabel#EstimateWarning {{
+    padding: 7px 10px;
+    border-radius: 6px;
+    background: #FFF4E0;
+    color: #8A5A00;
+}}
 QLabel#GroupLabel {{
     color: {TEXT_SECONDARY};
     font-size: 11px;

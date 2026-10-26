@@ -1,5 +1,6 @@
 """Run section: one switch per output level, readiness summary, cost estimate, Run button."""
 
+import logging
 import threading
 from pathlib import Path
 
@@ -15,6 +16,8 @@ from gui.planner import plan_from_prefs
 from gui.planner.plan import LEVEL_ARTIFACTS
 from utils.config_checks import value_errors
 from utils.preferences import load_preferences, save_preferences
+
+_log = logging.getLogger(__name__)
 
 # Transcript extensions the batch runners pair (gui/planner/emit.py).
 _TEXT_EXTS = (".txt", ".tsv", ".md")
@@ -90,6 +93,10 @@ class _LevelRow(QWidget):
         self.tag_label = QLabel()
         self.tag_label.setObjectName("SectionTag")
         head.addWidget(self.tag_label, 0, Qt.AlignmentFlag.AlignVCenter)
+        self.size_label = QLabel()
+        self.size_label.setObjectName("LevelSize")
+        self.size_label.hide()
+        head.addWidget(self.size_label, 0, Qt.AlignmentFlag.AlignVCenter)
         head.addStretch(1)
         body.addLayout(head)
         self.desc_label = QLabel(desc)
@@ -97,22 +104,40 @@ class _LevelRow(QWidget):
         self.desc_label.setWordWrap(True)
         body.addWidget(self.desc_label)
         self.file_labels: dict[str, QLabel] = {}
+        self.file_size_labels: dict[str, QLabel] = {}
         for art in LEVEL_ARTIFACTS[key]:
+            line = QHBoxLayout()
+            line.setSpacing(6)
             lbl = QLabel(_ARTIFACT_PATHS[art])
             lbl.setObjectName("LevelFile")
             lbl.setTextFormat(Qt.TextFormat.PlainText)
-            body.addWidget(lbl)
+            line.addWidget(lbl)
+            sz = QLabel()
+            sz.setObjectName("LevelFileSize")
+            sz.hide()
+            line.addWidget(sz)
+            line.addStretch(1)
+            body.addLayout(line)
             self.file_labels[art] = lbl
+            self.file_size_labels[art] = sz
         outer.addLayout(body, 1)
 
-    def update_from(self, on: bool, live) -> None:
-        """Sync the switch (without re-saving), the tag and the file lines."""
+    def update_from(self, on: bool, live, sizes: dict[str, str] | None = None,
+                    level_size: str = "") -> None:
+        """Sync the switch (without re-saving), the tag and the file lines.
+
+        `sizes` maps artifact -> display size (missing = nothing to show);
+        `level_size` is the level total shown after the count tag.
+        """
+        sizes = sizes or {}
         self.switch.blockSignals(True)
         self.switch.setChecked(on)
         self.switch.blockSignals(False)
         self.switch.update()
         n_live = sum(1 for a in self.file_labels if a in live)
         self.tag_label.setText(_count_tag(self.key, on, n_live))
+        self.size_label.setText(level_size)
+        self.size_label.setVisible(on and n_live > 0 and bool(level_size))
         state = "on" if on else "off"
         for w in (self.tag_label, self.name_label, self.desc_label):
             _set_state_property(w, "state", state)
@@ -125,6 +150,10 @@ class _LevelRow(QWidget):
             f.setStrikeOut(not produced)
             lbl.setFont(f)
             _set_state_property(lbl, "state", "on" if produced else "no")
+            sz = self.file_size_labels[art]
+            text = sizes.get(art, "") if produced else ""
+            sz.setText(text)
+            sz.setVisible(on and bool(text))
 
 
 class RunSection(QWidget):
@@ -174,6 +203,44 @@ class RunSection(QWidget):
         self.readiness_label = QLabel("…")
         self.readiness_label.setWordWrap(True)
         layout.addWidget(self.readiness_label)
+
+        # Estimates summary (disk / peak memory / time). Display only: it
+        # never touches run_button; values are "—" until the inputs are set.
+        self._system_info: dict | None = None
+        self.estimates_box = QFrame()
+        self.estimates_box.setObjectName("EstimatesBox")
+        eb = QVBoxLayout(self.estimates_box)
+        eb.setContentsMargins(12, 10, 12, 10)
+        eb.setSpacing(3)
+        self.est_values: dict[str, QLabel] = {}
+        for key, name in (("disk", "Disk space for outputs"),
+                          ("ram", "Peak memory (RAM)"),
+                          ("time", "Expected time")):
+            row = QHBoxLayout()
+            k = QLabel(name)
+            k.setObjectName("EstimateKey")
+            v = QLabel("—")
+            v.setObjectName("EstimateValue")
+            v.setTextFormat(Qt.TextFormat.PlainText)
+            row.addWidget(k)
+            row.addStretch(1)
+            row.addWidget(v)
+            eb.addLayout(row)
+            self.est_values[key] = v
+        self.estimate_note = QLabel(
+            "First estimate. It gets more precise as the app learns from "
+            "runs on this computer.")
+        self.estimate_note.setObjectName("EstimateNote")
+        self.estimate_note.setWordWrap(True)
+        eb.addWidget(self.estimate_note)
+        layout.addWidget(self.estimates_box)
+        self.estimate_warning = QLabel("")
+        self.estimate_warning.setObjectName("EstimateWarning")
+        self.estimate_warning.setWordWrap(True)
+        self.estimate_warning.setTextFormat(Qt.TextFormat.PlainText)
+        self.estimate_warning.hide()
+        layout.addWidget(self.estimate_warning)
+
         self.warnings_label = QLabel("")
         self.warnings_label.setWordWrap(True)
         layout.addWidget(self.warnings_label)
@@ -218,9 +285,12 @@ class RunSection(QWidget):
         # Level rows: switch state from prefs (the Acoustic card edits
         # output.level_acoustic too); files struck through unless the plan
         # will write them.
+        est = self._compute_estimates(prefs, plan)
         for key, row in self.level_rows.items():
             row.update_from(bool(prefs["output"].get(key, False)),
-                            plan.output_csvs)
+                            plan.output_csvs,
+                            est["file_sizes"], est["level_sizes"].get(key, ""))
+        self._show_estimates(est)
 
         # Required inputs depend on which outputs are actually selected. The
         # acoustic level is audio-only: its runner globs the audio folder and
@@ -293,6 +363,58 @@ class RunSection(QWidget):
         # deleted so a future paid backend can be wired back in without
         # rebuilding this panel.
         self.cost_panel.setVisible(False)
+
+    def _get_system_info(self) -> dict:
+        """Hardware facts, gathered once per RunSection (imports torch lazily)."""
+        if self._system_info is None:
+            from utils.system_info import gather_system_info
+            self._system_info = gather_system_info()
+        return self._system_info
+
+    def _compute_estimates(self, prefs: dict, plan) -> dict:
+        """Run the estimators; any failure degrades to dashes, never an error."""
+        empty = {"file_sizes": {}, "level_sizes": {}, "disk": "—", "ram": "—",
+                 "time": "—", "warning": None, "learned": True}
+        try:
+            from utils import run_estimates as re_
+            from utils.timing_history import load_history
+            shared = prefs["shared"]
+            stats = re_.scan_inputs(shared.get("last_transcripts_folder", ""),
+                                    shared.get("last_audio_folder", ""))
+            if stats is None:
+                return empty
+            system = self._get_system_info()
+            disk = re_.estimate_disk(plan, prefs, stats)
+            ram = re_.estimate_ram(plan, prefs, system)
+            cuda = bool((system.get("gpu") or {}).get("name"))
+            tm = re_.estimate_time(plan, prefs, stats, load_history(), cuda)
+            # Audio-only inputs: no transcript figures, so text levels show "—".
+            has_text = stats.n_stimuli > 0
+            shown = {a: b for a, b in disk.items()
+                     if has_text or a == "acoustic"}
+            level_sizes = {
+                key: "≈ " + re_.format_bytes(re_.level_bytes(shown, key))
+                for key in self.level_rows
+                if has_text or key == "level_acoustic"}
+            return {
+                "file_sizes": {a: "≈ " + re_.format_bytes(b) for a, b in shown.items()},
+                "level_sizes": level_sizes,
+                "disk": "≈ " + re_.format_bytes(sum(shown.values())),
+                "ram": (f"≈ {ram.peak_gb:.0f} GB   this computer: "
+                        f"{ram.machine_gb:.0f} GB"),
+                "time": "≈ " + re_.format_duration(tm.low_s, tm.high_s),
+                "warning": ram.warning, "learned": tm.learned,
+            }
+        except Exception:
+            _log.exception("Run-tab estimates failed; showing dashes")
+            return empty
+
+    def _show_estimates(self, est: dict) -> None:
+        for k, v in self.est_values.items():
+            v.setText(est[k])
+        self.estimate_note.setVisible(not est["learned"])
+        self.estimate_warning.setText(est["warning"] or "")
+        self.estimate_warning.setVisible(bool(est["warning"]))
 
     def _on_progress_main(self, i: int, total: int, name: str) -> None:
         """Main-thread slot for worker-thread progress updates."""
