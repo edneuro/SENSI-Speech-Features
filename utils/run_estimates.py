@@ -310,15 +310,20 @@ def estimate_ram(plan: Plan, prefs: dict, system: dict) -> RamEstimate:
     driver = max(items, key=lambda i: i[1])[0] if items else "the pipeline"
 
     warning = None
-    if peak > machine:
-        heavy = max(ram_items, key=lambda i: i[1])[0] if ram_items else "the pipeline"
-        warning = _ram_warning(heavy, peak, machine)
-    elif gpu_total > vram:
-        heavy = max(gpu_items, key=lambda i: i[1])[0]
-        warning = _ram_warning(heavy, gpu_total, vram)
+    if machine > 0 and peak > machine:
+        warning = _ram_warning(_pool_item(ram_items), peak, machine)
+    elif vram > 0 and gpu_total > vram:
+        warning = _ram_warning(_pool_item(gpu_items), gpu_total, vram)
     return RamEstimate(peak, driver, machine, vram, warning is None, warning)
+
+
+def _pool_item(items: list[tuple[str, float, bool]]) -> str:
+    """Name for the overflowing pool: the single item, else the whole run."""
+    if not items:
+        return "the pipeline"
+    return items[0][0] if len(items) == 1 else "This run"
 
 
 def _ram_warning(item: str, need: float, have: float) -> str:
     return (f"⚠ {item} needs ≈ {need:.1f} GB of memory; this computer has "
-            f"{have:.0f} GB. The run will likely fail or be extremely slow.")
+            f"{have:.1f} GB. The run will likely fail or be extremely slow.")

@@ -50,7 +50,7 @@ def test_llama8b_cpu_only_16gb_warns():
     e = estimate_ram(_plan(pred=True), _prefs(["llama3_8b"]), _sys(16, 0))
     assert not e.fits
     assert e.warning.startswith("⚠ Llama")
-    assert "needs ≈" in e.warning and "this computer has 16" in e.warning
+    assert "needs ≈" in e.warning and "this computer has 16.0" in e.warning
     assert e.warning.endswith("The run will likely fail or be extremely slow.")
 
 
@@ -67,3 +67,24 @@ def test_predictability_off_ignores_selected_models():
 def test_doc_means_alone_count_models():
     e = estimate_ram(_plan(pred_doc=True), _prefs(["gpt2"]), _sys())
     assert abs(e.peak_gb - (B + K.RAM_GB["gpt2"])) < 1e-9
+
+
+def test_stacked_items_warn_as_this_run():
+    e = estimate_ram(_plan(["word2vec", "bert_word"], pred=True),
+                     _prefs(["llama3_8b"]), _sys(16, 0))
+    assert not e.fits
+    assert e.warning.startswith("⚠ This run needs ≈ ")
+
+
+def test_stacked_vram_items_warn_as_this_run():
+    e = estimate_ram(_plan(pred=True), _prefs(["llama3_8b", "llama3_70b"]),
+                     _sys(64, 8))
+    assert not e.fits
+    assert e.warning.startswith("⚠ This run needs ≈ ")
+    assert "this computer has 8.0 GB" in e.warning
+
+
+def test_unknown_machine_memory_does_not_warn():
+    e = estimate_ram(_plan(["word2vec"], pred=True), _prefs(["llama3_70b"]),
+                     {"system_ram_gb": 0, "gpu": {"name": None, "vram_gb": 0}})
+    assert e.fits and e.warning is None
