@@ -153,6 +153,31 @@ write) and start the job. The Run page also shows readiness warnings (e.g. a
 missing HuggingFace token for a selected gated Llama model); the **Logs** page
 live-tails the run.
 
+#### Run-tab estimates
+
+Before you start, the Run page shows three rough figures for the current
+inputs and settings:
+
+- **Disk space for outputs** — the total size of the files the run will write,
+  plus a size next to each output level. Worked out from word counts, audio
+  length and the columns you have switched on; it does not count the saved MFA
+  alignments or the run logs.
+- **Peak memory (RAM)** — the most memory the run should need at once, mostly
+  set by the largest model you selected, next to the memory this computer has.
+  A warning appears if it may not fit.
+- **Expected time** — a range for the whole run. Stimuli that already have a
+  fresh saved alignment in the output folder are not charged for MFA.
+
+The time range starts as a wide first estimate (marked as such on the page).
+Each run records how long each step took on this computer, and once a step has
+a few timings the range narrows to one learned for this machine. A few seconds
+of start-up (loading Python libraries and the spaCy model) are not counted, so
+very short runs can finish slightly after the range. The timings are kept in
+`config/timing_history.json` (next to `features.yaml` / `run.yaml`, or in the
+folder `SENSI_CONFIG_DIR` points to). The file is specific to this computer and
+is not shared through git; delete it to reset the time estimates to first
+estimates.
+
 ### Command line
 
 Single file:
