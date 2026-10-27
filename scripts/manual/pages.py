@@ -68,6 +68,10 @@ def _chapter(page: Page, ctx: Context):
         inner = "".join(p.html for p in d.parts.values())
         return rewrite_links(inner, page, ctx.pages_by_key)
     src = re.sub(r"\{\{doc:([\w]+)\}\}", doc_inline, src)
+    src = re.sub(r"\{\{include:([^}]+)\}\}", lambda m: _include(m.group(1), ctx), src)
+    src = re.sub(r"\{\{file:([^}|]+)(?:\|([^}]*))?\}\}", lambda m: _file_block(m.group(1), m.group(2), ctx), src)
+    src = re.sub(r"\{\{screen:([\w-]+)\|([^}]*)\}\}", lambda m: _screen(m.group(1), m.group(2), page, ctx), src)
+    src = src.replace("{{outputs_table}}", _outputs_table(page, ctx))
     src = src.replace("{{root}}", page.root)
     body_html = ctx.md.render(src)
     toc, n = [], 0
@@ -85,6 +89,76 @@ def _chapter(page: Page, ctx: Context):
     entries = [_entry(page.title, "Chapter", page.url, meta.get("keywords", ""), _plain(body_html), 6)]
     entries += [_entry(t["title"], page.title, f"{page.url}#{t['id']}", "", "", 2) for t in toc]
     return body, toc, [], entries
+
+
+def _include(rel: str, ctx: Context) -> str:
+    """Another repo markdown file, inline (title line dropped; its relative links → GitHub)."""
+    from sensi.paths import PROJECT_ROOT
+    p = PROJECT_ROOT / rel.strip()
+    if not p.exists():
+        ctx.report.errors.append(f"include: {rel} does not exist")
+        return ""
+    text = p.read_text(encoding="utf-8")
+    text = re.sub(r"\A# .*\n", "", text)
+
+    def link(m):
+        label, href = m.group(1), m.group(2)
+        if re.match(r"^[a-z]+:|^#", href):
+            return m.group(0)
+        target = (p.parent / href.split("#")[0]).resolve()
+        try:
+            return f"[{label}]({D.GITHUB_BLOB}{target.relative_to(PROJECT_ROOT).as_posix()})"
+        except ValueError:
+            return m.group(0)
+    return re.sub(r"\[([^\]]+)\]\(([^)\s]+)\)", link, text)
+
+
+def _file_block(rel: str, lines: str | None, ctx: Context) -> str:
+    """A real repo file (or a line range "a-b") as a fenced code block."""
+    from sensi.paths import PROJECT_ROOT
+    p = PROJECT_ROOT / rel.strip()
+    if not p.exists():
+        ctx.report.errors.append(f"file: {rel} does not exist")
+        return ""
+    content = p.read_text(encoding="utf-8").splitlines()
+    if lines:
+        a, b = (int(x) for x in lines.split("-"))
+        content = content[a - 1:b]
+    lang = {".yaml": "yaml", ".yml": "yaml", ".sh": "bash", ".bat": "bat", ".py": "python"}.get(p.suffix, "text")
+    return f"\n```{lang}\n" + "\n".join(content) + "\n```\n"
+
+
+def _screen(name: str, caption: str, page: Page, ctx: Context) -> str:
+    import shutil
+    from manual.screenshots import SCREENS_DIR
+    matches = sorted(SCREENS_DIR.glob(f"*-{name}.png"))
+    if not matches:
+        ctx.report.errors.append(f"screen: no screenshot for '{name}' (run --refresh-screenshots)")
+        return ""
+    dest = ctx.out_dir / "assets" / "screens" / matches[0].name
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(matches[0], dest)
+    return (f'\n<figure class="card"><img class="shot" src="{page.root}assets/screens/{matches[0].name}" '
+            f'alt="{html.escape(caption)}" loading="lazy"><figcaption>{html.escape(caption)} '
+            '(screenshot of the real app)</figcaption></figure>\n')
+
+
+def _outputs_table(page: Page, ctx: Context) -> str:
+    """Every output file → the feature pages whose columns/variables it carries."""
+    files: dict[str, list] = {}
+    for lv in ctx.manifest["levels"]:
+        for s in lv["sections"]:
+            for f in s["features"]:
+                for o in G.outputs(f):
+                    where = o.format(stem="<stim>").replace("documents_summary.csv", "documents_summary_<timestamp>.csv")
+                    files.setdefault(where, []).append(f["key"])
+    rows = []
+    for where in sorted(files):
+        links = ", ".join(f'<a href="{page.root}{ctx.pages_by_key[k].url}">{html.escape(ctx.pages_by_key[k].title)}</a>'
+                          for k in dict.fromkeys(files[where]))
+        rows.append(f"<tr><td><span class='file'>{html.escape(where)}</span></td><td>{links}</td></tr>")
+    return ('\n<table><thead><tr><th>File</th><th>Features in it (see each page for its columns)</th></tr></thead>'
+            f'<tbody>{"".join(rows)}</tbody></table>\n')
 
 
 # ------------------------------------------------------------------ features

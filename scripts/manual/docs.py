@@ -147,9 +147,11 @@ def load_feature_doc(path: Path) -> FeatureDoc:
             doc.parts[pid] = Part(pid, title, rendered, [alias])
     first = doc.parts.get("what")
     if first:
-        plain = re.sub(r"<[^>]+>", "", first.html)
+        para = re.search(r"<p>(.*?)</p>", first.html, flags=re.S)
+        plain = re.sub(r"<[^>]+>", "", para.group(1) if para else first.html)
         m = re.search(r"(.+?[.!?])(\s|$)", " ".join(plain.split()))
-        doc.summary = m.group(1) if m else plain[:200]
+        summ = (m.group(1) if m else " ".join(plain.split())[:200]).strip()
+        doc.summary = summ[:-1] + "." if summ.endswith(":") else summ
     return doc
 
 

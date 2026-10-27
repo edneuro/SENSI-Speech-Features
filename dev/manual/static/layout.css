@@ -176,3 +176,13 @@ footer { margin-top: 40px; font: 12px var(--font-ui); color: var(--text-muted); 
   a { color: var(--text); }
   h2 { break-after: avoid; }
 }
+
+/* introduction: pipeline diagram */
+.flow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.flow-col { display: flex; flex-direction: column; gap: 8px; flex: 1; min-width: 150px; }
+.flow-box { border: 1px solid var(--border); border-radius: var(--radius-small); padding: 7px 10px; background: var(--bg-code); font-weight: 600; color: var(--text); }
+.flow-box small { display: block; font-weight: 400; color: var(--text-secondary); }
+.flow-box.in { background: var(--bg-card); border-color: var(--border-strong); }
+.flow-box.out { background: var(--accent-soft); border-color: var(--accent); }
+.flow-arrow { font-size: 24px; color: var(--accent); }
+kbd { border: 1px solid var(--border-strong); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; font-size: .8em; background: var(--bg-card); }

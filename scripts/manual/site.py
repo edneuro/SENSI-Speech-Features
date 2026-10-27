@@ -197,8 +197,10 @@ def build_site(out_dir: Path, *, check_links: bool = False) -> BuildReport:
     root, order = build_tree(manifest, docs)
     pages_by_key = {p.id: p for p in order if p.kind == "feature"}
 
-    if out_dir.exists():
-        shutil.rmtree(out_dir)
+    # Empty the folder rather than delete it (a viewer or server may hold it open).
+    out_dir.mkdir(parents=True, exist_ok=True)
+    for child in out_dir.iterdir():
+        shutil.rmtree(child) if child.is_dir() else child.unlink()
     (out_dir / "assets").mkdir(parents=True)
     for name in ("theme.css", "layout.css", "manual.js"):
         shutil.copyfile(STATIC_DIR / name, out_dir / "assets" / name)
