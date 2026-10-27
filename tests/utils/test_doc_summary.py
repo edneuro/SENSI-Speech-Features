@@ -221,7 +221,7 @@ def test_independence_doc_mean_zipf_when_word_freq_disabled(tmp_path):
 
 def test_doc_predictability_means():
     """mean_<slug>_<metric> aggregates are computed by scanning the token
-    df for '<slug>_<Metric>' columns (extractors.predictability's unified
+    df for '<slug>_<Metric>' columns (sensi.extractors.predictability's unified
     output shape) — no fixed 'Surprisal'/'LLM_Cloze' column names anymore."""
     import math
     df = pd.DataFrame({

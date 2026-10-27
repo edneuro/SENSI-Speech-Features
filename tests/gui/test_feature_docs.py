@@ -1,4 +1,4 @@
-"""Tests for gui.feature_docs loader and the info-icon wiring."""
+"""Tests for sensi.gui.feature_docs loader and the info-icon wiring."""
 from __future__ import annotations
 
 from sensi.gui import feature_docs

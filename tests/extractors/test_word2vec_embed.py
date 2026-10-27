@@ -1,4 +1,4 @@
-"""Tests for extractors.word2vec_embed.
+"""Tests for sensi.extractors.word2vec_embed.
 
 Uses a mock gensim KeyedVectors so no real model file is needed.
 """

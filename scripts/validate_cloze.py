@@ -1,7 +1,7 @@
 """One-shot validation of the configured LLM-cloze model against Provo Corpus.
 
 Run after install, from the project root:
-    python utils/validate_cloze.py
+    python scripts/validate_cloze.py
 
 Downloads Provo Corpus (~few MB) into data/provo/ on first run, computes
 LLM_Cloze for each Provo word using whichever LLM the pipeline auto-selects
@@ -18,9 +18,9 @@ from pathlib import Path
 import pandas as pd
 from scipy.stats import pearsonr
 
-# This script lives in utils/; put the project root on sys.path so `extractors`
-# imports resolve when run as `python utils/validate_cloze.py` (which otherwise
-# only puts utils/ on the path, not the root).
+# This script lives in scripts/; put the project root on sys.path so `sensi`
+# imports resolve when run as `python scripts/validate_cloze.py` (which otherwise
+# only puts scripts/ on the path, not the root).
 _ROOT = Path(__file__).resolve().parent.parent
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
@@ -73,7 +73,7 @@ def main():
     if slug is None:
         default_id = select_model()
         default_slug = slug_for_hf_id(default_id)
-        print(f'Model {model_id!r} is not in the local roster (extractors/'
+        print(f'Model {model_id!r} is not in the local roster (sensi/extractors/'
               f'predictability_models.py); falling back to the auto-selected '
               f'default {default_id!r}.')
         model_id, slug = default_id, default_slug

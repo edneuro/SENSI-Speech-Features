@@ -1,4 +1,4 @@
-"""Tests for extractors.text_parser — focused on doc_id and paragraph_id.
+"""Tests for sensi.extractors.text_parser — focused on doc_id and paragraph_id.
 
 The spaCy-driven columns (POS, lemma, dep) are covered by integration
 tests via the CLI; this module only verifies the structural bookkeeping

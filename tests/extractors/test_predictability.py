@@ -123,7 +123,7 @@ def _patch_transformers(monkeypatch, fake_model):
 
 
 def test_gpt2_backend_stays_cpu_even_when_cuda_available(monkeypatch):
-    # Legacy extractors/surprisal.py hardcoded USE_GPU=False, always loading
+    # Legacy sensi/extractors/surprisal.py hardcoded USE_GPU=False, always loading
     # GPT-2 in full fp32 precision on CPU. The shared _HuggingFaceBackend
     # must preserve that — quantized/fp16 GPT-2 would emit different
     # surprisal values than previously-computed CSVs, even though the GPU
@@ -136,7 +136,7 @@ def test_gpt2_backend_stays_cpu_even_when_cuda_available(monkeypatch):
 
 
 # ---------------------------------------------------------------------------
-# Ported from tests/extractors/test_surprisal.py (deleted — extractors/
+# Ported from tests/extractors/test_surprisal.py (deleted — sensi/extractors/
 # surprisal.py is now a retired shim). These pin the pure subword<->token
 # bookkeeping shared by every local-HF backend.
 # ---------------------------------------------------------------------------
@@ -196,7 +196,7 @@ def test_unmatched_token_is_none():
 
 
 # ---------------------------------------------------------------------------
-# Ported from tests/extractors/test_llm_cloze.py (deleted — extractors/
+# Ported from tests/extractors/test_llm_cloze.py (deleted — sensi/extractors/
 # llm_cloze.py is now a retired shim). Covers pieces of predictability.py
 # not already exercised above: pure scoring math, model selection/gating,
 # chunked long-text inference, and the device-tier load cascade.

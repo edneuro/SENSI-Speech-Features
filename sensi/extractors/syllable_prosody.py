@@ -1,8 +1,8 @@
 """Syllable-level prosody -- mean pitch/volume + delta within each syllable
 interval. Reuses the Contours object built once per stimulus by
-extractors.audio_features.extract(). No second audio decode.
+sensi.extractors.audio_features.extract(). No second audio decode.
 
-Mirrors extractors/prosody.py:add_word_prosody for the per-row math;
+Mirrors sensi/extractors/prosody.py:add_word_prosody for the per-row math;
 the only difference is the row granularity (syllables vs words).
 """
 from __future__ import annotations

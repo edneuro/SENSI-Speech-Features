@@ -32,7 +32,7 @@ Column order in output CSV:
 
 Merge strategy (alignment + parse):
     After alignment, Transcript words are merged into the token DataFrame
-    by monotonic sequence matching (extractors/align_merge.py): both word
+    by monotonic sequence matching (sensi/extractors/align_merge.py): both word
     streams are consumed left to right, with local repair for tokenization
     differences (contractions, digits vs. spelled-out numbers, hyphenated
     words). Tokens that cannot be paired get NaN Onset/End — never the
@@ -109,7 +109,7 @@ def _reorder(df: pd.DataFrame) -> pd.DataFrame:
 
 
 # ---------------------------------------------------------------------------
-# Per-step timing (Run-tab estimates; utils/timing_history.py)
+# Per-step timing (Run-tab estimates; sensi/utils/timing_history.py)
 # ---------------------------------------------------------------------------
 # The batch runners attach a StageTimer as args._stage_timer; every helper
 # below is a no-op without one (direct run() callers, e.g. tests), so
@@ -191,7 +191,7 @@ def _timed_predictability(args, df, text, models, metrics, context):
 
 def count_words(text) -> int:
     """Words of a raw transcript — the unit for text steps, shared with the
-    Run-tab estimator (utils.timing_history.count_words)."""
+    Run-tab estimator (sensi.utils.timing_history.count_words)."""
     from sensi.utils.timing_history import count_words as _count
     return _count(text)
 
@@ -327,7 +327,7 @@ def run(args) -> pd.DataFrame:
         run_if_missing = not getattr(args, '_batch_prealigned', False)
         g2p_oov = bool(getattr(args, 'g2p_oov', False))
         # Built via the SAME helper align_with_phones uses to store the memo
-        # entry (extractors.aligner.cache_key), so this log-only check can
+        # entry (sensi.extractors.aligner.cache_key), so this log-only check can
         # never desync from the real lookup inside mfa_align — a hand-rebuilt
         # tuple here previously omitted the `g2p` element added for OOV
         # support, so the "Reusing cached alignment" line never fired.
@@ -1169,7 +1169,7 @@ def run_doc_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None:
     # for direct run() callers, resolved from config/features.yaml inside run()). When
     # doc_toggles['predictability_means'] is on, build_doc_summary scans
     # whatever '<slug>_<Metric>' columns that roster actually produced and
-    # means them (utils/doc_summary.py's predictability_means branch) — if
+    # means them (sensi/utils/doc_summary.py's predictability_means branch) — if
     # the roster is empty, there is simply nothing to aggregate, same as any
     # other doc-agg toggle whose source columns are absent.
     if doc_toggles.get('lexical_norms_agg'):
@@ -1188,7 +1188,7 @@ def run_doc_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None:
     # no-ops when alignment didn't run, so we don't force no_align here
     # (an explicit no_align should win, and the GUI path
     # separately ensures alignment is on when doc-prosody is wanted —
-    # see gui/run_dispatch.py).
+    # see sensi/gui/run_dispatch.py).
     if doc_toggles.get('doc_prosody'):
         extract_args.no_prosody = False
 

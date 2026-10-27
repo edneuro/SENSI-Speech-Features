@@ -11,7 +11,7 @@ Two backends share the same interface:
             selects it automatically.
 
 Backend selection: `detect_backend` always returns Empath. A stray .dic in
-dictionaries/ no longer activates LIWC.
+data/dictionaries/ no longer activates LIWC.
 
 Output columns added to the token DataFrame:
     Sem_<Dict>_<category> ∈ {0, 1, NaN}     (one binary column per category)

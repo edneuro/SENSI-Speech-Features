@@ -6,7 +6,7 @@ Three artifacts per batch run, all sharing a timestamp, written to a
     <output>/logs/<prefix>_<YYYY-MM-DD_HH-MM-SS>_manifest.json    # structured manifest
     <output>/logs/<prefix>_<YYYY-MM-DD_HH-MM-SS>_no-match.csv     # only if files didn't pair
 
-Used by main.py's batch mode and gui.py.
+Used by sensi/pipeline.py's batch mode and gui.py.
 """
 
 import csv
@@ -29,7 +29,7 @@ class _StdoutTee:
     """Mirrors writes to both the original stream and the log file handle.
 
     Installed on sys.stdout / sys.stderr while a RunLogger is active so the
-    `[spacy] …` / `[mfa] …` progress prints in main.py reach the .log file
+    `[spacy] …` / `[mfa] …` progress prints in sensi/pipeline.py reach the .log file
     (which the GUI Logs panel tails live). The original stream still
     receives the writes so an attached terminal keeps showing them.
     """
@@ -87,7 +87,7 @@ class RunLogger:
 
         self._start = _dt.datetime.now()
         # run_ts is shared between the word + doc batches that get dispatched
-        # together (see gui/run_dispatch.py), so their log files group cleanly
+        # together (see sensi/gui/run_dispatch.py), so their log files group cleanly
         # by timestamp in the Logs tab.
         self._run_ts = run_ts if run_ts is not None else self._start.strftime('%Y-%m-%d_%H-%M-%S')
         ts = self._run_ts
@@ -113,7 +113,7 @@ class RunLogger:
         self._info(f'Run started by {analyzer} at {self._start.isoformat(timespec="seconds")}')
 
         # Tee stdout + stderr into the log file so the per-step progress
-        # prints from main.py (`[spacy] …`, `[mfa] …`, etc.) reach the
+        # prints from sensi/pipeline.py (`[spacy] …`, `[mfa] …`, etc.) reach the
         # Logs panel's live-tail. Restored in finalize().
         self._orig_stdout = sys.stdout
         self._orig_stderr = sys.stderr

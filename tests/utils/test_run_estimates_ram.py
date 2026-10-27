@@ -1,4 +1,4 @@
-"""Peak-memory estimate (utils/run_estimates.estimate_ram)."""
+"""Peak-memory estimate (sensi/utils/run_estimates.estimate_ram)."""
 from types import SimpleNamespace
 
 from sensi.utils import estimate_constants as K

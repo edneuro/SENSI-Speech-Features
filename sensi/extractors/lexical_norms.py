@@ -9,14 +9,14 @@ Adds these columns to a token DataFrame:
 
 Norm data is **never shipped** with SensiExtractor (house-use / BYO-files —
 see the data-distribution policy). Each source is a user-supplied parquet at
-a configurable local path under ``dictionaries/``. If a source's file is
+a configurable local path under ``data/dictionaries/``. If a source's file is
 missing, that source's columns are emitted as NaN and a warning is logged;
 the run never hard-fails.
 
 Lookup is keyed on ``lemma.lower()`` with a fallback to the surface
 ``token.lower()``; PUNCT rows and out-of-vocabulary words get NaN (never
 imputed). The expected parquet schema for each source is documented in
-``dictionaries/README.md``.
+``data/dictionaries/README.md``.
 """
 
 import logging
@@ -66,7 +66,7 @@ def add_lexical_norms(
         token_df: must have ``token``, ``lemma``, ``upos`` columns.
         paths: optional ``{source: path}`` overrides (sources: ``aoa``,
             ``concreteness``, ``mrc``, ``warriner``). Unspecified sources use
-            their default ``dictionaries/<file>.parquet`` path.
+            their default ``data/dictionaries/<file>.parquet`` path.
     """
     df = token_df.copy()
     norm_paths = {k: Path(v) for k, v in (paths or {}).items()}
@@ -101,8 +101,8 @@ def _load_lookup(path: Path, source: str) -> pd.DataFrame | None:
     if not path.exists():
         logger.warning(
             'Lexical-norms lookup for %r not found at %s - its columns will be '
-            'NaN. Build the norm tables with utils/download_lexical_norms.py (or see '
-            'dictionaries/README.md for sources and the expected schema).',
+            'NaN. Build the norm tables with scripts/download_lexical_norms.py (or see '
+            'data/dictionaries/README.md for sources and the expected schema).',
             source, path,
         )
         _lookup_cache[path] = None

@@ -2,7 +2,7 @@
 """Regenerate the committed config templates from the code defaults.
 
 config/features_defaults.yaml and config/run_defaults.yaml are build
-artifacts of utils.preferences.DEFAULT_PREFS — the code is the source of
+artifacts of sensi.utils.preferences.DEFAULT_PREFS — the code is the source of
 truth. A drift-guard test (tests/utils/test_config_templates.py) fails
 whenever the schema changes without rerunning this script:
 

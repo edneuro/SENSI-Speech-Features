@@ -37,12 +37,12 @@ def wait_for_estimate_threads(timeout: float = 10.0) -> bool:
         t.join(timeout)
     return not any(t.is_alive() for t in threads)
 
-# Transcript extensions the batch runners pair (gui/planner/emit.py).
+# Transcript extensions the batch runners pair (sensi/gui/planner/emit.py).
 _TEXT_EXTS = (".txt", ".tsv", ".md")
 
 
 # Run-tab level rows, in display order: (prefs output key, name, plain line).
-# Each level's files come from gui.planner.plan.LEVEL_ARTIFACTS, so the rows
+# Each level's files come from sensi.gui.planner.plan.LEVEL_ARTIFACTS, so the rows
 # can never disagree with what the planner writes.
 _LEVEL_ROWS: list[tuple[str, str, str]] = [
     ("level_word", "Word level",
@@ -214,7 +214,7 @@ class RunSection(QWidget):
         self._est_view: tuple | None = None    # (prefs, plan) of latest refresh
         self._system_info_lock = threading.Lock()
         # Cancel: the status strip's button sets this; the batch runners poll
-        # it between documents (main.py should_cancel), so the file in progress
+        # it between documents (sensi/pipeline.py should_cancel), so the file in progress
         # finishes and the rest are skipped.
         self._cancel = threading.Event()
         if status_strip is not None:
@@ -396,7 +396,7 @@ class RunSection(QWidget):
         self.warnings_label.setText("\n".join(lines))
 
         # Cost panel — dead: predictability offers local HuggingFace models
-        # only (see extractors/predictability.py; OpenAI backend removed),
+        # only (see sensi/extractors/predictability.py; OpenAI backend removed),
         # so there is no paid usage to estimate. Kept hidden rather than
         # deleted so a future paid backend can be wired back in without
         # rebuilding this panel.

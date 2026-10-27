@@ -1,4 +1,4 @@
-"""ARPABET -> IPA mapping (extractors/arpabet_ipa.py)."""
+"""ARPABET -> IPA mapping (sensi/extractors/arpabet_ipa.py)."""
 import pytest
 
 from sensi.extractors.arpabet_ipa import ARPABET_TO_IPA, to_ipa, syllable_to_ipa

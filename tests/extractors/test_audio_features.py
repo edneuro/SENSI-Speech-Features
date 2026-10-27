@@ -1,4 +1,4 @@
-"""Tests for extractors.audio_features (Parselmouth wrapper).
+"""Tests for sensi.extractors.audio_features (Parselmouth wrapper).
 
 The integration test synthesizes a 200 Hz sine WAV in-process so the test
 suite has no external dependencies.

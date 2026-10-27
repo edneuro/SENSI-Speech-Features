@@ -78,7 +78,7 @@ def test_word_level_namespace_basic():
 
 def test_predictability_namespace_reflects_prefs():
     """ns.predictability carries prefs["predictability"] verbatim (models list
-    + metrics dict) so main.py can drive add_predictability without the old
+    + metrics dict) so sensi/pipeline.py can drive add_predictability without the old
     no_surprisal/no_llm_cloze/llm_model flags."""
     prefs = _prefs(
         output={"level_word": True, "level_subword": False, "level_document": False},
@@ -151,7 +151,7 @@ def test_g2p_oov_defaults_off_when_alignment_section_absent():
 
 
 def test_syllable_prosody_forces_prosody_flag_off():
-    """no_prosody must be False so main.py runs praat extract + word prosody
+    """no_prosody must be False so sensi/pipeline.py runs praat extract + word prosody
     (contours are then shared with syllable_prosody)."""
     prefs = _prefs(
         output={"level_word": False, "level_subword": True, "level_document": False},
@@ -185,7 +185,7 @@ def test_doc_namespace_separate_no_flags():
 
 
 def test_feature_toggles_pass_through_verbatim():
-    """main.py's _word_columns_to_drop reads feature_toggles directly,
+    """sensi/pipeline.py's _word_columns_to_drop reads feature_toggles directly,
     so the planner must pass it through unchanged.
 
     The full prefs features dict (including v7 master defaults) is passed
@@ -229,7 +229,7 @@ def test_edu_bands_string_for_runtime():
     )
     plan = plan_from_prefs(prefs)
     ns = to_namespace(plan, prefs, level="word")
-    # main.py.run() does args.edu_bands.split(',') — must be a comma-joined string
+    # sensi/pipeline.py.run() does args.edu_bands.split(',') — must be a comma-joined string
     assert isinstance(ns.edu_bands, str) or ns.edu_bands is None
     if ns.edu_bands:
         assert "k2" in ns.edu_bands
@@ -275,7 +275,7 @@ def test_master_toggle_off_suppresses_word_stage_flags():
     toggle while its per-column child toggles stay on must NOT leave the
     corresponding word-level no_* flag False. plan_from_prefs correctly omits
     the stage (it honours master_toggle); the word namespace must agree, or
-    main.py runs an extractor the user switched off."""
+    sensi/pipeline.py runs an extractor the user switched off."""
     prefs = _prefs(
         output={"level_word": True, "level_subword": False, "level_document": False},
         features={

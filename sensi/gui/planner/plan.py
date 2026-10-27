@@ -30,7 +30,7 @@ DOC_AGG_PREDICTABILITY_CLUSTER_NAME = "doc agg predictability"
 # doc-level cluster master gates added in v7 (master_doc_prosody,
 # master_doc_articulation_rate). All other cluster toggle_keys (per-column
 # feat_*, masters that gate features-section clusters) live in
-# prefs["features"]. See utils/preferences.py:_OUTPUT_DEFAULT_V7 for the
+# prefs["features"]. See sensi/utils/preferences.py:_OUTPUT_DEFAULT_V7 for the
 # canonical set of output-keyed prefs.
 OUTPUT_KEYED_TOGGLES = frozenset({
     "out_count_tokens", "out_count_content_tokens",

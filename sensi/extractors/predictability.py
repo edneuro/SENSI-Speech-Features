@@ -98,7 +98,7 @@ def _get_backend(slug: str, max_context: int | None = None) -> "_Backend":
 
 
 # ---------------------------------------------------------------------------
-# subword <-> token bookkeeping (moved from extractors/surprisal.py; shared
+# subword <-> token bookkeeping (moved from sensi/extractors/surprisal.py; shared
 # by the HuggingFace backend's score() below)
 # ---------------------------------------------------------------------------
 
@@ -191,11 +191,11 @@ def _scores_from_subwords(
 
 
 # ---------------------------------------------------------------------------
-# model selection / gating (moved from extractors/llm_cloze.py)
+# model selection / gating (moved from sensi/extractors/llm_cloze.py)
 # ---------------------------------------------------------------------------
 
 # Legacy model list — the GUI now reads the roster
-# (extractors/predictability_models.all_specs) directly, so this constant is no
+# (sensi/extractors/predictability_models.all_specs) directly, so this constant is no
 # longer consulted by production code. Retained (with tests asserting it holds
 # no OpenAI entries) as the documented home for the local-model roster labels
 # and a guardrail against an OpenAI backend silently reappearing. LOCAL models
@@ -274,10 +274,10 @@ def select_model() -> str:
     slug) given the current environment.
 
     Legacy entry point kept for callers that still want a free-form model id
-    (e.g. utils/validate_cloze.py) rather than driving add_predictability via
+    (e.g. scripts/validate_cloze.py) rather than driving add_predictability via
     the roster directly. A plain-name lookup within this module's own
     namespace, so unit tests can monkeypatch
-    extractors.predictability._available_vram_gb to exercise each VRAM tier.
+    sensi.extractors.predictability._available_vram_gb to exercise each VRAM tier.
     """
     return _model_id_for_vram(_available_vram_gb())
 
@@ -330,7 +330,7 @@ def _load_tiers(cuda: bool) -> list[str]:
 
 
 # HF ids that must always load full-precision on CPU, never quantized/fp16
-# on GPU — this preserves the legacy extractors/surprisal.py behavior
+# on GPU — this preserves the legacy sensi/extractors/surprisal.py behavior
 # (hardcoded USE_GPU=False), so previously-computed GPT-2 surprisal values
 # never drift due to a precision change. Only GPT-2 has this constraint;
 # the Llama models keep the normal GPU-tier cascade.
@@ -357,7 +357,7 @@ class _HuggingFaceBackend:
     Loads via AutoModelForCausalLM/AutoTokenizer for every model — including
     GPT-2, where AutoModelForCausalLM("gpt2") resolves to the same
     GPT2LMHeadModel class (identical weights/logits) that the legacy
-    extractors/surprisal.py loaded directly.
+    sensi/extractors/surprisal.py loaded directly.
     """
 
     def __init__(self, model_id: str, max_context: int | None = None):

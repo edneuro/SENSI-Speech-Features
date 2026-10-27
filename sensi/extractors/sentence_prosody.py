@@ -101,8 +101,8 @@ def add_sentence_prosody(
         # Measured back to the most recent ALIGNED sentence (ffill skips
         # NaN-Mean rows -- sentences where no word aligned -- instead of
         # poisoning the next aligned sentence's delta with NaN; mirrors the
-        # Word_Gap fix in extractors/timing.py and the word-prosody fix in
-        # extractors/prosody.py).
+        # Word_Gap fix in sensi/extractors/timing.py and the word-prosody fix in
+        # sensi/extractors/prosody.py).
         df["Pitch_Delta"]  = df["Pitch_Mean"] - df["Pitch_Mean"].ffill().shift(1)
         df["Volume_Delta"] = df["Volume_Mean"] - df["Volume_Mean"].ffill().shift(1)
     elif len(df) == 1:

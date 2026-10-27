@@ -36,9 +36,9 @@ def _list_backend_categories(backend: str) -> tuple[list[str], str | None]:
         _, dict_path = detect_backend()
         if dict_path is None:
             return list(_SOP_CATEGORIES_LIWC), (
-                "No LIWC dictionary found at dictionaries/*.dic. Showing SOP "
+                "No LIWC dictionary found at data/dictionaries/*.dic. Showing SOP "
                 "defaults only. LIWC-22 is license-bound — obtain a copy and "
-                "place liwc-2022.dic in the dictionaries/ folder."
+                "place liwc-2022.dic in the data/dictionaries/ folder."
             )
         try:
             import liwc

@@ -1247,7 +1247,7 @@ def test_post_v20_user_values_survive_a_reload(tmp_path, monkeypatch):
 
 def test_alignment_section_merges_by_inner_key_not_wholesale():
     """Regression for a missed registration step: `alignment` must be listed
-    in _CURRENT_SECTIONS (utils/preferences.py) so it merges by inner key like
+    in _CURRENT_SECTIONS (sensi/utils/preferences.py) so it merges by inner key like
     every other section (acoustic_ts, phoneme_surprisal, ...). An unregistered
     section is wholesale-replaced, so saving one alignment.* toggle would
     silently erase any sibling key the instant a second one exists — this

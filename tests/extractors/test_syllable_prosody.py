@@ -7,7 +7,7 @@ from sensi.extractors.syllable_prosody import add_syllable_prosody
 
 
 class _FakeContours:
-    """Minimal fake of extractors.audio_features.Contours for testing."""
+    """Minimal fake of sensi.extractors.audio_features.Contours for testing."""
     def __init__(self, *, pitch_hz: np.ndarray, intensity_db: np.ndarray,
                  times: np.ndarray, speaker_median_pitch_hz: float = 100.0):
         self.pitch_hz = pitch_hz

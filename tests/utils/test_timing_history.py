@@ -103,7 +103,7 @@ def test_model_device_rule():
     other = next(s.slug for s in ALL_SPECS if s.hf_id != "gpt2")
     assert th.model_device("predictability", other, True) == "cuda"
     assert th.model_device("predictability", other, False) == "cpu"
-    # BERT is never moved to CUDA by extractors/bert_embed.py.
+    # BERT is never moved to CUDA by sensi/extractors/bert_embed.py.
     assert th.model_device("bert", None, True) == "cpu"
     for step in ("spacy_parse", "mfa_align", "word2vec", "acoustic_ts"):
         assert th.model_device(step, None, True) == "cpu"

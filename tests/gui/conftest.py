@@ -16,7 +16,7 @@ def _isolated_prefs(tmp_path, monkeypatch):
 
 @pytest.fixture(autouse=True)
 def _join_run_estimate_workers():
-    """Any RunSection starts background estimate workers (gui/section_run);
+    """Any RunSection starts background estimate workers (sensi/gui/section_run);
     wait for them so no test leaves a thread running into the next one."""
     yield
     import sys

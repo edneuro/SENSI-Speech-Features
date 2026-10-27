@@ -1,4 +1,4 @@
-"""Tests for extractors.bert_embed.
+"""Tests for sensi.extractors.bert_embed.
 
 Uses a tiny BertConfig (2 layers, 64 hidden, 2 heads) with random weights
 so tests run in <5 s without GPU or real model downloads.

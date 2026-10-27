@@ -52,7 +52,7 @@ def parse_phones(textgrid_path: str) -> pd.DataFrame:
     Silence intervals (SIL, sp, '') are excluded. 'spn' is NOT excluded: MFA
     emits it as the single phone of an out-of-dictionary word, so dropping it
     deleted that word from every sub-word output with no warning. Callers
-    distinguish it via Pron_Source (see extractors/syllabify.py).
+    distinguish it via Pron_Source (see sensi/extractors/syllabify.py).
     """
     tg = tgt.read_textgrid(textgrid_path)
     phone_tier = tg.get_tier_by_name('phones')

@@ -1,4 +1,4 @@
-"""Tests for gui.section_logs (Logs tab — live tail + past runs)."""
+"""Tests for sensi.gui.section_logs (Logs tab — live tail + past runs)."""
 from pathlib import Path
 
 

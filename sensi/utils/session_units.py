@@ -33,7 +33,7 @@ _STATIC_UNITS: dict[tuple[str, str], str] = {
     ("features", "Edu_Zipf_6to8"):    _ZIPF,
     ("features", "Edu_Zipf_9to12"):   _ZIPF,
     ("features", "Edu_Zipf_Overall"): _ZIPF,
-    # Lexical norms (extractors/lexical_norms.py): rating-scale units.
+    # Lexical norms (sensi/extractors/lexical_norms.py): rating-scale units.
     ("features", "AoA_Mean"):         "years (rated age of acquisition)",
     ("features", "AoA_SD"):           "years",
     ("features", "Concreteness"):     "rating (1-5)",
@@ -45,7 +45,7 @@ _STATIC_UNITS: dict[tuple[str, str], str] = {
     # Predictability: dynamic, roster-driven '<slug>_<Metric>' columns — see
     # _predictability_unit_rows below, resolved from plan.predictability_columns
     # rather than hard-coded here (the old fixed Surprisal/LLM_* column names
-    # no longer exist post-unification; extractors/predictability.py).
+    # no longer exist post-unification; sensi/extractors/predictability.py).
     # Syllable sidecar
     ("syllables", "Onset"):           "seconds",
     ("syllables", "End"):             "seconds",
@@ -59,7 +59,7 @@ _STATIC_UNITS: dict[tuple[str, str], str] = {
     ("phonemes",  "Duration"):        "seconds",
     ("phonemes",  "phoneme_surprisal"): "bits",
     ("phonemes",  "cohort_entropy"):  "bits",
-    # Sentence sidecar (extractors/sentence_prosody.py)
+    # Sentence sidecar (sensi/extractors/sentence_prosody.py)
     ("sentences", "Onset"):           "seconds",
     ("sentences", "End"):             "seconds",
     ("sentences", "Volume_Mean"):     "dB",
@@ -83,7 +83,7 @@ _STATIC_UNITS: dict[tuple[str, str], str] = {
     ("documents_summary", "mtld"):                      "tokens (mean factor length)",
     ("documents_summary", "flesch_reading_ease"):       "Flesch score (~0-100)",
     ("documents_summary", "flesch_kincaid_grade"):      "US grade level",
-    # Doc-level lexical-norm aggregates (over content words; utils/doc_summary.py)
+    # Doc-level lexical-norm aggregates (over content words; sensi/utils/doc_summary.py)
     ("documents_summary", "mean_aoa"):                  "years",
     ("documents_summary", "median_aoa"):                "years",
     ("documents_summary", "max_aoa"):                   "years",
@@ -133,7 +133,7 @@ _PITCH_COLUMNS: dict[str, tuple[str, ...]] = {
 
 
 # Predictability metric suffix -> unit. Roster columns are named
-# '<slug>_<Metric>' (extractors/predictability.py's _METRIC_COLS caps); the
+# '<slug>_<Metric>' (sensi/extractors/predictability.py's _METRIC_COLS caps); the
 # slug prefix varies per selected model so only the suffix is matched.
 _PREDICTABILITY_METRIC_UNITS: dict[str, str] = {
     "Surprisal": "bits",
@@ -142,7 +142,7 @@ _PREDICTABILITY_METRIC_UNITS: dict[str, str] = {
 }
 
 # Doc-level means of the same columns: 'mean_<slug>_<metric lower>'
-# (utils/doc_summary.py). A mean of a boolean is a proportion.
+# (sensi/utils/doc_summary.py). A mean of a boolean is a proportion.
 _DOC_PREDICTABILITY_METRIC_UNITS: dict[str, str] = {
     "Surprisal": "bits",
     "Cloze":     "probability (0-1)",
@@ -156,7 +156,7 @@ def _predictability_unit_rows(plan: Plan) -> list[dict]:
 
     Resolved dynamically from plan.predictability_columns (rather than a
     static table) because the column set depends on the user's selected
-    model roster — see gui/planner/plan.py:_predictability_columns.
+    model roster — see sensi/gui/planner/plan.py:_predictability_columns.
     """
     rows: list[dict] = []
     for col in plan.predictability_columns:

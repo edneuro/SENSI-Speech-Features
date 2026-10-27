@@ -3,7 +3,7 @@
 Measured values come from `python scripts/calibrate_estimates.py --scratch
 <dir outside the repo>`, run 2026-10-26 (the "all" memory variant re-run the
 same day with `--skip-full --memory-variants all`). "Validation corpus" below
-means: validation/data, 10 paired stimuli, 301 whitespace words,
+means: dev/validation/data, 10 paired stimuli, 301 whitespace words,
 113.8 s audio, every CPU-feasible feature on (predictability: GPT-2 only),
 run 2026-10-26 on "jose" (AMD Ryzen AI 9 HX 370, 24 threads, 31.1 GiB RAM,
 Windows 11, CPU-only torch 2.7.1, transformers 5.13.0). Values that the
@@ -11,8 +11,8 @@ machine could not measure (gated Llama models, any GPU) are computed from the
 model card's parameter count, with the URL next to the value.
 
 "Word" everywhere = a whitespace-separated token of the transcript, the unit
-utils/timing_history.py uses for text steps. Memory is in GiB (2**30 bytes),
-the unit of utils.system_info's system_ram_gb / vram_gb.
+sensi/utils/timing_history.py uses for text steps. Memory is in GiB (2**30 bytes),
+the unit of sensi.utils.system_info's system_ram_gb / vram_gb.
 """
 from __future__ import annotations
 
@@ -39,7 +39,7 @@ CSV_BYTES_PER_CELL: dict[str, float] = {
 # Peak = RAM_GB["baseline"] + the SUM of the heavy items that will run. Word2Vec
 # (_MODEL_CACHE), BERT (_BERT_CACHE) and the predictability backends
 # (_BACKEND_CACHE, several models at once) stay cached for the whole process
-# and main.py preloads them, so they add up. (MFA is a separate subprocess.)
+# and sensi/pipeline.py preloads them, so they add up. (MFA is a separate subprocess.)
 # Measured items: peak working set (psutil peak_wset) of a fresh run.py
 # subprocess on one stimulus with only that heavy item on, minus the baseline
 # subprocess (same config, no heavy models). Validation corpus, 2026-10-26,
@@ -111,7 +111,7 @@ RAM_GB: dict[str, float] = {
     "word2vec": 3.85,   # GoogleNews 300-d KeyedVectors (4.72 - 0.87 GiB)
     "bert": 0.48,       # bert-base-uncased, fp32 (1.35 - 0.87 GiB)
     # GPT-2 always loads full-precision on the CPU
-    # (extractors/predictability._is_full_precision_cpu): fp32, 1.57 - 0.87 GiB.
+    # (sensi/extractors/predictability._is_full_precision_cpu): fp32, 1.57 - 0.87 GiB.
     "gpt2": 0.70,
     # ...so its "@cuda" tier is the same CPU load, never VRAM.
     "gpt2@cuda": 0.70,
@@ -128,7 +128,7 @@ RAM_GB: dict[str, float] = {
 
 # --- First-estimate rates (seconds per unit, cpu) ---------------------------
 # Median seconds/unit over the validation run's samples (the same statistic as
-# utils.timing_history.rate), validation corpus, 2026-10-26, jose. Units:
+# sensi.utils.timing_history.rate), validation corpus, 2026-10-26, jose. Units:
 # audio seconds for mfa_align / prosody_contours / acoustic_ts /
 # phoneme_surprisal, transcript words for every other step.
 FIRST_ESTIMATE_RATES: dict[str, float] = {
@@ -159,7 +159,7 @@ for _slug, _params in (("llama32_3b", 3.21e9), ("llama3_8b", 8e9),
 FIRST_ESTIMATE_RATES["predictability:gpt2"] = FIRST_ESTIMATE_RATES["predictability"]
 
 # MFA wall time = fixed start-up per MFA invocation + slope x audio seconds
-# aligned (utils.timing_history.fit_overhead_slope learns both per machine).
+# aligned (sensi.utils.timing_history.fit_overhead_slope learns both per machine).
 # First estimate: least-squares fit of the three mfa_align samples the
 # calibration run recorded (2026-10-26, jose; each one MFA call):
 #   10-stimulus validation batch  113.8 s audio -> 114.4 s
@@ -185,7 +185,7 @@ FIRST_LOAD_SECONDS: dict[str, float] = {
     "bert": 0.7,
     # Not a model load: the first phoneme_surprisal stimulus took 5.88 s vs
     # 0.002-0.004 s for each later one (the cohort trie is built once per
-    # process, extractors/phoneme_surprisal._TRIE_CACHE). Read from the
+    # process, sensi/extractors/phoneme_surprisal._TRIE_CACHE). Read from the
     # timing_history.json samples of the same run.
     "phoneme_surprisal": 5.9,
 }

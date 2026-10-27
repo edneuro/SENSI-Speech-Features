@@ -1,4 +1,4 @@
-"""Tests for gui.run_dispatch — background-thread orchestration."""
+"""Tests for sensi.gui.run_dispatch — background-thread orchestration."""
 import pytest
 
 
@@ -29,7 +29,7 @@ def test_build_args_word_filters_ewfg_bands(monkeypatch, tmp_path):
 
 def test_build_args_word_propagates_feature_toggles_dict(monkeypatch, tmp_path):
     """v4: word-level args must include the full feature_toggles dict so
-    main.py's CSV writer can drop per-column toggled-off columns. Named
+    sensi/pipeline.py's CSV writer can drop per-column toggled-off columns. Named
     `feature_toggles` (not `features`) to avoid collision with CLI args."""
     monkeypatch.setenv("SENSI_PREFS_PATH", str(tmp_path / "prefs.json"))
     from sensi.utils.preferences import save_preferences
@@ -325,7 +325,7 @@ def test_word_args_runs_parse_when_only_freq_on(prefs_tmp):
 def test_doc_args_skip_freq_when_word_freq_off_and_no_aggregate(prefs_tmp):
     """Doc-level dispatcher must not force the freq extractor on. When the
     user has freq_subtlex off AND no doc aggregate needs Zipf, freq should
-    not run. (main.py's per-pair force-on re-enables it only when
+    not run. (sensi/pipeline.py's per-pair force-on re-enables it only when
     mean_zipf_freq is actually wanted.)"""
     from sensi.utils.preferences import save_preferences
     from sensi.gui.run_dispatch import build_args_doc_level
@@ -462,7 +462,7 @@ def test_dispatcher_runs_word_batch_for_sidecars_only(prefs_tmp):
     """Regression for Bug A part 1: with word_level_csv=False but
     syllables_csv=True (or phonemes_csv=True), the word batch must still
     fire — sidecars are emitted INSIDE run_word_level_batch. Pass
-    no_word_csv=True so main.py knows to skip the features.csv write."""
+    no_word_csv=True so sensi/pipeline.py knows to skip the features.csv write."""
     from sensi.utils.preferences import save_preferences
     save_preferences({
         "output": {
@@ -493,7 +493,7 @@ def test_dispatcher_runs_word_batch_for_sidecars_only(prefs_tmp):
         "word batch must fire when only sidecars are requested"
     )
     assert captured.get("no_word_csv") is True, (
-        "no_word_csv must be True so main.py skips the features.csv write"
+        "no_word_csv must be True so sensi/pipeline.py skips the features.csv write"
     )
     assert "doc_called" not in captured
 

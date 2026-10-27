@@ -1,4 +1,4 @@
-"""Run-time estimate (utils/run_estimates.estimate_time / format_duration)."""
+"""Run-time estimate (sensi/utils/run_estimates.estimate_time / format_duration)."""
 import copy
 
 import pytest
@@ -159,7 +159,7 @@ def test_format_duration_examples():
 
 def test_fresh_alignment_not_charged_mfa():
     # audio_seconds_to_align = 0: every paired stimulus already has a fresh
-    # TextGrid on disk (extractors.aligner.is_alignment_fresh), so the run
+    # TextGrid on disk (sensi.extractors.aligner.is_alignment_fresh), so the run
     # never starts MFA; None = unknown, charge every paired audio second.
     prefs = _all_on()
     plan = plan_from_prefs(prefs)

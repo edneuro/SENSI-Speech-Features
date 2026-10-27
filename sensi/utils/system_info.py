@@ -1,6 +1,6 @@
 """Collect OS / Python / GPU / RAM info for run manifests.
 
-Used by `utils.run_logger` to record the environment a batch was run in,
+Used by `sensi.utils.run_logger` to record the environment a batch was run in,
 so future debugging across machines is traceable.
 """
 

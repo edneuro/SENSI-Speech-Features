@@ -3,7 +3,7 @@ token detection.
 
 The conventional location is <config_dir>/hf_token.txt (gitignored), named by
 prefs `shared.hf_token_file`. A relative value resolves against the config
-dir (utils.preferences.get_config_dir), so the shipped default "hf_token.txt"
+dir (sensi.utils.preferences.get_config_dir), so the shipped default "hf_token.txt"
 is correct on every machine; absolute paths and ~/$VARS also work.
 """
 from __future__ import annotations

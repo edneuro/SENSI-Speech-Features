@@ -4,7 +4,7 @@ Each test verifies that a level subfolder (word/, syllable/, phoneme/,
 document/) is created only when output is actually written there, and that
 session_units CSVs land in logs/ not the output root.
 
-All tests fail until Task 2 and Task 3 update main.py.
+All tests fail until Task 2 and Task 3 update sensi/pipeline.py.
 """
 from pathlib import Path
 

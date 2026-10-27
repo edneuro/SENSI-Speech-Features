@@ -250,7 +250,7 @@ def test_phoneme_surprisal_mat_write_survives_savemat(tmp_path, monkeypatch):
     out_dir.mkdir()
 
     # A real (tiny, silent) wav so _audio_duration()'s soundfile.info() call
-    # — part of the real config-dict construction in main.py — succeeds.
+    # — part of the real config-dict construction in sensi/pipeline.py — succeeds.
     sr = 16000
     sf.write(str(audio_dir / "story.wav"), np.zeros(sr, dtype=np.float32), sr)
     (txt_dir / "story.txt").write_text("hello world")
@@ -328,7 +328,7 @@ def test_phoneme_surprisal_mat_write_survives_savemat(tmp_path, monkeypatch):
         assert val is not None, f"config.{key} round-tripped as None"
     # 'cap' specifically must be the REAL OOV-surprisal cap from the cohort
     # trie actually used for scoring (not the earlier None/NaN placeholder) —
-    # main.py fetches it via get_cohort_trie(...).cap for honest provenance.
+    # sensi/pipeline.py fetches it via get_cohort_trie(...).cap for honest provenance.
     assert np.isfinite(float(cfg["cap"]))
     assert float(cfg["cap"]) == pytest.approx(trie.cap)
 
@@ -336,11 +336,11 @@ def test_phoneme_surprisal_mat_write_survives_savemat(tmp_path, monkeypatch):
 def test_batch_emits_namespaced_predictability_columns(tmp_path):
     """End-to-end: a text-only batch with gpt2 + surprisal & cloze writes the
     namespaced <slug>_<Metric> columns and NONE of the retired names. Runs the
-    real GPT-2 forward pass (weights cached in hf_cache/)."""
+    real GPT-2 forward pass (weights cached in data/hf_cache/)."""
     import pandas as pd
     args = _args_for_batch(tmp_path)
     # Predictability is roster-driven (no CLI flags): configure it on the
-    # namespace directly, exactly as gui/planner/emit.py does.
+    # namespace directly, exactly as sensi/gui/planner/emit.py does.
     args.predictability = {
         "models": ["gpt2"],
         "metrics": {"surprisal": True, "cloze": True, "topmatch": False},

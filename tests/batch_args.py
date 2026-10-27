@@ -35,7 +35,7 @@ def build_parser() -> argparse.ArgumentParser:
     # with the default) for backward compatibility.
     p.add_argument('--edu-freq', dest='no_edu_freq', action='store_false',
                    help='Enable EWFG grade-band frequencies (off by default; '
-                        'requires a user-supplied dictionaries/edu_zipf.parquet).')
+                        'requires a user-supplied data/dictionaries/edu_zipf.parquet).')
     p.add_argument('--no-edu-freq', dest='no_edu_freq', action='store_true',
                    help='(default) Skip EWFG grade-band frequencies.')
     p.set_defaults(no_edu_freq=True)
@@ -49,7 +49,7 @@ def build_parser() -> argparse.ArgumentParser:
                    default=True,
                    help='Compute lexical-norm columns (AoA / concreteness / '
                         'imageability / familiarity / valence-arousal-dominance) '
-                        'from user-supplied parquets in dictionaries/.')
+                        'from user-supplied parquets in data/dictionaries/.')
     p.add_argument('--doc-lexical-norms', dest='no_doc_lexical_norms',
                    action='store_false', default=True,
                    help='Emit document-level lexical-norm aggregates (means, '
@@ -151,7 +151,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     # Note: embedding .mat output (word2vec, bert_word, bert_sentence) is
     # controlled by ns.no_word2vec / ns.no_bert_word / ns.no_bert_sentence
-    # set by gui/planner/emit.py. CLI does not expose these flags because the
+    # set by sensi/gui/planner/emit.py. CLI does not expose these flags because the
     # models require large downloads; use the GUI to enable embeddings.
 
     return p

@@ -29,7 +29,7 @@ class InfoIcon(QPushButton):
     """Clickable info-circle SVG that opens a FeatureInfoDialog for `toggle_key`.
 
     Caller is responsible for only constructing this widget when a doc
-    actually exists (see gui.feature_docs.has_feature_doc).
+    actually exists (see sensi.gui.feature_docs.has_feature_doc).
     """
 
     def __init__(self, toggle_key: str, parent=None):

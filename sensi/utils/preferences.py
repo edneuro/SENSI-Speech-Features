@@ -789,20 +789,20 @@ DEFAULT_PREFS_V16: dict[str, Any] = {
 # Release-hardening batch (2026-07-10). Two default corrections, no new keys:
 #   - acoustic_ts.env_comp: 0.3 → log10(2) ≈ 0.30103. The envelope extractor
 #     replicates mTRFenvelope.m bit-for-bit ONLY at exactly log10(2)
-#     (see extractors/acoustic_ts.MTRF_COMP); the rounded 0.3 default made
+#     (see sensi/extractors/acoustic_ts.MTRF_COMP); the rounded 0.3 default made
 #     every GUI/CLI run deviate from the documented replication claim.
 #     Migration coerces a stored value of exactly 0.3 (the old default) from
 #     any pre-v17 file; any other stored value is the user's and is kept.
 #   - predictability.llm_model: stored OpenAI ids (gpt-*) are coerced to ""
 #     (auto) — the OpenAI scoring endpoint no longer exists, so a saved gpt-*
-#     selection could only fail at run time (see extractors/llm_cloze.py).
+#     selection could only fail at run time (see sensi/extractors/llm_cloze.py).
 # ---------------------------------------------------------------------------
 
 SCHEMA_VERSION_V17 = 17
 
 # Exact mTRF power-law compression exponent. Kept as a literal here so
-# utils.preferences never imports extractors; cross-module equality with
-# extractors.acoustic_ts.MTRF_COMP is pinned by a migration test.
+# sensi.utils.preferences never imports extractors; cross-module equality with
+# sensi.extractors.acoustic_ts.MTRF_COMP is pinned by a migration test.
 import math as _math
 MTRF_ENV_COMP = float(_math.log10(2))
 
@@ -821,7 +821,7 @@ DEFAULT_PREFS_V17: dict[str, Any] = {
 # pred_cloze, pred_topmatch) and predictability.llm_model into a single
 # `predictability` settings section: {"models": [<slug>, ...], "metrics":
 # {"surprisal": bool, "cloze": bool, "topmatch": bool}}. Model slugs come from
-# extractors.predictability_models (the roster module — pure, no torch).
+# sensi.extractors.predictability_models (the roster module — pure, no torch).
 #
 # Not additive — the migration (in the finalize block below) removes the four
 # old feature keys and predictability.llm_model, mapping their old on/off
@@ -872,7 +872,7 @@ DEFAULT_PREFS_V19: dict[str, Any] = {
     # hf_token_file added 2026-07-12 (Project C, run.yaml): path to a file
     # holding a HuggingFace token for headless runs. Additive — no bump.
     # Defaults to the conventional gitignored config/hf_token.txt (relative
-    # values resolve against get_config_dir(); see utils/credentials.py).
+    # values resolve against get_config_dir(); see sensi/utils/credentials.py).
     "shared": {**DEFAULT_PREFS_V18["shared"], "hf_token_file": "hf_token.txt"},
     "predictability": {
         **DEFAULT_PREFS_V18["predictability"],
@@ -935,7 +935,7 @@ DEFAULT_PREFS_V20: dict[str, Any] = {
 SCHEMA_VERSION_V21 = 21
 
 # The v20 output keys retired by v21 (also listed in
-# utils.config_yaml.RETIRED_FEATURE_KEYS so a stale features.yaml validates).
+# sensi.utils.config_yaml.RETIRED_FEATURE_KEYS so a stale features.yaml validates).
 RETIRED_OUTPUT_KEYS_V21 = (
     "word_level_csv", "document_summary", "syllables_csv", "phonemes_csv",
     "sentences_csv", "acoustic_ts_mat", "phoneme_surprisal_mat",
@@ -1255,8 +1255,8 @@ def _merged_from_user(user: dict[str, Any]) -> tuple[dict[str, Any], bool]:
     #
     # Same version gate also folds in the doc-aggregate residue: the v7-era
     # doc_agg_surprisal / doc_agg_llm output toggles are unified into a
-    # single doc_agg_predictability toggle (see utils/doc_summary.py's
-    # predictability_means / gui/planner/registry.py's "doc agg
+    # single doc_agg_predictability toggle (see sensi/utils/doc_summary.py's
+    # predictability_means / sensi/gui/planner/registry.py's "doc agg
     # predictability" cluster). Only acts when a pre-v18 source file literally
     # has one of the old keys (sentinel None below) — pre-v10 chains never
     # carry these names forward as real user data (only as v7-template

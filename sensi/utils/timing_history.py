@@ -1,9 +1,9 @@
 """Machine-local per-step timing history for the Run-tab time estimate.
 
-The batch runners in main.py time each expensive stage per stimulus with a
+The batch runners in sensi/pipeline.py time each expensive stage per stimulus with a
 `StageTimer` and append the samples of every *successful* stimulus to
 `<config dir>/timing_history.json` (git-ignored, next to run.yaml; honours
-SENSI_CONFIG_DIR via utils.preferences.get_config_dir). The estimator reads
+SENSI_CONFIG_DIR via sensi.utils.preferences.get_config_dir). The estimator reads
 the median seconds-per-unit for each (step, model, device) key with `rate()`.
 
 Units: audio seconds for the audio steps (AUDIO_STEPS), whitespace-separated
@@ -73,7 +73,7 @@ class StageTimer:
 
 def count_words(text: str) -> int:
     """Words of a raw transcript (whitespace split): the unit every text step
-    records (main.py) and the estimator charges (utils.run_estimates)."""
+    records (sensi/pipeline.py) and the estimator charges (sensi.utils.run_estimates)."""
     return len(text.split())
 
 
@@ -86,10 +86,10 @@ def load_key(step: str, model: str | None = None) -> str:
 def model_device(step: str, model: str | None, cuda_available: bool) -> str:
     """"cuda" or "cpu": where the extractor itself puts this step's model.
 
-    Predictability follows extractors/predictability.py's _HuggingFaceBackend:
+    Predictability follows sensi/extractors/predictability.py's _HuggingFaceBackend:
     GPU tiers are tried only when CUDA is available and the model is not one
     pinned to full-precision CPU (_is_full_precision_cpu, i.e. GPT-2).
-    BERT (extractors/bert_embed.py) never moves its model off the CPU, and
+    BERT (sensi/extractors/bert_embed.py) never moves its model off the CPU, and
     every other step is CPU-only.
     """
     if step != "predictability" or not cuda_available or not model:

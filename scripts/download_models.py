@@ -1,10 +1,10 @@
 """
-One-time setup: download MFA acoustic models into ./mfa_data/
+One-time setup: download MFA acoustic models into ./data/mfa_data/
 
 Run this from the project root inside the activated conda environment:
     conda activate .\\env          (Windows)
     conda activate ./env          (Mac)
-    python utils/download_models.py
+    python scripts/download_models.py
 """
 
 import os
@@ -12,13 +12,14 @@ import subprocess
 import sys
 from pathlib import Path
 
-# This script lives in utils/; the project root (where mfa_data/ lives) is one up.
+# This script lives in scripts/; the project root is one up.
 _ROOT = Path(__file__).resolve().parent.parent
 
 
 def main() -> int:
     sys.path.insert(0, str(_ROOT))
-    from sensi.utils.local_caches import use_project_caches
+    from sensi.utils.local_caches import move_legacy_model_dirs, use_project_caches
+    move_legacy_model_dirs()
     use_project_caches()
     mfa_dir = Path(os.environ['MFA_ROOT_DIR'])
 
@@ -46,7 +47,7 @@ def main() -> int:
     print(
         '\n--- Word2Vec ---\n'
         'Google News 300d (~1.7 GB) downloads automatically on first use via gensim.\n'
-        'No manual step needed. The model is cached in gensim_data/ after the\n'
+        'No manual step needed. The model is cached in data/gensim_data/ after the\n'
         'first download. BERT embeddings work independently and need no download.'
     )
     return 0

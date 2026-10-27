@@ -35,7 +35,7 @@ def _prepare(ns):
 
 
 def dispatch(prefs: dict) -> None:
-    """Run the enabled levels from a prefs dict (mirrors gui.run_dispatch.run)."""
+    """Run the enabled levels from a prefs dict (mirrors sensi.gui.run_dispatch.run)."""
     from sensi.gui import planner
     plan = planner.plan_from_prefs(prefs)
     run_ts = _dt.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
@@ -89,7 +89,7 @@ def main() -> None:
     # catch a malformed hand-edited config before an hour of work, not to
     # duplicate load_preferences()'s migration below. A key retired by a past
     # migration (e.g. v19's feat_phoneme_label) is therefore tolerated here
-    # (warned, not errored) via retired_keys_present — see utils/config_yaml.py.
+    # (warned, not errored) via retired_keys_present — see sensi/utils/config_yaml.py.
     errors: list[str] = []
     features_raw: dict = {}
     features_path = get_features_yaml_path()

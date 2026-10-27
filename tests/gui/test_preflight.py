@@ -1,4 +1,4 @@
-"""Tests for gui/preflight.py.
+"""Tests for sensi/gui/preflight.py.
 
 Group A (planner-aware, kept): env/asset warnings that still apply when
   the relevant stage is actually in the plan.
@@ -212,7 +212,7 @@ def test_no_subword_alignment_warning_anymore(prefs_tmp):
 def test_warns_when_g2p_oov_on_but_model_missing(prefs_tmp, monkeypatch):
     """Final-review Fix 4: enabling alignment.g2p_oov without the vendored
     MFA G2P model silently degrades every OOV word to a single spn phone
-    (extractors/aligner._run_mfa) with only a run-time stderr line. This is
+    (sensi/extractors/aligner._run_mfa) with only a run-time stderr line. This is
     the preflight-time equivalent of the existing MFA-on-PATH check."""
     import sensi.extractors.aligner as al
     monkeypatch.setattr(al, "g2p_model_available", lambda: False)

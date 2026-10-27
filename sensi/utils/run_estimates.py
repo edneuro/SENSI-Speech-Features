@@ -3,8 +3,8 @@ memory and run time.
 
 Pure functions over (Plan, prefs, InputStats); the only I/O is scan_inputs,
 which reads the input folders once and caches per-file results by
-(path, size, mtime). Constants come from utils/estimate_constants.py.
-See docs/superpowers/specs/2026-10-26-run-estimates-design.md.
+(path, size, mtime). Constants come from sensi/utils/estimate_constants.py.
+See dev/superpowers/specs/2026-10-26-run-estimates-design.md.
 """
 from __future__ import annotations
 
@@ -20,7 +20,7 @@ MAT_HEADER_BYTES = 1024          # fixed .mat header/metadata allowance per file
 _F32, _F64 = 4, 8
 _WORD2VEC_DIM = 300
 _BERT_LAYERS, _BERT_DIM = 12, 768
-# extractors/phoneme_surprisal.phoneme_surprisal_mat_vars: four impulse trains
+# sensi/extractors/phoneme_surprisal.phoneme_surprisal_mat_vars: four impulse trains
 # (phoneme_surprisal, cohort_entropy, phoneme_onset, word_onset), each N x 1.
 _PHONEME_SURPRISAL_TRAINS = 4
 
@@ -35,7 +35,7 @@ _FIXED_COLUMNS: dict[str, int] = {
     "documents_summary": 4,   # stimulus_id, dictionary_used, transcript_path, audio_path
 }
 
-# Doc lexical-norm aggregates (utils/doc_summary._lexical_norm_aggregates) per
+# Doc lexical-norm aggregates (sensi/utils/doc_summary._lexical_norm_aggregates) per
 # word-level norm toggle: AoA gives mean/median/max/sd/prop_late + coverage,
 # every other norm a mean + coverage. AoA_SD has no doc column.
 _DOC_NORM_COLUMNS: dict[str, int] = {
@@ -58,7 +58,7 @@ class InputStats:
     n_audio_files: int | None = None
     all_audio_seconds: float | None = None
     # Paired audio seconds whose saved alignment is not fresh, i.e. the part
-    # MFA will actually run on (extractors.aligner.is_alignment_fresh). None =
+    # MFA will actually run on (sensi.extractors.aligner.is_alignment_fresh). None =
     # unknown (no output folder given): charge every paired audio second.
     audio_seconds_to_align: float | None = None
 
@@ -115,7 +115,7 @@ def _alignment_fresh(output_folder: str, transcript: Path, audio: Path,
 
 
 def _count_words(path: Path) -> int:
-    """Same unit main.py records text-step samples in (count_words on the raw
+    """Same unit sensi/pipeline.py records text-step samples in (count_words on the raw
     transcript), so learned seconds-per-word apply unchanged."""
     from sensi.utils.timing_history import count_words
     with open(path, encoding="utf-8", errors="replace") as f:
@@ -189,7 +189,7 @@ def _n_categories(prefs: dict) -> int:
     backend = sem.get("backend", "auto")
     if backend in ("liwc", "empath"):
         return len(sem.get(f"categories_{backend}") or [])
-    # "auto" is resolved at run time (main.py): take the larger list.
+    # "auto" is resolved at run time (sensi/pipeline.py): take the larger list.
     return max(len(sem.get("categories_liwc") or []),
                len(sem.get("categories_empath") or []))
 
@@ -326,7 +326,7 @@ class RamEstimate:
 
 def has_cuda(system: dict) -> bool:
     """One rule for "this machine can put models on a GPU": a detected CUDA
-    device with memory (utils.system_info._detect_gpu)."""
+    device with memory (sensi.utils.system_info._detect_gpu)."""
     gpu = (system or {}).get("gpu") or {}
     return bool(gpu.get("name")) and float(gpu.get("vram_gb") or 0.0) > 0
 
@@ -425,15 +425,15 @@ def _pass_steps(stages) -> set[str]:
 def estimate_time(plan: Plan, prefs: dict, stats: InputStats, history: dict,
                   cuda_available: bool) -> TimeEstimate:
     """Range for the whole run over the passes the dispatcher will start
-    (gui/run_dispatch.run, run.dispatch): word, doc, acoustic.
+    (sensi/gui/run_dispatch.run, run.dispatch): word, doc, acoustic.
 
     Each pass charges the steps its own namespace runs (emit.level_stages, the
     set to_namespace derives that pass's no_* flags from). Reuse across
-    passes, as main.py does it: MFA once per document (_prealign_batch skips
+    passes, as sensi/pipeline.py does it: MFA once per document (_prealign_batch skips
     _align_cache hits), and not at all for a stimulus whose saved alignment is
     fresh (stats.audio_seconds_to_align, when known); predictability once
     while the word pass's scores still sit in
-    extractors.predictability._SCORE_CACHE (FIFO, SCORE_CACHE_MAX entries of
+    sensi.extractors.predictability._SCORE_CACHE (FIFO, SCORE_CACHE_MAX entries of
     one model x stimulus each); Word2Vec/BERT/sub-word/sentence steps only in
     the word pass; doc_summary only in the doc pass; acoustic_ts only in the
     acoustic pass, over every audio file.

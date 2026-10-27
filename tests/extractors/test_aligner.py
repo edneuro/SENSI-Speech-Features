@@ -1,4 +1,4 @@
-"""Tests for extractors.aligner caching (memoization across passes).
+"""Tests for sensi.extractors.aligner caching (memoization across passes).
 
 The MFA subprocess is never invoked here — we monkeypatch the uncached compute
 so the tests run without Kaldi/MFA and stay fast.

@@ -1,7 +1,7 @@
-"""Adapter: Plan → argparse.Namespace that main.py consumes.
+"""Adapter: Plan → argparse.Namespace that sensi/pipeline.py consumes.
 
 Single source of truth for the no_* flag mappings. Refactor in v2 when
-main.py learns to consume Plans directly.
+sensi/pipeline.py learns to consume Plans directly.
 
 See spec §7.
 """
@@ -13,7 +13,7 @@ from sensi.gui.planner.stages import Plan
 from sensi.extractors.acoustic_ts import MTRF_COMP
 
 # Artifacts written by main.run_word_level_batch (the word CSV plus every
-# sub-word / sentence / embedding sidecar). The dispatchers (gui/run_dispatch,
+# sub-word / sentence / embedding sidecar). The dispatchers (sensi/gui/run_dispatch,
 # run.py) start the word batch iff the plan has any of these live; the word
 # namespace also uses them to filter which stages are relevant (so doc-level
 # stage requirements don't bleed into word-level no_* flags like no_align).
@@ -33,7 +33,7 @@ _WORD_STAGE_FLAGS = {
     # stage name -> attr name on the namespace (no_X is True iff stage NOT in plan)
     "spacy_parse":    "no_parse",
     "mfa_align":      "no_align",
-    "praat_contours": None,    # implicit; no flag in main.py
+    "praat_contours": None,    # implicit; no flag in sensi/pipeline.py
     "word_freq":      "no_freq",
     "ewfg_freq":      "no_edu_freq",
     "sem_domain":     "no_sem_domain",
@@ -53,7 +53,7 @@ def _word_only_stages(plan: Plan, prefs: dict) -> frozenset[str]:
     built: available_when (env), master_toggle (user master switch),
     output_csv wanted, and any child toggle on. Re-deriving the predicate
     locally is what caused the 2026-06-24 bug: a cluster disabled via its
-    master toggle (children left on) still flipped its no_* flag, so main.py
+    master toggle (children left on) still flipped its no_* flag, so sensi/pipeline.py
     ran an extractor the user had switched off. `plan` is accepted for call
     compatibility; activation reads straight from prefs.
     """
@@ -107,7 +107,7 @@ def level_stages(plan: Plan, prefs: dict, level: str) -> frozenset[str]:
 
     level "word": _word_only_stages (NOT closed under consumes); "doc":
     _doc_only_stages (closed); anything else: the whole plan. Public so that
-    consumers outside the planner (utils/run_estimates) read exactly the set
+    consumers outside the planner (sensi/utils/run_estimates) read exactly the set
     the real namespace uses.
     """
     if level == "word":
@@ -207,7 +207,7 @@ def to_namespace(plan: Plan, prefs: dict, level: str) -> argparse.Namespace:
         setattr(ns, attr, stage_name not in word_stages)
 
     # If syllable_prosody is active, praat contours are already being extracted.
-    # no_prosody must be False so main.py also runs word_prosody (it shares the
+    # no_prosody must be False so sensi/pipeline.py also runs word_prosody (it shares the
     # contour data that syllable_prosody needs anyway).
     if "syllable_prosody" in word_stages:
         ns.no_prosody = False
@@ -230,7 +230,7 @@ def to_namespace(plan: Plan, prefs: dict, level: str) -> argparse.Namespace:
         "primary_only": bool(_psr.get("primary_only", True)),
     }
 
-    # Pass-throughs that main.py reads directly from args
+    # Pass-throughs that sensi/pipeline.py reads directly from args
     ns.feature_toggles = dict(features)
     ns.output_toggles  = dict(output)
     ns.edu_bands       = _enabled_ewfg_bands(features)

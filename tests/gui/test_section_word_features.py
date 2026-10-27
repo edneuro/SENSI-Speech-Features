@@ -132,7 +132,7 @@ def test_word_prosody_pitch_units_combo_persists(qtbot, prefs_tmp):
 # --- Predictability v18: model_checkboxes / metric_checkboxes ------------
 # Replaces the old single llm_model_combo + api_key_row design (OpenAI
 # removed; model selection is now a multi-select roster, see
-# extractors/predictability_models.py).
+# sensi/extractors/predictability_models.py).
 
 def test_model_rows_persist_selection(qtbot, prefs_tmp):
     from sensi.gui.section_word_features import WordFeaturesSection
@@ -151,7 +151,7 @@ def test_metric_toggles_persist(qtbot, prefs_tmp):
 
 
 def test_model_rows_cover_full_roster_with_gating_hint(qtbot):
-    """One checkbox per extractors.predictability_models.all_specs() entry,
+    """One checkbox per sensi.extractors.predictability_models.all_specs() entry,
     with the spec's label + note (the 'free, no token' vs 'gated' hint) on
     the row's word-wrapping label (checkbox text can't wrap, so the text
     lives on a companion label — see the horizontal-scrollbar fix)."""
@@ -225,7 +225,7 @@ def test_session_hf_token_returns_text_only_when_visible(qtbot, monkeypatch):
 
 def test_session_api_key_is_inert(qtbot):
     """OpenAI backend removed — session_api_key() is a permanent no-op kept
-    only so gui/main_window.py's existing wiring stays valid."""
+    only so sensi/gui/main_window.py's existing wiring stays valid."""
     from sensi.gui.section_word_features import WordFeaturesSection
     w = WordFeaturesSection(); qtbot.addWidget(w)
     assert w.session_api_key() == ""

@@ -8,7 +8,7 @@ pronunciation passes through it, so per-phoneme scoring is O(1):
     surprisal(φk) = log2(Z_before) − log2(Z_after)   # Z_before(φ1) = Z_root
     entropy(φk)   = log2(Z_after) − SFL_after/Z_after # entropy of the AFTER cohort
 
-See docs/superpowers/specs/2026-07-06-phoneme-surprisal-design.md.
+See dev/superpowers/specs/2026-07-06-phoneme-surprisal-design.md.
 """
 from __future__ import annotations
 

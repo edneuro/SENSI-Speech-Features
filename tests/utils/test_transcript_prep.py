@@ -1,4 +1,4 @@
-"""Tests for utils/transcript_prep.py — number spelling for the MFA .lab.
+"""Tests for sensi/utils/transcript_prep.py — number spelling for the MFA .lab.
 
 MFA's dictionary contains spoken English words only, so every digit sequence
 must become the words a narrator would actually say. Wrong spellings don't

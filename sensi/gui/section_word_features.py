@@ -14,9 +14,9 @@ from sensi.extractors.predictability_models import (
     all_specs, is_gated, spec_for, FLOOR_CONTEXT,
 )
 # Imported as a module (not `from ... import has_hf_token`) so that tests can
-# monkeypatch `extractors.predictability.has_hf_token` and have it take
+# monkeypatch `sensi.extractors.predictability.has_hf_token` and have it take
 # effect here — a direct-name import would bind a stale reference at
-# module-load time (mirrors gui/preflight.py's `from extractors import
+# module-load time (mirrors sensi/gui/preflight.py's `from extractors import
 # llm_cloze` pattern).
 from sensi.extractors import predictability as _predictability_mod
 
@@ -141,8 +141,8 @@ class WordFeaturesSection(QWidget):
         # HuggingFace token box is a credential, not a feature control, so
         # it is added ungated and stays editable. There are no more
         # per-column feature toggles here: every <slug>_<Metric> word column
-        # is produced dynamically from the models x metrics selection (see extractors/predictability.py and
-        # gui/planner/plan.py's _predictability_columns).
+        # is produced dynamically from the models x metrics selection (see sensi/extractors/predictability.py and
+        # sensi/gui/planner/plan.py's _predictability_columns).
         pred_card = ClusterCard(
             "Predictability",
             "Context-conditional probability features. Each selected model "
@@ -244,7 +244,7 @@ class WordFeaturesSection(QWidget):
         # Credentials help — text + the same blue ⓘ info-icon used by feature
         # toggles, opening the shared setup doc (gated Llama license + HF
         # token) in the in-app feature-info dialog. OpenAI is no longer
-        # offered (see extractors/predictability.py), so this is HF-only.
+        # offered (see sensi/extractors/predictability.py), so this is HF-only.
         from sensi.gui.info_popup import InfoIcon
         cred_help = QHBoxLayout()
         cred_help.setContentsMargins(0, 0, 0, 0)
@@ -372,7 +372,7 @@ class WordFeaturesSection(QWidget):
         sim_card = ClusterCard(
             "Semantic similarity",
             "Pretrained word embeddings saved as .mat sidecars in word/. "
-            "Word2Vec requires a one-time manual download — see utils/download_models.py.",
+            "Word2Vec requires a one-time manual download — see scripts/download_models.py.",
             master_key="master_semantic_similarity",
         )
         sim_card.settings_changed.connect(self.settings_changed)
@@ -519,8 +519,8 @@ class WordFeaturesSection(QWidget):
 
     def session_api_key(self) -> str:
         """Inert no-op — the OpenAI backend was removed (local HuggingFace
-        models only; see extractors/predictability.py). Kept so
-        gui/main_window.py's existing `get_session_api_key=self.word_features
+        models only; see sensi/extractors/predictability.py). Kept so
+        sensi/gui/main_window.py's existing `get_session_api_key=self.word_features
         .session_api_key` wiring stays valid without a main_window.py edit."""
         return ""
 

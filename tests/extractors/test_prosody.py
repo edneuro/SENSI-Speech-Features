@@ -1,4 +1,4 @@
-"""Tests for extractors.prosody.add_word_prosody and compute_doc_prosody.
+"""Tests for sensi.extractors.prosody.add_word_prosody and compute_doc_prosody.
 
 Uses synthetic Contours fixtures — no audio file needed.
 """

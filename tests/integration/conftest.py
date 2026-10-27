@@ -1,6 +1,6 @@
 """Integration test configuration: isolate preferences.
 
-Batch runs load preferences internally (e.g. main.py's session-units sidecar
+Batch runs load preferences internally (e.g. sensi/pipeline.py's session-units sidecar
 builds a plan from `load_preferences()`), so without this an integration test
 would read — and migrate/rewrite — the developer's real two-YAML config store
 (config/features.yaml + config/run.yaml), making outcomes depend on that

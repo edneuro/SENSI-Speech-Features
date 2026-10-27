@@ -11,7 +11,7 @@ _GUI_PY = Path(__file__).resolve().parents[2] / "gui.py"
 
 
 def _load_entry_point():
-    # gui.py shares its name with the gui/ package, so load it by path.
+    # gui.py shares its name with the sensi/gui/ package, so load it by path.
     spec = importlib.util.spec_from_file_location("sensi_gui_entry", _GUI_PY)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)

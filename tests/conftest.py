@@ -1,4 +1,4 @@
-"""Add the project root to sys.path so tests can import extractors/utils."""
+"""Add the project root to sys.path so tests can import sensi/extractors/utils."""
 import os
 import sys
 from pathlib import Path

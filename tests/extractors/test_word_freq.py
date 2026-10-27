@@ -1,4 +1,4 @@
-"""Tests for extractors/word_freq.py — Zipf frequency lookup."""
+"""Tests for sensi/extractors/word_freq.py — Zipf frequency lookup."""
 import math
 
 import pandas as pd

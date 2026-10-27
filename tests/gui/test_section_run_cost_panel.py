@@ -1,7 +1,7 @@
 """Tests for the (now permanently dead) cost panel in RunSection.
 
 Predictability offers local HuggingFace models only (see
-extractors/predictability.py, extractors/predictability_models.py) — the
+sensi/extractors/predictability.py, sensi/extractors/predictability_models.py) — the
 OpenAI backend was removed, so there is no paid usage left to estimate. The
 panel is kept in the widget tree (hidden) rather than deleted so a future
 paid backend could be wired back in without rebuilding the UI; these tests

@@ -1,4 +1,4 @@
-"""Tests for extractors.sentence_prosody.add_sentence_prosody.
+"""Tests for sensi.extractors.sentence_prosody.add_sentence_prosody.
 
 All tests use synthetic Contours — no audio file needed.
 """

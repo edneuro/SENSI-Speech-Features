@@ -2,11 +2,11 @@
 
 If the model binary is not found at the default path, it is downloaded
 automatically from the gensim model repository on first use (~1.7 GB,
-cached in the project's gensim_data/ folder for subsequent runs; see
-utils/local_caches.py).
+cached in the project's data/gensim_data/ folder for subsequent runs; see
+sensi/utils/local_caches.py).
 
 Optional local override: place GoogleNews-vectors-negative300.bin at
-hf_cache/word2vec/GoogleNews-vectors-negative300.bin to skip the download.
+data/hf_cache/word2vec/GoogleNews-vectors-negative300.bin to skip the download.
 
 PUNCT and OOV rows receive a zero vector and is_valid=False.
 """
@@ -51,7 +51,7 @@ def _load_model_uncached(model_path: str | Path) -> Any:
     p = Path(model_path)
     if p.exists():
         return KeyedVectors.load_word2vec_format(str(p), binary=True)
-    # Auto-download on first use into GENSIM_DATA_DIR (project gensim_data/).
+    # Auto-download on first use into GENSIM_DATA_DIR (project data/gensim_data/).
     cached = Path(gensim_dl.base_dir, "word2vec-google-news-300").exists()
     print(
         "[word2vec] Loading Google News 300d from gensim's cache…" if cached
@@ -65,7 +65,7 @@ def _load_model_uncached(model_path: str | Path) -> Any:
         raise Word2VecUnavailable(
             f"Word2Vec auto-download failed: {exc}. "
             "Check your internet connection or place "
-            "GoogleNews-vectors-negative300.bin in hf_cache/word2vec/ manually."
+            "GoogleNews-vectors-negative300.bin in data/hf_cache/word2vec/ manually."
         ) from exc
 
 

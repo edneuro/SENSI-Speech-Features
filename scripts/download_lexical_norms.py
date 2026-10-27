@@ -1,32 +1,36 @@
 """Download and build the lexical-norm lookup tables for the lexical-norms
-feature (`extractors/lexical_norms.py`).
+feature (`sensi/extractors/lexical_norms.py`).
 
 Run once from the project root:
 
-    python utils/download_lexical_norms.py
+    python scripts/download_lexical_norms.py
 
 It fetches the published norm sets from public mirrors and writes the parquet
-files SensiExtractor expects into `dictionaries/` (plus a `.csv` mirror of each
+files SensiExtractor expects into `data/dictionaries/` (plus a `.csv` mirror of each
 for human-readable inspection — the extractor uses the parquet):
 
-    dictionaries/aoa_kuperman.parquet          word, aoa_mean, aoa_sd
-    dictionaries/concreteness_brysbaert.parquet word, concreteness
-    dictionaries/warriner_vad.parquet          word, valence, arousal, dominance
-    dictionaries/mrc.parquet                   word, imageability, familiarity
+    data/dictionaries/aoa_kuperman.parquet          word, aoa_mean, aoa_sd
+    data/dictionaries/concreteness_brysbaert.parquet word, concreteness
+    data/dictionaries/warriner_vad.parquet          word, valence, arousal, dominance
+    data/dictionaries/mrc.parquet                   word, imageability, familiarity
 
 Each source is independent; if one URL is unreachable the others still build.
 
 These norms are free for research use. URLs point at stable public mirrors;
-the authoritative sources and column details are in dictionaries/README.md.
+the authoritative sources and column details are in data/dictionaries/README.md.
 """
 
+import sys
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-# This script lives in utils/; the project root (where dictionaries/ lives) is one up.
-_DICT_DIR = Path(__file__).resolve().parent.parent / "dictionaries"
+# This script lives in scripts/; put the project root on sys.path for sensi.
+_ROOT = Path(__file__).resolve().parent.parent
+if str(_ROOT) not in sys.path:
+    sys.path.insert(0, str(_ROOT))
+from sensi.paths import DICT_DIR as _DICT_DIR  # noqa: E402
 
 
 def _clean_mrc(df: pd.DataFrame) -> pd.DataFrame:

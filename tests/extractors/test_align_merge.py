@@ -1,4 +1,4 @@
-"""Tests for extractors/align_merge.py — token ↔ MFA-word merge.
+"""Tests for sensi/extractors/align_merge.py — token ↔ MFA-word merge.
 
 The merge must be MONOTONIC: token i can never take timing from an
 alignment word that belongs before an already-consumed word or arbitrarily

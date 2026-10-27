@@ -4,7 +4,7 @@ Transcript preprocessing utilities.
 Prepares raw transcript text before it is sent to the forced aligner.
 The key requirement is that numbers must be spelled out — MFA's pronunciation
 dictionary contains English words, not digits. The same spelling function is
-used by the alignment merge (extractors/align_merge.py) so a digit token in
+used by the alignment merge (sensi/extractors/align_merge.py) so a digit token in
 the spaCy parse can be matched back to the spelled-out words MFA aligned.
 """
 

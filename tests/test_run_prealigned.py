@@ -136,8 +136,8 @@ def _canned_alignment(a, t, *, g2p=False):
 @pytest.mark.parametrize("g2p_oov", [False, True])
 def test_run_cache_hit_log_matches_the_real_align_with_phones_key(
         tmp_path, monkeypatch, capsys, g2p_oov):
-    """Fix 1: main.py rebuilds the align_with_phones memo key by hand for a
-    log-only cache-hit check. It must use extractors.aligner.cache_key (the
+    """Fix 1: sensi/pipeline.py rebuilds the align_with_phones memo key by hand for a
+    log-only cache-hit check. It must use sensi.extractors.aligner.cache_key (the
     same helper align_with_phones uses to store the entry) — a hand-rolled
     2-tuple that omits `g2p` never matches, so "[mfa] Reusing cached
     alignment…" never fires even on a genuine memo hit. Covers both g2p
@@ -175,7 +175,7 @@ def test_run_cache_hit_log_does_not_false_positive_across_different_g2p(
         tmp_path, monkeypatch, capsys):
     """A cache entry stored under one g2p setting must not be reported (or
     served) as a hit for the opposite setting — same invariant the memo key
-    itself enforces (extractors/aligner.py's `g2p` element)."""
+    itself enforces (sensi/extractors/aligner.py's `g2p` element)."""
     transcript = tmp_path / "stim.txt"
     transcript.write_text("hello world", encoding="utf-8")
     audio = tmp_path / "stim.wav"

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Import every extractor/util module + PySide6 + the CLI entry point.
+"""Import every module of the sensi package + PySide6 + the run.py launcher.
 
 Used by CI to prove the locked env is installable AND importable on each OS,
 without needing the ~1.5 GB vendored models (a fresh checkout lacks them).
@@ -17,21 +17,14 @@ os.environ.setdefault("MKL_THREADING_LAYER", "sequential")
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-# Run-only helper scripts: users invoke them directly; nothing in the app
-# imports them, so they're outside the import surface this smoke test covers.
-# (download_models guards its work under __main__, so importing it is now
-# side-effect-free — it stays here only because import-testing it adds nothing.)
-SKIP = {"sensi.utils.download_models"}
-
-targets = ["main", "run", "PySide6.QtWidgets"]
-for pkg in ("extractors", "utils", "gui", "gui/planner"):
-    for path in sorted((ROOT / pkg).glob("*.py")):
-        if path.stem == "__init__":
-            continue
-        mod = f"{pkg.replace('/', '.')}.{path.stem}"
-        if mod in SKIP:
-            continue
-        targets.append(mod)
+# Run-by-hand helpers live in scripts/, outside the package; nothing in the
+# app imports them, so they're outside the import surface this test covers.
+targets = ["run", "PySide6.QtWidgets"]
+for path in sorted((ROOT / "sensi").rglob("*.py")):
+    parts = path.relative_to(ROOT).with_suffix("").parts
+    if parts[-1] == "__init__":
+        parts = parts[:-1]
+    targets.append(".".join(parts))
 
 failed = []
 for mod in targets:

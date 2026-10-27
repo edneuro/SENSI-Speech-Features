@@ -20,13 +20,13 @@ from sensi.gui.planner.plan import (
     DOC_AGG_PREDICTABILITY_CLUSTER_NAME, _active_clusters, _active_output_csvs,
 )
 # Imported as a module (not `from ... import has_hf_token`) so that tests can
-# monkeypatch `extractors.predictability.has_hf_token` and have it take
+# monkeypatch `sensi.extractors.predictability.has_hf_token` and have it take
 # effect here — a direct-name import would bind a stale reference at
 # module-load time.
 from sensi.extractors import predictability
 from sensi.extractors.predictability_models import is_gated, all_specs
 # Imported as a module (see the `predictability` note above) so tests can
-# monkeypatch `extractors.aligner.g2p_model_available` and have it take
+# monkeypatch `sensi.extractors.aligner.g2p_model_available` and have it take
 # effect here.
 from sensi.extractors import aligner
 from sensi.paths import DICT_DIR
@@ -100,7 +100,7 @@ def compute_warnings(session_api_key: str = "", session_hf_token: str = "") -> l
             if prefs["features"].get(band, False):
                 out.append(Warning(
                     toggle_key=band, severity="amber",
-                    message="EWFG parquet not found at dictionaries/edu_zipf.parquet "
+                    message="EWFG parquet not found at data/dictionaries/edu_zipf.parquet "
                             "— columns will be NaN. See README for acquisition."))
 
     # Predictability (v18: models/metrics, not a single llm_model). Local
@@ -154,7 +154,7 @@ def compute_warnings(session_api_key: str = "", session_hf_token: str = "") -> l
             out.append(Warning(
                 toggle_key="sem_indicators", severity="amber",
                 message="LIWC backend selected but no .dic file found in "
-                        "dictionaries/. Will fall back to Empath at run time."))
+                        "data/dictionaries/. Will fall back to Empath at run time."))
 
     # MFA binary
     if "mfa_align" in in_plan and not _mfa_on_path():
@@ -165,14 +165,14 @@ def compute_warnings(session_api_key: str = "", session_hf_token: str = "") -> l
 
     # G2P for OOV words requested but the vendored model isn't present —
     # today this silently degrades every OOV word to a single `spn` phone
-    # (see extractors/aligner._run_mfa), with only a run-time stderr line.
+    # (see sensi/extractors/aligner._run_mfa), with only a run-time stderr line.
     if ("mfa_align" in in_plan and prefs.get("alignment", {}).get("g2p_oov", False)
             and not aligner.g2p_model_available()):
         out.append(Warning(
             toggle_key=None, severity="amber",
             message="G2P for out-of-dictionary words is on, but the vendored "
                     "MFA G2P model is missing — OOV words will align to a "
-                    "single spn phone instead. Run: python utils/download_models.py"))
+                    "single spn phone instead. Run: python scripts/download_models.py"))
 
     # parselmouth (any prosody stage in plan)
     if set(in_plan) & _PROSODY_STAGES:

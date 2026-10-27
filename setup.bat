@@ -5,8 +5,8 @@ echo ============================================================
 echo.
 echo Everything will be downloaded into this folder:
 echo   .\env\        Python environment (~6 GB)
-echo   .\mfa_data\   MFA acoustic models (~1 GB)
-echo   .\hf_cache\   GPT-2 weights (~500 MB, on first run)
+echo   .\data\mfa_data\   MFA acoustic models (~1 GB)
+echo   .\data\hf_cache\   GPT-2 / BERT weights (~500 MB, on first run)
 echo.
 echo Run this from Anaconda Prompt. Press Ctrl+C to cancel.
 echo.
@@ -36,8 +36,8 @@ if errorlevel 1 (
 )
 
 echo.
-echo [3/5] Downloading MFA models into .\mfa_data ...
-call conda run --prefix .\env python utils\download_models.py
+echo [3/5] Downloading MFA models into .\data\mfa_data ...
+call conda run --prefix .\env python scripts\download_models.py
 
 echo.
 echo [4/5] Downloading spaCy model into .\env ...

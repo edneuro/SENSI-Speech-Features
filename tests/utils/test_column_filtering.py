@@ -1,4 +1,4 @@
-"""Tests for the v4 per-column CSV filtering helpers in main.py."""
+"""Tests for the v4 per-column CSV filtering helpers in sensi/pipeline.py."""
 
 
 def test_word_columns_to_drop_returns_empty_when_all_on():

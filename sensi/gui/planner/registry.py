@@ -10,10 +10,10 @@ stages they require.
 Adding a new feature is a registry edit here plus three small touch-ups
 elsewhere (see spec §9): (1) the new extractor module, (2) one Stage +
 one FeatureCluster in this file, (3) the new prefs key in
-utils/preferences.py, (4) the toggle widget in gui/section_*.py. No
-edits to main.py, gui/run_dispatch.py, or any existing extractor.
+sensi/utils/preferences.py, (4) the toggle widget in sensi/gui/section_*.py. No
+edits to sensi/pipeline.py, sensi/gui/run_dispatch.py, or any existing extractor.
 
-See docs/feature_dependencies.md for the inventory this operationalizes.
+See dev/feature_dependencies.md for the inventory this operationalizes.
 """
 from __future__ import annotations
 
@@ -98,7 +98,7 @@ STAGES: list[Stage] = [
     # v18: unified dynamic predictability stage — replaces the old
     # gpt2_surprisal/llm_predict pair. One call to add_predictability scores
     # every selected roster model and writes only the requested metric
-    # columns, namespaced <slug>_<Metric>. See extractors/predictability.py.
+    # columns, namespaced <slug>_<Metric>. See sensi/extractors/predictability.py.
     Stage(name="predictability",
           consumes=("word_df",),
           produces=("word_df.predictability",),
@@ -170,7 +170,7 @@ STAGES: list[Stage] = [
 
     # --- §4 Document level ---
     # Document stages are intentionally NOT extracted into separate functions
-    # in v1 — utils/doc_summary.py:build_doc_summary computes them as one pass.
+    # in v1 — sensi/utils/doc_summary.py:build_doc_summary computes them as one pass.
     # We model them as logical stages so the planner knows what's needed; the
     # adapter (Task 5) collapses them into the existing no_doc_* flags.
     Stage(name="doc_counts",
@@ -217,7 +217,7 @@ STAGES: list[Stage] = [
 
 # The predictability cluster is registered (so test_registry/test_schema_drift
 # can validate its shape) but its activation + dynamic columns are computed
-# separately in gui/planner/plan.py. Both the cluster definition below and
+# separately in sensi/gui/planner/plan.py. Both the cluster definition below and
 # plan.py's skip-and-compute logic reference this single constant, so the
 # coupling is import-visible rather than a bare duplicated string literal.
 PREDICTABILITY_CLUSTER_NAME = "Predictability"
@@ -288,7 +288,7 @@ CLUSTERS: list[FeatureCluster] = [
     #
     # This cluster is therefore "static but considered" (spec §12 fallback):
     # it exists so the stage/CSV/master wiring is documented here and
-    # test_registry.py can validate its shape, but gui/planner/plan.py's
+    # test_registry.py can validate its shape, but sensi/gui/planner/plan.py's
     # _active_clusters skips it by name and computes its true activation
     # (master_predictability AND models non-empty AND >=1 metric on) plus its
     # dynamic column list directly from prefs["predictability"]
@@ -566,7 +566,7 @@ CLUSTERS: list[FeatureCluster] = [
     # (doc_agg_predictability), so it does not need the _active_clusters
     # skip-and-compute treatment — only its emitted columns are dynamic
     # (mean_<slug>_<metric>, one per active roster model x metric, computed
-    # by utils.doc_summary.build_doc_summary from whatever word-level
+    # by sensi.utils.doc_summary.build_doc_summary from whatever word-level
     # <slug>_<Metric> columns the run produced). Registered here with
     # emits_columns=() (static-but-considered, spec §12 fallback) so
     # test_schema_drift can still validate the toggle's shape; there is no

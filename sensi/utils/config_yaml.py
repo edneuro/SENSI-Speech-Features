@@ -3,7 +3,7 @@
 features.yaml holds schema_version/features/output/predictability/semantic/
 prosody/... (global, shareable, reset-able by the GUI); run.yaml holds
 `shared` (machine-specific folders, analyzer name, theme, token-file paths).
-utils.preferences reads/writes prefs through split_prefs/join_yaml_pair and
+sensi.utils.preferences reads/writes prefs through split_prefs/join_yaml_pair and
 the write_*_yaml helpers below; run.py validates raw files with
 validate_features_yaml/validate_run_yaml before loading them.
 """
@@ -60,7 +60,7 @@ _SECTION_COMMENTS = {
 
 
 # Feature/output toggle keys that existed in a past schema version and have
-# since been removed or renamed by a utils.preferences migration step.
+# since been removed or renamed by a sensi.utils.preferences migration step.
 # validate_features_yaml() tolerates these (warns, does not error) so a
 # pre-migration features.yaml — which WILL contain them, since each was a
 # default at some point — does not fail run.py's raw-shape validation before
@@ -232,7 +232,7 @@ def retired_keys_present(data: dict) -> list[str]:
 
     A retired key is not a validation error (see RETIRED_FEATURE_KEYS /
     RETIRED_PREDICTABILITY_KEYS above): it means the file predates a
-    utils.preferences migration and load_preferences() will drop it on the
+    sensi.utils.preferences migration and load_preferences() will drop it on the
     next save. Surfacing it as a warning still tells the user their config
     is stale, without blocking a headless run.py the way an error would.
     """

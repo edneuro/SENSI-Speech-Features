@@ -8,7 +8,7 @@ from sensi.extractors.syllabify import (
 
 # Explicit fixture lexicon for Pron_Source tests, so they never depend on the
 # real (git-ignored) MFA dictionary at tests/../mfa_data/. On a fresh clone
-# without mfa_data/, _lexicon_words() would return an empty set and
+# without data/mfa_data/, _lexicon_words() would return an empty set and
 # _pron_source's no-lexicon branch always returns "dictionary" — which would
 # make these tests pass vacuously, including the '48'/'forty eight' regression
 # guard. Must contain the dictionary-side fixtures and exclude 'zorblax'/'48'.

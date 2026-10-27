@@ -1,6 +1,6 @@
 """Maximum Onset Principle syllabification from MFA phoneme labels.
 
-Algorithm and rationale: see docs/superpowers/specs/2026-05-13-phoneme-syllable-design.md §5.
+Algorithm and rationale: see dev/superpowers/specs/2026-05-13-phoneme-syllable-design.md §5.
 """
 from __future__ import annotations
 
@@ -177,7 +177,7 @@ def _lexicon_words() -> set[str]:
     Used only to label Pron_Source: MFA does not mark G2P-derived words in the
     TextGrid, so a words-tier form absent from the dictionary is one whose
     pronunciation was generated (or absent entirely). Reuses the same .dict
-    that extractors/phoneme_surprisal.py parses. Returns an empty set if the
+    that sensi/extractors/phoneme_surprisal.py parses. Returns an empty set if the
     dictionary is unavailable, in which case every word is reported as
     'dictionary' rather than mislabelled as 'g2p'.
     """

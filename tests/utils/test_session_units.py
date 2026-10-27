@@ -1,4 +1,4 @@
-"""Tests for utils.session_units."""
+"""Tests for sensi.utils.session_units."""
 import pytest
 from sensi.gui.planner.stages import Plan
 from sensi.utils.session_units import build_session_units

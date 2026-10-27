@@ -1,6 +1,6 @@
 """Value checks for the feature config: ranges, allowed values, cross-field rules.
 
-utils.config_yaml.validate_features_yaml checks a hand-edited features.yaml for
+sensi.utils.config_yaml.validate_features_yaml checks a hand-edited features.yaml for
 unknown keys and wrong types; this module checks that the values themselves
 make sense (a pitch floor below the ceiling, a positive analysis rate, a known
 model slug, ...). Both the headless run.py (via validate_features_yaml) and the

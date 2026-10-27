@@ -1,6 +1,6 @@
 """Frozen dataclasses for the planner. No logic — just types.
 
-See docs/superpowers/specs/2026-05-14-planner-design.md §5.
+See dev/superpowers/specs/2026-05-14-planner-design.md §5.
 """
 from __future__ import annotations
 
@@ -50,9 +50,9 @@ class Plan:
     stage_configs: dict[str, dict[str, Any]]
     # Dynamic columns not representable by any FeatureCluster.emits_columns
     # (fixed at registry-definition time). Currently just the predictability
-    # <slug>_<Metric> columns — see gui/planner/plan.py's
+    # <slug>_<Metric> columns — see sensi/gui/planner/plan.py's
     # _predictability_columns / _predictability_active and the "Predictability"
-    # cluster's docstring in gui/planner/registry.py.
+    # cluster's docstring in sensi/gui/planner/registry.py.
     predictability_columns: tuple[str, ...] = ()
     # Which batch pass needs the predictability models (plan.py
     # _predictability_active): the word pass for <slug>_<Metric> word-CSV

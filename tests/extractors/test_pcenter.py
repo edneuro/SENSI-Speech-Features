@@ -1,4 +1,4 @@
-"""Unit tests for extractors.pcenter.add_pcenter."""
+"""Unit tests for sensi.extractors.pcenter.add_pcenter."""
 import math
 import pandas as pd
 

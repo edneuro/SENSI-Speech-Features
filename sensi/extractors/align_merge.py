@@ -6,7 +6,7 @@ each non-punctuation token with the MFA word interval it was spoken as.
 Why this is not a simple join: spaCy and MFA tokenize differently.
     - contractions: spaCy "do" + "n't"  vs  MFA "don't"
     - numbers:      spaCy "1,500"       vs  MFA "one thousand five hundred"
-                    (numbers are spelled out by utils.transcript_prep before
+                    (numbers are spelled out by sensi.utils.transcript_prep before
                     alignment, so the audio-side words are the spelled forms)
     - hyphens:      spaCy "mother-in-law" vs MFA "mother" "in" "law"
 
@@ -70,7 +70,7 @@ def merge_alignment(token_df: pd.DataFrame, align_df: pd.DataFrame) -> pd.DataFr
         token_df: token-level DataFrame with 'token' and 'upos' columns
                   (punctuation rows get NaN and consume nothing).
         align_df: MFA word tier with 'Transcript' / 'Onset' / 'End', in
-                  temporal order (extractors.aligner output).
+                  temporal order (sensi.extractors.aligner output).
 
     Onset/End come back as float64 (NaN where unmatched) so downstream
     arithmetic never meets object-dtype None columns.

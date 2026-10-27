@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Calibrate the Run-tab estimate constants (utils/estimate_constants.py).
+"""Calibrate the Run-tab estimate constants (sensi/utils/estimate_constants.py).
 
-Runs the headless pipeline (run.py) on validation/data with a scratch config
+Runs the headless pipeline (run.py) on dev/validation/data with a scratch config
 that turns on every CPU-feasible feature (predictability: GPT-2 only; the
 gated Llama models are not run), then prints:
 
@@ -88,7 +88,7 @@ def build_config(config_dir: Path, transcripts: Path, audio: Path, output: Path,
                  *, heavy: set[str] | None = None) -> None:
     """Write features.yaml + run.yaml into `config_dir` (never the live config).
 
-    Starts from a copy of validation/config when present (otherwise the shipped
+    Starts from a copy of dev/validation/config when present (otherwise the shipped
     defaults), migrates it, switches every feature/output toggle on, restricts
     predictability to GPT-2, and points the folders at absolute paths. With
     `heavy` given, the heavy items not in it are switched off (memory runs).
@@ -235,7 +235,7 @@ MEMORY_VARIANTS = [("warmup", set()), ("baseline", set()),
                    ("word2vec", {"word2vec"}), ("bert", {"bert"}),
                    ("gpt2", {"gpt2"}),
                    # All heavy items together: they are process-cached (and
-                   # preloaded by main.py), so they add up rather than overlap.
+                   # preloaded by sensi/pipeline.py), so they add up rather than overlap.
                    ("all", {"word2vec", "bert", "gpt2"})]
 
 

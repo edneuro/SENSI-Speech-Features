@@ -3,7 +3,7 @@
 Single-card layout: a shared analysis-rate grid on top, then each feature's
 toggle with its own parameters indented directly beneath it. Parameter groups
 grey out when no enabled feature consumes them (see _sync_param_enabled, which
-mirrors extract_acoustic() in extractors/acoustic_ts.py).
+mirrors extract_acoustic() in sensi/extractors/acoustic_ts.py).
 
 The card's section switch IS the Run tab's Acoustic level switch
 (output.level_acoustic): the page has a single card, so the two are one
@@ -210,7 +210,7 @@ class AcousticFeaturesSection(QWidget):
 
     def _sync_param_enabled(self) -> None:
         """Grey each param group out unless an enabled feature consumes it.
-        Mirrors extract_acoustic() in extractors/acoustic_ts.py:
+        Mirrors extract_acoustic() in sensi/extractors/acoustic_ts.py:
         env params -> envelope OR onset; mel params -> logmel OR mfcc;
         n_mfcc -> mfcc."""
         env_on = self._toggles["feat_acoustic_ts_envelope"].is_checked()

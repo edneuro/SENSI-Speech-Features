@@ -61,7 +61,7 @@ def cache_key(audio_path: str, transcript: str, g2p: bool = False) -> tuple:
 
     One definition, shared by align_with_phones (which stores/reads the
     cache) and any caller that needs to check for a cache hit without
-    running alignment (e.g. main.py's cache-hit log message) — so a new
+    running alignment (e.g. sensi/pipeline.py's cache-hit log message) — so a new
     parameter here (like `g2p`) cannot silently desync a hand-rebuilt tuple
     at the call site.
     """
@@ -449,7 +449,7 @@ def align(audio_path: str, transcript: str) -> pd.DataFrame:
 
     Returns a DataFrame with columns Transcript / Onset / End, one row per
     word; punctuation and silence excluded; words MFA couldn't align are
-    omitted (the merge step in main.py flags them NaN downstream).
+    omitted (the merge step in sensi/pipeline.py flags them NaN downstream).
 
     Thin wrapper over `align_with_phones` that discards the phone tier.
     Kept for callers that don't need phoneme alignment.
@@ -491,7 +491,7 @@ def _run_mfa(corpus_dir: str, output_dir: str, *, g2p: bool = False,
         else:
             print(f'[mfa] WARNING: g2p requested but no G2P model at '
                   f'{G2P_MODEL_PATH}; out-of-dictionary words will align to '
-                  f'spn. Run: python utils/download_models.py',
+                  f'spn. Run: python scripts/download_models.py',
                   file=sys.stderr)
     result = subprocess.run(cmd, capture_output=True, text=True)
     if result.returncode != 0:

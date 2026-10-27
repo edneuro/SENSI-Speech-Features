@@ -1,4 +1,4 @@
-"""Disk-size estimates and input statistics (utils/run_estimates.py)."""
+"""Disk-size estimates and input statistics (sensi/utils/run_estimates.py)."""
 import builtins
 import copy
 
@@ -82,7 +82,7 @@ def test_dropped_columns_shrink_features_csv():
     prefs["features"]["master_word_prosody"] = False
     no_prosody = estimate_disk(plan_from_prefs(prefs), prefs, _stats())["features"]
     assert no_prosody < full
-    # ...and a per-column toggle inside an active cluster (main.py drop map).
+    # ...and a per-column toggle inside an active cluster (sensi/pipeline.py drop map).
     prefs["features"]["feat_acoustic_onset"] = False
     fewer = estimate_disk(plan_from_prefs(prefs), prefs, _stats())["features"]
     assert fewer < no_prosody
@@ -150,8 +150,8 @@ def test_cache_is_module_level():
 
 
 def test_scan_words_match_recorded_units(tmp_path):
-    # The estimator counts words exactly as main.py records them
-    # (utils.timing_history.count_words on the raw transcript), so learned
+    # The estimator counts words exactly as sensi/pipeline.py records them
+    # (sensi.utils.timing_history.count_words on the raw transcript), so learned
     # seconds-per-word apply to the same unit. Number spelling would make
     # "1,500" four words; the recorder sees one.
     from sensi.utils.timing_history import count_words

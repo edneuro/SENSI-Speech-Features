@@ -3,7 +3,7 @@
 Adds five columns to a token DataFrame:
     Edu_Zipf_K2, Edu_Zipf_3to5, Edu_Zipf_6to8, Edu_Zipf_9to12, Edu_Zipf_Overall
 
-Reads from a lookup parquet file at `dictionaries/edu_zipf.parquet` (default)
+Reads from a lookup parquet file at `data/dictionaries/edu_zipf.parquet` (default)
 or a user-supplied path. The lookup must have columns:
     word, edu_zipf_k2, edu_zipf_3to5, edu_zipf_6to8, edu_zipf_9to12, edu_zipf_overall
 
@@ -58,7 +58,7 @@ def add_edu_freq(
         DataFrame with at least ``lemma`` and ``upos`` columns.
     lookup_path:
         Path to the EWFG parquet lookup.  Defaults to
-        ``dictionaries/edu_zipf.parquet`` relative to the project root.
+        ``data/dictionaries/edu_zipf.parquet`` relative to the project root.
     bands:
         Which grade-band columns to emit.  Accepted keys:
         ``"k2"``, ``"3to5"``, ``"6to8"``, ``"9to12"``, ``"overall"``.
@@ -113,7 +113,7 @@ def _load_lookup(path: Path) -> pd.DataFrame | None:
         logger.warning('Failed to load EWFG lookup from %s: %s', path, exc)
         return None
     # Drop duplicate word keys (reindex requires a unique index) — mirrors
-    # extractors/lexical_norms.py; user-supplied tables do contain dupes.
+    # sensi/extractors/lexical_norms.py; user-supplied tables do contain dupes.
     df = df[~df.index.duplicated(keep='first')]
     _lookup_cache[path] = df
     return df

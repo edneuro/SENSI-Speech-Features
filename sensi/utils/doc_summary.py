@@ -9,7 +9,7 @@ When 'category_proportions' is on, scans Sem_* columns and emits
 `count_<cat>` / `prop_<cat>` over content tokens.
 
 When any `psych_*` toggle is requested, adds the corresponding composite
-psychological scores via `extractors.psych_composite` — a license-clean
+psychological scores via `sensi.extractors.psych_composite` — a license-clean
 reimplementation of the Pennebaker et al. (2014) summary indices that
 reads grammatical categories from the spaCy-parsed token DataFrame and
 valence from VADER (no LIWC dictionary). The old LIWC `.dic`-based path
@@ -27,7 +27,7 @@ from sensi.extractors.readability import compute_readability
 CONTENT_POS = {'NOUN', 'VERB', 'ADJ', 'ADV', 'PROPN'}
 
 # Matches unified predictability word-level columns, e.g. "gpt2_Surprisal",
-# "llama3_8b_Cloze" — produced by extractors.predictability.add_predictability
+# "llama3_8b_Cloze" — produced by sensi.extractors.predictability.add_predictability
 # for every roster model x metric the run has active. There is no fixed list
 # of these column names (it depends on prefs["predictability"]), so the doc
 # aggregate scans for them dynamically rather than naming them individually.
@@ -81,7 +81,7 @@ def build_doc_summary(
     toggles: dict[str, bool],
     liwc_dictionary_path: Path | str | None = None,
     *,
-    contours=None,                       # extractors.audio_features.Contours | None
+    contours=None,                       # sensi.extractors.audio_features.Contours | None
     pause_threshold_s: float = 0.25,
     pitch_units: str = 'semitones',
     late_acquired_threshold: float = 10.0,
@@ -173,7 +173,7 @@ def build_doc_summary(
         summary.update(_lexical_norm_aggregates(df, late_acquired_threshold))
 
     # Prosody — single master toggle. Emits all 16 cols; per-column dropping
-    # happens later in main.py's CSV writer via _doc_columns_to_drop.
+    # happens later in sensi/pipeline.py's CSV writer via _doc_columns_to_drop.
     if contours is not None and toggles.get('doc_prosody'):
         from sensi.extractors.prosody import compute_doc_prosody
         prosody = compute_doc_prosody(

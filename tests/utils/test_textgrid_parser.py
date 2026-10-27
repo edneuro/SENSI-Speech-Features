@@ -1,4 +1,4 @@
-"""TextGrid parsing (utils/textgrid_parser.py)."""
+"""TextGrid parsing (sensi/utils/textgrid_parser.py)."""
 import textwrap
 
 from sensi.utils.textgrid_parser import parse_phones, parse_words

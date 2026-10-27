@@ -1,4 +1,4 @@
-"""savemat -> loadmat roundtrip for the embedding-struct helpers in main.py."""
+"""savemat -> loadmat roundtrip for the embedding-struct helpers in sensi/pipeline.py."""
 import numpy as np
 import pandas as pd
 import scipy.io

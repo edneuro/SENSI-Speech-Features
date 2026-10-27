@@ -9,8 +9,8 @@ echo "============================================================"
 echo ""
 echo "Everything will be downloaded into this folder:"
 echo "  ./env/        Python environment (~6 GB)"
-echo "  ./mfa_data/   MFA acoustic models (~1 GB)"
-echo "  ./hf_cache/   GPT-2 weights (~500 MB, on first run)"
+echo "  ./data/mfa_data/   MFA acoustic models (~1 GB)"
+echo "  ./data/hf_cache/   GPT-2 / BERT weights (~500 MB, on first run)"
 echo ""
 read -p "Press Enter to continue (Ctrl+C to cancel)..."
 
@@ -25,8 +25,8 @@ echo "[2/5] Creating ./env from conda-lock.yml (exact, pinned versions) ..."
 conda-lock install -p ./env conda-lock.yml
 
 echo ""
-echo "[3/5] Downloading MFA models into ./mfa_data ..."
-conda run --prefix ./env python utils/download_models.py
+echo "[3/5] Downloading MFA models into ./data/mfa_data ..."
+conda run --prefix ./env python scripts/download_models.py
 
 echo ""
 echo "[4/5] Downloading spaCy model into ./env ..."
