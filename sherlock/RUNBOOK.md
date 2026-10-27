@@ -118,7 +118,7 @@ Code first (small; carries `config/features.yaml` — your GUI's live feature ch
 never clobber the `run.yaml` you wrote on Sherlock in step 3):
 ```bash
 cd path/to/SensiExtractor
-rsync -avP --exclude env --exclude hf_cache --exclude mfa_data --exclude .git \
+rsync -avP --exclude env --exclude hf_cache --exclude mfa_data --exclude gensim_data --exclude .git \
   --exclude '*.sif' --exclude '__pycache__' \
   --exclude 'config/run.yaml' --exclude 'config/preferences.json*' \
   ./ <sunetid>@login.sherlock.stanford.edu:<GROUP_HOME>/SensiExtractor/
@@ -176,6 +176,14 @@ apptainer exec --bind $SCRATCH:$SCRATCH --env HF_HOME=$HF_HOME \
   --env HF_HUB_DISABLE_XET=1 \
   $GROUP_HOME/SensiExtractor/sherlock/sensiextractor.sif \
   bash -c 'hf download gpt2 && hf download meta-llama/Meta-Llama-3-8B'
+```
+   If Word2Vec is ticked, also download it (~1.7 GB, once) into the repo's
+   `gensim_data/`, where the offline job looks for it by default:
+```bash
+apptainer exec --bind $GROUP_HOME/SensiExtractor:$GROUP_HOME/SensiExtractor \
+  --env GENSIM_DATA_DIR=$GROUP_HOME/SensiExtractor/gensim_data \
+  $GROUP_HOME/SensiExtractor/sherlock/sensiextractor.sif \
+  python -c 'import gensim.downloader as d; print(d.load("word2vec-google-news-300", return_path=True))'
 ```
 
 ## 6 · (Optional) dry-run — [Sherlock-compute]

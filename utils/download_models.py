@@ -17,8 +17,10 @@ _ROOT = Path(__file__).resolve().parent.parent
 
 
 def main() -> int:
-    mfa_dir = _ROOT / 'mfa_data'
-    os.environ['MFA_ROOT_DIR'] = str(mfa_dir)
+    sys.path.insert(0, str(_ROOT))
+    from utils.local_caches import use_project_caches
+    use_project_caches()
+    mfa_dir = Path(os.environ['MFA_ROOT_DIR'])
 
     print(f'Downloading MFA models to: {mfa_dir}')
 
@@ -44,7 +46,7 @@ def main() -> int:
     print(
         '\n--- Word2Vec ---\n'
         'Google News 300d (~1.7 GB) downloads automatically on first use via gensim.\n'
-        'No manual step needed. The model is cached in ~/gensim-data/ after the\n'
+        'No manual step needed. The model is cached in gensim_data/ after the\n'
         'first download. BERT embeddings work independently and need no download.'
     )
     return 0

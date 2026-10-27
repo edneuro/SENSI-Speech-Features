@@ -84,6 +84,7 @@ SensiExtractor/
 │   ├── config_yaml.py     # features.yaml + run.yaml split/merge/IO behind preferences.py
 │   ├── config_checks.py   # value checks (ranges, allowed values, pitch floor < ceiling, n_mfcc ≤ n_mels…) shared by run.py and the Run tab
 │   ├── credentials.py     # HF token resolution (resolve/read/export/save_hf_token)
+│   ├── local_caches.py    # use_project_caches(): HF_HOME / MFA_ROOT_DIR / GENSIM_DATA_DIR → hf_cache/ mfa_data/ gensim_data/ (setdefault); called at every entry point + extractors/__init__
 │   ├── doc_summary.py     # Word-level frame → document-summary row (incl. dynamic predictability-column aggregation)
 │   ├── file_pairing.py    # Matches transcripts ↔ audio into work items for the batch runners
 │   ├── run_logger.py / session_units.py / system_info.py  # run-log artifacts, column→unit map, env capture

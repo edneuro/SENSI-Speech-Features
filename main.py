@@ -61,11 +61,9 @@ os.environ.setdefault("MKL_THREADING_LAYER", "sequential")
 import numpy as np
 import pandas as pd
 
-# Redirect all model/cache downloads into the project folder
-_HERE = Path(__file__).parent.resolve()
-os.environ.setdefault('HF_HOME',      str(_HERE / 'hf_cache'))   # GPT-2 weights
-os.environ.setdefault('MFA_ROOT_DIR', str(_HERE / 'mfa_data'))   # MFA models
-os.environ.setdefault('HF_HUB_DISABLE_IMPLICIT_TOKEN', '1')      # suppress unauthenticated warning
+# Keep all model/cache downloads inside the project folder
+from utils.local_caches import use_project_caches
+use_project_caches()
 
 
 # ---------------------------------------------------------------------------

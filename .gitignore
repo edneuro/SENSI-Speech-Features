@@ -1,6 +1,7 @@
 env/
 mfa_data/
 hf_cache/
+gensim_data/
 __pycache__/
 *.pyc
 *.csv

@@ -52,7 +52,8 @@ Source: `extractors/word2vec_embed.py`.
    `hf_cache/word2vec/GoogleNews-vectors-negative300.bin`.
 3. If the local file is missing, the model is auto-downloaded via
    `gensim.downloader.load("word2vec-google-news-300")` (~1.7 GB, one
-   time, cached by gensim in `~/gensim-data/`).
+   time, cached in the project's `gensim_data/` folder; an existing
+   `GENSIM_DATA_DIR` environment variable takes precedence).
 4. Iterates over the word-level token column and, for each token:
    a. Returns the vector if the exact token is in vocabulary.
    b. Otherwise tries the lowercase form (`token.lower()`).

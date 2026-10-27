@@ -7,6 +7,10 @@ _ROOT = Path(__file__).resolve().parent.parent
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
+# Tests that load models use the project's caches, not the home directory.
+from utils.local_caches import use_project_caches  # noqa: E402
+use_project_caches()
+
 # MKL on AMD CPUs crashes when using the default Intel-thread layer for
 # floating-point BLAS calls (Windows, Ryzen). Force sequential threading so
 # matrix-multiply in librosa/numpy works without a fatal exception (0xc06d007f).
