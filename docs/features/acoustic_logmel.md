@@ -61,10 +61,12 @@ eight in the Eelbrain toolkit paper [Brodbeck 2023].
 
 ## EEG rationale
 EEG/MEG responses to natural speech are **better predicted by a
-spectrotemporal (mel-band) representation than by the broadband envelope
-alone** — the cortex carries frequency-resolved acoustic information, and
-mel-band TRFs (the "spectrogram model") form the acoustic baseline against
-which higher-level models are compared [Di Liberto 2015]. The mel scale is
+spectrotemporal representation than by the broadband envelope alone**: in
+[Di Liberto 2015] the envelope model "underperformed relative to all other
+models", including a spectrogram of 16 bands between 250 Hz and 8 kHz (the
+Hilbert envelope of each band), and that spectrogram model is the acoustic
+baseline higher-level models are compared against. Theirs is a band-energy
+spectrogram, not a mel one; log-mel is the closest standard equivalent. The mel scale is
 used because its perceptual frequency warping is a reasonable proxy for the
 tonotopic, roughly log-frequency organization of the auditory periphery and
 cortex, so each mel band maps onto a coherent population of the response.
@@ -110,7 +112,7 @@ logmel, freqs = log_mel_spectrogram(y, sr, rate=128, n_mels=16,
 ```
 
 ## Papers
-- <a name="dl-2015"></a>**[Di Liberto 2015]** Di Liberto, O'Sullivan, Lalor. *Low-Frequency Cortical Entrainment to Speech Reflects Phoneme-Level Processing.* Current Biology 25(19), 2457–2465. [doi:10.1016/j.cub.2015.08.030](https://doi.org/10.1016/j.cub.2015.08.030) — establishes the spectrogram (mel-band) acoustic model as the TRF baseline that the phonetic-feature model is tested against.
+- <a name="dl-2015"></a>**[Di Liberto 2015]** Di Liberto, O'Sullivan, Lalor. *Low-Frequency Cortical Entrainment to Speech Reflects Phoneme-Level Processing.* Current Biology 25(19), 2457–2465. [doi:10.1016/j.cub.2015.08.030](https://doi.org/10.1016/j.cub.2015.08.030) — spectrogram of 16 bands (250 Hz–8 kHz, Hilbert envelope per band) beats the broadband envelope; the acoustic baseline the phonetic-feature model is tested against.
 - <a name="stevens-1937"></a>**[Stevens 1937]** Stevens, Volkmann, Newman. *A Scale for the Measurement of the Psychological Magnitude Pitch.* Journal of the Acoustical Society of America 8(3), 185–190. [doi:10.1121/1.1915893](https://doi.org/10.1121/1.1915893) — the original mel scale.
 - <a name="crosse-2016-mel"></a>**[Crosse 2016]** Crosse, Di Liberto, Bednar, Lalor. *The Multivariate Temporal Response Function (mTRF) Toolbox.* Frontiers in Human Neuroscience 10, 604. [doi:10.3389/fnhum.2016.00604](https://doi.org/10.3389/fnhum.2016.00604) — multivariate TRF for multi-band spectrotemporal predictors.
 - <a name="brodbeck-2023"></a>**[Brodbeck 2023]** Brodbeck, Das, Gillis, Kulasingham, Bhattasali, Gaston, Resnik, Simon. *Eelbrain, a Python toolkit for time-continuous analysis with temporal response functions.* eLife 12, e85012. [doi:10.7554/eLife.85012](https://doi.org/10.7554/eLife.85012) — reduces a gammatone spectrogram to eight bands for TRF analysis.

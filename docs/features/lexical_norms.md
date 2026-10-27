@@ -125,10 +125,12 @@ to **match or control stimuli** (e.g. checking that two conditions don't differ
 in average word difficulty) and to relate passage-level neural measures to
 passage-level language properties.
 
-> ⚠️ **Modeling caution.** AoA, frequency, familiarity, concreteness and
-> imageability are substantially intercorrelated: AoA "correlated strongly with
-> word frequency" [Kuperman 2012], AoA–familiarity r = −.67 and
-> **concreteness ↔ imageability r = .91** [Scott 2019].
+> ⚠️ **Modeling caution.** AoA, frequency, familiarity, word length and
+> concreteness "tend to be correlated in natural language" [Juhasz 2003],
+> which is why that study hand-picked stimuli to keep them apart. In large
+> norm sets, AoA "correlated strongly with word frequency" [Kuperman 2012],
+> AoA–familiarity r = −.67 and **concreteness ↔ imageability r = .91**
+> [Scott 2019].
 > Don't enter collinear norms in one model without checking VIF or
 > residualizing/PCA first. The length-like norms are best treated as control
 > regressors, not effects of interest.

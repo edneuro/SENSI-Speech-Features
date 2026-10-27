@@ -43,8 +43,8 @@ interpretability** that makes the log-mel features map onto the auditory
 system's frequency-organized response. A TRF weight on mel band 4 has a clear
 meaning ("response to ~500 Hz energy"); a TRF weight on MFCC-4 does not
 correspond to any single frequency region. The spectrotemporal model used in
-the cortical-tracking literature is the mel/spectrogram representation, not
-MFCCs [Di Liberto 2015]. MFCCs remain useful if you specifically want a
+the cortical-tracking literature is a band-energy spectrogram (16 bands,
+250 Hz–8 kHz in [Di Liberto 2015]), not MFCCs. MFCCs remain useful if you specifically want a
 low-dimensional, decorrelated acoustic summary (e.g. as a compact nuisance
 regressor, for stimulus-similarity/clustering, or to connect to ASR-style
 analyses).
@@ -88,7 +88,7 @@ m = mfcc(y, sr, rate=128, n_mfcc=13, n_mels=16, fmin=fmin, fmax=fmax)
 
 ## Papers
 - <a name="davis-1980"></a>**[Davis 1980]** Davis & Mermelstein. *Comparison of Parametric Representations for Monosyllabic Word Recognition in Continuously Spoken Sentences.* IEEE Transactions on Acoustics, Speech, and Signal Processing 28(4), 357–366. [doi:10.1109/TASSP.1980.1163420](https://doi.org/10.1109/TASSP.1980.1163420) — introduces MFCCs.
-- <a name="dl-2015-mfcc"></a>**[Di Liberto 2015]** Di Liberto, O'Sullivan, Lalor. *Low-Frequency Cortical Entrainment to Speech Reflects Phoneme-Level Processing.* Current Biology 25(19), 2457–2465. [doi:10.1016/j.cub.2015.08.030](https://doi.org/10.1016/j.cub.2015.08.030) — the mel/spectrogram representation (not MFCCs) is the acoustic TRF baseline in cortical-tracking work.
+- <a name="dl-2015-mfcc"></a>**[Di Liberto 2015]** Di Liberto, O'Sullivan, Lalor. *Low-Frequency Cortical Entrainment to Speech Reflects Phoneme-Level Processing.* Current Biology 25(19), 2457–2465. [doi:10.1016/j.cub.2015.08.030](https://doi.org/10.1016/j.cub.2015.08.030) — the acoustic TRF baseline is a 16-band spectrogram, not MFCCs.
 - <a name="stevens-1937-mfcc"></a>**[Stevens 1937]** Stevens, Volkmann, Newman. *A Scale for the Measurement of the Psychological Magnitude Pitch.* Journal of the Acoustical Society of America 8(3), 185–190. [doi:10.1121/1.1915893](https://doi.org/10.1121/1.1915893) — the mel scale underlying the filterbank the DCT is taken over.
 - <a name="crosse-2016-mfcc"></a>**[Crosse 2016]** Crosse, Di Liberto, Bednar, Lalor. *The Multivariate Temporal Response Function (mTRF) Toolbox: A MATLAB Toolbox for Relating Neural Signals to Continuous Stimuli.* Frontiers in Human Neuroscience 10, 604. [doi:10.3389/fnhum.2016.00604](https://doi.org/10.3389/fnhum.2016.00604) — spectrogram of 16 log-spaced bands (250 Hz–8 kHz) as the multivariate TRF example.
 
