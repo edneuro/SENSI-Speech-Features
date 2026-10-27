@@ -58,7 +58,23 @@ def external_links(out_dir: Path) -> list[str]:
     urls = sorted({u for p in out_dir.rglob("*.html") for u in _ATTR.findall(p.read_text(encoding="utf-8"))
                    if u.startswith(("http://", "https://"))})
     bad = []
+
+    def doi_registered(u: str) -> bool:
+        """Publishers (Elsevier especially) refuse scripted requests; for a DOI
+        link, ask the DOI registry whether it exists instead."""
+        import json
+        doi = u.split("doi.org/", 1)[1]
+        try:
+            with urllib.request.urlopen(f"https://doi.org/api/handles/{urllib.parse.quote(doi)}", timeout=12) as r:
+                return json.load(r).get("responseCode") == 1
+        except Exception:
+            return False
+
     for u in urls:
+        if "doi.org/" in u:
+            if not doi_registered(u):
+                bad.append(f"DOI not registered: {u}")
+            continue
         req = urllib.request.Request(u, method="GET", headers={"User-Agent": "Mozilla/5.0 (SensiExtractor manual link check)"})
         try:
             with urllib.request.urlopen(req, timeout=12) as r:

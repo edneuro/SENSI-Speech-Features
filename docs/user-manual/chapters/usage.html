@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Using the app · SensiExtractor User Manual</title>
+<link rel="icon" href="../assets/icon.svg">
+<link rel="stylesheet" href="../assets/theme.css">
+<link rel="stylesheet" href="../assets/layout.css">
+<link rel="stylesheet" href="../assets/code.css">
+</head>
+<body data-root="../">
+<button class="menu-btn" type="button" aria-label="Open the outline">☰ Contents</button>
+<div class="shell">
+  <nav class="left" aria-label="Manual outline">
+    <a class="brand" href="../index.html"><img src="../assets/icon.svg" alt="">SensiExtractor <span>User Manual</span></a>
+    <div class="search">
+      <input type="search" placeholder="Search features, columns…  ( / )" aria-label="Search the manual">
+      <div class="search-results" role="listbox"></div>
+    </div>
+    <div class="outline"><ul><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../index.html"><span class="num">1</span>Introduction</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../chapters/requirements.html"><span class="num">2</span>Requirements</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../chapters/installation.html"><span class="num">3</span>Installation</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../chapters/usage.html" class="current"><span class="num">4</span>Using the app</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../chapters/sherlock.html"><span class="num">5</span>Running on Sherlock</a></div></li><li class="chapter open"><div class="row"><button class="toggle" type="button" aria-expanded="true" aria-label="Show or hide Features">▶</button><a href="../features/index.html"><span class="num">6</span>Features</a></div><ul><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Word level">▶</button><a href="../features/word/index.html"><span class="num">6.1</span>Word level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/word/structural_ids.html">Structural identifier columns</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/word/structural_offsets.html">Structural character offsets</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/word/feat_struct_sentence_text.html">Sentence text</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/word/lexling_tokens.html">Tokens and lemmas</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/word/lexling_pos.html">Part-of-speech tags</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/word/lexling_morph.html">Morphological features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/word/lexling_dep.html">Dependency parse</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/word/freq_subtlex.html">Word frequency (Zipf, wordfreq)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/word/edu_zipf.html">Educator&#x27;s Word Frequency Guide (EWFG) grade-band frequencies<span class="tag" title="Not computed in this manual">◇</span></a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/word/pred_surprisal.html">Surprisal</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/word/pred_cloze.html">Cloze probability</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/word/pred_topmatch.html">Top-1 prediction match</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/word/sem_indicators.html">Semantic-domain category indicators</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/word/master_word2vec.html">Word2Vec static word embeddings</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/word/master_bert_word.html">BERT contextual word embeddings</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/word/lexical_norms.html">Lexical norms (AoA, concreteness, imageability, familiarity, VAD)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/word/acoustic_boundaries.html">Acoustic word boundaries (MFA)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/word/acoustic_durations.html">Acoustic word duration and gap</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/word/prosody_pitch.html">Word-level pitch features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/word/prosody_volume.html">Word-level volume (intensity) features</a></div></li></ul></li><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Document level">▶</button><a href="../features/document/index.html"><span class="num">6.2</span>Document level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/document/doc_counts.html">Document-level count columns</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/document/doc_aggregates.html">Word-level feature aggregates</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/document/output_doc_lex_diversity.html">Lexical diversity (TTR + MTLD)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/document/output_doc_readability.html">Readability (Flesch Reading Ease + Flesch–Kincaid Grade Level)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/document/output_doc_category_proportions.html">Document-level category proportions</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/document/doc_psych_composite.html">Composite psychological scores (LIWC-style summary variables)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/document/doc_prosody_pitch.html">Document-level pitch summaries</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/document/doc_prosody_volume.html">Document-level volume (intensity) summaries</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/document/doc_prosody_pauses.html">Document-level pause statistics</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/document/feat_doc_prosody_articulation_rate.html">Articulation rate</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/document/feat_doc_prosody_hnr.html">Document-level Harmonics-to-Noise Ratio (HNR)</a></div></li></ul></li><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Sub-word level">▶</button><a href="../features/subword/index.html"><span class="num">6.3</span>Sub-word level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/subword/syllable_timing.html">Syllable timing (Onset / End / Duration)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/subword/syllable_labels.html">Syllable labels (orthographic + ARPABET + IPA)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/subword/syllable_prosody.html">Syllable-level prosody (pitch + volume + deltas)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/subword/feat_syllable_pcenter.html">Perceptual centre (P-center)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/subword/phoneme.html">Phoneme-level columns</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/subword/feat_phoneme_ipa.html">IPA phoneme symbol</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/subword/g2p_oov.html">Out-of-dictionary words (MFA G2P)<span class="tag" title="Not computed in this manual">◇</span></a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/subword/phoneme_surprisal.html">Phoneme surprisal + cohort entropy</a></div></li></ul></li><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Sentence level">▶</button><a href="../features/sentence/index.html"><span class="num">6.4</span>Sentence level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/sentence/sentence_timing.html">Sentence timing</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/sentence/sentence_prosody_pitch.html">Sentence-level pitch features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/sentence/sentence_prosody_volume.html">Sentence-level volume (intensity) features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/sentence/feat_sentence_hnr.html">Sentence-level Harmonics-to-Noise Ratio (HNR)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/sentence/master_bert_sentence.html">BERT contextual sentence embeddings</a></div></li></ul></li><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Acoustic level">▶</button><a href="../features/acoustic/index.html"><span class="num">6.5</span>Acoustic level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/acoustic/acoustic_envelope.html">Amplitude envelope (broadband)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/acoustic/acoustic_onset_envelope.html">Onset envelope (HWR derivative)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/acoustic/acoustic_logmel.html">Log-mel spectrogram</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/acoustic/acoustic_mfcc.html">MFCC (Mel-frequency cepstral coefficients)</a></div></li></ul></li></ul></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../chapters/outputs.html"><span class="num">7</span>Outputs reference</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../references.html"><span class="num">8</span>References</a></div></li></ul></div>
+  </nav>
+  <main>
+    <div class="content">
+      
+      <h1><span class="num">4</span>Using the app</h1><p class="lede">The app is eight pages in a sidebar — choose your files, tick the features you want, run. The same settings also drive a headless run with run.py.</p><h2 id="the-workflow-at-a-glance"><span class="num">4.1</span>The workflow at a glance</h2>
+<ol class="steps">
+<li><b>Inputs</b> — say who is running it, and pick the transcripts, audio and output folders.</li>
+<li><b>Feature pages</b> (Word, Document, Sub-word, Sentence, Acoustic) — switch on the sections you want and tick their columns.</li>
+<li><b>Run</b> — switch on the output levels to write, check the size / memory / time estimates and readiness, press <b>Run extraction</b>.</li>
+<li><b>Logs</b> — watch progress live; reopen past runs.</li>
+</ol>
+<p>Your choices are saved as you make them, in two plain-text files in <code>config/</code>:
+<code>features.yaml</code> (<em>what</em> to extract — the same on every computer, safe to share) and
+<code>run.yaml</code> (<em>where</em>: folders, your name — specific to this computer). Close the app and
+everything is still there next time.</p>
+<h2 id="inputs"><span class="num">4.2</span>Inputs</h2>
+<figure class="card"><img class="shot" src="../assets/screens/01-inputs.png" alt="The Inputs page with the manual&#x27;s example files" loading="lazy"><figcaption>The Inputs page with the manual&#x27;s example files (screenshot of the real app)</figcaption></figure>
+<ul>
+<li><strong>Analyzer</strong> — your name; it is recorded in every run's log and manifest, so you can tell
+later who produced a set of outputs.</li>
+<li><strong>Transcripts folder</strong> — one plain-text file per stimulus (<code>.txt</code>; <code>.md</code> and <code>.tsv</code> work too; numbers are spelled out
+for you).</li>
+<li><strong>Audio folder</strong> — the matching recordings (<code>.wav</code>, <code>.flac</code> or <code>.mp3</code>). A transcript and a
+recording are paired when they have the <strong>same file name</strong> (<code>story1.txt</code> ↔ <code>story1.wav</code>).
+Optional: without audio you still get every text feature; timing, prosody and the
+sub-word levels need it.</li>
+<li><strong>Output folder</strong> — where results go (created if missing).</li>
+<li><strong>Pairing preview</strong> — shows which files paired and which didn't, before you run. In the
+example above, two text-only sentences have no recording and one recording has no
+transcript (it is used only by the audio-only Acoustic level).</li>
+</ul>
+<h2 id="feature-pages"><span class="num">4.3</span>Feature pages</h2>
+<figure class="card"><img class="shot" src="../assets/screens/02-word.png" alt="The Word-level features page" loading="lazy"><figcaption>The Word-level features page (screenshot of the real app)</figcaption></figure>
+<p>Each page groups its features in <strong>cards</strong> — the same grouping as the
+<a href="../features/index.html">Features</a> chapters of this manual. On every card:</p>
+<ul>
+<li>The <strong>switch</strong> next to the title includes or leaves out the whole section. Switched off,
+the card greys out but keeps your ticks for when you switch it back on.</li>
+<li>The <strong>ticks</strong> choose individual columns; <strong>All · None</strong> set them all at once.</li>
+<li>The <strong>ⓘ</strong> icon opens the feature's explanation — the same text as its page in this manual.</li>
+<li>Some cards have settings (pitch range, pitch units, model choice, analysis rate…); each is
+explained on the feature's page.</li>
+</ul>
+<p>The other feature pages work the same way:</p>
+<div data-tabs>
+<div class="tabs" role="tablist"><button type="button" class="on">Document</button><button type="button">Sub-word</button><button type="button">Sentence</button><button type="button">Acoustic</button></div>
+<div class="tabpanel on">
+<figure class="card"><img class="shot" src="../assets/screens/03-document.png" alt="Document-level features" loading="lazy"><figcaption>Document-level features (screenshot of the real app)</figcaption></figure>
+</div>
+<div class="tabpanel">
+<figure class="card"><img class="shot" src="../assets/screens/04-subword.png" alt="Sub-word features" loading="lazy"><figcaption>Sub-word features (screenshot of the real app)</figcaption></figure>
+</div>
+<div class="tabpanel">
+<figure class="card"><img class="shot" src="../assets/screens/05-sentence.png" alt="Sentence features" loading="lazy"><figcaption>Sentence features (screenshot of the real app)</figcaption></figure>
+</div>
+<div class="tabpanel">
+<figure class="card"><img class="shot" src="../assets/screens/06-acoustic.png" alt="Acoustic features" loading="lazy"><figcaption>Acoustic features (screenshot of the real app)</figcaption></figure>
+</div>
+</div>
+<p><strong>Reset settings</strong> (top right) puts every feature choice back to the shipped defaults — a
+minimal run with only the structural word columns. It rewrites <code>features.yaml</code> only; your
+folders and name in <code>run.yaml</code> are kept.</p>
+<h2 id="run"><span class="num">4.4</span>Run</h2>
+<figure class="card"><img class="shot" src="../assets/screens/07-run.png" alt="The Run page: output levels, estimates, readiness" loading="lazy"><figcaption>The Run page: output levels, estimates, readiness (screenshot of the real app)</figcaption></figure>
+<ul>
+<li><strong>Output levels</strong> — one switch per level. Each lists the files it will write for every
+stimulus; a file is crossed out when nothing you ticked would go into it. A level writes
+only when its switch is on <em>and</em> at least one ticked feature produces that file.</li>
+<li><strong>Estimates</strong> — before you start, the page shows the <strong>disk space</strong> the outputs will take
+(per level and per file), the <strong>peak memory</strong> compared with this computer's (with a
+warning if it may not fit), and an <strong>expected time</strong> range. The time starts as a wide first
+estimate and narrows as the app learns how fast <em>this</em> computer is; stimuli that already
+have a saved alignment in the output folder aren't charged for alignment again.</li>
+<li><strong>Readiness</strong> — the run button is enabled only when everything needed is in place; the
+line above it says what's missing (a folder, a token for a gated model, …).</li>
+</ul>
+<p>Alignment runs once per stimulus and is saved in the output folder
+(<code>Montreal Forced Alignment/</code>); the next run on unchanged files reuses it.</p>
+<h2 id="logs"><span class="num">4.5</span>Logs</h2>
+<figure class="card"><img class="shot" src="../assets/screens/08-logs.png" alt="The Logs page" loading="lazy"><figcaption>The Logs page (screenshot of the real app)</figcaption></figure>
+<p><strong>Current run</strong> shows the progress messages live (with a search box and <strong>Copy</strong>); <strong>Past
+runs</strong> lists earlier runs in this output folder. Each run also leaves files in
+<code>&lt;output&gt;/logs/</code>: the log, a JSON manifest (inputs, settings, versions, per-stimulus results
+and any problems), and a table of the units of every column.</p>
+<h2 id="headless-runs-run-py"><span class="num">4.6</span>Headless runs: <code>run.py</code></h2>
+<p><code>python run.py</code> does exactly what the <strong>Run</strong> button does, using the saved
+<code>config/features.yaml</code> and <code>config/run.yaml</code>. Use it for long batches, on a server, or on
+Sherlock.</p>
+<pre><code class="language-bash">conda<span class="w"> </span>activate<span class="w"> </span>./env
+python<span class="w"> </span>run.py<span class="w">                       </span><span class="c1"># uses config/</span>
+python<span class="w"> </span>run.py<span class="w"> </span>--config-dir<span class="w"> </span>path/to/other/config
+</code></pre>
+<p>The easiest way to make the two files is to set everything up in the app once. Without the
+app, copy the templates and edit them:</p>
+<pre><code class="language-bash">cp<span class="w"> </span>config/features_defaults.yaml<span class="w"> </span>config/features.yaml
+cp<span class="w"> </span>config/run_defaults.yaml<span class="w"> </span>config/run.yaml
+</code></pre>
+<h3><code>run.yaml</code> — where</h3>
+<pre><code class="language-yaml"><span class="nt">shared</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">analyzer_name</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;&#39;</span>
+<span class="w">  </span><span class="nt">last_transcripts_folder</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;&#39;</span>
+<span class="w">  </span><span class="nt">last_audio_folder</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;&#39;</span>
+<span class="w">  </span><span class="nt">last_output_folder</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;&#39;</span>
+<span class="w">  </span><span class="nt">theme</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">system</span>
+<span class="w">  </span><span class="nt">hf_token_file</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">hf_token.txt</span>
+</code></pre>
+<p>Set <code>analyzer_name</code> and the three folders. Folder paths can be absolute (recommended) or
+relative — a relative path is taken from the folder that holds <code>run.yaml</code>.</p>
+<h3><code>features.yaml</code> — what</h3>
+<p>The file has one block per part of the app. The output levels:</p>
+<pre><code class="language-yaml"><span class="nt">output</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">level_word</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">  </span><span class="nt">level_document</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="w">  </span><span class="nt">level_subword</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="w">  </span><span class="nt">level_sentence</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="w">  </span><span class="nt">level_acoustic</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+</code></pre>
+<p>Feature switches are <code>true</code> / <code>false</code> under <code>features:</code> (each feature page in this manual
+lists the keys it uses). Settings that aren't switches have their own blocks, for example:</p>
+<pre><code class="language-yaml"><span class="nt">prosody</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">pitch_units</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">semitones</span>
+<span class="w">  </span><span class="nt">pitch_floor_hz</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">75</span>
+<span class="w">  </span><span class="nt">pitch_ceiling_hz</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">500</span>
+<span class="w">  </span><span class="nt">pause_threshold_s</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.25</span>
+<span class="w">  </span><span class="nt">pcenter_k</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.3</span>
+</code></pre>
+<pre><code class="language-yaml"><span class="nt">acoustic_ts</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">analysis_rate</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">128</span>
+<span class="w">  </span><span class="nt">env_method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">rms</span>
+<span class="w">  </span><span class="nt">env_comp</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.3010299956639812</span>
+<span class="w">  </span><span class="nt">env_window</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0</span>
+<span class="w">  </span><span class="nt">n_mels</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">16</span>
+<span class="w">  </span><span class="nt">n_mfcc</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">13</span>
+<span class="w">  </span><span class="nt">mel_preset</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">speech</span>
+</code></pre>
+<p>Predictability is chosen by model and metric:</p>
+<pre><code class="language-yaml"><span class="nt">predictability</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">models</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">gpt2</span><span class="p p-Indicator">]</span><span class="w">           </span><span class="c1"># gpt2, or the gated llama3_* models (need a token)</span>
+<span class="w">  </span><span class="nt">metrics</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">surprisal</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">    </span><span class="nt">cloze</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">    </span><span class="nt">topmatch</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+</code></pre>
+<p><code>run.py</code> checks both files before doing any work and stops with a plain message for an
+unknown key, a wrong type, an out-of-range value (such as a pitch floor above the ceiling) or
+a missing folder.</p>
+<h2 id="huggingface-token"><span class="num">4.7</span>HuggingFace token</h2>
+<p>The predictability metrics — <a href="../features/word/pred_cloze.html"><code>Cloze</code></a>,
+<a href="../features/word/pred_surprisal.html"><code>Surprisal</code></a>, and
+<a href="../features/word/pred_topmatch.html"><code>TopMatch</code></a> — come from a single forward pass of
+each <strong>local</strong> model you select in the GUI's Predictability card
+(roster: GPT-2 + three Llama-3 variants; see
+<a href="../features/word/pred_surprisal.html#models">Models</a>). Weights are not bundled; set
+access up once per gated model before running. <strong>GPT-2 needs no
+credentials at all</strong> — it's free, ungated, and downloads automatically
+on first use. Everything below applies only to the three gated
+Llama-3 models.</p>
+<blockquote>
+<p><strong>Why local-only (no OpenAI).</strong> Scoring an <em>existing</em> string for per-token
+log-probabilities needs the legacy OpenAI <code>/v1/completions</code> <code>echo=True, logprobs</code> primitive, which OpenAI has retired and never served for the
+<code>gpt-4o</code> family. There is no current OpenAI endpoint that returns the
+probabilities these columns require, so SensiExtractor uses local
+Hugging Face causal LMs only. (Selecting a <code>gpt-*</code> model id raises an
+explanatory error rather than failing mid-run.) There is no API-key
+input anywhere in the GUI for this feature — only local models are ever
+offered.</p>
+</blockquote>
+<h3 id="local-llama-backends--gated-free-one-time-setup">Local Llama backends — gated, free, one-time setup</h3>
+<p>The Meta-Llama weights are free but <strong>gated</strong>: HuggingFace releases them only
+after you accept Meta's license <em>and</em> Meta approves your request.</p>
+<ol>
+<li><strong>Sign in</strong> at <a href="https://huggingface.co">https://huggingface.co</a> (create a free account if needed).</li>
+<li><strong>Open the model page</strong> for the variant you want, e.g.
+<a href="https://huggingface.co/meta-llama/Meta-Llama-3-8B">https://huggingface.co/meta-llama/Meta-Llama-3-8B</a>, and fill in the access
+form to <strong>accept Meta's license</strong>.</li>
+<li><strong>Wait for approval.</strong> Access is granted <strong>manually, not instantly</strong> —
+you'll receive a <strong>confirmation email</strong> and the page will change to show
+&quot;You have been granted access to this model&quot;. This typically takes anywhere
+from a few minutes to a day or two. Until then, downloads return HTTP 403.</li>
+<li><strong>Create a token.</strong> Settings → Access Tokens → <em>New token</em> with the <strong>Read</strong>
+role: <a href="https://huggingface.co/settings/tokens">https://huggingface.co/settings/tokens</a>.</li>
+<li><strong>Provide the token</strong> to the run in any one of these ways (all auto-detected):
+<ul>
+<li>Paste it into the <strong>HF token</strong> box in the GUI's Predictability card, then
+click <strong>Save</strong> to persist it to <code>config/hf_token.txt</code> (gitignored) and
+point <code>shared.hf_token_file</code> at it — headless runs (<code>python run.py</code>,
+Sherlock) then pick it up automatically without repasting. Leaving it
+unsaved keeps the token session-only, for that GUI run alone. The box is
+shown whenever no token is already detected — you don't need to select a
+model first; once a token is detected (saved to the configured file, or
+via one of the fallbacks below) it is replaced by &quot;✓ HuggingFace token
+detected&quot;, <strong>or</strong></li>
+<li>Run <code>hf auth login</code> once in the environment (stored under <code>~/.cache</code>), <strong>or</strong></li>
+<li>Set the <code>HF_TOKEN</code> (or <code>HUGGING_FACE_HUB_TOKEN</code>) environment variable.</li>
+</ul>
+</li>
+</ol>
+<p><strong>Device placement is automatic</strong>, in this order: 4-bit on the GPU (needs a
+working <em>bitsandbytes</em> build — an 8B model fits in ~6 GB VRAM this way) →
+fp16 on the GPU if bitsandbytes is unavailable (≈16 GB VRAM for 8B; this is the
+common path on Windows, where bitsandbytes is often broken) → CPU if there's no
+CUDA GPU. If a GPU <em>is</em> present but both GPU loads fail, the run logs a loud
+warning and falls back to CPU rather than using the GPU silently — watch the
+log for <code>loaded on CPU</code> if inference is unexpectedly slow. Running on
+Sherlock/HPC is documented separately.</p>
+
+      <nav class="pager">
+        <a class="prev" href="../chapters/installation.html"><small>Previous</small>Installation</a>
+        <a class="next" href="../chapters/sherlock.html"><small>Next</small>Running on Sherlock</a>
+      </nav>
+      <footer>SensiExtractor User Manual · built 2026-10-27 from commit e0b7600 · source: <a href="https://github.com/edneuro/SENSI-Speech-Features">edneuro/SENSI-Speech-Features</a></footer>
+    </div>
+  </main>
+  <aside class="right" aria-label="On this page">
+    <div class="label">On this page</div>
+    <ul><li><a href="#the-workflow-at-a-glance">The workflow at a glance</a></li><li><a href="#inputs">Inputs</a></li><li><a href="#feature-pages">Feature pages</a></li><li><a href="#run">Run</a></li><li><a href="#logs">Logs</a></li><li><a href="#headless-runs-run-py">Headless runs: run.py</a></li><li><a href="#huggingface-token">HuggingFace token</a></li></ul>
+    
+  </aside>
+</div>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/manual.js"></script>
+</body>
+</html>

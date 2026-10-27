@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Phoneme-level columns · SensiExtractor User Manual</title>
+<link rel="icon" href="../../assets/icon.svg">
+<link rel="stylesheet" href="../../assets/theme.css">
+<link rel="stylesheet" href="../../assets/layout.css">
+<link rel="stylesheet" href="../../assets/code.css">
+</head>
+<body data-root="../../">
+<button class="menu-btn" type="button" aria-label="Open the outline">☰ Contents</button>
+<div class="shell">
+  <nav class="left" aria-label="Manual outline">
+    <a class="brand" href="../../index.html"><img src="../../assets/icon.svg" alt="">SensiExtractor <span>User Manual</span></a>
+    <div class="search">
+      <input type="search" placeholder="Search features, columns…  ( / )" aria-label="Search the manual">
+      <div class="search-results" role="listbox"></div>
+    </div>
+    <div class="outline"><ul><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../index.html"><span class="num">1</span>Introduction</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/requirements.html"><span class="num">2</span>Requirements</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/installation.html"><span class="num">3</span>Installation</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/usage.html"><span class="num">4</span>Using the app</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/sherlock.html"><span class="num">5</span>Running on Sherlock</a></div></li><li class="chapter open"><div class="row"><button class="toggle" type="button" aria-expanded="true" aria-label="Show or hide Features">▶</button><a href="../../features/index.html"><span class="num">6</span>Features</a></div><ul><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Word level">▶</button><a href="../../features/word/index.html"><span class="num">6.1</span>Word level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/structural_ids.html">Structural identifier columns</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/structural_offsets.html">Structural character offsets</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/feat_struct_sentence_text.html">Sentence text</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexling_tokens.html">Tokens and lemmas</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexling_pos.html">Part-of-speech tags</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexling_morph.html">Morphological features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexling_dep.html">Dependency parse</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/freq_subtlex.html">Word frequency (Zipf, wordfreq)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/edu_zipf.html">Educator&#x27;s Word Frequency Guide (EWFG) grade-band frequencies<span class="tag" title="Not computed in this manual">◇</span></a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/pred_surprisal.html">Surprisal</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/pred_cloze.html">Cloze probability</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/pred_topmatch.html">Top-1 prediction match</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/sem_indicators.html">Semantic-domain category indicators</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/master_word2vec.html">Word2Vec static word embeddings</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/master_bert_word.html">BERT contextual word embeddings</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexical_norms.html">Lexical norms (AoA, concreteness, imageability, familiarity, VAD)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/acoustic_boundaries.html">Acoustic word boundaries (MFA)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/acoustic_durations.html">Acoustic word duration and gap</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/prosody_pitch.html">Word-level pitch features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/prosody_volume.html">Word-level volume (intensity) features</a></div></li></ul></li><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Document level">▶</button><a href="../../features/document/index.html"><span class="num">6.2</span>Document level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_counts.html">Document-level count columns</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_aggregates.html">Word-level feature aggregates</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/output_doc_lex_diversity.html">Lexical diversity (TTR + MTLD)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/output_doc_readability.html">Readability (Flesch Reading Ease + Flesch–Kincaid Grade Level)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/output_doc_category_proportions.html">Document-level category proportions</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_psych_composite.html">Composite psychological scores (LIWC-style summary variables)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_prosody_pitch.html">Document-level pitch summaries</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_prosody_volume.html">Document-level volume (intensity) summaries</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_prosody_pauses.html">Document-level pause statistics</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/feat_doc_prosody_articulation_rate.html">Articulation rate</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/feat_doc_prosody_hnr.html">Document-level Harmonics-to-Noise Ratio (HNR)</a></div></li></ul></li><li class="open"><div class="row"><button class="toggle" type="button" aria-expanded="true" aria-label="Show or hide Sub-word level">▶</button><a href="../../features/subword/index.html"><span class="num">6.3</span>Sub-word level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/syllable_timing.html">Syllable timing (Onset / End / Duration)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/syllable_labels.html">Syllable labels (orthographic + ARPABET + IPA)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/syllable_prosody.html">Syllable-level prosody (pitch + volume + deltas)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/feat_syllable_pcenter.html">Perceptual centre (P-center)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/phoneme.html" class="current">Phoneme-level columns</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/feat_phoneme_ipa.html">IPA phoneme symbol</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/g2p_oov.html">Out-of-dictionary words (MFA G2P)<span class="tag" title="Not computed in this manual">◇</span></a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/phoneme_surprisal.html">Phoneme surprisal + cohort entropy</a></div></li></ul></li><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Sentence level">▶</button><a href="../../features/sentence/index.html"><span class="num">6.4</span>Sentence level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/sentence_timing.html">Sentence timing</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/sentence_prosody_pitch.html">Sentence-level pitch features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/sentence_prosody_volume.html">Sentence-level volume (intensity) features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/feat_sentence_hnr.html">Sentence-level Harmonics-to-Noise Ratio (HNR)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/master_bert_sentence.html">BERT contextual sentence embeddings</a></div></li></ul></li><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Acoustic level">▶</button><a href="../../features/acoustic/index.html"><span class="num">6.5</span>Acoustic level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/acoustic/acoustic_envelope.html">Amplitude envelope (broadband)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/acoustic/acoustic_onset_envelope.html">Onset envelope (HWR derivative)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/acoustic/acoustic_logmel.html">Log-mel spectrogram</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/acoustic/acoustic_mfcc.html">MFCC (Mel-frequency cepstral coefficients)</a></div></li></ul></li></ul></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/outputs.html"><span class="num">7</span>Outputs reference</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../references.html"><span class="num">8</span>References</a></div></li></ul></div>
+  </nav>
+  <main>
+    <div class="content">
+      <div class="crumbs"><a href="../../features/index.html">Features</a> › <a href="../../features/subword/index.html">Sub-word level</a></div>
+      <h1><span class="num">6.3.5</span>Phoneme-level columns</h1><p class="lede">One row per phone (phoneme) in phoneme/&lt;stim&gt;_phonemes.csv.</p><div class="facts"><span class="chip">App: <b>Sub-word features</b> → <b>Phonemes</b></span><span class="chip">Output: <b>phoneme/&lt;stim&gt;_phonemes.csv</b></span><span class="chip">Libraries: <b>montreal-forced-aligner</b></span></div><section id="what"><a id="meaning"></a><h2><span class="num">6.3.5.1</span>What it is</h2><p>One row per phone (phoneme) in <code>phoneme/&lt;stim&gt;_phonemes.csv</code>. Each row
+joins back to its word and syllable via
+<code>(doc_id, sentence_id, token_in_sentence_id, syllable_id, phoneme_id)</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ARPABET</code></td>
+<td>str</td>
+<td>The bare ARPABET segment, <strong>with no stress digit</strong>: <code>EY</code>, <code>D</code>, <code>IY</code>. For an out-of-dictionary word MFA could not pronounce, the literal <code>spn</code> (see <code>Pron_Source</code> below).</td>
+</tr>
+<tr>
+<td><code>Stress</code></td>
+<td>nullable integer (<code>Int64</code>)</td>
+<td><code>0</code>, <code>1</code> or <code>2</code> on vowels; <strong>empty on consonants</strong>. See the warning below — empty and <code>0</code> are different claims.</td>
+</tr>
+<tr>
+<td><code>IPA</code></td>
+<td>str</td>
+<td>The single IPA segment for this phone, e.g. <code>eɪ</code>, <code>d</code>, <code>ɹ</code>. Empty for <code>spn</code> and for any code outside the 39-phone set. Derived from <code>ARPABET</code> <strong>and</strong> <code>Stress</code> together — see <a href="../../features/subword/feat_phoneme_ipa.html"><code>IPA</code></a>.</td>
+</tr>
+<tr>
+<td><code>Pron_Source</code></td>
+<td>str</td>
+<td>Where the pronunciation came from: <code>dictionary</code>, <code>g2p</code>, or <code>oov_unresolved</code>.</td>
+</tr>
+<tr>
+<td><code>Onset</code></td>
+<td>float (s)</td>
+<td>Time the phone begins, in seconds from audio start.</td>
+</tr>
+<tr>
+<td><code>End</code></td>
+<td>float (s)</td>
+<td>Time the phone ends, in seconds from audio start.</td>
+</tr>
+<tr>
+<td><code>Duration</code></td>
+<td>float (s)</td>
+<td><code>End − Onset</code>.</td>
+</tr>
+</tbody>
+</table>
+<p>Example — the first two syllables of <em>Adrianna</em>:</p>
+<pre><code>token     syllable_id phoneme_id ARPABET Stress IPA Pron_Source Onset End
+Adrianna       1          1        EY      2    eɪ  dictionary  0.00  0.12
+Adrianna       2          1        D            d   dictionary  0.12  0.20
+Adrianna       2          2        R            ɹ   dictionary  0.20  0.25
+Adrianna       2          3        IY      0    i   dictionary  0.25  0.34
+</code></pre>
+<p>Before 2026-07-27 these three columns were one fused <code>Label</code> column
+(<code>EY2</code>), which could not be filtered or grouped without string surgery.
+<code>Label</code> is <strong>gone</strong> from the phoneme CSV — it is fully recoverable as
+<code>ARPABET + Stress</code> if you need the old form. (The <em>syllable</em> CSV's
+<code>Label</code> and <code>ARPABET</code> columns are unrelated and unchanged; see
+<a href="../../features/subword/syllable_labels.html"><code>syllable_labels</code></a>.)</p>
+<h3 id="-stress-empty--0">⚠️ <code>Stress</code>: empty ≠ <code>0</code></h3>
+<p>This is the one column in the file that is easy to misread, and
+misreading it is a silent analysis error rather than a crash:</p>
+<ul>
+<li><strong>Empty (<code>NA</code>)</strong> means <em>stress does not apply to this segment.</em> Every
+consonant row is empty. ARPABET simply does not mark stress on
+consonants — it is a property of the vowel nucleus, not of the
+syllable's onset or coda (<a href="#cmudict">CMUdict</a>).</li>
+<li><strong><code>0</code></strong> means <em>this is a vowel, and it is unstressed.</em> It is a
+measurement, not a missing value.</li>
+</ul>
+<p>Collapsing the two (e.g. <code>df.Stress.fillna(0)</code>, or reading the column as
+plain <code>int64</code>, which cannot hold a missing value) turns every consonant
+in the corpus into an unstressed vowel. That is why the column is stored
+as pandas' <strong>nullable</strong> <code>Int64</code> and written to CSV as an empty field, and
+why <code>Stress == 0</code> is the correct filter for unstressed vowels while
+<code>Stress.notna()</code> is the correct filter for <em>&quot;is this segment a vowel&quot;</em>.</p>
+<p>To recover the old fused label: <code>ARPABET + Stress.astype(&quot;string&quot;).fillna(&quot;&quot;)</code>.</p>
+<h3 id="pron_source--where-the-pronunciation-came-from"><code>Pron_Source</code> — where the pronunciation came from</h3>
+<p>MFA is a <em>lexicon-driven</em> aligner: it looks each word up in
+<code>english_us_arpa.dict</code> to know which phones to look for. This column
+records what happened at that lookup, per word (every phone row of a
+word carries the same value).</p>
+<table>
+<thead>
+<tr>
+<th>Value</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>dictionary</code></td>
+<td>The word was in MFA's pronunciation dictionary. Its phone sequence is the dictionary's, aligned to the audio. This is the overwhelming majority of rows.</td>
+</tr>
+<tr>
+<td><code>g2p</code></td>
+<td>The word was <strong>not</strong> in the dictionary, and the optional <a href="../../features/subword/g2p_oov.html">G2P option</a> was on, so MFA <em>generated</em> a pronunciation from the spelling and aligned that. The phone identities are <strong>modeled, not observed</strong> — treat them as a hypothesis.</td>
+</tr>
+<tr>
+<td><code>oov_unresolved</code></td>
+<td>The word was not in the dictionary and no pronunciation could be generated, so MFA aligned it to its single unknown-word phone, <code>spn</code>. The row carries <code>ARPABET = 'spn'</code>, empty <code>Stress</code>, empty <code>IPA</code>, and the word's real MFA timing.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="-oov_unresolved-does-not-mean-quotthe-word-wasnt-spokenquot">⚠️ <code>oov_unresolved</code> does <strong>not</strong> mean &quot;the word wasn't spoken&quot;</h3>
+<p>It means <em>MFA had no pronunciation for the word</em> — nothing more. The word
+is still in the transcript, still aligned, and still occupies a real
+interval in the audio. What is missing is the phone identity, not the
+speech.</p>
+<p>The reverse reading is the tempting one and it is wrong. MFA is a
+<strong>forced</strong> aligner: it assumes the transcript is what was said and must
+place every word somewhere (<a href="#mcauliffe-2017">McAuliffe 2017</a>). It has no &quot;this word is
+absent from the audio&quot; output at all — for <em>any</em> word, in-dictionary or
+not. If you need to know whether a word was actually uttered, this
+column cannot tell you, and neither can any other column in this
+release; see <a href="../../features/subword/g2p_oov.html"><code>g2p_oov</code></a> for why that is out of scope.</p>
+<p>Practically: <code>oov_unresolved</code> rows are the ones to <strong>exclude</strong> from
+phoneme-identity analyses (they have no identity), and to <strong>keep</strong> in
+timing analyses (their <code>Onset</code>/<code>End</code>/<code>Duration</code> are as real as any other
+word's). <a href="../../features/subword/phoneme_surprisal.html"><code>phoneme_surprisal</code></a> already scores them
+<code>NaN</code> for exactly this reason.</p>
+<h3 id="-some-tokens-legitimately-have-no-phoneme-rows">⚠️ Some tokens legitimately have no phoneme rows</h3>
+<p>A word-CSV token with zero rows in this file is <strong>expected</strong> in two
+cases, and is not a bug:</p>
+<ol>
+<li>
+<p><strong>Punctuation and unaligned tokens.</strong> They have no acoustic interval,
+so there is nothing to attach phones to.</p>
+</li>
+<li>
+<p><strong>Tokens that share one MFA word with the token before them.</strong> spaCy
+splits <code>wasn't</code> into two tokens, <code>was</code> + <code>n't</code>; MFA has a single word
+<code>wasn't</code> with a single phone sequence. Possessives behave the same way
+(<code>debtor's</code> → <code>debtor</code> + <code>'s</code>). The phones are emitted <strong>once, under
+the first token</strong>, because emitting them under both would duplicate
+the same acoustic segments — which is precisely the bug fixed on
+2026-07-27 (it inflated row counts and doubled the
+<code>phoneme_surprisal.mat</code> impulse trains).</p>
+<p>The word CSV's <code>Transcript</code> column is what identifies the sharing: both
+<code>was</code> and <code>n't</code> carry <code>Transcript = &quot;wasn't&quot;</code> and the <em>same</em>
+<code>Onset</code>/<code>End</code>. So to find a token's phones, join on the <strong>first</strong> token
+holding that <code>(Onset, End)</code> pair — or, equivalently, treat the shared
+MFA word as the unit.</p>
+<p>We deliberately do <strong>not</strong> split clitic phones between the two tokens.
+Doing so needs a hand-maintained rule table (<code>n't</code> → <code>N T</code>, <code>'s</code> → <code>Z</code>
+…) that mis-splits silently on edge cases, and in <code>wasn't</code> the vowel
+<code>AH0</code> belongs cleanly to neither token.</p>
+</li>
+</ol>
+</section><section id="see"><h2><span class="num">6.3.5.2</span>See it</h2><div class="card"><div class="caption">Example <b>LJ002-0321</b> (LJ Speech, public domain): “Others who arrived just after the time of distribution were often 48 hours without food. The latter might also be six days without meat.”</div><audio controls preload="none" src="../../assets/audio/LJ002-0321.wav"></audio><div ><figure><img src="../../assets/figures/phoneme.svg" alt="Phoneme-level columns — Default settings" loading="lazy"></figure><figcaption>Phoneme-level columns — Default settings</figcaption><div class="provenance">Read from <span class='file'>phoneme/LJ002-0321_phonemes.csv</span>, written by SensiExtractor on the example below. Nothing on this figure is typed in.</div></div></div></section><section id="output"><h2><span class="num">6.3.5.3</span>In your output</h2><div class="card"><div class="card-title">File <span class="file">phoneme/&lt;stim&gt;_phonemes.csv</span></div><table class="excerpt"><thead><tr><th class="">token</th><th class="">phoneme_id</th><th class="hl">ARPABET</th><th class="hl">Stress</th><th class="hl">IPA</th><th class="hl">Pron_Source</th><th class="hl">Onset</th><th class="hl">End</th><th class="hl">Duration</th></tr></thead><tbody><tr><td class="">Others</td><td class="">1</td><td class="hl">AH</td><td class="hl">1</td><td class="hl">ʌ</td><td class="hl">dictionary</td><td class="hl">0</td><td class="hl">0.1</td><td class="hl">0.1</td></tr><tr><td class="">Others</td><td class="">1</td><td class="hl">DH</td><td class="hl"></td><td class="hl">ð</td><td class="hl">dictionary</td><td class="hl">0.1</td><td class="hl">0.16</td><td class="hl">0.06</td></tr><tr><td class="">Others</td><td class="">2</td><td class="hl">ER</td><td class="hl">0</td><td class="hl">ɚ</td><td class="hl">dictionary</td><td class="hl">0.16</td><td class="hl">0.3</td><td class="hl">0.14</td></tr><tr><td class="">Others</td><td class="">3</td><td class="hl">Z</td><td class="hl"></td><td class="hl">z</td><td class="hl">dictionary</td><td class="hl">0.3</td><td class="hl">0.42</td><td class="hl">0.12</td></tr><tr><td class="">who</td><td class="">1</td><td class="hl">HH</td><td class="hl"></td><td class="hl">h</td><td class="hl">dictionary</td><td class="hl">0.42</td><td class="hl">0.48</td><td class="hl">0.06</td></tr><tr><td class="">who</td><td class="">2</td><td class="hl">UW</td><td class="hl">1</td><td class="hl">u</td><td class="hl">dictionary</td><td class="hl">0.48</td><td class="hl">0.55</td><td class="hl">0.07</td></tr><tr><td class="">arrived</td><td class="">1</td><td class="hl">ER</td><td class="hl">0</td><td class="hl">ɚ</td><td class="hl">dictionary</td><td class="hl">0.55</td><td class="hl">0.7</td><td class="hl">0.15</td></tr><tr><td class="">arrived</td><td class="">1</td><td class="hl">AY</td><td class="hl">1</td><td class="hl">aɪ</td><td class="hl">dictionary</td><td class="hl">0.7</td><td class="hl">0.93</td><td class="hl">0.23</td></tr><tr><td class="">arrived</td><td class="">2</td><td class="hl">V</td><td class="hl"></td><td class="hl">v</td><td class="hl">dictionary</td><td class="hl">0.93</td><td class="hl">1</td><td class="hl">0.07</td></tr><tr><td class="">arrived</td><td class="">3</td><td class="hl">D</td><td class="hl"></td><td class="hl">d</td><td class="hl">dictionary</td><td class="hl">1</td><td class="hl">1.07</td><td class="hl">0.07</td></tr><tr><td class="">just</td><td class="">1</td><td class="hl">JH</td><td class="hl"></td><td class="hl">dʒ</td><td class="hl">dictionary</td><td class="hl">1.13</td><td class="hl">1.21</td><td class="hl">0.08</td></tr><tr><td class="">just</td><td class="">2</td><td class="hl">AH</td><td class="hl">1</td><td class="hl">ʌ</td><td class="hl">dictionary</td><td class="hl">1.21</td><td class="hl">1.3</td><td class="hl">0.09</td></tr></tbody></table><div class="caption">91 rows × 15 columns in the file; showing the feature's columns for the first sentence. An empty cell means no value (e.g. punctuation, or a word the measure doesn’t cover).</div><div class="provenance">Excerpt of the real file for <b>LJ002-0321</b>.</div></div></section><section id="matlab"><h2><span class="num">6.3.5.4</span>MATLAB</h2><div class="card" data-tabs><div class="tabpanel on"><pre data-copy><code>% Load the phoneme-level table (one row per phoneme)
+T = readtable(&#x27;phoneme/LJ002-0321_phonemes.csv&#x27;, &#x27;TextType&#x27;, &#x27;string&#x27;);
+T.Properties.VariableNames             % every column in the file
+T(1:10, {&#x27;token&#x27;, &#x27;phoneme_id&#x27;, &#x27;ARPABET&#x27;, &#x27;Stress&#x27;, &#x27;IPA&#x27;, &#x27;Pron_Source&#x27;, &#x27;Onset&#x27;, &#x27;End&#x27;, &#x27;Duration&#x27;})                       % this feature&#x27;s columns
+
+% Plot
+ok = ~isnan(T.Onset);
+stem((T.Onset(ok) + T.End(ok)) / 2, T.Duration(ok)); xlabel(&#x27;Time (s)&#x27;); ylabel(&#x27;Duration&#x27;)
+</code></pre></div><div class="caption">Run from the output folder. Variable and column names were checked against the real files when this manual was built; the code itself was not run in MATLAB.</div></div></section><section id="code"><a id="implementation-in-sensiextractor"></a><h2><span class="num">6.3.5.5</span>In the code</h2><div class="card"><div class="card-title">Open in GitHub</div><ul><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/extractors/syllabify.py#L265"><code>sensi/extractors/syllabify.py → syllabify_pairs()</code></a></li><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/extractors/arpabet_ipa.py"><code>sensi/extractors/arpabet_ipa.py</code></a></li><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/utils/transcript_prep.py"><code>sensi/utils/transcript_prep.py</code></a></li><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/pipeline.py"><code>sensi/pipeline.py</code></a></li></ul></div><p>Source: <code>sensi/extractors/syllabify.py:syllabify_pairs</code> (downstream of MFA
+alignment), with the IPA lookup in <code>sensi/extractors/arpabet_ipa.py</code>.</p>
+<p><strong>Phone selection.</strong> <code>utils.textgrid_parser:parse_phones</code> parses the
+<code>phones</code> tier of MFA's TextGrid; <code>_phones_for_word</code> then assigns each
+phone to the word whose <code>[Onset, End]</code> interval contains it (with a 1 µs
+tolerance for MFA's millisecond stamping). <code>phoneme_id</code> is a per-syllable
+1-indexed counter, so <code>phoneme_id == 1</code> is the first phone <em>of its
+syllable</em>, not of the word.</p>
+<p><strong>Splitting the label.</strong> <code>_split_label</code> peels a trailing digit off MFA's
+label: <code>'EY2'</code> → <code>('EY', 2)</code>, <code>'D'</code> → <code>('D', None)</code>. <code>None</code> becomes <code>NA</code>
+in the nullable <code>Int64</code> <code>Stress</code> column, which is the mechanism behind the
+empty-vs-<code>0</code> distinction above — a plain <code>int64</code> column physically cannot
+represent both.</p>
+<p><strong>Silence filtering, and the one phone we stopped filtering.</strong>
+<code>parse_phones</code> drops <code>''</code>, <code>sil</code>, <code>SIL</code> and <code>sp</code> as silence. Until
+2026-07-27 it also dropped <code>spn</code>, MFA's unknown-word phone — which meant
+an out-of-dictionary word arrived at <code>syllabify_pairs</code> with an empty
+phone list and was skipped, producing <strong>zero phoneme and zero syllable
+rows with no warning at all</strong>. Reproduced by re-aligning a real stimulus
+with one name replaced by the nonsense word <em>Zorblax</em>: the <code>words</code> tier
+held <code>zorblax</code>, the <code>phones</code> tier held a single <code>spn</code>, and the word
+vanished from both sub-word CSVs. <code>spn</code> is now kept, so the word yields
+one syllable and one phoneme row with its real timing and
+<code>Pron_Source = 'oov_unresolved'</code>. <code>Phone.is_vowel</code> is <code>False</code> for <code>spn</code>
+(no trailing digit), so <code>syllabify_word</code> takes its existing vowel-less
+branch — the same path as an interjection like <em>hmm</em> — and emits a single
+syllable. No new branch.</p>
+<p><strong>Deduplicating shared alignments.</strong> <code>syllabify_pairs</code> tracks the
+<code>(doc_id, Onset, End)</code> intervals it has already emitted, rounded to 6
+decimals, and skips a token whose interval a previous token already
+claimed. This is the <code>align_merge</code> <em>join</em> case (<code>was</code> + <code>n't</code> → <code>wasn't</code>)
+described above.</p>
+<p><strong>Zero-phoneme reporting.</strong> Any word that survives to the phone lookup
+and still ends up with no phones is collected and reported to stderr and
+the run log:</p>
+<pre><code>[phonemes] WARNING: 2 words had no phonemes (likely OOV): zorblax, mciver
+</code></pre>
+<p>This is a belt-and-braces guard — it fires if, for example, a
+collaborator's checkout is missing the G2P model. Punctuation and
+shared-alignment tokens never reach that list; their absence is expected.</p>
+<p><strong>Deriving <code>Pron_Source</code>.</strong> MFA does not mark G2P-derived words in the
+TextGrid, so provenance is inferred: a word absent from
+<code>english_us_arpa.dict</code> must have had its pronunciation generated. Any
+<code>spn</code> phone short-circuits to <code>oov_unresolved</code>.</p>
+<p>The form checked is the <strong>MFA words-tier form</strong> — the word frame's
+<code>Transcript</code> column — never the spaCy token, and that distinction is
+load-bearing. <code>sensi/utils/transcript_prep.py</code> spells numbers out before
+handing the transcript to MFA, so spaCy's token is <code>48</code> while MFA's word
+is <code>forty eight</code>. Judging by the token would find <code>48</code> absent from the
+dictionary and label every number in the corpus <code>g2p</code>; verified against
+the real stimuli, where <code>48</code>, <code>2</code>, <code>6</code>, <code>8</code>, <code>10</code> and <code>3</code> are all absent
+as digit strings and all present as their spelled forms. A <code>Transcript</code>
+holding several space-separated words (the <code>align_merge</code> <em>expand</em> case)
+counts as <code>dictionary</code> only when <strong>every</strong> part is in the lexicon. If the
+dictionary file is unreadable, the code reports <code>dictionary</code> rather than
+mislabelling the whole corpus <code>g2p</code>.</p>
+<p>The lexicon key set is memoized in <code>_lexicon_words()</code>, reading the same
+<code>english_us_arpa.dict</code> that <a href="../../features/subword/phoneme_surprisal.html"><code>phoneme_surprisal</code></a>
+already parses, so a run does not read the 200k-line file twice.</p>
+<p><strong>Per-column toggles.</strong> Each of the seven columns can be dropped
+independently from the Sub-word GUI page, wired through
+<code>_PHONEME_COLUMN_MAP</code> in <code>sensi/pipeline.py</code>. Dropping <code>Stress</code> does <strong>not</strong> change
+<code>IPA</code>: the IPA segment is computed before any column is dropped, so
+<code>AH0</code> → <code>ə</code> even in a CSV that no longer shows the <code>0</code>.</p>
+</section><section id="library"><h2><span class="num">6.3.5.6</span>Library</h2><p>ARPABET is the phoneme tagset of the CMU Pronouncing Dictionary
+(<a href="#cmudict">CMUdict</a>) and is what MFA's <code>english_us_arpa</code> dictionary and acoustic
+model use; the alignment step writes those labels straight into the
+TextGrid <code>phones</code> tier. <code>spn</code> (&quot;spoken noise&quot;) is MFA's own addition for
+unknown words, not a CMUdict phone. No third-party library is needed
+beyond MFA itself; the IPA lookup is a dependency-free dict in
+<code>sensi/extractors/arpabet_ipa.py</code>.</p>
+</section><section id="eeg"><a id="eeg-rationale"></a><h2><span class="num">6.3.5.7</span>EEG rationale</h2><p>Phoneme-level alignment is the most precise speech-unit anchor
+available; for naturalistic-EEG / MEG:</p>
+<ul>
+<li><strong>Phoneme-onset-locked early auditory responses</strong> are the standard
+anchor for fine-grained acoustic-tracking analyses (<a href="#khalighinejad-2017">Khalighinejad 2017</a>,
+<a href="#brodbeck-2018">Brodbeck 2018</a>).</li>
+<li><strong>Phoneme-class regressors</strong> (e.g. plosive vs. fricative vs. vowel)
+reveal feature-specific neural responses that word-level analyses
+average over (<a href="#mesgarani-2014">Mesgarani 2014</a>). Building those classes is what the
+split into <code>ARPABET</code> + <code>Stress</code> is for: a class map keyed on <code>T</code>/<code>K</code>/<code>S</code>
+needs 39 keys, whereas one keyed on the old fused <code>Label</code> needed every
+vowel spelled out three times (<code>AE0</code>, <code>AE1</code>, <code>AE2</code>, …).</li>
+<li><strong>Stress-marked vowels</strong> identify prominent nuclei, the anchor points
+for stress-tracking analyses. <code>Stress == 1</code> is now a direct filter
+rather than a string-suffix test.</li>
+<li><strong><code>IPA</code></strong> exists for readability and cross-corpus joining, not for a
+different analysis: it is a relabelling of <code>ARPABET</code>, so the two are
+redundant as regressors. Pick one.</li>
+<li>Phoneme <code>Duration</code> is the foundation for
+<a href="../../features/subword/feat_syllable_pcenter.html"><code>P_Center</code></a> — which depends on the duration
+of the onset consonants preceding the syllable's nucleus, and which
+finds that nucleus via <code>Stress.notna()</code>.</li>
+</ul>
+</section><section id="papers"><h2><span class="num">6.3.5.8</span>Papers</h2><ul>
+<li><a name="cmudict"></a><strong><a href="#cmudict">CMUdict</a></strong> <em>The CMU Pronouncing Dictionary.</em> Carnegie Mellon University Speech Group. <a href="http://www.speech.cs.cmu.edu/cgi-bin/cmudict">speech.cs.cmu.edu/cgi-bin/cmudict</a> · phone set: <a href="https://github.com/cmusphinx/cmudict/blob/master/cmudict.phones"><code>cmudict.phones</code></a> / <a href="https://github.com/cmusphinx/cmudict/blob/master/cmudict.symbols"><code>cmudict.symbols</code></a> — the 39-phone ARPABET inventory with its vowel/consonant classes, and the symbol list in which <strong>only</strong> vowels appear suffixed <code>0</code>/<code>1</code>/<code>2</code> (no consonant carries a stress digit).</li>
+<li><a name="mcauliffe-2017"></a><strong><a href="#mcauliffe-2017">McAuliffe 2017</a></strong> McAuliffe, Socolof, Mihuc, Wagner, Sonderegger. <em>Montreal Forced Aligner: trainable text-speech alignment using Kaldi.</em> Interspeech 2017. <a href="https://doi.org/10.21437/Interspeech.2017-1386">doi:10.21437/Interspeech.2017-1386</a> — the aligner itself.</li>
+<li><a name="khalighinejad-2017"></a><strong><a href="#khalighinejad-2017">Khalighinejad 2017</a></strong> Khalighinejad, Cruzatto da Silva, Mesgarani. <em>Dynamic encoding of acoustic features in neural responses to continuous speech.</em> J. Neuroscience. <a href="https://doi.org/10.1523/JNEUROSCI.2383-16.2017">doi:10.1523/JNEUROSCI.2383-16.2017</a></li>
+<li><a name="brodbeck-2018"></a><strong><a href="#brodbeck-2018">Brodbeck 2018</a></strong> Brodbeck, Hong, Simon. <em>Rapid transformation from auditory to linguistic representations of continuous speech.</em> Current Biology. <a href="https://doi.org/10.1016/j.cub.2018.10.042">doi:10.1016/j.cub.2018.10.042</a></li>
+<li><a name="mesgarani-2014"></a><strong><a href="#mesgarani-2014">Mesgarani 2014</a></strong> Mesgarani, Cheung, Johnson, Chang. <em>Phonetic feature encoding in human superior temporal gyrus.</em> Science. <a href="https://doi.org/10.1126/science.1245994">doi:10.1126/science.1245994</a></li>
+</ul>
+</section>
+      <nav class="pager">
+        <a class="prev" href="../../features/subword/feat_syllable_pcenter.html"><small>Previous</small>Perceptual centre (P-center)</a>
+        <a class="next" href="../../features/subword/feat_phoneme_ipa.html"><small>Next</small>IPA phoneme symbol</a>
+      </nav>
+      <footer>SensiExtractor User Manual · built 2026-10-27 from commit e0b7600 · source: <a href="https://github.com/edneuro/SENSI-Speech-Features">edneuro/SENSI-Speech-Features</a></footer>
+    </div>
+  </main>
+  <aside class="right" aria-label="On this page">
+    <div class="label">On this page</div>
+    <ul><li><a href="#what">What it is</a></li><li><a href="#see">See it</a></li><li><a href="#output">In your output</a></li><li><a href="#matlab">MATLAB</a></li><li><a href="#code">In the code</a></li><li><a href="#library">Library</a></li><li><a href="#eeg">EEG rationale</a></li><li><a href="#papers">Papers</a></li></ul>
+    <div class="meta"><div><b>Key</b> <code>phoneme</code></div><div><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/docs/features/phoneme.md">This page’s source text</a> (also the app’s ⓘ pop-up)</div></div>
+  </aside>
+</div>
+<script src="../../assets/search-index.js"></script>
+<script src="../../assets/manual.js"></script>
+</body>
+</html>

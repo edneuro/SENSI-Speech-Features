@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Amplitude envelope (broadband) · SensiExtractor User Manual</title>
+<link rel="icon" href="../../assets/icon.svg">
+<link rel="stylesheet" href="../../assets/theme.css">
+<link rel="stylesheet" href="../../assets/layout.css">
+<link rel="stylesheet" href="../../assets/code.css">
+</head>
+<body data-root="../../">
+<button class="menu-btn" type="button" aria-label="Open the outline">☰ Contents</button>
+<div class="shell">
+  <nav class="left" aria-label="Manual outline">
+    <a class="brand" href="../../index.html"><img src="../../assets/icon.svg" alt="">SensiExtractor <span>User Manual</span></a>
+    <div class="search">
+      <input type="search" placeholder="Search features, columns…  ( / )" aria-label="Search the manual">
+      <div class="search-results" role="listbox"></div>
+    </div>
+    <div class="outline"><ul><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../index.html"><span class="num">1</span>Introduction</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/requirements.html"><span class="num">2</span>Requirements</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/installation.html"><span class="num">3</span>Installation</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/usage.html"><span class="num">4</span>Using the app</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/sherlock.html"><span class="num">5</span>Running on Sherlock</a></div></li><li class="chapter open"><div class="row"><button class="toggle" type="button" aria-expanded="true" aria-label="Show or hide Features">▶</button><a href="../../features/index.html"><span class="num">6</span>Features</a></div><ul><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Word level">▶</button><a href="../../features/word/index.html"><span class="num">6.1</span>Word level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/structural_ids.html">Structural identifier columns</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/structural_offsets.html">Structural character offsets</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/feat_struct_sentence_text.html">Sentence text</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexling_tokens.html">Tokens and lemmas</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexling_pos.html">Part-of-speech tags</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexling_morph.html">Morphological features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexling_dep.html">Dependency parse</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/freq_subtlex.html">Word frequency (Zipf, wordfreq)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/edu_zipf.html">Educator&#x27;s Word Frequency Guide (EWFG) grade-band frequencies<span class="tag" title="Not computed in this manual">◇</span></a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/pred_surprisal.html">Surprisal</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/pred_cloze.html">Cloze probability</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/pred_topmatch.html">Top-1 prediction match</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/sem_indicators.html">Semantic-domain category indicators</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/master_word2vec.html">Word2Vec static word embeddings</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/master_bert_word.html">BERT contextual word embeddings</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexical_norms.html">Lexical norms (AoA, concreteness, imageability, familiarity, VAD)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/acoustic_boundaries.html">Acoustic word boundaries (MFA)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/acoustic_durations.html">Acoustic word duration and gap</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/prosody_pitch.html">Word-level pitch features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/prosody_volume.html">Word-level volume (intensity) features</a></div></li></ul></li><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Document level">▶</button><a href="../../features/document/index.html"><span class="num">6.2</span>Document level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_counts.html">Document-level count columns</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_aggregates.html">Word-level feature aggregates</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/output_doc_lex_diversity.html">Lexical diversity (TTR + MTLD)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/output_doc_readability.html">Readability (Flesch Reading Ease + Flesch–Kincaid Grade Level)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/output_doc_category_proportions.html">Document-level category proportions</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_psych_composite.html">Composite psychological scores (LIWC-style summary variables)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_prosody_pitch.html">Document-level pitch summaries</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_prosody_volume.html">Document-level volume (intensity) summaries</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_prosody_pauses.html">Document-level pause statistics</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/feat_doc_prosody_articulation_rate.html">Articulation rate</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/feat_doc_prosody_hnr.html">Document-level Harmonics-to-Noise Ratio (HNR)</a></div></li></ul></li><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Sub-word level">▶</button><a href="../../features/subword/index.html"><span class="num">6.3</span>Sub-word level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/syllable_timing.html">Syllable timing (Onset / End / Duration)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/syllable_labels.html">Syllable labels (orthographic + ARPABET + IPA)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/syllable_prosody.html">Syllable-level prosody (pitch + volume + deltas)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/feat_syllable_pcenter.html">Perceptual centre (P-center)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/phoneme.html">Phoneme-level columns</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/feat_phoneme_ipa.html">IPA phoneme symbol</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/g2p_oov.html">Out-of-dictionary words (MFA G2P)<span class="tag" title="Not computed in this manual">◇</span></a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/phoneme_surprisal.html">Phoneme surprisal + cohort entropy</a></div></li></ul></li><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Sentence level">▶</button><a href="../../features/sentence/index.html"><span class="num">6.4</span>Sentence level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/sentence_timing.html">Sentence timing</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/sentence_prosody_pitch.html">Sentence-level pitch features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/sentence_prosody_volume.html">Sentence-level volume (intensity) features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/feat_sentence_hnr.html">Sentence-level Harmonics-to-Noise Ratio (HNR)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/master_bert_sentence.html">BERT contextual sentence embeddings</a></div></li></ul></li><li class="open"><div class="row"><button class="toggle" type="button" aria-expanded="true" aria-label="Show or hide Acoustic level">▶</button><a href="../../features/acoustic/index.html"><span class="num">6.5</span>Acoustic level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/acoustic/acoustic_envelope.html" class="current">Amplitude envelope (broadband)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/acoustic/acoustic_onset_envelope.html">Onset envelope (HWR derivative)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/acoustic/acoustic_logmel.html">Log-mel spectrogram</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/acoustic/acoustic_mfcc.html">MFCC (Mel-frequency cepstral coefficients)</a></div></li></ul></li></ul></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/outputs.html"><span class="num">7</span>Outputs reference</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../references.html"><span class="num">8</span>References</a></div></li></ul></div>
+  </nav>
+  <main>
+    <div class="content">
+      <div class="crumbs"><a href="../../features/index.html">Features</a> › <a href="../../features/acoustic/index.html">Acoustic level</a></div>
+      <h1><span class="num">6.5.1</span>Amplitude envelope (broadband)</h1><p class="lede">The broadband amplitude envelope is the slow-varying &quot;loudness contour&quot; of the audio — how the overall energy of the signal rises and falls over time, with the fast carrier (the individual pressure oscillations) stripped away.</p><div class="facts"><span class="chip">App: <b>Acoustic features</b> → <b>Time series</b></span><span class="chip">Output: <b>acoustic/&lt;stim&gt;_acoustic.mat</b></span><span class="chip">Libraries: <b>librosa, scipy</b></span></div><section id="what"><a id="meaning"></a><h2><span class="num">6.5.1.1</span>What it is</h2><p>The <strong>broadband amplitude envelope</strong> is the slow-varying &quot;loudness contour&quot;
+of the audio — how the overall energy of the signal rises and falls over
+time, with the fast carrier (the individual pressure oscillations) stripped
+away. For speech it tracks the syllabic rhythm: each syllable is a bump in
+the envelope. It is the single most widely used acoustic predictor in
+cortical-tracking / temporal-response-function (TRF) studies.</p>
+<p>It is emitted as one column, <code>envelope</code>, in the per-stimulus
+<code>acoustic/&lt;stim&gt;_acoustic.mat</code> sidecar, sampled on the shared analysis grid
+(<code>t</code>, <code>fs</code>) so it lines up sample-for-sample with the other acoustic time
+series.</p>
+</section><section id="see"><h2><span class="num">6.5.1.2</span>See it</h2><div class="card"><div class="caption">Example <b>LJ002-0321</b> (LJ Speech, public domain): “Others who arrived just after the time of distribution were often 48 hours without food. The latter might also be six days without meat.”</div><audio controls preload="none" src="../../assets/audio/LJ002-0321.wav"></audio><div data-tabs><div class="tabs" role="tablist"><button type="button" class="on">Default settings</button><button type="button" class="">env_method: hilbert</button></div><div class="tabpanel on"><figure><img src="../../assets/figures/acoustic_envelope.svg" alt="Amplitude envelope (broadband) — Default settings" loading="lazy"></figure><figcaption>Amplitude envelope (broadband) — Default settings</figcaption><div class="provenance">Read from <span class='file'>acoustic/LJ002-0321_acoustic.mat</span>, written by SensiExtractor on the example below. Nothing on this figure is typed in.</div></div><div class="tabpanel"><figure><img src="../../assets/figures/acoustic_envelope__env_hilbert.svg" alt="Amplitude envelope (broadband) — env_method: hilbert" loading="lazy"></figure><figcaption>Amplitude envelope (broadband) — env_method: hilbert</figcaption><div class="provenance">Read from <span class='file'>acoustic/LJ002-0321_acoustic.mat</span>, written by SensiExtractor on the example below. Nothing on this figure is typed in.</div></div></div><div class="caption">Switch between real runs that differ only in this one setting.</div></div></section><section id="output"><h2><span class="num">6.5.1.3</span>In your output</h2><div class="card"><div class="card-title">File <span class="file">acoustic/&lt;stim&gt;_acoustic.mat</span></div><table class="excerpt vars"><thead><tr><th>variable</th><th>size</th><th>MATLAB class</th></tr></thead><tbody><tr><td><code>envelope</code></td><td>1292 × 1</td><td>double</td></tr><tr><td><code>t</code></td><td>1292 × 1</td><td>double</td></tr><tr><td><code>fs</code></td><td>1 × 1</td><td>double</td></tr></tbody></table><div class="provenance">Excerpt of the real file for <b>LJ002-0321</b>.</div></div></section><section id="matlab"><h2><span class="num">6.5.1.4</span>MATLAB</h2><div class="card" data-tabs><div class="tabpanel on"><pre data-copy><code>S = load(&#x27;acoustic/LJ002-0321_acoustic.mat&#x27;);
+whos(&#x27;-file&#x27;, &#x27;acoustic/LJ002-0321_acoustic.mat&#x27;)                % variables, sizes, classes
+
+plot(S.t, S.envelope); xlabel(&#x27;Time (s)&#x27;); ylabel(&#x27;envelope&#x27;)   % one value per time step, fs = S.fs Hz
+</code></pre></div><div class="caption">Run from the output folder. Variable and column names were checked against the real files when this manual was built; the code itself was not run in MATLAB.</div></div></section><section id="computed"><a id="what-it-is--how-its-computed"></a><h2><span class="num">6.5.1.5</span>How it&#x27;s computed</h2><p>SensiExtractor offers two envelope methods (toggle: <code>env_method</code>). Both
+return a value at every point of the canonical grid <code>N = round(duration × rate)</code> and then apply a power-law compression <code>comp</code> (default
+<code>log₁₀(2) ≈ 0.30103</code>).</p>
+<p><strong><code>rms</code> (default) — faithful replica of <code>mTRFenvelope.m</code> → <code>mTRFresample.m</code>.</strong>
+This is a direct port of the mTRF-Toolbox envelope routine <a href="#crosse-2016">Crosse 2016</a>, the
+de-facto reference for speech-TRF work, and matches it sample-for-sample (no
+buffer, working along the time axis):</p>
+<ol>
+<li>
+<p><strong>Square</strong> the waveform — <code>y²</code> is instantaneous signal power.</p>
+</li>
+<li>
+<p><strong>Centered moving-average resample</strong> onto the grid: output frame <code>i</code> is
+placed at time <code>t = i / rate</code> and set to the mean of <code>y²</code> over the samples
+in <code>[round(sr·(t − h)), round(sr·(t + h))]</code>, where the half-window
+<code>h = 0.5 · window / rate</code>. The first frame sits at <code>t = 0</code> as a clamped
+half-window (this centering is what makes it bit-identical to mTRF, and is
+the one thing a naive contiguous-bin average gets wrong — it introduces a
+half-frame phase shift). The square-window average is simultaneously the
+anti-alias filter and the downsampling step; no separate filter is applied.</p>
+</li>
+<li>
+<p><strong>Square root</strong> — <code>√(mean power)</code> is the RMS amplitude of each frame.</p>
+</li>
+<li>
+<p><strong>Power-law compress</strong> — raise the RMS envelope to the exponent <code>comp</code>.</p>
+<p>The <strong><code>window</code></strong> parameter (default <code>1</code>) sets the averaging width in output
+samples; values <code>&gt; 1</code> overlap adjacent frames for extra smoothing <strong>without</strong>
+changing the output rate — the same <code>window</code> argument as <code>mTRFresample</code>.</p>
+<p>The mTRF default, which SensiExtractor matches, is the <strong>exact</strong> constant
+<code>comp = log₁₀(2) ≈ 0.30103</code> — carried at full float precision, not the
+rounded <code>0.3</code>. On normalized audio (values &lt; 1) the difference is
+systematic: a rounded <code>0.3</code> makes every frame slightly larger than
+MATLAB's, so the <code>rms</code> method would no longer be bit-for-bit with
+<code>mTRFenvelope.m</code>. (Prior to prefs v17 the shipped default was <code>0.3</code>,
+which quietly broke that replication; v17 migrates a stored <code>0.3</code> back to
+the exact constant.) This is not arbitrary: Stevens' loudness
+law found that the perceived loudness of a tone grows as a power function
+of intensity with exponent <code>log₁₀(2)</code> <a href="#stevens-1955">Stevens 1955</a>, and <code>mTRFenvelope.m</code>
+cites that law for its default (&quot;to model human auditory perception&quot;).
+Note the base of the exponent: the toolbox (and SensiExtractor) raise the
+<strong>RMS amplitude</strong> to <code>log₁₀(2)</code>, while Stevens' exponent is on
+<strong>intensity</strong>. Intensity is proportional to amplitude squared, so
+<code>amplitude^0.301 = intensity^0.151</code>: half the loudness-law exponent. The
+step is a compression <em>motivated by</em> the loudness law, not a
+re-derivation of it.</p>
+</li>
+</ol>
+<p><strong><code>hilbert</code> — analytic-signal envelope.</strong> Takes the magnitude of the
+analytic signal <code>|hilbert(y)|</code> (the instantaneous amplitude), then
+band-limits and resamples it from <code>sr</code> to <code>rate</code> with <code>scipy.signal. resample_poly</code> (a polyphase FIR anti-alias filter), and applies the same
+<code>comp</code> compression. The Hilbert envelope is smoother and is the more common
+choice in some auditory-neuroscience pipelines; the <code>rms</code> method is closer
+to the mTRF lineage. The two are highly correlated for speech.</p>
+<p>Lowering <code>comp</code> toward 0 flattens the dynamic range (loud and quiet moments
+move closer together); <code>comp = 1.0</code> disables compression and returns the
+linear RMS / Hilbert envelope.</p>
+</section><section id="x-how-to-set-the-analysis-rate-to-match-your-eeg"><a id="how-to-set-the-analysis-rate-to-match-your-eeg"></a><h2><span class="num">6.5.1.6</span>How to set the analysis rate to match your EEG</h2><p>A TRF predictor must be sampled at <strong>the same rate as the EEG you will
+regress it against.</strong> Set <code>analysis_rate</code> (Hz) to your post-downsampling EEG
+rate — commonly <strong>64 or 128 Hz</strong> for envelope-TRF work. Every acoustic
+feature in the <code>.mat</code> is computed on the single grid <code>N = round(duration × rate)</code>, so:</p>
+<ul>
+<li><code>envelope</code>, <code>onset_envelope</code>, <code>logmel</code>, <code>mfcc</code> all have exactly <code>N</code> rows
+and share the <code>t</code> time vector and scalar <code>fs</code> — no per-feature resampling
+or alignment is needed on your side. The 1-D series (<code>t</code>, <code>envelope</code>,
+<code>onset_envelope</code>) are saved as <code>(N, 1)</code> column vectors so they stack
+directly with <code>logmel</code> <code>(N, n_mels)</code> / <code>mfcc</code> <code>(N, n_mfcc)</code> into a
+time-by-feature TRF predictor matrix in MATLAB (<code>[envelope onset logmel]</code>).</li>
+<li>To align with the EEG, resample your EEG to <code>analysis_rate</code> (or pick
+<code>analysis_rate</code> to equal it). Length will be <code>round(duration × rate)</code>;
+trim the EEG and predictor to the common length.</li>
+</ul>
+<p>The envelope is returned <strong>raw (not z-scored / not normalized)</strong> so you keep
+full control: most TRF pipelines z-score each predictor and each EEG channel
+before fitting. The <code>config</code> struct in the <code>.mat</code> records <code>analysis_rate</code>,
+<code>env_method</code>, <code>env_comp</code>, <code>env_window</code>, and <code>source_sr</code> for provenance.</p>
+</section><section id="code"><a id="implementation-in-sensiextractor"></a><h2><span class="num">6.5.1.7</span>In the code</h2><div class="card"><div class="card-title">Open in GitHub</div><ul><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/extractors/acoustic_ts.py"><code>sensi/extractors/acoustic_ts.py</code></a></li></ul></div><p>Source: <code>sensi/extractors/acoustic_ts.py</code> → <code>amplitude_envelope(y, sr, rate, *, method, comp, window)</code>. The <code>rms</code> branch is a line-for-line port of
+<code>mTRFenvelope.m</code> + <code>mTRFresample.m</code>: for each output frame it averages <code>y²</code>
+over the centered window <code>[round(sr·(t−h)), round(sr·(t+h))]</code> (with <code>t = i/rate</code>
+and <code>h = 0.5·window/rate</code>), clamped to the signal bounds, then takes the square
+root and raises to <code>comp</code>. MATLAB's round-half-away-from-zero is reproduced
+(<code>_mround</code>) so frame boundaries match exactly; a regression test
+(<code>tests/extractors/test_acoustic_ts.py::test_rms_matches_mtrfenvelope_reference</code>)
+asserts bit-for-bit agreement with an independent transcription of the two <code>.m</code>
+files. The <code>hilbert</code> branch uses <code>scipy.signal.hilbert</code> + <code>resample_poly</code> with
+<code>up/down</code> reduced by their GCD. The audio is loaded mono at its native sample
+rate (<code>librosa.load(..., sr=None)</code>); content above <code>rate/2</code> is removed by the
+averaging / FIR step.</p>
+</section><section id="library"><h2><span class="num">6.5.1.8</span>Library</h2><pre><code class="language-python">import librosa
+from extractors.acoustic_ts import amplitude_envelope
+
+y, sr = librosa.load(&quot;stim.wav&quot;, sr=None, mono=True)
+import numpy as np
+env = amplitude_envelope(y, sr, rate=128, method=&quot;rms&quot;,
+                         comp=float(np.log10(2)), window=1.0)
+# env.shape == (round(len(y)/sr * 128),)
+</code></pre>
+</section><section id="eeg"><a id="eeg-rationale"></a><h2><span class="num">6.5.1.9</span>EEG rationale</h2><p>Auditory cortex <strong>phase-locks to the speech envelope</strong>: the slow (≈1–8 Hz)
+amplitude modulations of speech are reconstructable from, and predictive of,
+the ongoing EEG/MEG <a href="#lalor-2010">Lalor 2010</a> <a href="#ding-2012">Ding &amp; Simon 2012</a>. In a forward TRF you
+regress the EEG onto the envelope to estimate the brain's impulse response
+to acoustic energy; in a backward (decoding) model you reconstruct the
+envelope from the EEG. Envelope tracking is sensitive to attention,
+intelligibility, and hearing status, which is why it is the workhorse
+predictor for naturalistic-listening studies.</p>
+<p>The envelope is also the <strong>base signal for the <a href="../../features/acoustic/acoustic_onset_envelope.html">onset
+envelope</a></strong> — its half-wave-rectified
+derivative — and a useful covariate to regress out when isolating
+higher-level (lexical, semantic) responses.</p>
+</section><section id="papers"><h2><span class="num">6.5.1.10</span>Papers</h2><ul>
+<li><a name="crosse-2016"></a><strong><a href="#crosse-2016">Crosse 2016</a></strong> Crosse, Di Liberto, Bednar, Lalor. <em>The Multivariate Temporal Response Function (mTRF) Toolbox: A MATLAB Toolbox for Relating Neural Signals to Continuous Stimuli.</em> Frontiers in Human Neuroscience 10, 604. <a href="https://doi.org/10.3389/fnhum.2016.00604">doi:10.3389/fnhum.2016.00604</a> — reference TRF toolbox; <code>mTRFenvelope.m</code> is the algorithm replicated by the <code>rms</code> method.</li>
+<li><a name="stevens-1955"></a><strong><a href="#stevens-1955">Stevens 1955</a></strong> Stevens. <em>The Measurement of Loudness.</em> Journal of the Acoustical Society of America 27(5), 815–829. <a href="https://doi.org/10.1121/1.1908048">doi:10.1121/1.1908048</a> — loudness grows as a power function of intensity with exponent <code>log₁₀(2)</code>; the source of the default compression exponent.</li>
+<li><a name="lalor-2010"></a><strong><a href="#lalor-2010">Lalor 2010</a></strong> Lalor &amp; Foxe. <em>Neural responses to uninterrupted natural speech can be extracted with precise temporal resolution.</em> European Journal of Neuroscience 31(1), 189–193. <a href="https://doi.org/10.1111/j.1460-9568.2009.07055.x">doi:10.1111/j.1460-9568.2009.07055.x</a> — EEG TRF to the speech envelope.</li>
+<li><a name="ding-2012"></a><strong>[Ding 2012]</strong> Ding &amp; Simon. <em>Neural coding of continuous speech in auditory cortex during monaural and dichotic listening.</em> Journal of Neurophysiology 107(1), 78–89. <a href="https://doi.org/10.1152/jn.00297.2011">doi:10.1152/jn.00297.2011</a> — phase-locked cortical representation of the slow speech envelope.</li>
+</ul>
+</section>
+      <nav class="pager">
+        <a class="prev" href="../../features/acoustic/index.html"><small>Previous</small>Acoustic level</a>
+        <a class="next" href="../../features/acoustic/acoustic_onset_envelope.html"><small>Next</small>Onset envelope (HWR derivative)</a>
+      </nav>
+      <footer>SensiExtractor User Manual · built 2026-10-27 from commit e0b7600 · source: <a href="https://github.com/edneuro/SENSI-Speech-Features">edneuro/SENSI-Speech-Features</a></footer>
+    </div>
+  </main>
+  <aside class="right" aria-label="On this page">
+    <div class="label">On this page</div>
+    <ul><li><a href="#what">What it is</a></li><li><a href="#see">See it</a></li><li><a href="#output">In your output</a></li><li><a href="#matlab">MATLAB</a></li><li><a href="#computed">How it's computed</a></li><li><a href="#x-how-to-set-the-analysis-rate-to-match-your-eeg">How to set the analysis rate to match your EEG</a></li><li><a href="#code">In the code</a></li><li><a href="#library">Library</a></li><li><a href="#eeg">EEG rationale</a></li><li><a href="#papers">Papers</a></li></ul>
+    <div class="meta"><div><b>Key</b> <code>acoustic_envelope</code></div><div><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/docs/features/acoustic_envelope.md">This page’s source text</a> (also the app’s ⓘ pop-up)</div></div>
+  </aside>
+</div>
+<script src="../../assets/search-index.js"></script>
+<script src="../../assets/manual.js"></script>
+</body>
+</html>

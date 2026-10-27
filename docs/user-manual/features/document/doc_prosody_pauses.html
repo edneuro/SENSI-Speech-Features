@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Document-level pause statistics · SensiExtractor User Manual</title>
+<link rel="icon" href="../../assets/icon.svg">
+<link rel="stylesheet" href="../../assets/theme.css">
+<link rel="stylesheet" href="../../assets/layout.css">
+<link rel="stylesheet" href="../../assets/code.css">
+</head>
+<body data-root="../../">
+<button class="menu-btn" type="button" aria-label="Open the outline">☰ Contents</button>
+<div class="shell">
+  <nav class="left" aria-label="Manual outline">
+    <a class="brand" href="../../index.html"><img src="../../assets/icon.svg" alt="">SensiExtractor <span>User Manual</span></a>
+    <div class="search">
+      <input type="search" placeholder="Search features, columns…  ( / )" aria-label="Search the manual">
+      <div class="search-results" role="listbox"></div>
+    </div>
+    <div class="outline"><ul><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../index.html"><span class="num">1</span>Introduction</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/requirements.html"><span class="num">2</span>Requirements</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/installation.html"><span class="num">3</span>Installation</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/usage.html"><span class="num">4</span>Using the app</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/sherlock.html"><span class="num">5</span>Running on Sherlock</a></div></li><li class="chapter open"><div class="row"><button class="toggle" type="button" aria-expanded="true" aria-label="Show or hide Features">▶</button><a href="../../features/index.html"><span class="num">6</span>Features</a></div><ul><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Word level">▶</button><a href="../../features/word/index.html"><span class="num">6.1</span>Word level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/structural_ids.html">Structural identifier columns</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/structural_offsets.html">Structural character offsets</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/feat_struct_sentence_text.html">Sentence text</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexling_tokens.html">Tokens and lemmas</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexling_pos.html">Part-of-speech tags</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexling_morph.html">Morphological features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexling_dep.html">Dependency parse</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/freq_subtlex.html">Word frequency (Zipf, wordfreq)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/edu_zipf.html">Educator&#x27;s Word Frequency Guide (EWFG) grade-band frequencies<span class="tag" title="Not computed in this manual">◇</span></a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/pred_surprisal.html">Surprisal</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/pred_cloze.html">Cloze probability</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/pred_topmatch.html">Top-1 prediction match</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/sem_indicators.html">Semantic-domain category indicators</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/master_word2vec.html">Word2Vec static word embeddings</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/master_bert_word.html">BERT contextual word embeddings</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexical_norms.html">Lexical norms (AoA, concreteness, imageability, familiarity, VAD)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/acoustic_boundaries.html">Acoustic word boundaries (MFA)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/acoustic_durations.html">Acoustic word duration and gap</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/prosody_pitch.html">Word-level pitch features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/prosody_volume.html">Word-level volume (intensity) features</a></div></li></ul></li><li class="open"><div class="row"><button class="toggle" type="button" aria-expanded="true" aria-label="Show or hide Document level">▶</button><a href="../../features/document/index.html"><span class="num">6.2</span>Document level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_counts.html">Document-level count columns</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_aggregates.html">Word-level feature aggregates</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/output_doc_lex_diversity.html">Lexical diversity (TTR + MTLD)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/output_doc_readability.html">Readability (Flesch Reading Ease + Flesch–Kincaid Grade Level)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/output_doc_category_proportions.html">Document-level category proportions</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_psych_composite.html">Composite psychological scores (LIWC-style summary variables)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_prosody_pitch.html">Document-level pitch summaries</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_prosody_volume.html">Document-level volume (intensity) summaries</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_prosody_pauses.html" class="current">Document-level pause statistics</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/feat_doc_prosody_articulation_rate.html">Articulation rate</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/feat_doc_prosody_hnr.html">Document-level Harmonics-to-Noise Ratio (HNR)</a></div></li></ul></li><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Sub-word level">▶</button><a href="../../features/subword/index.html"><span class="num">6.3</span>Sub-word level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/syllable_timing.html">Syllable timing (Onset / End / Duration)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/syllable_labels.html">Syllable labels (orthographic + ARPABET + IPA)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/syllable_prosody.html">Syllable-level prosody (pitch + volume + deltas)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/feat_syllable_pcenter.html">Perceptual centre (P-center)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/phoneme.html">Phoneme-level columns</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/feat_phoneme_ipa.html">IPA phoneme symbol</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/g2p_oov.html">Out-of-dictionary words (MFA G2P)<span class="tag" title="Not computed in this manual">◇</span></a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/phoneme_surprisal.html">Phoneme surprisal + cohort entropy</a></div></li></ul></li><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Sentence level">▶</button><a href="../../features/sentence/index.html"><span class="num">6.4</span>Sentence level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/sentence_timing.html">Sentence timing</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/sentence_prosody_pitch.html">Sentence-level pitch features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/sentence_prosody_volume.html">Sentence-level volume (intensity) features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/feat_sentence_hnr.html">Sentence-level Harmonics-to-Noise Ratio (HNR)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/master_bert_sentence.html">BERT contextual sentence embeddings</a></div></li></ul></li><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Acoustic level">▶</button><a href="../../features/acoustic/index.html"><span class="num">6.5</span>Acoustic level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/acoustic/acoustic_envelope.html">Amplitude envelope (broadband)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/acoustic/acoustic_onset_envelope.html">Onset envelope (HWR derivative)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/acoustic/acoustic_logmel.html">Log-mel spectrogram</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/acoustic/acoustic_mfcc.html">MFCC (Mel-frequency cepstral coefficients)</a></div></li></ul></li></ul></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/outputs.html"><span class="num">7</span>Outputs reference</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../references.html"><span class="num">8</span>References</a></div></li></ul></div>
+  </nav>
+  <main>
+    <div class="content">
+      <div class="crumbs"><a href="../../features/index.html">Features</a> › <a href="../../features/document/index.html">Document level</a></div>
+      <h1><span class="num">6.2.9</span>Document-level pause statistics</h1><p class="lede">Four document-level summary statistics of silent pauses in the audio.</p><div class="facts"><span class="chip">App: <b>Document-level features</b> → <b>Document prosody</b></span><span class="chip">Output: <b>document/documents_summary.csv</b></span></div><section id="what"><a id="meaning"></a><h2><span class="num">6.2.9.1</span>What it is</h2><p>Four document-level summary statistics of <strong>silent pauses</strong> in the
+audio. A &quot;pause&quot; is an inter-word silence (<code>Word_Gap</code>) longer than a
+configurable threshold (<strong>default 0.25 s</strong>; GUI-tunable on the
+Document-level features → Prosody card).</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Meaning</th>
+<th>Unit</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>doc_pause_count</code></td>
+<td>Number of inter-word gaps exceeding the threshold.</td>
+<td>integer</td>
+</tr>
+<tr>
+<td><code>doc_pause_mean_duration</code></td>
+<td>Mean duration of those pauses. Blank when there are no pauses (a mean of nothing is undefined, not 0 s).</td>
+<td>seconds</td>
+</tr>
+<tr>
+<td><code>doc_pause_total_duration</code></td>
+<td>Sum of those pauses.</td>
+<td>seconds</td>
+</tr>
+<tr>
+<td><code>doc_pause_pct_silence</code></td>
+<td>Pause time as a percent of the <strong>speech span</strong> (first word's onset to last word's end).</td>
+<td>percent (0–100)</td>
+</tr>
+</tbody>
+</table>
+<p>The speech span deliberately leaves out silence before the first word and
+after the last one: that padding depends on how the recording was cut, not
+on the speaker.</p>
+</section><section id="see"><h2><span class="num">6.2.9.2</span>See it</h2><div class="card"><div class="caption">One row per example stimulus: the five LJ Speech clips and the two invented text-only sentences (no audio, so their audio-based columns are empty).</div><div ><figure><img src="../../assets/figures/doc_prosody_pauses.svg" alt="Document-level pause statistics — Default settings" loading="lazy"></figure><figcaption>Document-level pause statistics — Default settings</figcaption><div class="provenance">Read from <span class='file'>document/documents_summary.csv</span>, written by SensiExtractor on the example below. Nothing on this figure is typed in.</div></div></div></section><section id="output"><h2><span class="num">6.2.9.3</span>In your output</h2><div class="card"><div class="card-title">File <span class="file">document/documents_summary_&lt;timestamp&gt;.csv</span></div><table class="excerpt"><thead><tr><th class="">stimulus_id</th><th class="hl">doc_pause_count</th><th class="hl">doc_pause_mean_duration</th><th class="hl">doc_pause_total_duration</th><th class="hl">doc_pause_pct_silence</th></tr></thead><tbody><tr><td class="">LJ002-0321</td><td class="hl">2</td><td class="hl">0.505</td><td class="hl">1.01</td><td class="hl">10.11</td></tr><tr><td class="">LJ003-0007</td><td class="hl">1</td><td class="hl">0.33</td><td class="hl">0.33</td><td class="hl">3.36</td></tr><tr><td class="">LJ005-0063</td><td class="hl">2</td><td class="hl">0.405</td><td class="hl">0.81</td><td class="hl">8.333</td></tr><tr><td class="">LJ005-0066</td><td class="hl">1</td><td class="hl">0.41</td><td class="hl">0.41</td><td class="hl">4.092</td></tr><tr><td class="">LJ019-0027</td><td class="hl">4</td><td class="hl">0.315</td><td class="hl">1.26</td><td class="hl">12.54</td></tr><tr><td class="">predictable</td><td class="hl"></td><td class="hl"></td><td class="hl"></td><td class="hl"></td></tr><tr><td class="">surprising</td><td class="hl"></td><td class="hl"></td><td class="hl"></td><td class="hl"></td></tr></tbody></table><div class="caption">7 rows × 80 columns in the file; showing the feature's columns. An empty cell means no value (e.g. punctuation, or a word the measure doesn’t cover).</div><div class="provenance">Excerpt of the real file for <b>LJ002-0321</b>.</div></div></section><section id="matlab"><h2><span class="num">6.2.9.4</span>MATLAB</h2><div class="card" data-tabs><div class="tabpanel on"><pre data-copy><code>% Load the document-level table (one row per stimulus)
+T = readtable(&#x27;document/documents_summary_&lt;timestamp&gt;.csv&#x27;, &#x27;TextType&#x27;, &#x27;string&#x27;);
+T.Properties.VariableNames             % every column in the file
+T(1:10, {&#x27;stimulus_id&#x27;, &#x27;doc_pause_count&#x27;, &#x27;doc_pause_mean_duration&#x27;, &#x27;doc_pause_total_duration&#x27;, &#x27;doc_pause_pct_silence&#x27;})                       % this feature&#x27;s columns
+
+% Plot
+barh(T.doc_pause_count); yticks(1:height(T)); yticklabels(T.stimulus_id); xlabel(&#x27;doc_pause_count&#x27;)
+</code></pre></div><div class="caption">Run from the output folder. Variable and column names were checked against the real files when this manual was built; the code itself was not run in MATLAB.</div></div></section><section id="x-configuration"><a id="configuration"></a><h2><span class="num">6.2.9.5</span>Configuration</h2><p>The pause threshold is shared with the document-level <strong>Pause
+threshold (sec)</strong> spinbox in the Prosody card. Default <code>0.25 s</code>
+matches the convention in much of the prosody literature
+(<a href="#goldman-eisler-1968">Goldman-Eisler 1968</a>), but the right value depends on your
+discourse:</p>
+<ul>
+<li>Conversational dialogue: 0.20 – 0.30 s</li>
+<li>Read narrative / audiobook: 0.30 – 0.50 s</li>
+<li>Lecture / formal speech: 0.40 – 0.60 s</li>
+</ul>
+<p>The same threshold applies to all four columns — they're not
+independently tunable.</p>
+</section><section id="code"><a id="implementation-in-sensiextractor"></a><h2><span class="num">6.2.9.6</span>In the code</h2><div class="card"><div class="card-title">Open in GitHub</div><ul><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/extractors/prosody.py#L148"><code>sensi/extractors/prosody.py → compute_doc_prosody()</code></a></li></ul></div><p>Source: <code>sensi/extractors/prosody.py:compute_doc_prosody</code>. All four columns
+come from the MFA-aligned words (rows with an <code>Onset</code>/<code>End</code>), sorted by
+onset. The gap between consecutive words is the same quantity as the
+word-level <a href="../../features/word/acoustic_durations.html"><code>Word_Gap</code></a> column:</p>
+<pre><code class="language-python">gaps   = onset[1:] - end[:-1]                 # consecutive aligned words
+pauses = gaps[gaps &gt; threshold_s]             # strictly greater than
+span   = end[last] - onset[first]             # speech span
+doc_pause_count          = len(pauses)
+doc_pause_total_duration = sum(pauses)
+doc_pause_mean_duration  = mean(pauses) if pauses else NaN
+doc_pause_pct_silence    = 100.0 * doc_pause_total_duration / span
+</code></pre>
+<p>Words that share one MFA interval (e.g. the two halves of a contraction)
+produce a negative or zero gap, which never counts as a pause.</p>
+<p>Before 2026-10-21, <code>doc_pause_pct_silence</code> was emitted as a fraction
+(0–1) despite its name, and <code>doc_pause_mean_duration</code> was 0 instead of
+blank for a stimulus with no pauses.</p>
+<p>These columns need forced alignment; without it the document prosody
+step does not run and they are left out. The doc-level page's preflight
+surfaces a warning in that case.</p>
+</section><section id="eeg"><a id="eeg-rationale"></a><h2><span class="num">6.2.9.7</span>EEG rationale</h2><p>Pauses chunk continuous speech into <strong>prosodic phrases</strong> and <strong>clauses</strong>
+— each pause boundary is an event-marker in its own right and elicits
+the <strong>Closure Positive Shift (CPS)</strong> (<a href="#steinhauer-1999">Steinhauer 1999</a>, <a href="#pauker-2011">Pauker 2011</a>).
+Document-level pause statistics let you:</p>
+<ul>
+<li><strong>Match stimuli on pausing behaviour</strong> before running a cross-stimulus
+contrast — a stimulus full of long pauses has very different
+envelope structure from one without.</li>
+<li><strong>Predict listener engagement</strong> — speech with more / longer pauses
+is easier to process at low speech rates, an effect documented in the
+pausing-and-comprehension literature
+(<a href="#goldman-eisler-1968">Goldman-Eisler 1968</a>); ERP signatures of pause-related boundaries
+appear as the closure-positive shift (<a href="#steinhauer-1999">Steinhauer 1999</a>, <a href="#pauker-2011">Pauker 2011</a>).</li>
+<li><strong>Distinguish pause types</strong> (combined with <a href="../../features/document/feat_doc_prosody_articulation_rate.html"><code>articulation_rate</code></a>): a stimulus
+with low articulation rate AND many pauses is genuinely slow; one
+with high articulation rate AND many pauses is fast-but-bursty.</li>
+</ul>
+<p><code>doc_pause_pct_silence</code> is the most-cited single-number summary of
+&quot;how much of the speech is silence&quot; — useful for stimulus-level
+matching and as a sanity check (if it's 0 %, alignment may have
+failed or the speaker never paused longer than the threshold). Because
+it is measured over the speech span, long silence at the very start or
+end of a file does not inflate it.</p>
+</section><section id="papers"><h2><span class="num">6.2.9.8</span>Papers</h2><ul>
+<li><a name="goldman-eisler-1968"></a><strong><a href="#goldman-eisler-1968">Goldman-Eisler 1968</a></strong> Goldman-Eisler. <em>Psycholinguistics: Experiments in Spontaneous Speech.</em> Academic Press. — foundational study of pause distribution in spontaneous conversation, including the canonical hesitation-pause / juncture-pause distinction.</li>
+<li><a name="steinhauer-1999"></a><strong><a href="#steinhauer-1999">Steinhauer 1999</a></strong> Steinhauer, Alter, Friederici. <em>Brain potentials indicate immediate use of prosodic cues in natural speech processing.</em> Nature Neuroscience 2(2), 191–196. <a href="https://doi.org/10.1038/5757">doi:10.1038/5757</a> — CPS at prosodic boundaries.</li>
+<li><a name="pauker-2011"></a><strong><a href="#pauker-2011">Pauker 2011</a></strong> Pauker, Itzhak, Baum, Steinhauer. <em>Effects of cooperating and conflicting prosody in spoken English garden path sentences: ERP evidence for the boundary deletion hypothesis.</em> J. Cognitive Neuroscience 23(10), 2731–2751. <a href="https://doi.org/10.1162/jocn.2011.21610">doi:10.1162/jocn.2011.21610</a></li>
+</ul>
+</section>
+      <nav class="pager">
+        <a class="prev" href="../../features/document/doc_prosody_volume.html"><small>Previous</small>Document-level volume (intensity) summaries</a>
+        <a class="next" href="../../features/document/feat_doc_prosody_articulation_rate.html"><small>Next</small>Articulation rate</a>
+      </nav>
+      <footer>SensiExtractor User Manual · built 2026-10-27 from commit e0b7600 · source: <a href="https://github.com/edneuro/SENSI-Speech-Features">edneuro/SENSI-Speech-Features</a></footer>
+    </div>
+  </main>
+  <aside class="right" aria-label="On this page">
+    <div class="label">On this page</div>
+    <ul><li><a href="#what">What it is</a></li><li><a href="#see">See it</a></li><li><a href="#output">In your output</a></li><li><a href="#matlab">MATLAB</a></li><li><a href="#x-configuration">Configuration</a></li><li><a href="#code">In the code</a></li><li><a href="#eeg">EEG rationale</a></li><li><a href="#papers">Papers</a></li></ul>
+    <div class="meta"><div><b>Key</b> <code>doc_prosody_pauses</code></div><div><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/docs/features/doc_prosody_pauses.md">This page’s source text</a> (also the app’s ⓘ pop-up)</div></div>
+  </aside>
+</div>
+<script src="../../assets/search-index.js"></script>
+<script src="../../assets/manual.js"></script>
+</body>
+</html>

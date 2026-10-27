@@ -4,8 +4,14 @@ Turn a spoken-word **audio file + its transcript** into publication-ready,
 **word-level feature tables** for naturalistic EEG analysis (e.g. N400 or TRF
 regressors). Part of the SENSI naturalistic-EEG pipeline.
 
-Every feature is optional and toggleable from either a desktop **GUI** or the
-**command line**.
+Every feature is optional and toggleable from the desktop **GUI**, or from the
+saved settings for a headless run (`run.py`).
+
+> **📖 User Manual:** open [`docs/user-manual/index.html`](docs/user-manual/index.html) in a
+> browser (download the folder or the repo and double-click it — no install needed). It covers
+> installation, using the app, Sherlock, and every feature in depth, with real example output,
+> MATLAB snippets, the method, the code, and the papers. Rebuild it with
+> `python scripts/build_manual.py`.
 
 ---
 
@@ -297,6 +303,7 @@ SensiExtractor/
 │   └── hf_cache/ mfa_data/ gensim_data/   # downloaded models (git-ignored)
 ├── assets/                    # app icons
 ├── docs/
+│   ├── user-manual/           # the User Manual (open index.html) — built by scripts/build_manual.py
 │   ├── features/              # per-feature documentation (also shown in the app)
 │   └── reproducibility.md     # dependency/lock model + archival policy
 ├── dev/                       # project history: plans, specs, changelog, validation

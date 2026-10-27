@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Running on Sherlock · SensiExtractor User Manual</title>
+<link rel="icon" href="../assets/icon.svg">
+<link rel="stylesheet" href="../assets/theme.css">
+<link rel="stylesheet" href="../assets/layout.css">
+<link rel="stylesheet" href="../assets/code.css">
+</head>
+<body data-root="../">
+<button class="menu-btn" type="button" aria-label="Open the outline">☰ Contents</button>
+<div class="shell">
+  <nav class="left" aria-label="Manual outline">
+    <a class="brand" href="../index.html"><img src="../assets/icon.svg" alt="">SensiExtractor <span>User Manual</span></a>
+    <div class="search">
+      <input type="search" placeholder="Search features, columns…  ( / )" aria-label="Search the manual">
+      <div class="search-results" role="listbox"></div>
+    </div>
+    <div class="outline"><ul><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../index.html"><span class="num">1</span>Introduction</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../chapters/requirements.html"><span class="num">2</span>Requirements</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../chapters/installation.html"><span class="num">3</span>Installation</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../chapters/usage.html"><span class="num">4</span>Using the app</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../chapters/sherlock.html" class="current"><span class="num">5</span>Running on Sherlock</a></div></li><li class="chapter open"><div class="row"><button class="toggle" type="button" aria-expanded="true" aria-label="Show or hide Features">▶</button><a href="../features/index.html"><span class="num">6</span>Features</a></div><ul><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Word level">▶</button><a href="../features/word/index.html"><span class="num">6.1</span>Word level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/word/structural_ids.html">Structural identifier columns</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/word/structural_offsets.html">Structural character offsets</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/word/feat_struct_sentence_text.html">Sentence text</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/word/lexling_tokens.html">Tokens and lemmas</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/word/lexling_pos.html">Part-of-speech tags</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/word/lexling_morph.html">Morphological features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/word/lexling_dep.html">Dependency parse</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/word/freq_subtlex.html">Word frequency (Zipf, wordfreq)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/word/edu_zipf.html">Educator&#x27;s Word Frequency Guide (EWFG) grade-band frequencies<span class="tag" title="Not computed in this manual">◇</span></a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/word/pred_surprisal.html">Surprisal</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/word/pred_cloze.html">Cloze probability</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/word/pred_topmatch.html">Top-1 prediction match</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/word/sem_indicators.html">Semantic-domain category indicators</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/word/master_word2vec.html">Word2Vec static word embeddings</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/word/master_bert_word.html">BERT contextual word embeddings</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/word/lexical_norms.html">Lexical norms (AoA, concreteness, imageability, familiarity, VAD)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/word/acoustic_boundaries.html">Acoustic word boundaries (MFA)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/word/acoustic_durations.html">Acoustic word duration and gap</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/word/prosody_pitch.html">Word-level pitch features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/word/prosody_volume.html">Word-level volume (intensity) features</a></div></li></ul></li><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Document level">▶</button><a href="../features/document/index.html"><span class="num">6.2</span>Document level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/document/doc_counts.html">Document-level count columns</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/document/doc_aggregates.html">Word-level feature aggregates</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/document/output_doc_lex_diversity.html">Lexical diversity (TTR + MTLD)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/document/output_doc_readability.html">Readability (Flesch Reading Ease + Flesch–Kincaid Grade Level)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/document/output_doc_category_proportions.html">Document-level category proportions</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/document/doc_psych_composite.html">Composite psychological scores (LIWC-style summary variables)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/document/doc_prosody_pitch.html">Document-level pitch summaries</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/document/doc_prosody_volume.html">Document-level volume (intensity) summaries</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/document/doc_prosody_pauses.html">Document-level pause statistics</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/document/feat_doc_prosody_articulation_rate.html">Articulation rate</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/document/feat_doc_prosody_hnr.html">Document-level Harmonics-to-Noise Ratio (HNR)</a></div></li></ul></li><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Sub-word level">▶</button><a href="../features/subword/index.html"><span class="num">6.3</span>Sub-word level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/subword/syllable_timing.html">Syllable timing (Onset / End / Duration)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/subword/syllable_labels.html">Syllable labels (orthographic + ARPABET + IPA)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/subword/syllable_prosody.html">Syllable-level prosody (pitch + volume + deltas)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/subword/feat_syllable_pcenter.html">Perceptual centre (P-center)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/subword/phoneme.html">Phoneme-level columns</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/subword/feat_phoneme_ipa.html">IPA phoneme symbol</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/subword/g2p_oov.html">Out-of-dictionary words (MFA G2P)<span class="tag" title="Not computed in this manual">◇</span></a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/subword/phoneme_surprisal.html">Phoneme surprisal + cohort entropy</a></div></li></ul></li><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Sentence level">▶</button><a href="../features/sentence/index.html"><span class="num">6.4</span>Sentence level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/sentence/sentence_timing.html">Sentence timing</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/sentence/sentence_prosody_pitch.html">Sentence-level pitch features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/sentence/sentence_prosody_volume.html">Sentence-level volume (intensity) features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/sentence/feat_sentence_hnr.html">Sentence-level Harmonics-to-Noise Ratio (HNR)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/sentence/master_bert_sentence.html">BERT contextual sentence embeddings</a></div></li></ul></li><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Acoustic level">▶</button><a href="../features/acoustic/index.html"><span class="num">6.5</span>Acoustic level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/acoustic/acoustic_envelope.html">Amplitude envelope (broadband)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/acoustic/acoustic_onset_envelope.html">Onset envelope (HWR derivative)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/acoustic/acoustic_logmel.html">Log-mel spectrogram</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/acoustic/acoustic_mfcc.html">MFCC (Mel-frequency cepstral coefficients)</a></div></li></ul></li></ul></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../chapters/outputs.html"><span class="num">7</span>Outputs reference</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../references.html"><span class="num">8</span>References</a></div></li></ul></div>
+  </nav>
+  <main>
+    <div class="content">
+      
+      <h1><span class="num">5</span>Running on Sherlock</h1><p class="lede">Large batches and the bigger language models run on Stanford&#x27;s Sherlock cluster, inside a container, driven by the same features.yaml you set up in the app.</p><h2 id="the-idea"><span class="num">5.1</span>The idea</h2>
+<p>The app's environment is built for one operating system, and Sherlock's compute nodes are
+headless Linux machines, so SensiExtractor runs there inside a portable <strong>Apptainer
+container</strong> (<code>sensiextractor.sif</code>) that carries the whole environment. The flow:</p>
+<ol class="steps">
+<li><b>On your computer</b>, set up the features in the app as usual — that writes <code>config/features.yaml</code>.</li>
+<li><b>Build the container</b> once (Linux, or WSL on Windows) and upload it with the code and your stimuli.</li>
+<li><b>On Sherlock</b>, write a <code>run.yaml</code> with the cluster's folders, download the model weights once, and submit the job.</li>
+<li>The job runs <code>run.py</code> in the container — the same headless runner as on your computer — and the outputs land in your scratch folder.</li>
+</ol>
+<p>Everything below is the project's Sherlock runbook (<code>sherlock/RUNBOOK.md</code>), included here
+as-is so the two never disagree.</p>
+<h2 id="what-this-is-and-why"><span class="num">5.2</span>What this is and why</h2>
+<p>Sherlock is a remote, <strong>headless</strong> HPC cluster — there's no desktop to run the GUI
+on, and a local conda env is built for one OS/CPU so it won't run on Sherlock's
+nodes as-is. So we package the whole environment — Python + MFA/Kaldi + models —
+into a single portable Linux <strong>container image</strong>, <code>sensiextractor.sif</code>, built with
+<strong>Apptainer</strong> (the container runtime HPC clusters allow). That one file runs
+unchanged on Sherlock's compute nodes, including a GPU for the Llama LLM‑cloze.</p>
+<p>The flow: <strong>build the container</strong> on your own computer → <strong>ship</strong> the container +
+code (which carries your GUI's live <code>config/features.yaml</code>) to Sherlock → <strong>fill in</strong>
+a machine-specific <code>config/run.yaml</code> there → <strong>run</strong> the pipeline inside the
+container, via the top-level <code>run.py</code>.</p>
+<h2 id="fill-in-your-own-identifiers"><span class="num">5.3</span>Fill in your own identifiers</h2>
+<ul>
+<li><code>&lt;sunetid&gt;</code> — your Stanford SUNet ID (used for <code>ssh</code> and in <code>$SCRATCH</code>).</li>
+<li><code>&lt;GROUP_HOME&gt;</code> / <code>&lt;SCRATCH&gt;</code> — the <em>literal</em> values of <code>$GROUP_HOME</code> and <code>$SCRATCH</code>
+on Sherlock. rsync can't expand <code>$GROUP_HOME</code> on the remote side, so get the real
+values once (step 3: <code>echo $GROUP_HOME $SCRATCH</code>) and paste them into the rsync
+commands. Sherlock-side commands keep <code>$GROUP_HOME</code>/<code>$SCRATCH</code> — they resolve for you.</li>
+</ul>
+<h2 id="two-folders-on-sherlock-fixed-names-used-everywhere-below"><span class="num">5.4</span>Two folders on Sherlock (fixed names — used everywhere below)</h2>
+<table>
+<thead>
+<tr>
+<th>Purpose</th>
+<th>Folder</th>
+<th>Holds</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Durable</strong> (code + container)</td>
+<td><code>$GROUP_HOME/SensiExtractor</code></td>
+<td>the repo, incl. <code>sherlock/sensiextractor.sif</code>, <code>config/features.yaml</code> (rsync'd from your machine), and <code>config/run.yaml</code> (created on Sherlock)</td>
+</tr>
+<tr>
+<td><strong>Working</strong> (data + weights)</td>
+<td><code>$SCRATCH/sensi</code></td>
+<td><code>transcripts/</code>, <code>audio/</code>, <code>output/</code>, <code>hf_cache/</code></td>
+</tr>
+</tbody>
+</table>
+<p><code>$GROUP_HOME</code> is shared with your whole group — if a labmate also uses a folder
+called <code>SensiExtractor</code>, add a personal one in front (e.g. <code>$GROUP_HOME/&lt;sunetid&gt;/…</code>)
+and adjust the paths. Step 3 creates both folders.</p>
+<h2 id="which-terminal-runs-what"><span class="num">5.5</span>Which terminal runs what</h2>
+<p>Each step's heading names the terminal. Don't mix them.</p>
+<ul>
+<li><strong>[local]</strong> — your computer, in the project's conda env (<code>conda activate ./env</code>). Runs the GUI, which saves your feature choices straight to <code>config/features.yaml</code>. <em>(Linux/macOS: your terminal. Windows: Anaconda Prompt.)</em></li>
+<li><strong>[linux]</strong> — a Linux shell with Apptainer, for building the container and rsync/ssh. <em>(Linux: your terminal. Windows: WSL. macOS: a Linux VM — Apptainer is Linux-only.)</em></li>
+<li><strong>[Sherlock-login]</strong> — inside <code>ssh &lt;sunetid&gt;@login.sherlock.stanford.edu</code>. Setup / transfer / submit only.</li>
+<li><strong>[Sherlock-compute]</strong> — a node from <code>sh_dev</code> (or the batch job). Everything that actually runs the pipeline.</li>
+</ul>
+<p>Commands use forward-slash paths and <code>./env</code>, which work on every OS. The only 3
+things to edit are marked <strong>✎</strong>: the GPU partition, the HF token, and the <code>shared:</code>
+block of <code>config/run.yaml</code>.</p>
+<hr />
+<h2 id="1-build-the-container-linux-once"><span class="num">5.6</span>1 · Build the container — [linux], once</h2>
+<p>One-time tools <em>(Debian/Ubuntu shown; use your distro's package manager)</em>:</p>
+<pre><code class="language-bash">sudo<span class="w"> </span>apt<span class="w"> </span>update<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>-y<span class="w"> </span>apptainer<span class="w"> </span>uidmap<span class="w"> </span>squashfuse<span class="w"> </span>fuse2fs
+</code></pre>
+<p>Build it from the repo root. On Windows/WSL the repo is under <code>/mnt/c/...</code>; on
+Linux/macOS use its path. Output ≈ a few GB (mostly the CUDA torch for GPU Llama):</p>
+<pre><code class="language-bash"><span class="nb">cd</span><span class="w"> </span>path/to/SensiExtractor
+<span class="nb">export</span><span class="w"> </span><span class="nv">APPTAINER_TMPDIR</span><span class="o">=</span>/var/tmp/apptmp<span class="w"> </span><span class="nv">APPTAINER_CACHEDIR</span><span class="o">=</span>/var/tmp/apptmp/cache
+apptainer<span class="w"> </span>build<span class="w"> </span>sherlock/sensiextractor.sif<span class="w"> </span>sherlock/Apptainer.def
+</code></pre>
+<h2 id="2-configure-the-extraction-local"><span class="num">5.7</span>2 · Configure the extraction — [local]</h2>
+<p>From the repo root: set your feature toggles / model choices (and the output levels
+on the Run page) in the GUI, then close it. The GUI saves them straight to
+<code>config/features.yaml</code> — that file <strong>is</strong> the shareable config now, no export
+step needed:</p>
+<pre><code class="language-bash">conda<span class="w"> </span>activate<span class="w"> </span>./env
+python<span class="w"> </span>gui.py
+</code></pre>
+<p><code>config/features.yaml</code> is gitignored (machine-local like the old <code>preferences.json</code>
+was), but it rsyncs to Sherlock in step 4 like any other file. It carries WHAT to
+extract (feature toggles, predictability models, semantic categories, …) — nothing
+machine-specific lives in it.</p>
+<h2 id="3-connect-note-your-paths-make-the-folders-sherlock-login-once"><span class="num">5.8</span>3 · Connect, note your paths, make the folders — [Sherlock-login], once</h2>
+<pre><code class="language-bash">ssh<span class="w"> </span>&lt;sunetid&gt;@login.sherlock.stanford.edu
+</code></pre>
+<p>Print the literal paths (copy them for the rsync in step 4):</p>
+<pre><code class="language-bash"><span class="nb">echo</span><span class="w"> </span><span class="nv">$GROUP_HOME</span><span class="w"> </span><span class="nv">$SCRATCH</span>
+</code></pre>
+<p>Create both folders (these expand automatically here):</p>
+<pre><code class="language-bash">mkdir<span class="w"> </span>-p<span class="w"> </span><span class="nv">$GROUP_HOME</span>/SensiExtractor<span class="w"> </span><span class="nv">$SCRATCH</span>/sensi/<span class="o">{</span>transcripts,audio,output,hf_cache<span class="o">}</span>
+</code></pre>
+<p>Create <code>config/run.yaml</code> in the repo folder — this is <strong>machine-specific</strong> (folders,
+analyzer name, token-file path) and is never rsync'd from your machine, so you write
+it once, directly here. The repo's own <code>config/run_defaults.yaml</code> (a committed
+template, generated from the code defaults — it isn't on Sherlock yet, since the
+code lands in step 4) is the shape to copy; fill in your paths ✎:</p>
+<pre><code class="language-bash">mkdir<span class="w"> </span>-p<span class="w"> </span><span class="nv">$GROUP_HOME</span>/SensiExtractor/config
+cat<span class="w"> </span>&gt;<span class="w"> </span><span class="nv">$GROUP_HOME</span>/SensiExtractor/config/run.yaml<span class="w"> </span><span class="s">&lt;&lt;&#39;YAML&#39;</span>
+<span class="s">shared:</span>
+<span class="s">  analyzer_name: sherlock-run</span>
+<span class="s">  last_transcripts_folder: $SCRATCH/sensi/transcripts</span>
+<span class="s">  last_audio_folder: $SCRATCH/sensi/audio</span>
+<span class="s">  last_output_folder: $SCRATCH/sensi/output</span>
+<span class="s">  theme: system</span>
+<span class="s">  hf_token_file: hf_token.txt</span>
+<span class="s">YAML</span>
+</code></pre>
+<p><code>$SCRATCH</code> is expanded by <code>run.py</code> at run time, so that literal string is fine as
+written. <code>hf_token_file</code> is just a <strong>path</strong> — you create that file in step 5, so no
+secret ever goes into this config. The shipped default, <code>hf_token.txt</code>, is a
+<em>relative</em> path, which <code>run.py</code> resolves against <code>config/</code> itself (not your home
+dir) — so it means <code>$GROUP_HOME/SensiExtractor/config/hf_token.txt</code> here. Use an
+absolute path or <code>~/...</code> instead if you'd rather keep the token outside the repo
+folder. The folder keys (<code>last_*_folder</code>) follow the same rule: a relative
+path is resolved against <code>config/</code>, so absolute <code>$SCRATCH/...</code> paths are the
+least surprising choice. (Once the code arrives in step 4, <code>cp config/run_defaults.yaml config/run.yaml</code>
+on Sherlock is an equivalent way to start this file for any <em>future</em> re-run.)</p>
+<h2 id="4-upload-code-container-data-linux"><span class="num">5.9</span>4 · Upload code, container, data — [linux]</h2>
+<p>Use the <strong>literal</strong> <code>&lt;GROUP_HOME&gt;</code>/<code>&lt;SCRATCH&gt;</code> from step 3 (rsync won't expand them).
+Code first (small; carries <code>config/features.yaml</code> — your GUI's live feature choices;
+<code>*.sif</code> excluded so the container isn't sent here; the model folders under <code>data/</code>
+and the <code>dev/</code> project-history folder stay behind (<code>data/dictionaries/</code> is sent);
+<code>config/run.yaml</code> and
+<code>config/preferences.json*</code> excluded so your local machine's folders/legacy prefs
+never clobber the <code>run.yaml</code> you wrote on Sherlock in step 3):</p>
+<pre><code class="language-bash"><span class="nb">cd</span><span class="w"> </span>path/to/SensiExtractor
+rsync<span class="w"> </span>-avP<span class="w"> </span>--exclude<span class="w"> </span>env<span class="w"> </span>--exclude<span class="w"> </span>hf_cache<span class="w"> </span>--exclude<span class="w"> </span>mfa_data<span class="w"> </span>--exclude<span class="w"> </span>gensim_data<span class="w"> </span>--exclude<span class="w"> </span>/dev<span class="w"> </span>--exclude<span class="w"> </span>.git<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--exclude<span class="w"> </span><span class="s1">&#39;*.sif&#39;</span><span class="w"> </span>--exclude<span class="w"> </span><span class="s1">&#39;__pycache__&#39;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--exclude<span class="w"> </span><span class="s1">&#39;config/run.yaml&#39;</span><span class="w"> </span>--exclude<span class="w"> </span><span class="s1">&#39;config/preferences.json*&#39;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>./<span class="w"> </span>&lt;sunetid&gt;@login.sherlock.stanford.edu:&lt;GROUP_HOME&gt;/SensiExtractor/
+</code></pre>
+<blockquote>
+<p><strong>Updating a copy uploaded before 2026-10-27</strong> (the repo was reorganized then): rsync
+adds the new layout but never deletes, so the old top-level <code>main.py</code>, <code>__init__.py</code>,
+<code>extractors/</code>, <code>gui/</code>, <code>utils/</code> stay behind. They are unused (<code>run.py</code> imports only
+<code>sensi/</code>) and can be removed once: <code>cd $GROUP_HOME/SensiExtractor &amp;&amp; rm -rf main.py __init__.py extractors gui utils</code>. Leave <code>dictionaries/</code> and <code>gensim_data/</code> alone: the
+first <code>run.py</code> start moves their files into <code>data/</code> itself, and prints what it moved.</p>
+</blockquote>
+<p>Container into the repo's <code>sherlock/</code> folder (a few GB):</p>
+<pre><code class="language-bash">rsync<span class="w"> </span>-avP<span class="w"> </span>sherlock/sensiextractor.sif<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>&lt;sunetid&gt;@login.sherlock.stanford.edu:&lt;GROUP_HOME&gt;/SensiExtractor/sherlock/
+</code></pre>
+<p><strong>Your input files — the data you actually want to analyze.</strong> These go into
+<code>$SCRATCH/sensi/transcripts</code> and (only if using alignment / prosody / acoustic
+features) <code>$SCRATCH/sensi/audio</code>. <strong>Each <code>.wav</code> must share its transcript's
+basename</strong> — e.g. <code>story1.txt</code> ↔ <code>story1.wav</code>; a transcript with no matching <code>.wav</code>
+is processed text-only. You change these run-to-run, so the easy way is the web:</p>
+<ul>
+<li><strong>Easiest — Sherlock's web file browser (no rsync):</strong> open
+<a href="https://ondemand.sherlock.stanford.edu">https://ondemand.sherlock.stanford.edu</a> → <strong>Files</strong> → browse to
+<code>$SCRATCH/sensi/transcripts</code> (and <code>/audio</code>) → <strong>Upload</strong> (drag-and-drop). Also how
+you'll grab results later (step 8).</li>
+<li><strong>Bulk / scripted — rsync</strong> (better for hundreds of files) [linux]:<pre><code class="language-bash">rsync<span class="w"> </span>-avP<span class="w"> </span>path/to/your/transcripts/<span class="w"> </span>&lt;sunetid&gt;@login.sherlock.stanford.edu:&lt;SCRATCH&gt;/sensi/transcripts/
+rsync<span class="w"> </span>-avP<span class="w"> </span>path/to/your/audio/<span class="w">       </span>&lt;sunetid&gt;@login.sherlock.stanford.edu:&lt;SCRATCH&gt;/sensi/audio/
+</code></pre>
+</li>
+</ul>
+<p>(The code + container above still go by rsync — they're large/many-file and
+one-time — but your <em>data</em> can just drag-and-drop through the browser.)</p>
+<h2 id="5-get-your-hf-token-save-it-download-the-weights-sherlock-login-once"><span class="num">5.10</span>5 · Get your HF token, save it, download the weights — [Sherlock-login], once</h2>
+<p>The local Llama model is gated, so you need a HuggingFace token — <strong>made once on the
+HF website, saved once on Sherlock:</strong></p>
+<ol>
+<li>On huggingface.co (in a browser): sign in → open <code>meta-llama/Meta-Llama-3-8B</code> →
+accept the license (wait for &quot;access granted&quot;) → Settings → Access Tokens →
+create a <strong>Read</strong> token, and copy it.</li>
+<li>On Sherlock, save that token into the file your <code>config/run.yaml</code> points at —
+the shipped default <code>hf_token_file: hf_token.txt</code> (see step 3) is a relative
+path, so it resolves against the repo's own <code>config/</code> dir, i.e.
+<code>$GROUP_HOME/SensiExtractor/config/hf_token.txt</code> — readable only by you.
+Replace <code>hf_xxx…</code> with the token you just copied ✎:</li>
+</ol>
+<pre><code class="language-bash"><span class="nb">umask</span><span class="w"> </span><span class="m">077</span>
+<span class="nb">printf</span><span class="w"> </span><span class="s1">&#39;hf_xxxYOURTOKEN\n&#39;</span><span class="w"> </span>&gt;<span class="w"> </span><span class="nv">$GROUP_HOME</span>/SensiExtractor/config/hf_token.txt
+chmod<span class="w"> </span><span class="m">600</span><span class="w"> </span><span class="nv">$GROUP_HOME</span>/SensiExtractor/config/hf_token.txt
+</code></pre>
+<p>(This file is gitignored, same as on your local machine, so it's never rsync'd
+by the code-upload step or committed by accident.)
+3. Download the weights into the cache the job reads. This is the only step that
+uses the token (for the gated download) — the batch job runs offline and needs
+no token:</p>
+<pre><code class="language-bash"><span class="nb">export</span><span class="w"> </span><span class="nv">HF_HOME</span><span class="o">=</span><span class="nv">$SCRATCH</span>/sensi/hf_cache<span class="p">;</span><span class="w"> </span>mkdir<span class="w"> </span>-p<span class="w"> </span><span class="nv">$HF_HOME</span>
+apptainer<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>--bind<span class="w"> </span><span class="nv">$SCRATCH</span>:<span class="nv">$SCRATCH</span><span class="w"> </span>--env<span class="w"> </span><span class="nv">HF_HOME</span><span class="o">=</span><span class="nv">$HF_HOME</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--env<span class="w"> </span><span class="nv">HF_TOKEN</span><span class="o">=</span><span class="s2">&quot;</span><span class="k">$(</span>cat<span class="w"> </span><span class="nv">$GROUP_HOME</span>/SensiExtractor/config/hf_token.txt<span class="k">)</span><span class="s2">&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--env<span class="w"> </span><span class="nv">HF_HUB_DISABLE_XET</span><span class="o">=</span><span class="m">1</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="nv">$GROUP_HOME</span>/SensiExtractor/sherlock/sensiextractor.sif<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>bash<span class="w"> </span>-c<span class="w"> </span><span class="s1">&#39;hf download gpt2 &amp;&amp; hf download meta-llama/Meta-Llama-3-8B&#39;</span>
+</code></pre>
+<p>If Word2Vec is ticked, also download it (~1.7 GB, once) into the repo's
+<code>data/gensim_data/</code>, where the offline job looks for it by default:</p>
+<pre><code class="language-bash">apptainer<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>--bind<span class="w"> </span><span class="nv">$GROUP_HOME</span>/SensiExtractor:<span class="nv">$GROUP_HOME</span>/SensiExtractor<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--env<span class="w"> </span><span class="nv">GENSIM_DATA_DIR</span><span class="o">=</span><span class="nv">$GROUP_HOME</span>/SensiExtractor/data/gensim_data<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="nv">$GROUP_HOME</span>/SensiExtractor/sherlock/sensiextractor.sif<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>python<span class="w"> </span>-c<span class="w"> </span><span class="s1">&#39;import gensim.downloader as d; print(d.load(&quot;word2vec-google-news-300&quot;, return_path=True))&#39;</span>
+</code></pre>
+<h2 id="6-optional-dry-run-sherlock-compute"><span class="num">5.11</span>6 · (Optional) dry-run — [Sherlock-compute]</h2>
+<p>Validate the config + plumbing before spending a GPU allocation. Get a node:</p>
+<pre><code class="language-bash">sh_dev<span class="w"> </span>-c<span class="w"> </span><span class="m">4</span><span class="w"> </span>-m<span class="w"> </span>16GB<span class="w"> </span>-t<span class="w"> </span><span class="m">01</span>:00:00
+</code></pre>
+<p>Run (reads <code>config/features.yaml</code> + <code>config/run.yaml</code>, default <code>--config-dir</code>;
+keep the model selection text-only here for speed — GPU Llama is slow on a CPU node):</p>
+<pre><code class="language-bash"><span class="nb">ulimit</span><span class="w"> </span>-n<span class="w"> </span><span class="s2">&quot;</span><span class="k">$(</span><span class="nb">ulimit</span><span class="w"> </span>-Hn<span class="k">)</span><span class="s2">&quot;</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">HF_HOME</span><span class="o">=</span><span class="nv">$SCRATCH</span>/sensi/hf_cache
+apptainer<span class="w"> </span><span class="nb">exec</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--bind<span class="w"> </span><span class="nv">$SCRATCH</span>:<span class="nv">$SCRATCH</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--bind<span class="w"> </span><span class="nv">$GROUP_HOME</span>/SensiExtractor:<span class="nv">$GROUP_HOME</span>/SensiExtractor<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--env<span class="w"> </span><span class="nv">HF_HOME</span><span class="o">=</span><span class="nv">$HF_HOME</span><span class="w"> </span>--env<span class="w"> </span><span class="nv">HF_HUB_OFFLINE</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>--env<span class="w"> </span><span class="nv">TRANSFORMERS_OFFLINE</span><span class="o">=</span><span class="m">1</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="nv">$GROUP_HOME</span>/SensiExtractor/sherlock/sensiextractor.sif<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>python<span class="w"> </span><span class="nv">$GROUP_HOME</span>/SensiExtractor/run.py
+</code></pre>
+<h2 id="7-build-amp-submit-the-gpu-job-sherlock-login"><span class="num">5.12</span>7 · Build &amp; submit the GPU job — [Sherlock-login]</h2>
+<p><strong>a. See what you can request.</strong> Which partitions you can submit to, and which VRAM
+sizes actually exist on the cluster:</p>
+<pre><code class="language-bash">sh_part
+</code></pre>
+<pre><code class="language-bash">sinfo<span class="w"> </span>-o<span class="w"> </span><span class="s2">&quot;%P %f&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-o<span class="w"> </span><span class="s2">&quot;GPU_MEM:[0-9]*GB&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>sort<span class="w"> </span>-u
+</code></pre>
+<p><strong>b. Submit — pass the partition and VRAM as flags</strong> (no file editing; these <code>sbatch</code>
+flags override the script's defaults). Pick a partition from <code>sh_part</code> and a VRAM
+size from the <code>sinfo</code> list that fits your model:</p>
+<ul>
+<li><strong>Llama-3-8B</strong> (default, 4-bit) → <code>16GB</code> is plenty (needs ~6–8 GB).</li>
+<li><strong>Llama-3-70B</strong> (4-bit) → <code>48GB</code> or <code>80GB</code> (also set <code>settings.llm_model</code> + download
+those weights in step 5).</li>
+<li>Bigger VRAM = <strong>longer queue</strong>, so don't over-request.</li>
+</ul>
+<pre><code class="language-bash">sbatch<span class="w"> </span>--partition<span class="o">=</span>gpu<span class="w"> </span>-C<span class="w"> </span>GPU_MEM:16GB<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="nv">$GROUP_HOME</span>/SensiExtractor/sherlock/run_container.sbatch
+</code></pre>
+<p>(Drop <code>--partition=gpu</code> if <code>gpu</code> is already your default; swap it for your partition
+otherwise. Change <code>16GB</code> to any value from the <code>sinfo</code> list.)</p>
+<blockquote>
+<p><strong>⚠️ Paths.</strong> The sbatch assumes the folder layout from <strong>step 3</strong>
+(<code>$GROUP_HOME/SensiExtractor</code> for code+container, <code>$SCRATCH/sensi/hf_cache</code> for
+weights). If you followed step 3, it just works. <strong>If you used different folders,</strong>
+tell the sbatch where they are — add them to the same <code>--export</code> flag:</p>
+<pre><code class="language-bash">sbatch<span class="w"> </span>--partition<span class="o">=</span>gpu<span class="w"> </span>-C<span class="w"> </span>GPU_MEM:16GB<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--export<span class="o">=</span>ALL,REPO<span class="o">=</span>/your/path/SensiExtractor,HF_HOME<span class="o">=</span>/your/scratch/hf_cache<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>/your/path/SensiExtractor/sherlock/run_container.sbatch
+</code></pre>
+<p>If a path is wrong the job exits immediately with <code>ERROR: … not found at &lt;path&gt;</code>
+and the override hint — so it fails clearly, never silently.</p>
+</blockquote>
+<p><strong>c. Watch it.</strong> Note the JobID, then follow the log:</p>
+<pre><code class="language-bash">squeue<span class="w"> </span>--me
+</code></pre>
+<pre><code class="language-bash">tail<span class="w"> </span>-f<span class="w"> </span>slurm-&lt;JobID&gt;.out
+</code></pre>
+<p>The top of the log runs <code>nvidia-smi</code> — that confirms which GPU you landed on and its
+VRAM, so you can verify you got the size you asked for.</p>
+<h2 id="8-collect-results"><span class="num">5.13</span>8 · Collect results</h2>
+<p>The output CSVs are in <code>$SCRATCH/sensi/output</code>. Grab them either way:</p>
+<ul>
+<li><strong>Easiest — web:</strong> <a href="https://ondemand.sherlock.stanford.edu">https://ondemand.sherlock.stanford.edu</a> → <strong>Files</strong> → browse to
+<code>$SCRATCH/sensi/output</code> → select → <strong>Download</strong>.</li>
+<li><strong>rsync</strong> [linux] (literal <code>&lt;SCRATCH&gt;</code>):<pre><code class="language-bash">rsync<span class="w"> </span>-avP<span class="w"> </span>&lt;sunetid&gt;@login.sherlock.stanford.edu:&lt;SCRATCH&gt;/sensi/output/<span class="w"> </span>./sherlock_out/
+</code></pre>
+</li>
+</ul>
+<h2 id="gotchas"><span class="num">5.14</span>Gotchas</h2>
+<ul>
+<li>Anything that runs the pipeline must be on a <strong>compute node</strong> (<code>sh_dev</code>), never the login node (256 open-file cap → <code>Too many open files</code>). The sbatch raises the limit itself.</li>
+<li>HuggingFace: use <code>hf download</code> (not the removed <code>huggingface-cli</code>) with <code>HF_HUB_DISABLE_XET=1</code>. A <code>401</code> means the Llama-3 license isn't accepted/approved yet (<code>hf auth whoami</code> checks the token).</li>
+<li>A bad <code>features.yaml</code>/<code>run.yaml</code> makes <code>run.py</code> print the errors and exit before running — fix the flagged keys/types (schema validation runs before anything else).</li>
+</ul>
+
+      <nav class="pager">
+        <a class="prev" href="../chapters/usage.html"><small>Previous</small>Using the app</a>
+        <a class="next" href="../features/index.html"><small>Next</small>Features</a>
+      </nav>
+      <footer>SensiExtractor User Manual · built 2026-10-27 from commit e0b7600 · source: <a href="https://github.com/edneuro/SENSI-Speech-Features">edneuro/SENSI-Speech-Features</a></footer>
+    </div>
+  </main>
+  <aside class="right" aria-label="On this page">
+    <div class="label">On this page</div>
+    <ul><li><a href="#the-idea">The idea</a></li><li><a href="#what-this-is-and-why">What this is and why</a></li><li><a href="#fill-in-your-own-identifiers">Fill in your own identifiers</a></li><li><a href="#two-folders-on-sherlock-fixed-names-used-everywhere-below">Two folders on Sherlock (fixed names — used everywhere below)</a></li><li><a href="#which-terminal-runs-what">Which terminal runs what</a></li><li><a href="#1-build-the-container-linux-once">1 · Build the container — [linux], once</a></li><li><a href="#2-configure-the-extraction-local">2 · Configure the extraction — [local]</a></li><li><a href="#3-connect-note-your-paths-make-the-folders-sherlock-login-once">3 · Connect, note your paths, make the folders — [Sherlock-login], once</a></li><li><a href="#4-upload-code-container-data-linux">4 · Upload code, container, data — [linux]</a></li><li><a href="#5-get-your-hf-token-save-it-download-the-weights-sherlock-login-once">5 · Get your HF token, save it, download the weights — [Sherlock-login], once</a></li><li><a href="#6-optional-dry-run-sherlock-compute">6 · (Optional) dry-run — [Sherlock-compute]</a></li><li><a href="#7-build-amp-submit-the-gpu-job-sherlock-login">7 · Build &amp; submit the GPU job — [Sherlock-login]</a></li><li><a href="#8-collect-results">8 · Collect results</a></li><li><a href="#gotchas">Gotchas</a></li></ul>
+    
+  </aside>
+</div>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/manual.js"></script>
+</body>
+</html>

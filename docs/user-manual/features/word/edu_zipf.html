@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Educator's Word Frequency Guide (EWFG) grade-band frequencies · SensiExtractor User Manual</title>
+<link rel="icon" href="../../assets/icon.svg">
+<link rel="stylesheet" href="../../assets/theme.css">
+<link rel="stylesheet" href="../../assets/layout.css">
+<link rel="stylesheet" href="../../assets/code.css">
+</head>
+<body data-root="../../">
+<button class="menu-btn" type="button" aria-label="Open the outline">☰ Contents</button>
+<div class="shell">
+  <nav class="left" aria-label="Manual outline">
+    <a class="brand" href="../../index.html"><img src="../../assets/icon.svg" alt="">SensiExtractor <span>User Manual</span></a>
+    <div class="search">
+      <input type="search" placeholder="Search features, columns…  ( / )" aria-label="Search the manual">
+      <div class="search-results" role="listbox"></div>
+    </div>
+    <div class="outline"><ul><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../index.html"><span class="num">1</span>Introduction</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/requirements.html"><span class="num">2</span>Requirements</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/installation.html"><span class="num">3</span>Installation</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/usage.html"><span class="num">4</span>Using the app</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/sherlock.html"><span class="num">5</span>Running on Sherlock</a></div></li><li class="chapter open"><div class="row"><button class="toggle" type="button" aria-expanded="true" aria-label="Show or hide Features">▶</button><a href="../../features/index.html"><span class="num">6</span>Features</a></div><ul><li class="open"><div class="row"><button class="toggle" type="button" aria-expanded="true" aria-label="Show or hide Word level">▶</button><a href="../../features/word/index.html"><span class="num">6.1</span>Word level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/structural_ids.html">Structural identifier columns</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/structural_offsets.html">Structural character offsets</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/feat_struct_sentence_text.html">Sentence text</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexling_tokens.html">Tokens and lemmas</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexling_pos.html">Part-of-speech tags</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexling_morph.html">Morphological features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexling_dep.html">Dependency parse</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/freq_subtlex.html">Word frequency (Zipf, wordfreq)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/edu_zipf.html" class="current">Educator&#x27;s Word Frequency Guide (EWFG) grade-band frequencies<span class="tag" title="Not computed in this manual">◇</span></a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/pred_surprisal.html">Surprisal</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/pred_cloze.html">Cloze probability</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/pred_topmatch.html">Top-1 prediction match</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/sem_indicators.html">Semantic-domain category indicators</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/master_word2vec.html">Word2Vec static word embeddings</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/master_bert_word.html">BERT contextual word embeddings</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexical_norms.html">Lexical norms (AoA, concreteness, imageability, familiarity, VAD)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/acoustic_boundaries.html">Acoustic word boundaries (MFA)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/acoustic_durations.html">Acoustic word duration and gap</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/prosody_pitch.html">Word-level pitch features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/prosody_volume.html">Word-level volume (intensity) features</a></div></li></ul></li><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Document level">▶</button><a href="../../features/document/index.html"><span class="num">6.2</span>Document level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_counts.html">Document-level count columns</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_aggregates.html">Word-level feature aggregates</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/output_doc_lex_diversity.html">Lexical diversity (TTR + MTLD)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/output_doc_readability.html">Readability (Flesch Reading Ease + Flesch–Kincaid Grade Level)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/output_doc_category_proportions.html">Document-level category proportions</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_psych_composite.html">Composite psychological scores (LIWC-style summary variables)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_prosody_pitch.html">Document-level pitch summaries</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_prosody_volume.html">Document-level volume (intensity) summaries</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_prosody_pauses.html">Document-level pause statistics</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/feat_doc_prosody_articulation_rate.html">Articulation rate</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/feat_doc_prosody_hnr.html">Document-level Harmonics-to-Noise Ratio (HNR)</a></div></li></ul></li><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Sub-word level">▶</button><a href="../../features/subword/index.html"><span class="num">6.3</span>Sub-word level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/syllable_timing.html">Syllable timing (Onset / End / Duration)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/syllable_labels.html">Syllable labels (orthographic + ARPABET + IPA)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/syllable_prosody.html">Syllable-level prosody (pitch + volume + deltas)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/feat_syllable_pcenter.html">Perceptual centre (P-center)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/phoneme.html">Phoneme-level columns</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/feat_phoneme_ipa.html">IPA phoneme symbol</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/g2p_oov.html">Out-of-dictionary words (MFA G2P)<span class="tag" title="Not computed in this manual">◇</span></a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/phoneme_surprisal.html">Phoneme surprisal + cohort entropy</a></div></li></ul></li><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Sentence level">▶</button><a href="../../features/sentence/index.html"><span class="num">6.4</span>Sentence level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/sentence_timing.html">Sentence timing</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/sentence_prosody_pitch.html">Sentence-level pitch features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/sentence_prosody_volume.html">Sentence-level volume (intensity) features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/feat_sentence_hnr.html">Sentence-level Harmonics-to-Noise Ratio (HNR)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/master_bert_sentence.html">BERT contextual sentence embeddings</a></div></li></ul></li><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Acoustic level">▶</button><a href="../../features/acoustic/index.html"><span class="num">6.5</span>Acoustic level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/acoustic/acoustic_envelope.html">Amplitude envelope (broadband)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/acoustic/acoustic_onset_envelope.html">Onset envelope (HWR derivative)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/acoustic/acoustic_logmel.html">Log-mel spectrogram</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/acoustic/acoustic_mfcc.html">MFCC (Mel-frequency cepstral coefficients)</a></div></li></ul></li></ul></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/outputs.html"><span class="num">7</span>Outputs reference</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../references.html"><span class="num">8</span>References</a></div></li></ul></div>
+  </nav>
+  <main>
+    <div class="content">
+      <div class="crumbs"><a href="../../features/index.html">Features</a> › <a href="../../features/word/index.html">Word level</a></div>
+      <h1><span class="num">6.1.9</span>Educator&#x27;s Word Frequency Guide (EWFG) grade-band frequencies</h1><p class="lede">Per-word Zipf-scale frequencies derived from the Educator&#x27;s Word Frequency Guide (Zeno 1995), a corpus of texts that American schoolchildren actually encounter, bucketed by grade band.</p><div class="facts"><span class="chip">App: <b>Word-level features</b> → <b>Frequency</b></span><span class="chip">Libraries: <b>pyarrow</b></span><span class="chip status">Not computed in this manual</span><span class="chip status">Status: unavailable</span></div><section id="what"><a id="meaning"></a><h2><span class="num">6.1.9.1</span>What it is</h2><p>Per-word Zipf-scale frequencies derived from the <em>Educator's Word
+Frequency Guide</em> (<a href="#zeno-1995">Zeno 1995</a>), a corpus of texts that
+American schoolchildren actually encounter, <strong>bucketed by grade band</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Grade band</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Edu_Zipf_K2</code></td>
+<td>Kindergarten through 2nd grade</td>
+</tr>
+<tr>
+<td><code>Edu_Zipf_3to5</code></td>
+<td>3rd–5th grade</td>
+</tr>
+<tr>
+<td><code>Edu_Zipf_6to8</code></td>
+<td>6th–8th grade</td>
+</tr>
+<tr>
+<td><code>Edu_Zipf_9to12</code></td>
+<td>9th–12th grade</td>
+</tr>
+<tr>
+<td><code>Edu_Zipf_Overall</code></td>
+<td>Aggregated across all bands</td>
+</tr>
+</tbody>
+</table>
+<p>Each column uses the same <a href="../../features/word/freq_subtlex.html#math--linguistics">Zipf scale</a>
+as <code>Zipf_Freq</code>, just computed against a different reference corpus.
+Missing-from-lookup rows are <code>NaN</code> (PUNCT rows also <code>NaN</code>).</p>
+</section><section id="see"><h2><span class="num">6.1.9.2</span>See it</h2><div class="card notcomputed"><div class="card-title">◇ Not computed in this manual</div><p>The Educator&#x27;s Word Frequency Guide exists only in print, so there is no lookup table; these columns are never written (the planner leaves them out unless you supply data/dictionaries/edu_zipf.parquet).</p><p>Columns this feature writes when it runs: <code>Edu_Zipf_K2</code>, <code>Edu_Zipf_3to5</code>, <code>Edu_Zipf_6to8</code>, <code>Edu_Zipf_9to12</code>, <code>Edu_Zipf_Overall</code></p></div></section><section id="output"><h2><span class="num">6.1.9.3</span>In your output</h2><p>When it runs, this feature writes these columns: <code>Edu_Zipf_K2</code>, <code>Edu_Zipf_3to5</code>, <code>Edu_Zipf_6to8</code>, <code>Edu_Zipf_9to12</code>, <code>Edu_Zipf_Overall</code>.</p></section><section id="matlab"><h2><span class="num">6.1.9.4</span>MATLAB</h2><p>Nothing to load: this feature is not written in this manual's example outputs.</p></section><section id="x-data-acquisition"><a id="data-acquisition"></a><h2><span class="num">6.1.9.5</span>Data acquisition</h2><p><strong>No digital source exists.</strong> <em>The Educator's Word Frequency Guide</em>
+(<a href="#zeno-1995">Zeno 1995</a>) was published as a print reference and, as far as we have
+been able to determine, has never been released in machine-readable
+form. SensiExtractor therefore ships <strong>no</strong> <code>data/dictionaries/edu_zipf.parquet</code>,
+and without it the planner leaves these columns out of every run.</p>
+<p>To enable these columns in future, a <code>data/dictionaries/edu_zipf.parquet</code>
+would need to be built — indexed by <code>word</code>, with columns
+<code>edu_zipf_k2, edu_zipf_3to5, edu_zipf_6to8, edu_zipf_9to12, edu_zipf_overall</code> — from a digitized copy of the guide (book reference:
+<a href="https://books.google.com/books/about/The_Educator_s_Word_Frequency_Guide.html?id=jsJ1QgAACAAJ">https://books.google.com/books/about/The_Educator_s_Word_Frequency_Guide.html?id=jsJ1QgAACAAJ</a>).
+Once that file is in place, a headless <code>run.py</code> with the <code>freq_ewfg_*</code>
+(and, for the document means, <code>doc_agg_edu_zipf</code>) toggles on in
+<code>config/features.yaml</code> produces the columns; the app's toggles stay
+disabled until the GUI is changed to match.</p>
+</section><section id="code"><a id="implementation-in-sensiextractor"></a><h2><span class="num">6.1.9.6</span>In the code</h2><div class="card"><div class="card-title">Open in GitHub</div><ul><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/extractors/educator_freq.py#L48"><code>sensi/extractors/educator_freq.py → add_edu_freq()</code></a></li><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/gui/planner/registry.py"><code>sensi/gui/planner/registry.py</code></a></li></ul></div><p>Source: <code>sensi/extractors/educator_freq.py:add_edu_freq</code>.</p>
+<p><strong>What the code does:</strong></p>
+<ol>
+<li>Loads a parquet lookup from
+<code>data/dictionaries/edu_zipf.parquet</code> (or a user-supplied path), indexed
+by <code>word</code>, with columns
+<code>edu_zipf_k2, edu_zipf_3to5, edu_zipf_6to8, edu_zipf_9to12, edu_zipf_overall</code>.</li>
+<li>Lookups are keyed on <code>lemma.lower()</code>; <code>upos == &quot;PUNCT&quot;</code> rows are
+sentinel-keyed to <code>&quot;__missing__&quot;</code> so they always miss and surface as
+<code>NaN</code>.</li>
+<li>Uses <code>pandas.DataFrame.reindex</code> for a vectorized lookup — much
+faster than a per-row apply for long transcripts.</li>
+<li><strong>The planner runs it only when the parquet exists.</strong> The word-level
+EWFG cluster and the document <code>mean_edu_zipf_*</code> cluster both declare
+<code>requires_dictionary=&quot;edu_zipf.parquet&quot;</code> (<code>sensi/gui/planner/registry.py</code>),
+so without <code>data/dictionaries/edu_zipf.parquet</code> neither the extractor nor
+the document means are planned and no <code>Edu_Zipf_*</code> / <code>mean_edu_zipf_*</code>
+column is written, whatever the toggles say. If the extractor is called
+directly with no lookup file, it still returns the five columns as <code>NaN</code>
+and logs a warning.</li>
+<li>The <code>bands</code> argument lets the caller emit only a subset of columns —
+the GUI's per-band toggles flow through to this argument so disabled
+bands are simply not added to the output DataFrame.</li>
+</ol>
+<p><strong>Why:</strong></p>
+<ul>
+<li><em>Lookup keyed on lowercased <code>lemma</code></em> — matches the
+<a href="../../features/word/freq_subtlex.html">SUBTLEX extractor</a>'s convention so the two
+frequency columns are comparable lexeme-for-lexeme.</li>
+<li><em>Parquet over CSV</em> — vectorised pandas lookup is fast and the file
+format compresses well for a ~5-column-by-N-row table.</li>
+<li><em>Gated in the planner, not the GUI</em> — the GUI greys the toggles out, but
+<code>run.py</code> follows <code>config/features.yaml</code> as written. Before the gate, a
+config with the toggles on made a headless run write five all-<code>NaN</code> word
+columns and five all-<code>NaN</code> document columns that a GUI run did not.</li>
+</ul>
+</section><section id="library"><h2><span class="num">6.1.9.7</span>Library</h2><p>The lookup is a plain pandas-on-pyarrow read:</p>
+<pre><code class="language-python">import pandas as pd
+lookup = pd.read_parquet(&quot;data/dictionaries/edu_zipf.parquet&quot;).set_index(&quot;word&quot;)
+lookup.loc[&quot;house&quot;]
+# edu_zipf_k2        4.21
+# edu_zipf_3to5      4.93
+# edu_zipf_6to8      5.18
+# edu_zipf_9to12     5.41
+# edu_zipf_overall   5.27
+</code></pre>
+</section><section id="eeg"><a id="eeg-rationale"></a><h2><span class="num">6.1.9.8</span>EEG rationale</h2><p>EWFG is the right reference corpus when the question is <strong>age of
+acquisition</strong>, <strong>developmental exposure</strong>, or <strong>literacy-graded
+difficulty</strong> — i.e. when SUBTLEX-US's adult-conversational baseline is
+the wrong yardstick.</p>
+<ul>
+<li>A word's <code>Edu_Zipf_K2</code> measures how often a young child has plausibly
+encountered it in print. Words with high K2 frequency but low
+9to12 frequency (function words, common nouns) behave differently
+from words with low K2 but high 9to12 frequency (acquired-late
+vocabulary). The guide's overall frequency does track age of
+acquisition (AoA): r = −.281 across the 72 target words of
+<a href="#juhasz-2003">Juhasz 2003</a>. But no paper we know of tests the K2-vs-9to12
+<em>contrast</em> as an AoA measure, so treat that use as exploratory; for
+AoA itself, use the rated norms of <a href="#kuperman-2012">Kuperman 2012</a>.</li>
+<li>Age of acquisition independently predicts <strong>eye fixation durations</strong>
+in naturalistic reading (<a href="#juhasz-2003">Juhasz 2003</a>, <a href="#dirix-2017">Dirix 2017</a>) and <strong>N400
+amplitude</strong> in single-word ERP studies (<a href="#yum-2019">Yum 2019</a>), with effects
+that persist after controlling for word frequency. The per-band
+columns therefore let you regress out a developmental-exposure
+covariate that pure SUBTLEX cannot capture.</li>
+<li><code>Edu_Zipf_Overall</code> is the closest EWFG analogue to general
+<code>Zipf_Freq</code> and is most useful as a sanity-check baseline against
+the SUBTLEX value.</li>
+</ul>
+</section><section id="papers"><h2><span class="num">6.1.9.9</span>Papers</h2><ul>
+<li><a name="zeno-1995"></a><strong><a href="#zeno-1995">Zeno 1995</a></strong> Zeno, Ivens, Millard, Duvvuri. <em>The Educator's Word Frequency Guide.</em> Touchstone Applied Science Associates. — the source norms for the per-band frequencies.</li>
+<li><a name="kuperman-2012"></a><strong><a href="#kuperman-2012">Kuperman 2012</a></strong> Kuperman, Stadthagen-Gonzalez, Brysbaert. <em>Age-of-acquisition ratings for 30,000 English words.</em> Behavior Research Methods 44, 978–990. <a href="https://doi.org/10.3758/s13428-012-0210-4">doi:10.3758/s13428-012-0210-4</a> — large AoA norms; the construct's empirical basis.</li>
+<li><a name="juhasz-2003"></a><strong><a href="#juhasz-2003">Juhasz 2003</a></strong> Juhasz &amp; Rayner. <em>Investigating the effects of a set of intercorrelated variables on eye fixation durations in reading.</em> J. Experimental Psychology: Learning, Memory, and Cognition 29(6), 1312–1318. <a href="https://doi.org/10.1037/0278-7393.29.6.1312">doi:10.1037/0278-7393.29.6.1312</a> — AoA effects on eye fixation durations after controlling for frequency, familiarity, length, and concreteness.</li>
+<li><a name="dirix-2017"></a><strong><a href="#dirix-2017">Dirix 2017</a></strong> Dirix &amp; Duyck. <em>The first- and second-language age of acquisition effect in first- and second-language book reading.</em> J. Memory and Language 97, 103–120. <a href="https://doi.org/10.1016/j.jml.2017.07.012">doi:10.1016/j.jml.2017.07.012</a> — AoA effects on eye movements during naturalistic book reading (GECO corpus).</li>
+<li><a name="yum-2019"></a><strong><a href="#yum-2019">Yum 2019</a></strong> Yum &amp; Law. <em>Interactions of age of acquisition and lexical frequency effects with phonological regularity: An ERP study.</em> Psychophysiology 56(10), e13433. <a href="https://doi.org/10.1111/psyp.13433">doi:10.1111/psyp.13433</a> — single-trial ERP analysis shows AoA modulates N400 amplitude independently of word frequency.</li>
+</ul>
+</section>
+      <nav class="pager">
+        <a class="prev" href="../../features/word/freq_subtlex.html"><small>Previous</small>Word frequency (Zipf, wordfreq)</a>
+        <a class="next" href="../../features/word/pred_surprisal.html"><small>Next</small>Surprisal</a>
+      </nav>
+      <footer>SensiExtractor User Manual · built 2026-10-27 from commit e0b7600 · source: <a href="https://github.com/edneuro/SENSI-Speech-Features">edneuro/SENSI-Speech-Features</a></footer>
+    </div>
+  </main>
+  <aside class="right" aria-label="On this page">
+    <div class="label">On this page</div>
+    <ul><li><a href="#what">What it is</a></li><li><a href="#see">See it</a></li><li><a href="#output">In your output</a></li><li><a href="#matlab">MATLAB</a></li><li><a href="#x-data-acquisition">Data acquisition</a></li><li><a href="#code">In the code</a></li><li><a href="#library">Library</a></li><li><a href="#eeg">EEG rationale</a></li><li><a href="#papers">Papers</a></li></ul>
+    <div class="meta"><div><b>Key</b> <code>edu_zipf</code></div><div><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/docs/features/edu_zipf.md">This page’s source text</a> (also the app’s ⓘ pop-up)</div></div>
+  </aside>
+</div>
+<script src="../../assets/search-index.js"></script>
+<script src="../../assets/manual.js"></script>
+</body>
+</html>

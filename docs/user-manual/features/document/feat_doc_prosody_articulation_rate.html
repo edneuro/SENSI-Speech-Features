@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Articulation rate · SensiExtractor User Manual</title>
+<link rel="icon" href="../../assets/icon.svg">
+<link rel="stylesheet" href="../../assets/theme.css">
+<link rel="stylesheet" href="../../assets/layout.css">
+<link rel="stylesheet" href="../../assets/code.css">
+</head>
+<body data-root="../../">
+<button class="menu-btn" type="button" aria-label="Open the outline">☰ Contents</button>
+<div class="shell">
+  <nav class="left" aria-label="Manual outline">
+    <a class="brand" href="../../index.html"><img src="../../assets/icon.svg" alt="">SensiExtractor <span>User Manual</span></a>
+    <div class="search">
+      <input type="search" placeholder="Search features, columns…  ( / )" aria-label="Search the manual">
+      <div class="search-results" role="listbox"></div>
+    </div>
+    <div class="outline"><ul><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../index.html"><span class="num">1</span>Introduction</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/requirements.html"><span class="num">2</span>Requirements</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/installation.html"><span class="num">3</span>Installation</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/usage.html"><span class="num">4</span>Using the app</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/sherlock.html"><span class="num">5</span>Running on Sherlock</a></div></li><li class="chapter open"><div class="row"><button class="toggle" type="button" aria-expanded="true" aria-label="Show or hide Features">▶</button><a href="../../features/index.html"><span class="num">6</span>Features</a></div><ul><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Word level">▶</button><a href="../../features/word/index.html"><span class="num">6.1</span>Word level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/structural_ids.html">Structural identifier columns</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/structural_offsets.html">Structural character offsets</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/feat_struct_sentence_text.html">Sentence text</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexling_tokens.html">Tokens and lemmas</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexling_pos.html">Part-of-speech tags</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexling_morph.html">Morphological features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexling_dep.html">Dependency parse</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/freq_subtlex.html">Word frequency (Zipf, wordfreq)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/edu_zipf.html">Educator&#x27;s Word Frequency Guide (EWFG) grade-band frequencies<span class="tag" title="Not computed in this manual">◇</span></a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/pred_surprisal.html">Surprisal</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/pred_cloze.html">Cloze probability</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/pred_topmatch.html">Top-1 prediction match</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/sem_indicators.html">Semantic-domain category indicators</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/master_word2vec.html">Word2Vec static word embeddings</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/master_bert_word.html">BERT contextual word embeddings</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexical_norms.html">Lexical norms (AoA, concreteness, imageability, familiarity, VAD)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/acoustic_boundaries.html">Acoustic word boundaries (MFA)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/acoustic_durations.html">Acoustic word duration and gap</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/prosody_pitch.html">Word-level pitch features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/prosody_volume.html">Word-level volume (intensity) features</a></div></li></ul></li><li class="open"><div class="row"><button class="toggle" type="button" aria-expanded="true" aria-label="Show or hide Document level">▶</button><a href="../../features/document/index.html"><span class="num">6.2</span>Document level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_counts.html">Document-level count columns</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_aggregates.html">Word-level feature aggregates</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/output_doc_lex_diversity.html">Lexical diversity (TTR + MTLD)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/output_doc_readability.html">Readability (Flesch Reading Ease + Flesch–Kincaid Grade Level)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/output_doc_category_proportions.html">Document-level category proportions</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_psych_composite.html">Composite psychological scores (LIWC-style summary variables)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_prosody_pitch.html">Document-level pitch summaries</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_prosody_volume.html">Document-level volume (intensity) summaries</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_prosody_pauses.html">Document-level pause statistics</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/feat_doc_prosody_articulation_rate.html" class="current">Articulation rate</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/feat_doc_prosody_hnr.html">Document-level Harmonics-to-Noise Ratio (HNR)</a></div></li></ul></li><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Sub-word level">▶</button><a href="../../features/subword/index.html"><span class="num">6.3</span>Sub-word level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/syllable_timing.html">Syllable timing (Onset / End / Duration)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/syllable_labels.html">Syllable labels (orthographic + ARPABET + IPA)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/syllable_prosody.html">Syllable-level prosody (pitch + volume + deltas)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/feat_syllable_pcenter.html">Perceptual centre (P-center)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/phoneme.html">Phoneme-level columns</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/feat_phoneme_ipa.html">IPA phoneme symbol</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/g2p_oov.html">Out-of-dictionary words (MFA G2P)<span class="tag" title="Not computed in this manual">◇</span></a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/phoneme_surprisal.html">Phoneme surprisal + cohort entropy</a></div></li></ul></li><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Sentence level">▶</button><a href="../../features/sentence/index.html"><span class="num">6.4</span>Sentence level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/sentence_timing.html">Sentence timing</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/sentence_prosody_pitch.html">Sentence-level pitch features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/sentence_prosody_volume.html">Sentence-level volume (intensity) features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/feat_sentence_hnr.html">Sentence-level Harmonics-to-Noise Ratio (HNR)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/master_bert_sentence.html">BERT contextual sentence embeddings</a></div></li></ul></li><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Acoustic level">▶</button><a href="../../features/acoustic/index.html"><span class="num">6.5</span>Acoustic level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/acoustic/acoustic_envelope.html">Amplitude envelope (broadband)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/acoustic/acoustic_onset_envelope.html">Onset envelope (HWR derivative)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/acoustic/acoustic_logmel.html">Log-mel spectrogram</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/acoustic/acoustic_mfcc.html">MFCC (Mel-frequency cepstral coefficients)</a></div></li></ul></li></ul></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/outputs.html"><span class="num">7</span>Outputs reference</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../references.html"><span class="num">8</span>References</a></div></li></ul></div>
+  </nav>
+  <main>
+    <div class="content">
+      <div class="crumbs"><a href="../../features/index.html">Features</a> › <a href="../../features/document/index.html">Document level</a></div>
+      <h1><span class="num">6.2.10</span>Articulation rate</h1><p class="lede">Syllables per second of speaking time: the speech span (first word&#x27;s onset to last word&#x27;s end) minus the silent pauses longer than the pause threshold.</p><div class="facts"><span class="chip">App: <b>Document-level features</b> → <b>Document prosody</b></span><span class="chip">Output: <b>document/documents_summary.csv</b></span><span class="chip">Libraries: <b>pyphen, montreal-forced-aligner</b></span></div><section id="what"><a id="meaning"></a><h2><span class="num">6.2.10.1</span>What it is</h2><p><strong>Syllables per second of speaking time</strong>: the speech span (first
+word's onset to last word's end) minus the silent pauses longer than the
+pause threshold. Single value per stimulus.</p>
+<p>Typical adult conversational range: <strong>3–6 syllables/sec</strong> (<a href="#tauroza-1990">Tauroza
+1990</a>). Values outside this range usually indicate either a
+configuration problem (no aligned words → zero) or an unusual stimulus
+(e.g. read poetry at ~2 syl/sec; rapid news broadcast at ~7 syl/sec).</p>
+</section><section id="see"><h2><span class="num">6.2.10.2</span>See it</h2><div class="card"><div class="caption">One row per example stimulus: the five LJ Speech clips and the two invented text-only sentences (no audio, so their audio-based columns are empty).</div><div ><figure><img src="../../assets/figures/feat_doc_prosody_articulation_rate.svg" alt="Articulation rate — Default settings" loading="lazy"></figure><figcaption>Articulation rate — Default settings</figcaption><div class="provenance">Read from <span class='file'>document/documents_summary.csv</span>, written by SensiExtractor on the example below. Nothing on this figure is typed in.</div></div></div></section><section id="output"><h2><span class="num">6.2.10.3</span>In your output</h2><div class="card"><div class="card-title">File <span class="file">document/documents_summary_&lt;timestamp&gt;.csv</span></div><table class="excerpt"><thead><tr><th class="">stimulus_id</th><th class="hl">doc_articulation_rate</th></tr></thead><tbody><tr><td class="">LJ002-0321</td><td class="hl">4.232</td></tr><tr><td class="">LJ003-0007</td><td class="hl">4.847</td></tr><tr><td class="">LJ005-0063</td><td class="hl">4.377</td></tr><tr><td class="">LJ005-0066</td><td class="hl">4.058</td></tr><tr><td class="">LJ019-0027</td><td class="hl">4.437</td></tr><tr><td class="">predictable</td><td class="hl"></td></tr><tr><td class="">surprising</td><td class="hl"></td></tr></tbody></table><div class="caption">7 rows × 80 columns in the file; showing the feature's columns. An empty cell means no value (e.g. punctuation, or a word the measure doesn’t cover).</div><div class="provenance">Excerpt of the real file for <b>LJ002-0321</b>.</div></div></section><section id="matlab"><h2><span class="num">6.2.10.4</span>MATLAB</h2><div class="card" data-tabs><div class="tabpanel on"><pre data-copy><code>% Load the document-level table (one row per stimulus)
+T = readtable(&#x27;document/documents_summary_&lt;timestamp&gt;.csv&#x27;, &#x27;TextType&#x27;, &#x27;string&#x27;);
+T.Properties.VariableNames             % every column in the file
+T(1:10, {&#x27;stimulus_id&#x27;, &#x27;doc_articulation_rate&#x27;})                       % this feature&#x27;s columns
+
+% Plot
+barh(T.doc_articulation_rate); yticks(1:height(T)); yticklabels(T.stimulus_id); xlabel(&#x27;doc_articulation_rate&#x27;)
+</code></pre></div><div class="caption">Run from the output folder. Variable and column names were checked against the real files when this manual was built; the code itself was not run in MATLAB.</div></div></section><section id="computed"><a id="math--linguistics"></a><h2><span class="num">6.2.10.5</span>How it&#x27;s computed</h2><pre><code>articulation_rate = total_syllables / (speech_span − total_pause_duration)
+</code></pre>
+<p>Where:</p>
+<ul>
+<li><code>speech_span</code> = last aligned word's <code>End</code> − first aligned word's
+<code>Onset</code>.</li>
+<li><code>total_pause_duration</code> is the sum of inter-word gaps <strong>longer than</strong>
+the pause threshold (default 0.25 s; the same threshold as
+<a href="../../features/document/doc_prosody_pauses.html"><code>doc_pause_*</code></a>). Shorter gaps between words
+count as speaking time, as in <a href="#chon-2012">Chon 2012</a>, who keep silent gaps up to
+250 ms as part of the utterance and remove longer ones; this is also
+what makes the threshold matter.</li>
+<li><code>total_syllables</code> counts every aligned word (all parts of speech,
+punctuation excluded), from the pronunciation MFA aligned: one
+syllable per vowel phone. A word MFA could not pronounce (aligned to
+a single <code>spn</code> &quot;spoken noise&quot; phone, see <a href="../../features/subword/g2p_oov.html">g2p_oov</a>) is
+counted with the <code>pyphen</code> spelling-based estimate instead.</li>
+</ul>
+<p>Counting from MFA's phones follows the pronunciation MFA aligned
+rather than the spelling, and counts a contraction that MFA
+aligns as one stretch (&quot;wasn't&quot;) once.</p>
+</section><section id="code"><a id="implementation-in-sensiextractor"></a><h2><span class="num">6.2.10.6</span>In the code</h2><div class="card"><div class="card-title">Open in GitHub</div><ul><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/extractors/prosody.py#L148"><code>sensi/extractors/prosody.py → compute_doc_prosody()</code></a></li><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/pipeline.py"><code>sensi/pipeline.py</code></a></li></ul></div><p>Source: <code>sensi/extractors/prosody.py:compute_doc_prosody</code> — see the
+document-batch finishing step in <code>sensi/pipeline.py</code> which calls it.</p>
+<p><strong>What the code does:</strong></p>
+<ol>
+<li>Takes the MFA-aligned words (rows with <code>Onset</code>/<code>End</code>), sorted by
+onset, and computes the speech span and the pauses (gaps longer than
+the threshold set in the GUI's Prosody card → &quot;Pause threshold
+(sec)&quot;).</li>
+<li>Counts syllables with <code>_count_spoken_syllables</code>: vowel phones in the
+MFA phone tier, plus a <code>pyphen</code> count for each <code>spn</code> word. When no
+phone tier is available it falls back to <code>pyphen</code> over every aligned
+non-punctuation token.</li>
+<li>Returns <code>total_syllables / (speech_span − total_pause_duration)</code>, or
+<code>NaN</code> if that speaking time is not positive or <code>pyphen</code> is needed but
+unavailable.</li>
+</ol>
+<p>The syllable count no longer depends on whether the syllable-timing
+outputs are switched on: the phone tier comes from the same alignment
+every time.</p>
+<p><strong>History (2026-10-21):</strong> speaking time used to be the sum of each
+word's MFA duration. That dropped every short gap between words, so the
+pause threshold had no effect, and it counted a contraction sharing one
+MFA interval twice. Syllables used to be counted with <code>pyphen</code> over the
+spelling. On three validation stimuli the new values were 1–10 % higher
+(4.35 → 4.40, 3.52 → 3.85, 4.75 → 4.85 syl/s), mostly because MFA's
+pronunciations contain more syllables than the spelling-based estimate
+(e.g. 39 vs 33 for one stimulus).</p>
+</section><section id="library"><h2><span class="num">6.2.10.7</span>Library</h2><pre><code class="language-python">import pyphen
+dic = pyphen.Pyphen(lang=&quot;en_US&quot;)
+n_syllables_in_unbelievable = dic.inserted(&quot;unbelievable&quot;).count(&quot;-&quot;) + 1
+# &quot;un-be-liev-a-ble&quot; → 5
+</code></pre>
+</section><section id="eeg"><a id="eeg-rationale"></a><h2><span class="num">6.2.10.8</span>EEG rationale</h2><p>Articulation rate is a <strong>stimulus-level speech-rate descriptor</strong> that
+is partly under speaker control (slow vs. fast narration) and partly
+fixed by the text content (longer words slow it down). For
+naturalistic-EEG:</p>
+<ul>
+<li>Stimulus matching: two stimuli that differ in speech rate produce
+systematically different time-locked responses because the same
+fixed-duration post-onset window covers more linguistic content in
+fast speech. Speech-rate matching is essential for any
+cross-stimulus contrast.</li>
+<li>Tracking responses (e.g. cortical envelope tracking): low-frequency
+cortical activity entrains to the syllabic rhythm of speech
+(<a href="#ding-2014">Ding 2014</a> review), and irregular speech rate dissociates this
+entrainment from sound-onset-evoked responses (<a href="#kayser-2015">Kayser 2015</a>).</li>
+</ul>
+<p>Note this is <strong>articulation rate</strong>, not <strong>speech rate</strong> — the former
+excludes pauses, the latter includes them. The two diverge when a
+speaker pauses a lot; together with <a href="../../features/document/doc_prosody_pauses.html"><code>doc_pause_*</code></a>,
+articulation rate gives a complete picture of timing.</p>
+</section><section id="papers"><h2><span class="num">6.2.10.9</span>Papers</h2><ul>
+<li><a name="tauroza-1990"></a><strong><a href="#tauroza-1990">Tauroza 1990</a></strong> Tauroza &amp; Allison. <em>Speech Rates in British English.</em> Applied Linguistics 11(1), 90–105. <a href="https://doi.org/10.1093/applin/11.1.90">doi:10.1093/applin/11.1.90</a> — establishes typical conversational ranges.</li>
+<li><a name="ding-2014"></a><strong><a href="#ding-2014">Ding 2014</a></strong> Ding &amp; Simon. <em>Cortical entrainment to continuous speech: functional roles and interpretations.</em> Frontiers in Human Neuroscience 8, 311. <a href="https://doi.org/10.3389/fnhum.2014.00311">doi:10.3389/fnhum.2014.00311</a> — rate as a modulator of cortical tracking.</li>
+<li><a name="chon-2012"></a><strong><a href="#chon-2012">Chon 2012</a></strong> Chon, Sawyer, Ambrose. <em>Differences of articulation rate and utterance length in fluent and disfluent utterances of preschool children who stutter.</em> J. Communication Disorders 45(6), 455–467. <a href="https://doi.org/10.1016/j.jcomdis.2012.08.003">doi:10.1016/j.jcomdis.2012.08.003</a> — defines articulation rate as syllables per second of fluent speech, keeping silent gaps up to 250 ms in the duration and deleting longer pauses (§2.3.2).</li>
+<li><a name="kayser-2015"></a><strong><a href="#kayser-2015">Kayser 2015</a></strong> Kayser, Ince, Gross, Kayser. <em>Irregular speech rate dissociates auditory cortical entrainment, evoked responses, and frontal alpha.</em> J. Neuroscience 35(44), 14691–14701. <a href="https://doi.org/10.1523/JNEUROSCI.2243-15.2015">doi:10.1523/JNEUROSCI.2243-15.2015</a> — speech-rate manipulations and cortical entrainment.</li>
+</ul>
+</section>
+      <nav class="pager">
+        <a class="prev" href="../../features/document/doc_prosody_pauses.html"><small>Previous</small>Document-level pause statistics</a>
+        <a class="next" href="../../features/document/feat_doc_prosody_hnr.html"><small>Next</small>Document-level Harmonics-to-Noise Ratio (HNR)</a>
+      </nav>
+      <footer>SensiExtractor User Manual · built 2026-10-27 from commit e0b7600 · source: <a href="https://github.com/edneuro/SENSI-Speech-Features">edneuro/SENSI-Speech-Features</a></footer>
+    </div>
+  </main>
+  <aside class="right" aria-label="On this page">
+    <div class="label">On this page</div>
+    <ul><li><a href="#what">What it is</a></li><li><a href="#see">See it</a></li><li><a href="#output">In your output</a></li><li><a href="#matlab">MATLAB</a></li><li><a href="#computed">How it's computed</a></li><li><a href="#code">In the code</a></li><li><a href="#library">Library</a></li><li><a href="#eeg">EEG rationale</a></li><li><a href="#papers">Papers</a></li></ul>
+    <div class="meta"><div><b>Key</b> <code>feat_doc_prosody_articulation_rate</code></div><div><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/docs/features/feat_doc_prosody_articulation_rate.md">This page’s source text</a> (also the app’s ⓘ pop-up)</div></div>
+  </aside>
+</div>
+<script src="../../assets/search-index.js"></script>
+<script src="../../assets/manual.js"></script>
+</body>
+</html>

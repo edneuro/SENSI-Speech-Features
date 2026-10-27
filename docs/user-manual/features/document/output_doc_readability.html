@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Readability (Flesch Reading Ease + Flesch–Kincaid Grade Level) · SensiExtractor User Manual</title>
+<link rel="icon" href="../../assets/icon.svg">
+<link rel="stylesheet" href="../../assets/theme.css">
+<link rel="stylesheet" href="../../assets/layout.css">
+<link rel="stylesheet" href="../../assets/code.css">
+</head>
+<body data-root="../../">
+<button class="menu-btn" type="button" aria-label="Open the outline">☰ Contents</button>
+<div class="shell">
+  <nav class="left" aria-label="Manual outline">
+    <a class="brand" href="../../index.html"><img src="../../assets/icon.svg" alt="">SensiExtractor <span>User Manual</span></a>
+    <div class="search">
+      <input type="search" placeholder="Search features, columns…  ( / )" aria-label="Search the manual">
+      <div class="search-results" role="listbox"></div>
+    </div>
+    <div class="outline"><ul><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../index.html"><span class="num">1</span>Introduction</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/requirements.html"><span class="num">2</span>Requirements</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/installation.html"><span class="num">3</span>Installation</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/usage.html"><span class="num">4</span>Using the app</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/sherlock.html"><span class="num">5</span>Running on Sherlock</a></div></li><li class="chapter open"><div class="row"><button class="toggle" type="button" aria-expanded="true" aria-label="Show or hide Features">▶</button><a href="../../features/index.html"><span class="num">6</span>Features</a></div><ul><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Word level">▶</button><a href="../../features/word/index.html"><span class="num">6.1</span>Word level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/structural_ids.html">Structural identifier columns</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/structural_offsets.html">Structural character offsets</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/feat_struct_sentence_text.html">Sentence text</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexling_tokens.html">Tokens and lemmas</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexling_pos.html">Part-of-speech tags</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexling_morph.html">Morphological features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexling_dep.html">Dependency parse</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/freq_subtlex.html">Word frequency (Zipf, wordfreq)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/edu_zipf.html">Educator&#x27;s Word Frequency Guide (EWFG) grade-band frequencies<span class="tag" title="Not computed in this manual">◇</span></a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/pred_surprisal.html">Surprisal</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/pred_cloze.html">Cloze probability</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/pred_topmatch.html">Top-1 prediction match</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/sem_indicators.html">Semantic-domain category indicators</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/master_word2vec.html">Word2Vec static word embeddings</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/master_bert_word.html">BERT contextual word embeddings</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexical_norms.html">Lexical norms (AoA, concreteness, imageability, familiarity, VAD)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/acoustic_boundaries.html">Acoustic word boundaries (MFA)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/acoustic_durations.html">Acoustic word duration and gap</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/prosody_pitch.html">Word-level pitch features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/prosody_volume.html">Word-level volume (intensity) features</a></div></li></ul></li><li class="open"><div class="row"><button class="toggle" type="button" aria-expanded="true" aria-label="Show or hide Document level">▶</button><a href="../../features/document/index.html"><span class="num">6.2</span>Document level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_counts.html">Document-level count columns</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_aggregates.html">Word-level feature aggregates</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/output_doc_lex_diversity.html">Lexical diversity (TTR + MTLD)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/output_doc_readability.html" class="current">Readability (Flesch Reading Ease + Flesch–Kincaid Grade Level)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/output_doc_category_proportions.html">Document-level category proportions</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_psych_composite.html">Composite psychological scores (LIWC-style summary variables)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_prosody_pitch.html">Document-level pitch summaries</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_prosody_volume.html">Document-level volume (intensity) summaries</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_prosody_pauses.html">Document-level pause statistics</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/feat_doc_prosody_articulation_rate.html">Articulation rate</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/feat_doc_prosody_hnr.html">Document-level Harmonics-to-Noise Ratio (HNR)</a></div></li></ul></li><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Sub-word level">▶</button><a href="../../features/subword/index.html"><span class="num">6.3</span>Sub-word level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/syllable_timing.html">Syllable timing (Onset / End / Duration)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/syllable_labels.html">Syllable labels (orthographic + ARPABET + IPA)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/syllable_prosody.html">Syllable-level prosody (pitch + volume + deltas)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/feat_syllable_pcenter.html">Perceptual centre (P-center)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/phoneme.html">Phoneme-level columns</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/feat_phoneme_ipa.html">IPA phoneme symbol</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/g2p_oov.html">Out-of-dictionary words (MFA G2P)<span class="tag" title="Not computed in this manual">◇</span></a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/phoneme_surprisal.html">Phoneme surprisal + cohort entropy</a></div></li></ul></li><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Sentence level">▶</button><a href="../../features/sentence/index.html"><span class="num">6.4</span>Sentence level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/sentence_timing.html">Sentence timing</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/sentence_prosody_pitch.html">Sentence-level pitch features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/sentence_prosody_volume.html">Sentence-level volume (intensity) features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/feat_sentence_hnr.html">Sentence-level Harmonics-to-Noise Ratio (HNR)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/master_bert_sentence.html">BERT contextual sentence embeddings</a></div></li></ul></li><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Acoustic level">▶</button><a href="../../features/acoustic/index.html"><span class="num">6.5</span>Acoustic level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/acoustic/acoustic_envelope.html">Amplitude envelope (broadband)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/acoustic/acoustic_onset_envelope.html">Onset envelope (HWR derivative)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/acoustic/acoustic_logmel.html">Log-mel spectrogram</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/acoustic/acoustic_mfcc.html">MFCC (Mel-frequency cepstral coefficients)</a></div></li></ul></li></ul></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/outputs.html"><span class="num">7</span>Outputs reference</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../references.html"><span class="num">8</span>References</a></div></li></ul></div>
+  </nav>
+  <main>
+    <div class="content">
+      <div class="crumbs"><a href="../../features/index.html">Features</a> › <a href="../../features/document/index.html">Document level</a></div>
+      <h1><span class="num">6.2.4</span>Readability (Flesch Reading Ease + Flesch–Kincaid Grade Level)</h1><p class="lede">Two classical readability indices computed over the full transcript.</p><div class="facts"><span class="chip">App: <b>Document-level features</b> → <b>Readability</b></span><span class="chip">Output: <b>document/documents_summary.csv</b></span><span class="chip">Libraries: <b>textstat</b></span></div><section id="what"><a id="meaning"></a><h2><span class="num">6.2.4.1</span>What it is</h2><p>Two classical readability indices computed over the full transcript:</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Formula (English)</th>
+<th>Range</th>
+<th>Interpretation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>flesch_reading_ease</code></td>
+<td><code>206.835 − 1.015·(words/sentence) − 84.6·(syllables/word)</code></td>
+<td>typically 0–100</td>
+<td><strong>Higher = easier</strong>. 60–70 ≈ plain English; below 30 ≈ academic / legal.</td>
+</tr>
+<tr>
+<td><code>flesch_kincaid_grade</code></td>
+<td><code>0.39·(words/sentence) + 11.8·(syllables/word) − 15.59</code></td>
+<td>typically 0–18</td>
+<td>US grade level required to comprehend the text. 8 ≈ 8th grade.</td>
+</tr>
+</tbody>
+</table>
+<p>The two metrics are derived from the <strong>same two predictors</strong> (sentence
+length, syllables per word) but combine them with different
+coefficients to put one on a &quot;ease&quot; scale and the other on a &quot;grade
+level&quot; scale — see <a href="#kincaid-1975">Kincaid 1975</a> for the derivation history.</p>
+</section><section id="see"><h2><span class="num">6.2.4.2</span>See it</h2><div class="card"><div class="caption">One row per example stimulus: the five LJ Speech clips and the two invented text-only sentences (no audio, so their audio-based columns are empty).</div><div ><figure><img src="../../assets/figures/output_doc_readability.svg" alt="Readability (Flesch Reading Ease + Flesch–Kincaid Grade Level) — Default settings" loading="lazy"></figure><figcaption>Readability (Flesch Reading Ease + Flesch–Kincaid Grade Level) — Default settings</figcaption><div class="provenance">Read from <span class='file'>document/documents_summary.csv</span>, written by SensiExtractor on the example below. Nothing on this figure is typed in.</div></div></div></section><section id="output"><h2><span class="num">6.2.4.3</span>In your output</h2><div class="card"><div class="card-title">File <span class="file">document/documents_summary_&lt;timestamp&gt;.csv</span></div><table class="excerpt"><thead><tr><th class="">stimulus_id</th><th class="hl">flesch_reading_ease</th><th class="hl">flesch_kincaid_grade</th></tr></thead><tbody><tr><td class="">LJ002-0321</td><td class="hl">67.76</td><td class="hl">6.79</td></tr><tr><td class="">LJ003-0007</td><td class="hl">59.07</td><td class="hl">8.747</td></tr><tr><td class="">LJ005-0063</td><td class="hl">53.55</td><td class="hl">12.25</td></tr><tr><td class="">LJ005-0066</td><td class="hl">57.23</td><td class="hl">11.98</td></tr><tr><td class="">LJ019-0027</td><td class="hl">57.18</td><td class="hl">8.265</td></tr><tr><td class="">predictable</td><td class="hl">102</td><td class="hl">0.5167</td></tr><tr><td class="">surprising</td><td class="hl">73.85</td><td class="hl">4.45</td></tr></tbody></table><div class="caption">7 rows × 80 columns in the file; showing the feature's columns. An empty cell means no value (e.g. punctuation, or a word the measure doesn’t cover).</div><div class="provenance">Excerpt of the real file for <b>LJ002-0321</b>.</div></div></section><section id="matlab"><h2><span class="num">6.2.4.4</span>MATLAB</h2><div class="card" data-tabs><div class="tabpanel on"><pre data-copy><code>% Load the document-level table (one row per stimulus)
+T = readtable(&#x27;document/documents_summary_&lt;timestamp&gt;.csv&#x27;, &#x27;TextType&#x27;, &#x27;string&#x27;);
+T.Properties.VariableNames             % every column in the file
+T(1:10, {&#x27;stimulus_id&#x27;, &#x27;flesch_reading_ease&#x27;, &#x27;flesch_kincaid_grade&#x27;})                       % this feature&#x27;s columns
+
+% Plot
+barh(T.flesch_reading_ease); yticks(1:height(T)); yticklabels(T.stimulus_id); xlabel(&#x27;flesch_reading_ease&#x27;)
+</code></pre></div><div class="caption">Run from the output folder. Variable and column names were checked against the real files when this manual was built; the code itself was not run in MATLAB.</div></div></section><section id="code"><a id="implementation-in-sensiextractor"></a><h2><span class="num">6.2.4.5</span>In the code</h2><div class="card"><div class="card-title">Open in GitHub</div><ul><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/pipeline.py"><code>sensi/pipeline.py</code></a></li></ul></div><p>Computed in <code>sensi/pipeline.py</code>'s document-batch finishing step using the
+<code>textstat</code> package, which implements both formulas as defined in
+<a href="#kincaid-1975">Kincaid 1975</a> / <a href="#flesch-1948">Flesch 1948</a>. Syllable counts use the same
+<code>pyphen</code> machinery as the <a href="../../features/subword/syllable_timing.html">syllable extractor</a>,
+so the two are internally consistent.</p>
+</section><section id="library"><h2><span class="num">6.2.4.6</span>Library</h2><pre><code class="language-python">import textstat
+textstat.flesch_reading_ease(text)        # 0-100, higher = easier
+textstat.flesch_kincaid_grade(text)       # US grade level
+</code></pre>
+</section><section id="eeg"><a id="eeg-rationale"></a><h2><span class="num">6.2.4.7</span>EEG rationale</h2><p>Readability indices are passage-level numbers combining sentence
+length and syllables-per-word into a single scale. Both ingredients
+are established correlates of reading time: longer sentences and
+longer / more-polysyllabic words produce longer eye fixations
+(<a href="#just-1980">Just 1980</a>). The Flesch and Flesch–Kincaid scores are typically
+used as a single-number covariate for matching stimuli on overall
+text difficulty (e.g. educational or developmental designs).</p>
+<p>The Flesch family is not the most sensitive difficulty measure
+available — <a href="../../features/document/output_doc_lex_diversity.html"><code>MTLD</code></a> and the
+<a href="../../features/word/edu_zipf.html"><code>Edu_Zipf_*</code></a> family carry more information — but it's the
+most-cited and most-comparable across studies because everyone has it.</p>
+</section><section id="papers"><h2><span class="num">6.2.4.8</span>Papers</h2><ul>
+<li><a name="flesch-1948"></a><strong><a href="#flesch-1948">Flesch 1948</a></strong> Flesch. <em>A new readability yardstick.</em> J. Applied Psychology. <a href="https://doi.org/10.1037/h0057532">doi:10.1037/h0057532</a> — original Flesch Reading Ease.</li>
+<li><a name="kincaid-1975"></a><strong><a href="#kincaid-1975">Kincaid 1975</a></strong> Kincaid, Fishburne, Rogers, Chissom. <em>Derivation of new readability formulas (Automated Readability Index, Fog Count, and Flesch Reading Ease formula) for Navy enlisted personnel.</em> Naval Air Station Memphis. — Flesch–Kincaid Grade Level.</li>
+<li><a name="just-1980"></a><strong><a href="#just-1980">Just 1980</a></strong> Just &amp; Carpenter. <em>A theory of reading: From eye fixations to comprehension.</em> Psychological Review 87(4), 329–354. <a href="https://doi.org/10.1037/0033-295X.87.4.329">doi:10.1037/0033-295X.87.4.329</a> — eye-fixation model showing readers pause longer at points of higher processing load (infrequent words, clause boundaries, sentence-end inferences).</li>
+</ul>
+</section>
+      <nav class="pager">
+        <a class="prev" href="../../features/document/output_doc_lex_diversity.html"><small>Previous</small>Lexical diversity (TTR + MTLD)</a>
+        <a class="next" href="../../features/document/output_doc_category_proportions.html"><small>Next</small>Document-level category proportions</a>
+      </nav>
+      <footer>SensiExtractor User Manual · built 2026-10-27 from commit e0b7600 · source: <a href="https://github.com/edneuro/SENSI-Speech-Features">edneuro/SENSI-Speech-Features</a></footer>
+    </div>
+  </main>
+  <aside class="right" aria-label="On this page">
+    <div class="label">On this page</div>
+    <ul><li><a href="#what">What it is</a></li><li><a href="#see">See it</a></li><li><a href="#output">In your output</a></li><li><a href="#matlab">MATLAB</a></li><li><a href="#code">In the code</a></li><li><a href="#library">Library</a></li><li><a href="#eeg">EEG rationale</a></li><li><a href="#papers">Papers</a></li></ul>
+    <div class="meta"><div><b>Key</b> <code>output_doc_readability</code></div><div><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/docs/features/output_doc_readability.md">This page’s source text</a> (also the app’s ⓘ pop-up)</div></div>
+  </aside>
+</div>
+<script src="../../assets/search-index.js"></script>
+<script src="../../assets/manual.js"></script>
+</body>
+</html>

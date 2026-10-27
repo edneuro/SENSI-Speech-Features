@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lexical norms (AoA, concreteness, imageability, familiarity, VAD) · SensiExtractor User Manual</title>
+<link rel="icon" href="../../assets/icon.svg">
+<link rel="stylesheet" href="../../assets/theme.css">
+<link rel="stylesheet" href="../../assets/layout.css">
+<link rel="stylesheet" href="../../assets/code.css">
+</head>
+<body data-root="../../">
+<button class="menu-btn" type="button" aria-label="Open the outline">☰ Contents</button>
+<div class="shell">
+  <nav class="left" aria-label="Manual outline">
+    <a class="brand" href="../../index.html"><img src="../../assets/icon.svg" alt="">SensiExtractor <span>User Manual</span></a>
+    <div class="search">
+      <input type="search" placeholder="Search features, columns…  ( / )" aria-label="Search the manual">
+      <div class="search-results" role="listbox"></div>
+    </div>
+    <div class="outline"><ul><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../index.html"><span class="num">1</span>Introduction</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/requirements.html"><span class="num">2</span>Requirements</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/installation.html"><span class="num">3</span>Installation</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/usage.html"><span class="num">4</span>Using the app</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/sherlock.html"><span class="num">5</span>Running on Sherlock</a></div></li><li class="chapter open"><div class="row"><button class="toggle" type="button" aria-expanded="true" aria-label="Show or hide Features">▶</button><a href="../../features/index.html"><span class="num">6</span>Features</a></div><ul><li class="open"><div class="row"><button class="toggle" type="button" aria-expanded="true" aria-label="Show or hide Word level">▶</button><a href="../../features/word/index.html"><span class="num">6.1</span>Word level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/structural_ids.html">Structural identifier columns</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/structural_offsets.html">Structural character offsets</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/feat_struct_sentence_text.html">Sentence text</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexling_tokens.html">Tokens and lemmas</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexling_pos.html">Part-of-speech tags</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexling_morph.html">Morphological features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexling_dep.html">Dependency parse</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/freq_subtlex.html">Word frequency (Zipf, wordfreq)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/edu_zipf.html">Educator&#x27;s Word Frequency Guide (EWFG) grade-band frequencies<span class="tag" title="Not computed in this manual">◇</span></a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/pred_surprisal.html">Surprisal</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/pred_cloze.html">Cloze probability</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/pred_topmatch.html">Top-1 prediction match</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/sem_indicators.html">Semantic-domain category indicators</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/master_word2vec.html">Word2Vec static word embeddings</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/master_bert_word.html">BERT contextual word embeddings</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexical_norms.html" class="current">Lexical norms (AoA, concreteness, imageability, familiarity, VAD)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/acoustic_boundaries.html">Acoustic word boundaries (MFA)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/acoustic_durations.html">Acoustic word duration and gap</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/prosody_pitch.html">Word-level pitch features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/prosody_volume.html">Word-level volume (intensity) features</a></div></li></ul></li><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Document level">▶</button><a href="../../features/document/index.html"><span class="num">6.2</span>Document level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_counts.html">Document-level count columns</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_aggregates.html">Word-level feature aggregates</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/output_doc_lex_diversity.html">Lexical diversity (TTR + MTLD)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/output_doc_readability.html">Readability (Flesch Reading Ease + Flesch–Kincaid Grade Level)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/output_doc_category_proportions.html">Document-level category proportions</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_psych_composite.html">Composite psychological scores (LIWC-style summary variables)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_prosody_pitch.html">Document-level pitch summaries</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_prosody_volume.html">Document-level volume (intensity) summaries</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_prosody_pauses.html">Document-level pause statistics</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/feat_doc_prosody_articulation_rate.html">Articulation rate</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/feat_doc_prosody_hnr.html">Document-level Harmonics-to-Noise Ratio (HNR)</a></div></li></ul></li><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Sub-word level">▶</button><a href="../../features/subword/index.html"><span class="num">6.3</span>Sub-word level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/syllable_timing.html">Syllable timing (Onset / End / Duration)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/syllable_labels.html">Syllable labels (orthographic + ARPABET + IPA)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/syllable_prosody.html">Syllable-level prosody (pitch + volume + deltas)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/feat_syllable_pcenter.html">Perceptual centre (P-center)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/phoneme.html">Phoneme-level columns</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/feat_phoneme_ipa.html">IPA phoneme symbol</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/g2p_oov.html">Out-of-dictionary words (MFA G2P)<span class="tag" title="Not computed in this manual">◇</span></a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/phoneme_surprisal.html">Phoneme surprisal + cohort entropy</a></div></li></ul></li><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Sentence level">▶</button><a href="../../features/sentence/index.html"><span class="num">6.4</span>Sentence level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/sentence_timing.html">Sentence timing</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/sentence_prosody_pitch.html">Sentence-level pitch features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/sentence_prosody_volume.html">Sentence-level volume (intensity) features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/feat_sentence_hnr.html">Sentence-level Harmonics-to-Noise Ratio (HNR)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/master_bert_sentence.html">BERT contextual sentence embeddings</a></div></li></ul></li><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Acoustic level">▶</button><a href="../../features/acoustic/index.html"><span class="num">6.5</span>Acoustic level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/acoustic/acoustic_envelope.html">Amplitude envelope (broadband)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/acoustic/acoustic_onset_envelope.html">Onset envelope (HWR derivative)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/acoustic/acoustic_logmel.html">Log-mel spectrogram</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/acoustic/acoustic_mfcc.html">MFCC (Mel-frequency cepstral coefficients)</a></div></li></ul></li></ul></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/outputs.html"><span class="num">7</span>Outputs reference</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../references.html"><span class="num">8</span>References</a></div></li></ul></div>
+  </nav>
+  <main>
+    <div class="content">
+      <div class="crumbs"><a href="../../features/index.html">Features</a> › <a href="../../features/word/index.html">Word level</a></div>
+      <h1><span class="num">6.1.16</span>Lexical norms (AoA, concreteness, imageability, familiarity, VAD)</h1><p class="lede">Per-word psycholinguistic ratings looked up from published norm databases, keyed by lemma (with a surface-token fallback).</p><div class="facts"><span class="chip">App: <b>Word-level features</b> → <b>Lexical norms</b></span><span class="chip">Output: <b>word/&lt;stim&gt;_features.csv</b></span></div><section id="what"><a id="meaning"></a><h2><span class="num">6.1.16.1</span>What it is</h2><p>Per-word psycholinguistic ratings looked up from published norm databases,
+keyed by lemma (with a surface-token fallback):</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Norm</th>
+<th>What it captures</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>AoA_Mean</code></td>
+<td>Age of acquisition (<a href="#kuperman-2012">Kuperman 2012</a>)</td>
+<td>mean rated age (years) at which the word is learned</td>
+</tr>
+<tr>
+<td><code>AoA_SD</code></td>
+<td>&quot;</td>
+<td>rater dispersion of the AoA estimate (quality/weight)</td>
+</tr>
+<tr>
+<td><code>Concreteness</code></td>
+<td><a href="#brysbaert-2014">Brysbaert 2014</a></td>
+<td>how concrete (perceptible) vs. abstract the referent is (1–5)</td>
+</tr>
+<tr>
+<td><code>Imageability</code></td>
+<td>MRC (<a href="#coltheart-1981">Coltheart 1981</a>)</td>
+<td>how easily the word evokes a mental image</td>
+</tr>
+<tr>
+<td><code>Familiarity</code></td>
+<td>MRC</td>
+<td>how familiar the word feels to typical readers</td>
+</tr>
+<tr>
+<td><code>Valence</code></td>
+<td><a href="#warriner-2013">Warriner 2013</a></td>
+<td>pleasantness, 1 (unpleasant) – 9 (pleasant)</td>
+</tr>
+<tr>
+<td><code>Arousal</code></td>
+<td>&quot;</td>
+<td>calm (1) – excited (9)</td>
+</tr>
+<tr>
+<td><code>Dominance</code></td>
+<td>&quot;</td>
+<td>feeling controlled (1) – in control (9)</td>
+</tr>
+</tbody>
+</table>
+<p>Out-of-vocabulary words and punctuation are <code>NaN</code> (<strong>never imputed</strong> — a blank
+means &quot;no norm available&quot;, and downstream code decides how to handle it).</p>
+<p><strong>Coverage</strong> — distinct words in each table built by <code>download_lexical_norms.py</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Norm</th>
+<th>Words</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AoA (Kuperman)</td>
+<td>30,121</td>
+</tr>
+<tr>
+<td>Concreteness (Brysbaert)</td>
+<td>39,954</td>
+</tr>
+<tr>
+<td>Valence / Arousal / Dominance (Warriner)</td>
+<td>13,905</td>
+</tr>
+<tr>
+<td>Imageability / Familiarity (MRC)</td>
+<td>4,890</td>
+</tr>
+</tbody>
+</table>
+<p>MRC's rated subset is small (~4,900 words), so imageability/familiarity will be
+<code>NaN</code> for many tokens — the document-level <code>*_coverage</code> stats report the match
+rate per stimulus. Concreteness (~40k words) correlates ≈0.9 with imageability
+(r = .91 across 5,553 words in the Glasgow Norms <a href="#scott-2019">Scott 2019</a>)
+and covers far more vocabulary, so it is usually the better choice when
+coverage matters.</p>
+</section><section id="see"><h2><span class="num">6.1.16.2</span>See it</h2><div class="card"><div class="caption">Example <b>LJ002-0321</b> (LJ Speech, public domain): “Others who arrived just after the time of distribution were often 48 hours without food. The latter might also be six days without meat.”</div><audio controls preload="none" src="../../assets/audio/LJ002-0321.wav"></audio><div ><figure><img src="../../assets/figures/lexical_norms.svg" alt="Lexical norms (AoA, concreteness, imageability, familiarity, VAD) — Default settings" loading="lazy"></figure><figcaption>Lexical norms (AoA, concreteness, imageability, familiarity, VAD) — Default settings</figcaption><div class="provenance">Read from <span class='file'>word/LJ002-0321_features.csv</span>, written by SensiExtractor on the example below. Nothing on this figure is typed in.</div></div></div></section><section id="output"><h2><span class="num">6.1.16.3</span>In your output</h2><div class="card"><div class="card-title">File <span class="file">word/&lt;stim&gt;_features.csv</span></div><table class="excerpt"><thead><tr><th class="">token</th><th class="hl">AoA_Mean</th><th class="hl">AoA_SD</th><th class="hl">Concreteness</th><th class="hl">Imageability</th><th class="hl">Familiarity</th><th class="hl">Valence</th><th class="hl">Arousal</th><th class="hl">Dominance</th></tr></thead><tbody><tr><td class="">Others</td><td class="hl">5.33</td><td class="hl">2.35</td><td class="hl">2.04</td><td class="hl">265</td><td class="hl">581</td><td class="hl">5.41</td><td class="hl">3.48</td><td class="hl">6</td></tr><tr><td class="">who</td><td class="hl"></td><td class="hl"></td><td class="hl">1.74</td><td class="hl">261</td><td class="hl">599</td><td class="hl"></td><td class="hl"></td><td class="hl"></td></tr><tr><td class="">arrived</td><td class="hl">6.26</td><td class="hl">1.85</td><td class="hl">3.22</td><td class="hl"></td><td class="hl"></td><td class="hl">6.41</td><td class="hl">5</td><td class="hl">6.84</td></tr><tr><td class="">just</td><td class="hl"></td><td class="hl"></td><td class="hl">1.52</td><td class="hl">221</td><td class="hl">540</td><td class="hl"></td><td class="hl"></td><td class="hl"></td></tr><tr><td class="">after</td><td class="hl"></td><td class="hl"></td><td class="hl">2.12</td><td class="hl">217</td><td class="hl">575</td><td class="hl"></td><td class="hl"></td><td class="hl"></td></tr><tr><td class="">the</td><td class="hl"></td><td class="hl"></td><td class="hl">1.43</td><td class="hl">209</td><td class="hl">625</td><td class="hl"></td><td class="hl"></td><td class="hl"></td></tr><tr><td class="">time</td><td class="hl">5.16</td><td class="hl">1.86</td><td class="hl">3.07</td><td class="hl">413</td><td class="hl">604</td><td class="hl">5.6</td><td class="hl">3.41</td><td class="hl">4.36</td></tr><tr><td class="">of</td><td class="hl"></td><td class="hl"></td><td class="hl">1.67</td><td class="hl">217</td><td class="hl">598</td><td class="hl"></td><td class="hl"></td><td class="hl"></td></tr><tr><td class="">distribution</td><td class="hl">11</td><td class="hl">3.46</td><td class="hl">3.33</td><td class="hl"></td><td class="hl"></td><td class="hl">5.5</td><td class="hl">3.45</td><td class="hl">5.21</td></tr><tr><td class="">were</td><td class="hl">5.11</td><td class="hl">3.23</td><td class="hl">1.85</td><td class="hl">274</td><td class="hl">613</td><td class="hl">6.18</td><td class="hl">3.43</td><td class="hl">5.5</td></tr><tr><td class="">often</td><td class="hl"></td><td class="hl"></td><td class="hl">2.5</td><td class="hl"></td><td class="hl"></td><td class="hl"></td><td class="hl"></td><td class="hl"></td></tr><tr><td class="">48</td><td class="hl"></td><td class="hl"></td><td class="hl"></td><td class="hl"></td><td class="hl"></td><td class="hl"></td><td class="hl"></td><td class="hl"></td></tr></tbody></table><div class="caption">26 rows × 56 columns in the file; showing the feature's columns for the first sentence. An empty cell means no value (e.g. punctuation, or a word the measure doesn’t cover).</div><div class="provenance">Excerpt of the real file for <b>LJ002-0321</b>.</div></div></section><section id="matlab"><h2><span class="num">6.1.16.4</span>MATLAB</h2><div class="card" data-tabs><div class="tabpanel on"><pre data-copy><code>% Load the word-level table (one row per word)
+T = readtable(&#x27;word/LJ002-0321_features.csv&#x27;, &#x27;TextType&#x27;, &#x27;string&#x27;);
+T.Properties.VariableNames             % every column in the file
+T(1:10, {&#x27;token&#x27;, &#x27;AoA_Mean&#x27;, &#x27;AoA_SD&#x27;, &#x27;Concreteness&#x27;, &#x27;Imageability&#x27;, &#x27;Familiarity&#x27;, &#x27;Valence&#x27;, &#x27;Arousal&#x27;, &#x27;Dominance&#x27;})                       % this feature&#x27;s columns
+
+% Plot
+w = ~T.upos == &quot;PUNCT&quot;;
+subplot(3,1,1); bar(T.AoA_Mean(w)); ylabel(&#x27;AoA_Mean&#x27;)
+subplot(3,1,2); bar(T.AoA_SD(w)); ylabel(&#x27;AoA_SD&#x27;)
+subplot(3,1,3); bar(T.Concreteness(w)); ylabel(&#x27;Concreteness&#x27;)
+xticks(1:nnz(w)); xticklabels(T.token(w))
+</code></pre></div><div class="caption">Run from the output folder. Variable and column names were checked against the real files when this manual was built; the code itself was not run in MATLAB.</div></div></section><section id="x-what-each-rating-is-and-how-it-was-made"><a id="what-each-rating-is-and-how-it-was-made"></a><h2><span class="num">6.1.16.5</span>What each rating is, and how it was made</h2><p>Each value is a <strong>human rating averaged over many people</strong> — a behavioural
+norm, not a corpus statistic. Knowing exactly how each was collected is what
+lets you justify using it.</p>
+<ul>
+<li>
+<p><strong>AoA (<code>AoA_Mean</code>/<code>AoA_SD</code>, <a href="#kuperman-2012">Kuperman 2012</a>).</strong> <em>Subjective, retrospective
+age of acquisition.</em> ~30k words; each rated by ~20 adults on Amazon
+Mechanical Turk who <strong>estimated, in years, the age at which they learned the
+word</strong>. <code>AoA_Mean</code> is the mean of those estimates, <code>AoA_SD</code> their
+disagreement. It is an adult's recollection of when a word was learned, not
+an objective developmental record — but it predicts processing speed and N400
+amplitude well, which is why it is used. Lower = learned earlier.</p>
+</li>
+<li>
+<p><strong>Concreteness (<code>Concreteness</code>, <a href="#brysbaert-2014">Brysbaert 2014</a>).</strong> <em>How far a word's
+referent can be experienced through the senses and actions.</em> ~40k words,
+4,000+ Mechanical Turk raters (~25 per word), on a <strong>1 (abstract) – 5
+(concrete)</strong> scale. Concrete = something you can see, hear, feel, taste,
+smell, or act on (<em>dog</em>, <em>run</em>); abstract = something whose meaning is carried
+by language and cannot be sensed directly (<em>truth</em>, <em>justice</em>). Raters leaned
+mostly on visual/haptic experience.</p>
+</li>
+<li>
+<p><strong>Imageability (<code>Imageability</code>, MRC — <a href="#coltheart-1981">Coltheart 1981</a>).</strong> <em>How readily the
+word evokes a mental image.</em> Originally rated on a <strong>1–7</strong> scale (1 = arouses
+an image slowly or not at all; 7 = arouses an image immediately), pooled in
+the MRC database from classic norm sets (Paivio, Yuille &amp; Madigan 1968;
+Toglia &amp; Battig 1978; Gilhooly &amp; Logie 1980) and <strong>rescaled to 100–700</strong>
+(the 1–7 mean × 100; so <code>636</code> ≈ 6.36/7). Related to concreteness but not
+identical: some abstract words (<em>ghost</em>, <em>heaven</em>) are highly imageable.</p>
+</li>
+<li>
+<p><strong>Familiarity (<code>Familiarity</code>, MRC — <a href="#coltheart-1981">Coltheart 1981</a>).</strong> <em>Subjective
+familiarity</em> — how familiar / often-encountered a word feels — rated <strong>1–7</strong>
+and rescaled to <strong>100–700</strong>. This is a <em>perceptual</em> judgement of frequency,
+distinct from corpus frequency (<code>Zipf_Freq</code>); the two can diverge, which is
+exactly why familiarity is a useful complementary control.</p>
+</li>
+<li>
+<p><strong>Valence / Arousal / Dominance (<code>Valence</code>/<code>Arousal</code>/<code>Dominance</code>,
+<a href="#warriner-2013">Warriner 2013</a>).</strong> The three dimensions of affective meaning, extending
+Bradley &amp; Lang's ANEW. ~14k words rated on the <strong>9-point Self-Assessment
+Manikin (SAM)</strong> scale by Mechanical Turk participants (~20 per word):</p>
+<ul>
+<li><em>Valence</em> = pleasantness, 1 (unhappy/unpleasant) – 9 (happy/pleasant).</li>
+<li><em>Arousal</em> = emotional intensity, 1 (calm/relaxed) – 9 (excited/aroused).</li>
+<li><em>Dominance</em> = how much control the word's referent makes you feel,
+1 (controlled/submissive) – 9 (in control/dominant).</li>
+</ul>
+</li>
+</ul>
+</section><section id="x-document-level-aggregates"><a id="document-level-aggregates"></a><h2><span class="num">6.1.16.6</span>Document-level aggregates</h2><p>Enabling <strong>Aggregates → Lexical-norm aggregates</strong> (<code>doc_agg_lexical_norms</code>)
+adds, computed over <strong>content words</strong> (<code>NOUN/VERB/ADJ/ADV/PROPN</code>):</p>
+<ul>
+<li><code>mean_aoa</code>, <code>median_aoa</code>, <code>max_aoa</code>, <code>sd_aoa</code></li>
+<li><code>prop_late_acquired</code> — fraction of (AoA-matched) content words with
+<code>AoA_Mean</code> above the late-acquired threshold (default <strong>10 yrs</strong>,
+configurable via <code>lexical_norms.late_acquired_threshold</code>); an arbitrary
+convention, documented as such.</li>
+<li><code>mean_concreteness</code>, <code>mean_imageability</code>, <code>mean_familiarity</code>,
+<code>mean_valence</code>, <code>mean_arousal</code>, <code>mean_dominance</code></li>
+<li>per-norm coverage (blank when the document has no content words): <code>aoa_coverage</code>, <code>concreteness_coverage</code>, … (fraction of
+content tokens that matched the norm — read these to judge how trustworthy
+each mean is).</li>
+</ul>
+<h3 id="relative-aoa-analysis-time-not-a-stored-column">Relative AoA (analysis-time, not a stored column)</h3>
+<p>A useful derived variable for developmental studies is
+<code>relative_aoa = AoA_Mean − participant_age</code> (years): a word's difficulty
+relative to the listener. SensiExtractor never sees participant age, so this
+is computed downstream by joining the stimulus <code>AoA_Mean</code> with participant
+metadata. Suggested uses: an AoA × age interaction term, an above/below-age
+word contrast, or a document-level proportion-above-age covariate. Caveat:
+AoA is an adult-rated population norm, not a measure of the individual
+listener's vocabulary.</p>
+<p><strong>Using <code>AoA_SD</code>.</strong> <code>AoA_SD</code> measures how much raters <em>disagreed</em> about a
+word's age of acquisition — i.e. the reliability of <code>AoA_Mean</code>. A word raters
+place at the same age (small SD) is a trustworthy estimate; a word they
+scatter on (large SD) is noisy. Use it to <strong>weight or filter</strong> words, not to
+rescale <code>relative_aoa</code>:</p>
+<pre><code>relative_aoa = AoA_Mean − participant_age      # the predictor, in years
+weight       = 1 / AoA_SD²                      # precise words count more
+</code></pre>
+<p>Fit a weighted regression in which each word contributes in proportion to its
+<code>weight</code> (or simply drop words whose <code>AoA_SD</code> exceeds a cutoff). Do <strong>not</strong>
+use <code>relative_aoa / AoA_SD</code>: that divides by rater disagreement — not the
+spread of AoA across words — and would make the words people most disagreed on
+appear closest to the listener's age. (This is why <code>AoA_SD</code> ships as its own
+column.)</p>
+</section><section id="code"><a id="implementation-in-sensiextractor"></a><h2><span class="num">6.1.16.7</span>In the code</h2><div class="card"><div class="card-title">Open in GitHub</div><ul><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/extractors/lexical_norms.py#L58"><code>sensi/extractors/lexical_norms.py → add_lexical_norms()</code></a></li><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/utils/doc_summary.py#L196"><code>sensi/utils/doc_summary.py → _lexical_norm_aggregates()</code></a></li></ul></div><p>Source: <code>sensi/extractors/lexical_norms.py:add_lexical_norms</code>. For each source it
+loads a parquet (cached), indexes by <code>word</code>, and does a vectorized
+<code>reindex</code> lookup on <code>lemma.lower()</code>, falling back to <code>token.lower()</code> where the
+lemma misses. PUNCT rows are excluded. <strong>MRC gotcha:</strong> a stored <code>0</code> in MRC's
+imageability/familiarity fields means &quot;missing&quot; and is converted to <code>NaN</code> on
+load. Document-level aggregates live in
+<code>sensi/utils/doc_summary.py:_lexical_norm_aggregates</code>.</p>
+</section><section id="library"><h2><span class="num">6.1.16.8</span>Library</h2><pre><code class="language-python">from extractors.lexical_norms import add_lexical_norms
+df = add_lexical_norms(df, paths={
+    'aoa':          'data/dictionaries/aoa_kuperman.parquet',
+    'concreteness': 'data/dictionaries/concreteness_brysbaert.parquet',
+    'mrc':          'data/dictionaries/mrc.parquet',
+    'warriner':     'data/dictionaries/warriner_vad.parquet',
+})
+</code></pre>
+</section><section id="eeg"><a id="eeg-rationale"></a><h2><span class="num">6.1.16.9</span>EEG rationale</h2><p>In word-level EEG analyses — whether averaged ERPs or regression/TRF models of
+continuous speech and reading — each word is described by a row of predictors
+and the neural response is modeled as a function of them. Lexical norms are the
+<strong>standard psycholinguistic predictors</strong> in that row. Their value is twofold:
+they let you <strong>test</strong> a lexical property directly, and they let you <strong>control</strong>
+the many correlated properties that also drive word processing. Without them an
+N400 effect you credit to predictability may actually reflect concreteness,
+frequency, or age of acquisition — so these columns are what make a word-level
+effect <em>interpretable</em>.</p>
+<p>Concretely:</p>
+<ul>
+<li><strong>AoA</strong> — earlier-acquired words are recognized faster. AoA independently
+predicts <strong>eye-fixation durations</strong> in natural reading (<a href="#juhasz-2003">Juhasz 2003</a>,
+<a href="#dirix-2017">Dirix 2017</a>) and <strong>N400</strong> amplitude (<a href="#yum-2019">Yum 2019</a>) <em>over and above frequency</em>,
+so it serves both as a developmental-exposure variable of interest and as a
+covariate to partial out of frequency / predictability effects.</li>
+<li><strong>Concreteness / imageability</strong> — concrete, imageable words recruit richer
+perceptual representations and modulate the <strong>N400</strong> differently from
+abstract ones (<a href="#barber-2013">Barber 2013</a>); the standard semantic covariate.</li>
+<li><strong>Valence / arousal / dominance</strong> — the core affective dimensions. Arousal
+appears early in the <strong>early posterior negativity</strong> (EPN), with interactive
+arousal × valence effects (<a href="#citron-2012">Citron 2012</a> review; <a href="#recio-2014">Recio 2014</a>) — essential
+whenever a stimulus contains emotional language, whether as an effect or a
+nuisance regressor.</li>
+<li><strong>Familiarity</strong> — subjective experience with a word; a classic control
+entered alongside frequency.</li>
+</ul>
+<p>At the <strong>document level</strong> the same norms become <strong>passage descriptors</strong> — mean
+concreteness, mean/spread of AoA, proportion of late-acquired vocabulary — used
+to <strong>match or control stimuli</strong> (e.g. checking that two conditions don't differ
+in average word difficulty) and to relate passage-level neural measures to
+passage-level language properties.</p>
+<blockquote>
+<p>⚠️ <strong>Modeling caution.</strong> AoA, frequency, familiarity, word length and
+concreteness &quot;tend to be correlated in natural language&quot; <a href="#juhasz-2003">Juhasz 2003</a>,
+which is why that study hand-picked stimuli to keep them apart. In large
+norm sets, AoA &quot;correlated strongly with word frequency&quot; <a href="#kuperman-2012">Kuperman 2012</a>,
+AoA–familiarity r = −.67 and <strong>concreteness ↔ imageability r = .91</strong>
+<a href="#scott-2019">Scott 2019</a>.
+Don't enter collinear norms in one model without checking VIF or
+residualizing/PCA first. The length-like norms are best treated as control
+regressors, not effects of interest.</p>
+</blockquote>
+</section><section id="papers"><h2><span class="num">6.1.16.10</span>Papers</h2><ul>
+<li><a name="kuperman-2012"></a><strong><a href="#kuperman-2012">Kuperman 2012</a></strong> Kuperman, Stadthagen-Gonzalez, Brysbaert. <em>Age-of-acquisition ratings for 30,000 English words.</em> Behavior Research Methods 44, 978–990. <a href="https://doi.org/10.3758/s13428-012-0210-4">doi:10.3758/s13428-012-0210-4</a></li>
+<li><a name="brysbaert-2014"></a><strong><a href="#brysbaert-2014">Brysbaert 2014</a></strong> Brysbaert, Warriner, Kuperman. <em>Concreteness ratings for 40 thousand generally known English word lemmas.</em> Behavior Research Methods 46, 904–911. <a href="https://doi.org/10.3758/s13428-013-0403-5">doi:10.3758/s13428-013-0403-5</a></li>
+<li><a name="coltheart-1981"></a><strong><a href="#coltheart-1981">Coltheart 1981</a></strong> Coltheart. <em>The MRC Psycholinguistic Database.</em> Quarterly J. Experimental Psychology 33A, 497–505. <a href="https://doi.org/10.1080/14640748108400805">doi:10.1080/14640748108400805</a> — imageability &amp; familiarity.</li>
+<li><a name="warriner-2013"></a><strong><a href="#warriner-2013">Warriner 2013</a></strong> Warriner, Kuperman, Brysbaert. <em>Norms of valence, arousal, and dominance for 13,915 English lemmas.</em> Behavior Research Methods 45, 1191–1207. <a href="https://doi.org/10.3758/s13428-012-0314-x">doi:10.3758/s13428-012-0314-x</a></li>
+<li><a name="barber-2013"></a><strong><a href="#barber-2013">Barber 2013</a></strong> Barber, Otten, Kousta, Vigliocco. <em>Concreteness in word processing: ERP and behavioral effects in a lexical decision task.</em> Brain &amp; Language 125(1), 47–53. <a href="https://doi.org/10.1016/j.bandl.2013.01.005">doi:10.1016/j.bandl.2013.01.005</a></li>
+<li><a name="juhasz-2003"></a><strong><a href="#juhasz-2003">Juhasz 2003</a></strong> Juhasz &amp; Rayner. <em>Investigating the effects of a set of intercorrelated variables on eye fixation durations in reading.</em> JEP:LMC 29(6), 1312–1318. <a href="https://doi.org/10.1037/0278-7393.29.6.1312">doi:10.1037/0278-7393.29.6.1312</a></li>
+<li><a name="dirix-2017"></a><strong><a href="#dirix-2017">Dirix 2017</a></strong> Dirix &amp; Duyck. <em>The first- and second-language age of acquisition effect in first- and second-language book reading.</em> JML 97, 103–120. <a href="https://doi.org/10.1016/j.jml.2017.07.012">doi:10.1016/j.jml.2017.07.012</a></li>
+<li><a name="yum-2019"></a><strong><a href="#yum-2019">Yum 2019</a></strong> Yum &amp; Law. <em>Interactions of age of acquisition and lexical frequency effects… An ERP study.</em> Psychophysiology 56(10), e13433. <a href="https://doi.org/10.1111/psyp.13433">doi:10.1111/psyp.13433</a></li>
+<li><a name="citron-2012"></a><strong><a href="#citron-2012">Citron 2012</a></strong> Citron. <em>Neural correlates of written emotion word processing: a review…</em> Brain &amp; Language 122(3), 211–226. <a href="https://doi.org/10.1016/j.bandl.2011.12.007">doi:10.1016/j.bandl.2011.12.007</a></li>
+<li><a name="recio-2014"></a><strong><a href="#recio-2014">Recio 2014</a></strong> Recio, Conrad, Hansen, Jacobs. <em>On pleasure and thrill: the interplay between arousal and valence…</em> Brain &amp; Language 134, 34–43. <a href="https://doi.org/10.1016/j.bandl.2014.03.009">doi:10.1016/j.bandl.2014.03.009</a></li>
+<li><a name="scott-2019"></a><strong><a href="#scott-2019">Scott 2019</a></strong> Scott, Keitel, Becirspahic, Yao, Sereno. <em>The Glasgow Norms: Ratings of 5,500 words on nine scales.</em> Behavior Research Methods 51, 1258–1270. <a href="https://doi.org/10.3758/s13428-018-1099-3">doi:10.3758/s13428-018-1099-3</a> — inter-scale correlations (Table 5, Spearman): concreteness–imageability .91, AoA–familiarity −.67.</li>
+</ul>
+</section>
+      <nav class="pager">
+        <a class="prev" href="../../features/word/master_bert_word.html"><small>Previous</small>BERT contextual word embeddings</a>
+        <a class="next" href="../../features/word/acoustic_boundaries.html"><small>Next</small>Acoustic word boundaries (MFA)</a>
+      </nav>
+      <footer>SensiExtractor User Manual · built 2026-10-27 from commit e0b7600 · source: <a href="https://github.com/edneuro/SENSI-Speech-Features">edneuro/SENSI-Speech-Features</a></footer>
+    </div>
+  </main>
+  <aside class="right" aria-label="On this page">
+    <div class="label">On this page</div>
+    <ul><li><a href="#what">What it is</a></li><li><a href="#see">See it</a></li><li><a href="#output">In your output</a></li><li><a href="#matlab">MATLAB</a></li><li><a href="#x-what-each-rating-is-and-how-it-was-made">What each rating is, and how it was made</a></li><li><a href="#x-document-level-aggregates">Document-level aggregates</a></li><li><a href="#code">In the code</a></li><li><a href="#library">Library</a></li><li><a href="#eeg">EEG rationale</a></li><li><a href="#papers">Papers</a></li></ul>
+    <div class="meta"><div><b>Key</b> <code>lexical_norms</code></div><div><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/docs/features/lexical_norms.md">This page’s source text</a> (also the app’s ⓘ pop-up)</div></div>
+  </aside>
+</div>
+<script src="../../assets/search-index.js"></script>
+<script src="../../assets/manual.js"></script>
+</body>
+</html>

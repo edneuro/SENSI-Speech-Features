@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Installation · SensiExtractor User Manual</title>
+<link rel="icon" href="../assets/icon.svg">
+<link rel="stylesheet" href="../assets/theme.css">
+<link rel="stylesheet" href="../assets/layout.css">
+<link rel="stylesheet" href="../assets/code.css">
+</head>
+<body data-root="../">
+<button class="menu-btn" type="button" aria-label="Open the outline">☰ Contents</button>
+<div class="shell">
+  <nav class="left" aria-label="Manual outline">
+    <a class="brand" href="../index.html"><img src="../assets/icon.svg" alt="">SensiExtractor <span>User Manual</span></a>
+    <div class="search">
+      <input type="search" placeholder="Search features, columns…  ( / )" aria-label="Search the manual">
+      <div class="search-results" role="listbox"></div>
+    </div>
+    <div class="outline"><ul><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../index.html"><span class="num">1</span>Introduction</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../chapters/requirements.html"><span class="num">2</span>Requirements</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../chapters/installation.html" class="current"><span class="num">3</span>Installation</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../chapters/usage.html"><span class="num">4</span>Using the app</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../chapters/sherlock.html"><span class="num">5</span>Running on Sherlock</a></div></li><li class="chapter open"><div class="row"><button class="toggle" type="button" aria-expanded="true" aria-label="Show or hide Features">▶</button><a href="../features/index.html"><span class="num">6</span>Features</a></div><ul><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Word level">▶</button><a href="../features/word/index.html"><span class="num">6.1</span>Word level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/word/structural_ids.html">Structural identifier columns</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/word/structural_offsets.html">Structural character offsets</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/word/feat_struct_sentence_text.html">Sentence text</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/word/lexling_tokens.html">Tokens and lemmas</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/word/lexling_pos.html">Part-of-speech tags</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/word/lexling_morph.html">Morphological features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/word/lexling_dep.html">Dependency parse</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/word/freq_subtlex.html">Word frequency (Zipf, wordfreq)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/word/edu_zipf.html">Educator&#x27;s Word Frequency Guide (EWFG) grade-band frequencies<span class="tag" title="Not computed in this manual">◇</span></a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/word/pred_surprisal.html">Surprisal</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/word/pred_cloze.html">Cloze probability</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/word/pred_topmatch.html">Top-1 prediction match</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/word/sem_indicators.html">Semantic-domain category indicators</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/word/master_word2vec.html">Word2Vec static word embeddings</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/word/master_bert_word.html">BERT contextual word embeddings</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/word/lexical_norms.html">Lexical norms (AoA, concreteness, imageability, familiarity, VAD)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/word/acoustic_boundaries.html">Acoustic word boundaries (MFA)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/word/acoustic_durations.html">Acoustic word duration and gap</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/word/prosody_pitch.html">Word-level pitch features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/word/prosody_volume.html">Word-level volume (intensity) features</a></div></li></ul></li><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Document level">▶</button><a href="../features/document/index.html"><span class="num">6.2</span>Document level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/document/doc_counts.html">Document-level count columns</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/document/doc_aggregates.html">Word-level feature aggregates</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/document/output_doc_lex_diversity.html">Lexical diversity (TTR + MTLD)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/document/output_doc_readability.html">Readability (Flesch Reading Ease + Flesch–Kincaid Grade Level)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/document/output_doc_category_proportions.html">Document-level category proportions</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/document/doc_psych_composite.html">Composite psychological scores (LIWC-style summary variables)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/document/doc_prosody_pitch.html">Document-level pitch summaries</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/document/doc_prosody_volume.html">Document-level volume (intensity) summaries</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/document/doc_prosody_pauses.html">Document-level pause statistics</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/document/feat_doc_prosody_articulation_rate.html">Articulation rate</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/document/feat_doc_prosody_hnr.html">Document-level Harmonics-to-Noise Ratio (HNR)</a></div></li></ul></li><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Sub-word level">▶</button><a href="../features/subword/index.html"><span class="num">6.3</span>Sub-word level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/subword/syllable_timing.html">Syllable timing (Onset / End / Duration)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/subword/syllable_labels.html">Syllable labels (orthographic + ARPABET + IPA)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/subword/syllable_prosody.html">Syllable-level prosody (pitch + volume + deltas)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/subword/feat_syllable_pcenter.html">Perceptual centre (P-center)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/subword/phoneme.html">Phoneme-level columns</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/subword/feat_phoneme_ipa.html">IPA phoneme symbol</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/subword/g2p_oov.html">Out-of-dictionary words (MFA G2P)<span class="tag" title="Not computed in this manual">◇</span></a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/subword/phoneme_surprisal.html">Phoneme surprisal + cohort entropy</a></div></li></ul></li><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Sentence level">▶</button><a href="../features/sentence/index.html"><span class="num">6.4</span>Sentence level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/sentence/sentence_timing.html">Sentence timing</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/sentence/sentence_prosody_pitch.html">Sentence-level pitch features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/sentence/sentence_prosody_volume.html">Sentence-level volume (intensity) features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/sentence/feat_sentence_hnr.html">Sentence-level Harmonics-to-Noise Ratio (HNR)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/sentence/master_bert_sentence.html">BERT contextual sentence embeddings</a></div></li></ul></li><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Acoustic level">▶</button><a href="../features/acoustic/index.html"><span class="num">6.5</span>Acoustic level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/acoustic/acoustic_envelope.html">Amplitude envelope (broadband)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/acoustic/acoustic_onset_envelope.html">Onset envelope (HWR derivative)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/acoustic/acoustic_logmel.html">Log-mel spectrogram</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../features/acoustic/acoustic_mfcc.html">MFCC (Mel-frequency cepstral coefficients)</a></div></li></ul></li></ul></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../chapters/outputs.html"><span class="num">7</span>Outputs reference</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../references.html"><span class="num">8</span>References</a></div></li></ul></div>
+  </nav>
+  <main>
+    <div class="content">
+      
+      <h1><span class="num">3</span>Installation</h1><p class="lede">Three steps — install Miniconda, run the setup script once, launch the app.</p><h2 id="step-1-install-miniconda"><span class="num">3.1</span>Step 1 — Install Miniconda</h2>
+<p>Download the installer for your system from
+<a href="https://www.anaconda.com/docs/getting-started/installation">anaconda.com/docs/getting-started/installation</a>.</p>
+<div data-tabs class="os-tabs">
+<div class="tabs" role="tablist"><button type="button" class="on">Windows</button><button type="button">macOS (Apple Silicon)</button><button type="button">Linux</button></div>
+<div class="tabpanel on">
+<p>Run the <code>.exe</code> with the default options. Use the <strong>Anaconda Prompt</strong> (in your Start menu) for
+every command below — it already has <code>conda</code> set up.</p>
+</div>
+<div class="tabpanel">
+<p>Run the Apple-Silicon <code>.pkg</code> (or <code>.sh</code>) installer, then set conda up for your shell and
+<strong>open a new Terminal window</strong>:</p>
+<pre><code class="language-bash">conda<span class="w"> </span>init<span class="w"> </span>zsh<span class="w">          </span><span class="c1"># zsh is the macOS default</span>
+</code></pre>
+</div>
+<div class="tabpanel">
+<p>Run the <code>.sh</code> installer, then set conda up for your shell and open a new terminal:</p>
+<pre><code class="language-bash">conda<span class="w"> </span>init<span class="w"> </span>bash<span class="w">         </span><span class="c1"># or zsh / fish</span>
+</code></pre>
+</div>
+</div>
+<div class="callout warn">
+<b>"Run 'conda init' before 'conda activate'"?</b> The init step hasn't been loaded. Run
+<code>conda init &lt;your-shell&gt;</code>, open a new terminal, and try again.
+</div>
+<h2 id="step-2-get-the-project-and-run-the-setup-script"><span class="num">3.2</span>Step 2 — Get the project and run the setup script</h2>
+<p>Download the project from
+<a href="https://github.com/edneuro/SENSI-Speech-Features">github.com/edneuro/SENSI-Speech-Features</a>
+(green <strong>Code</strong> button → <em>Download ZIP</em>, or <code>git clone</code>). Then, from inside the project
+folder:</p>
+<div data-tabs class="os-tabs">
+<div class="tabs" role="tablist"><button type="button" class="on">Windows</button><button type="button">macOS / Linux</button></div>
+<div class="tabpanel on">
+<p>In the Anaconda Prompt:</p>
+<pre><code class="language-bat"><span class="k">cd</span> path\to\SENSI-Speech-Features
+setup.bat
+</code></pre>
+</div>
+<div class="tabpanel">
+<pre><code class="language-bash"><span class="nb">cd</span><span class="w"> </span>path/to/SENSI-Speech-Features
+bash<span class="w"> </span>setup.sh
+</code></pre>
+</div>
+</div>
+<p>The script does five things, and prints each as it goes:</p>
+<ol class="steps">
+<li><b>Installs conda-lock</b> into your base conda — the tool that installs exact, pinned versions.</li>
+<li><b>Creates <code>./env</code></b> inside the project folder from <code>conda-lock.yml</code>, a lock file that pins every package for your platform. Everyone gets the same versions.</li>
+<li><b>Downloads the forced-aligner models</b> into <code>data/mfa_data/</code>.</li>
+<li><b>Downloads the spaCy English model</b> into the environment.</li>
+<li><b>Creates a double-click launcher</b> for your machine (with the app icon).</li>
+</ol>
+<p>It takes a while (the environment is about 6 GB). You only do it once.</p>
+<h2 id="step-3-launch"><span class="num">3.3</span>Step 3 — Launch</h2>
+<p>Double-click the <strong>SensiExtractor</strong> launcher the setup created in the project folder:</p>
+<table>
+<thead>
+<tr>
+<th>System</th>
+<th>Launcher</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Windows</td>
+<td><strong>SensiExtractor</strong> shortcut (runs <code>runGUI.bat</code>)</td>
+<td>a console window opens next to the app with live progress — that's intentional</td>
+</tr>
+<tr>
+<td>macOS</td>
+<td><strong>SensiExtractor.app</strong></td>
+<td>no Terminal window; the log goes to <code>~/Library/Logs/SensiExtractor.log</code>. For live logs, double-click <code>runGUI.command</code> instead</td>
+</tr>
+<tr>
+<td>Linux</td>
+<td><strong>SensiExtractor</strong> desktop entry (runs <code>runGUI.sh</code>)</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>Or from a terminal in the project folder:</p>
+<pre><code class="language-bash">conda<span class="w"> </span>activate<span class="w"> </span>./env
+python<span class="w"> </span>gui.py
+</code></pre>
+<h2 id="updating-to-a-newer-version"><span class="num">3.4</span>Updating to a newer version</h2>
+<p>From the project folder, <code>git pull</code> (or download the new ZIP over the old folder), then
+start the app as usual. If the dependencies changed, run the setup script again — it
+rebuilds <code>env/</code> from the new lock file.</p>
+<div class="callout">
+<b>Updating a copy from before 27 October 2026?</b> The folders were reorganized then (code in
+<code>sensi/</code>, models and dictionaries in <code>data/</code>). The first start after
+updating moves your existing <code>hf_cache/</code>, <code>mfa_data/</code>,
+<code>gensim_data/</code> and any private files in <code>dictionaries/</code> into
+<code>data/</code> and prints what it moved. Nothing is downloaded again.
+</div>
+
+      <nav class="pager">
+        <a class="prev" href="../chapters/requirements.html"><small>Previous</small>Requirements</a>
+        <a class="next" href="../chapters/usage.html"><small>Next</small>Using the app</a>
+      </nav>
+      <footer>SensiExtractor User Manual · built 2026-10-27 from commit e0b7600 · source: <a href="https://github.com/edneuro/SENSI-Speech-Features">edneuro/SENSI-Speech-Features</a></footer>
+    </div>
+  </main>
+  <aside class="right" aria-label="On this page">
+    <div class="label">On this page</div>
+    <ul><li><a href="#step-1-install-miniconda">Step 1 — Install Miniconda</a></li><li><a href="#step-2-get-the-project-and-run-the-setup-script">Step 2 — Get the project and run the setup script</a></li><li><a href="#step-3-launch">Step 3 — Launch</a></li><li><a href="#updating-to-a-newer-version">Updating to a newer version</a></li></ul>
+    
+  </aside>
+</div>
+<script src="../assets/search-index.js"></script>
+<script src="../assets/manual.js"></script>
+</body>
+</html>

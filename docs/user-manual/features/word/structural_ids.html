@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Structural identifier columns · SensiExtractor User Manual</title>
+<link rel="icon" href="../../assets/icon.svg">
+<link rel="stylesheet" href="../../assets/theme.css">
+<link rel="stylesheet" href="../../assets/layout.css">
+<link rel="stylesheet" href="../../assets/code.css">
+</head>
+<body data-root="../../">
+<button class="menu-btn" type="button" aria-label="Open the outline">☰ Contents</button>
+<div class="shell">
+  <nav class="left" aria-label="Manual outline">
+    <a class="brand" href="../../index.html"><img src="../../assets/icon.svg" alt="">SensiExtractor <span>User Manual</span></a>
+    <div class="search">
+      <input type="search" placeholder="Search features, columns…  ( / )" aria-label="Search the manual">
+      <div class="search-results" role="listbox"></div>
+    </div>
+    <div class="outline"><ul><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../index.html"><span class="num">1</span>Introduction</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/requirements.html"><span class="num">2</span>Requirements</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/installation.html"><span class="num">3</span>Installation</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/usage.html"><span class="num">4</span>Using the app</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/sherlock.html"><span class="num">5</span>Running on Sherlock</a></div></li><li class="chapter open"><div class="row"><button class="toggle" type="button" aria-expanded="true" aria-label="Show or hide Features">▶</button><a href="../../features/index.html"><span class="num">6</span>Features</a></div><ul><li class="open"><div class="row"><button class="toggle" type="button" aria-expanded="true" aria-label="Show or hide Word level">▶</button><a href="../../features/word/index.html"><span class="num">6.1</span>Word level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/structural_ids.html" class="current">Structural identifier columns</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/structural_offsets.html">Structural character offsets</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/feat_struct_sentence_text.html">Sentence text</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexling_tokens.html">Tokens and lemmas</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexling_pos.html">Part-of-speech tags</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexling_morph.html">Morphological features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexling_dep.html">Dependency parse</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/freq_subtlex.html">Word frequency (Zipf, wordfreq)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/edu_zipf.html">Educator&#x27;s Word Frequency Guide (EWFG) grade-band frequencies<span class="tag" title="Not computed in this manual">◇</span></a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/pred_surprisal.html">Surprisal</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/pred_cloze.html">Cloze probability</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/pred_topmatch.html">Top-1 prediction match</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/sem_indicators.html">Semantic-domain category indicators</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/master_word2vec.html">Word2Vec static word embeddings</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/master_bert_word.html">BERT contextual word embeddings</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexical_norms.html">Lexical norms (AoA, concreteness, imageability, familiarity, VAD)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/acoustic_boundaries.html">Acoustic word boundaries (MFA)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/acoustic_durations.html">Acoustic word duration and gap</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/prosody_pitch.html">Word-level pitch features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/prosody_volume.html">Word-level volume (intensity) features</a></div></li></ul></li><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Document level">▶</button><a href="../../features/document/index.html"><span class="num">6.2</span>Document level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_counts.html">Document-level count columns</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_aggregates.html">Word-level feature aggregates</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/output_doc_lex_diversity.html">Lexical diversity (TTR + MTLD)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/output_doc_readability.html">Readability (Flesch Reading Ease + Flesch–Kincaid Grade Level)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/output_doc_category_proportions.html">Document-level category proportions</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_psych_composite.html">Composite psychological scores (LIWC-style summary variables)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_prosody_pitch.html">Document-level pitch summaries</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_prosody_volume.html">Document-level volume (intensity) summaries</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_prosody_pauses.html">Document-level pause statistics</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/feat_doc_prosody_articulation_rate.html">Articulation rate</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/feat_doc_prosody_hnr.html">Document-level Harmonics-to-Noise Ratio (HNR)</a></div></li></ul></li><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Sub-word level">▶</button><a href="../../features/subword/index.html"><span class="num">6.3</span>Sub-word level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/syllable_timing.html">Syllable timing (Onset / End / Duration)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/syllable_labels.html">Syllable labels (orthographic + ARPABET + IPA)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/syllable_prosody.html">Syllable-level prosody (pitch + volume + deltas)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/feat_syllable_pcenter.html">Perceptual centre (P-center)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/phoneme.html">Phoneme-level columns</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/feat_phoneme_ipa.html">IPA phoneme symbol</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/g2p_oov.html">Out-of-dictionary words (MFA G2P)<span class="tag" title="Not computed in this manual">◇</span></a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/phoneme_surprisal.html">Phoneme surprisal + cohort entropy</a></div></li></ul></li><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Sentence level">▶</button><a href="../../features/sentence/index.html"><span class="num">6.4</span>Sentence level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/sentence_timing.html">Sentence timing</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/sentence_prosody_pitch.html">Sentence-level pitch features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/sentence_prosody_volume.html">Sentence-level volume (intensity) features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/feat_sentence_hnr.html">Sentence-level Harmonics-to-Noise Ratio (HNR)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/master_bert_sentence.html">BERT contextual sentence embeddings</a></div></li></ul></li><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Acoustic level">▶</button><a href="../../features/acoustic/index.html"><span class="num">6.5</span>Acoustic level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/acoustic/acoustic_envelope.html">Amplitude envelope (broadband)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/acoustic/acoustic_onset_envelope.html">Onset envelope (HWR derivative)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/acoustic/acoustic_logmel.html">Log-mel spectrogram</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/acoustic/acoustic_mfcc.html">MFCC (Mel-frequency cepstral coefficients)</a></div></li></ul></li></ul></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/outputs.html"><span class="num">7</span>Outputs reference</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../references.html"><span class="num">8</span>References</a></div></li></ul></div>
+  </nav>
+  <main>
+    <div class="content">
+      <div class="crumbs"><a href="../../features/index.html">Features</a> › <a href="../../features/word/index.html">Word level</a></div>
+      <h1><span class="num">6.1.1</span>Structural identifier columns</h1><p class="lede">Bookkeeping columns that uniquely locate each word within the document hierarchy.</p><div class="facts"><span class="chip">App: <b>Word-level features</b> → <b>Structural</b></span><span class="chip">Output: <b>word/&lt;stim&gt;_features.csv</b></span><span class="chip">Libraries: <b>spaCy</b></span></div><section id="what"><a id="meaning"></a><h2><span class="num">6.1.1.1</span>What it is</h2><p>Bookkeeping columns that uniquely locate each word within the document
+hierarchy. All are <strong>1-indexed integers</strong>.</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>What it indexes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>doc_id</code></td>
+<td>Document. <code>1</code> for a single-document run; in batch mode each document gets its sequential 1-indexed position in the batch (1, 2, 3, …).</td>
+</tr>
+<tr>
+<td><code>paragraph_id</code></td>
+<td>Paragraph within the document. Paragraphs are detected as runs of text separated by one or more blank lines (<code>\n\n</code>) in the transcript. A transcript with no blank lines is a single paragraph (<code>paragraph_id == 1</code> throughout).</td>
+</tr>
+<tr>
+<td><code>sentence_id</code></td>
+<td>Sentence within the document, in spaCy reading order. First sentence is <code>1</code>.</td>
+</tr>
+<tr>
+<td><code>token_id</code></td>
+<td>Global token index across the entire document. First token is <code>1</code>. Counts <strong>emitted tokens only</strong> — see below.</td>
+</tr>
+<tr>
+<td><code>token_in_sentence_id</code></td>
+<td>Token index <strong>within the current sentence</strong>. Resets to <code>1</code> at each sentence boundary. A true sentence position — see below.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="whitespace-tokens-are-not-rows-fixed-2026-07-27">Whitespace tokens are not rows (fixed 2026-07-27)</h3>
+<p>spaCy emits a literal newline in the transcript as its own token
+(<code>upos == 'SPACE'</code>, text <code>&quot;\n&quot;</code>). Until 2026-07-27 the parser iterated
+every token, so each hard line wrap became an <strong>all-NaN word-CSV row that
+consumed both a <code>token_id</code> and a <code>token_in_sentence_id</code></strong>:</p>
+<pre><code>token_id=10  token_in_sentence_id=10  token=\n     ← consumed position 10
+token_id=11  token_in_sentence_id=11  token=were
+</code></pre>
+<p>Every word after a line break was therefore off by one in both id columns,
+and <code>token_in_sentence_id</code> was <strong>not</strong> a true position within its sentence
+— it was a position within the sentence's token stream <em>including</em> line
+wraps. Three of the ten SENSI validation transcripts were affected (the
+hard-wrapped <code>LJ*</code> files); the single-line ISC stimuli have no SPACE
+tokens, which is why it went unnoticed.</p>
+<p>Whitespace tokens are now skipped entirely. Consequences:</p>
+<ul>
+<li><code>token_id</code> and <code>token_in_sentence_id</code> count <strong>emitted tokens only</strong> and
+are contiguous with no gaps.</li>
+<li><code>token_in_sentence_id</code> <strong>is</strong> now a true position within its sentence —
+word <em>n</em> of the sentence, as printed.</li>
+<li>Nothing is lost by dropping the rows. They carried no features (every
+feature column was NaN), and paragraph membership was never encoded by
+them: <code>paragraph_id</code> is computed from <strong>blank lines</strong>, not single
+newlines, and has been all along. A hard wrap inside a sentence is not a
+paragraph break — in one validation stimulus a <code>\n</code> falls mid-sentence,
+and spaCy correctly assigns both halves the same <code>sentence_id</code>.</li>
+<li><code>head_token_id</code> still resolves correctly; see the note in
+Implementation, because that part was <strong>not</strong> free.</li>
+</ul>
+<p>⚠️ If you are comparing against a word CSV generated before 2026-07-27
+from a transcript containing hard line wraps, the id columns will differ
+by the number of preceding newlines. Join on <code>token</code>/<code>Onset</code> rather than
+on <code>token_id</code> when reconciling old and new outputs.</p>
+</section><section id="see"><h2><span class="num">6.1.1.2</span>See it</h2><div class="card"><div class="caption">Example <b>LJ002-0321</b> (LJ Speech, public domain): “Others who arrived just after the time of distribution were often 48 hours without food. The latter might also be six days without meat.”</div><audio controls preload="none" src="../../assets/audio/LJ002-0321.wav"></audio><table class="excerpt strip"><thead><tr><th>token</th><th>Others</th><th>who</th><th>arrived</th><th>just</th><th>after</th><th>the</th><th>time</th><th>of</th><th>distribution</th><th>were</th><th>often</th><th>48</th><th>hours</th><th>without</th><th>food</th><th>.</th></tr></thead><tbody><tr><th class="hl">doc_id</th><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td></tr><tr><th class="hl">paragraph_id</th><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td></tr><tr><th class="hl">sentence_id</th><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td></tr><tr><th class="hl">token_id</th><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td><td>9</td><td>10</td><td>11</td><td>12</td><td>13</td><td>14</td><td>15</td><td>16</td></tr><tr><th class="hl">token_in_sentence_id</th><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td><td>9</td><td>10</td><td>11</td><td>12</td><td>13</td><td>14</td><td>15</td><td>16</td></tr></tbody></table><div class="provenance">Read from <span class='file'>word/LJ002-0321_features.csv</span>, written by SensiExtractor on the example below. Nothing on this figure is typed in.</div></div></section><section id="output"><h2><span class="num">6.1.1.3</span>In your output</h2><div class="card"><div class="card-title">File <span class="file">word/&lt;stim&gt;_features.csv</span></div><table class="excerpt"><thead><tr><th class="hl">doc_id</th><th class="hl">paragraph_id</th><th class="">sentence_id</th><th class="hl">token_id</th><th class="hl">token_in_sentence_id</th><th class="">token</th></tr></thead><tbody><tr><td class="hl">1</td><td class="hl">1</td><td class="">1</td><td class="hl">1</td><td class="hl">1</td><td class="">Others</td></tr><tr><td class="hl">1</td><td class="hl">1</td><td class="">1</td><td class="hl">2</td><td class="hl">2</td><td class="">who</td></tr><tr><td class="hl">1</td><td class="hl">1</td><td class="">1</td><td class="hl">3</td><td class="hl">3</td><td class="">arrived</td></tr><tr><td class="hl">1</td><td class="hl">1</td><td class="">1</td><td class="hl">4</td><td class="hl">4</td><td class="">just</td></tr><tr><td class="hl">1</td><td class="hl">1</td><td class="">1</td><td class="hl">5</td><td class="hl">5</td><td class="">after</td></tr><tr><td class="hl">1</td><td class="hl">1</td><td class="">1</td><td class="hl">6</td><td class="hl">6</td><td class="">the</td></tr><tr><td class="hl">1</td><td class="hl">1</td><td class="">1</td><td class="hl">7</td><td class="hl">7</td><td class="">time</td></tr><tr><td class="hl">1</td><td class="hl">1</td><td class="">1</td><td class="hl">8</td><td class="hl">8</td><td class="">of</td></tr><tr><td class="hl">1</td><td class="hl">1</td><td class="">1</td><td class="hl">9</td><td class="hl">9</td><td class="">distribution</td></tr><tr><td class="hl">1</td><td class="hl">1</td><td class="">1</td><td class="hl">10</td><td class="hl">10</td><td class="">were</td></tr><tr><td class="hl">1</td><td class="hl">1</td><td class="">1</td><td class="hl">11</td><td class="hl">11</td><td class="">often</td></tr><tr><td class="hl">1</td><td class="hl">1</td><td class="">1</td><td class="hl">12</td><td class="hl">12</td><td class="">48</td></tr></tbody></table><div class="caption">26 rows × 56 columns in the file; showing the feature's columns for the first sentence. An empty cell means no value (e.g. punctuation, or a word the measure doesn’t cover).</div><div class="provenance">Excerpt of the real file for <b>LJ002-0321</b>.</div></div></section><section id="matlab"><h2><span class="num">6.1.1.4</span>MATLAB</h2><div class="card" data-tabs><div class="tabpanel on"><pre data-copy><code>% Load the word-level table (one row per word)
+T = readtable(&#x27;word/LJ002-0321_features.csv&#x27;, &#x27;TextType&#x27;, &#x27;string&#x27;);
+T.Properties.VariableNames             % every column in the file
+T(1:10, {&#x27;doc_id&#x27;, &#x27;paragraph_id&#x27;, &#x27;sentence_id&#x27;, &#x27;token_id&#x27;, &#x27;token_in_sentence_id&#x27;, &#x27;token&#x27;})                       % this feature&#x27;s columns
+</code></pre></div><div class="caption">Run from the output folder. Variable and column names were checked against the real files when this manual was built; the code itself was not run in MATLAB.</div></div></section><section id="x-usage"><a id="usage"></a><h2><span class="num">6.1.1.5</span>Usage</h2><ul>
+<li>Group by <code>sentence_id</code> to compute sentence-level aggregates from the
+word-level CSV (matches the sentence sidecar's <code>sentence_id</code>).</li>
+<li>Use <code>token_id</code> for whole-document linear position. This is also what
+the dependency parse (<code>head_token_id</code>) refers to: a word's head is
+named by the head's global <code>token_id</code>, so <code>token_id</code> is the anchor
+needed to resolve the dependency tree.</li>
+<li>Use <code>(sentence_id, token_in_sentence_id)</code> together to refer to a word by
+its position inside its sentence. This pair is the foreign key the
+sub-word (syllable / phoneme) sidecars join back on.</li>
+</ul>
+</section><section id="code"><a id="implementation-in-sensiextractor"></a><h2><span class="num">6.1.1.6</span>In the code</h2><div class="card"><div class="card-title">Open in GitHub</div><ul><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/extractors/text_parser.py#L82"><code>sensi/extractors/text_parser.py → parse()</code></a></li><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/pipeline.py"><code>sensi/pipeline.py</code></a></li></ul></div><p>Source: <code>sensi/extractors/text_parser.py:parse</code>.</p>
+<p><code>doc_id</code> is a parameter on <code>parse(text, doc_id=1)</code> — the batch loops in
+<code>sensi/pipeline.py</code> set it to each pair's 1-indexed position in the batch
+(<code>args.doc_id = i + 1</code>).</p>
+<p><code>paragraph_id</code> is computed from blank-line boundaries in the raw
+transcript: <code>_paragraph_spans</code> collects <code>(start_char, end_char)</code> for
+each paragraph (separators matched by <code>\n[ \t]*\n+</code>), and each
+sentence's <code>paragraph_id</code> is looked up by its <code>sent.start_char</code>. A
+transcript with no blank lines yields a single span covering the whole
+text, so <code>paragraph_id</code> stays at <code>1</code>. The aligner path (which
+normalises whitespace before feeding MFA) is unaffected — parser and
+aligner each see the raw text first.</p>
+<p>The other three counters are populated during the spaCy sentence walk:
+<code>sentence_id</code> from <code>enumerate(doc.sents, start=1)</code>, <code>token_in_sentence_id</code>
+as a per-sentence counter over non-whitespace tokens, and <code>token_id</code> as a
+global counter that increments across sentences. Tokens for which
+<code>token.is_space</code> is true are skipped and never become rows.</p>
+<p>⚠️ <strong>The whitespace skip required a second, non-obvious change</strong>, and
+omitting it would have silently corrupted the dependency parse. <code>parse</code>
+previously computed <code>head_token_id = token.head.i + 1</code>, using spaCy's own
+document index — which counts SPACE tokens. That agreed with <code>token_id</code>
+only <em>by accident</em>, because <code>token_id</code> counted them too. Skipping the rows
+without remapping would have left every <code>head_token_id</code> past the first
+newline pointing at the wrong word, with no error raised.</p>
+<p>So <code>parse</code> now runs two passes: the first builds
+<code>id_by_doc_index: {token.i → token_id}</code> over surviving tokens only, and
+the second resolves each head through that map. A root token maps to its
+own <code>token_id</code>. Because heads are resolved through the map rather than
+arithmetic, <code>head_token_id</code> always names a <code>token_id</code> that exists in the
+CSV.</p>
+</section><section id="library"><h2><span class="num">6.1.1.7</span>Library</h2><p>Derived from spaCy's <code>Doc.sents</code> iteration over the <code>en_core_web_sm</code>
+pipeline; <code>token_id</code> and <code>token_in_sentence_id</code> are assigned by the
+extractor as 1-based counters during the sentence walk.</p>
+</section>
+      <nav class="pager">
+        <a class="prev" href="../../features/word/index.html"><small>Previous</small>Word level</a>
+        <a class="next" href="../../features/word/structural_offsets.html"><small>Next</small>Structural character offsets</a>
+      </nav>
+      <footer>SensiExtractor User Manual · built 2026-10-27 from commit e0b7600 · source: <a href="https://github.com/edneuro/SENSI-Speech-Features">edneuro/SENSI-Speech-Features</a></footer>
+    </div>
+  </main>
+  <aside class="right" aria-label="On this page">
+    <div class="label">On this page</div>
+    <ul><li><a href="#what">What it is</a></li><li><a href="#see">See it</a></li><li><a href="#output">In your output</a></li><li><a href="#matlab">MATLAB</a></li><li><a href="#x-usage">Usage</a></li><li><a href="#code">In the code</a></li><li><a href="#library">Library</a></li></ul>
+    <div class="meta"><div><b>Key</b> <code>structural_ids</code></div><div><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/docs/features/structural_ids.md">This page’s source text</a> (also the app’s ⓘ pop-up)</div></div>
+  </aside>
+</div>
+<script src="../../assets/search-index.js"></script>
+<script src="../../assets/manual.js"></script>
+</body>
+</html>

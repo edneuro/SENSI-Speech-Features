@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Out-of-dictionary words (MFA G2P) · SensiExtractor User Manual</title>
+<link rel="icon" href="../../assets/icon.svg">
+<link rel="stylesheet" href="../../assets/theme.css">
+<link rel="stylesheet" href="../../assets/layout.css">
+<link rel="stylesheet" href="../../assets/code.css">
+</head>
+<body data-root="../../">
+<button class="menu-btn" type="button" aria-label="Open the outline">☰ Contents</button>
+<div class="shell">
+  <nav class="left" aria-label="Manual outline">
+    <a class="brand" href="../../index.html"><img src="../../assets/icon.svg" alt="">SensiExtractor <span>User Manual</span></a>
+    <div class="search">
+      <input type="search" placeholder="Search features, columns…  ( / )" aria-label="Search the manual">
+      <div class="search-results" role="listbox"></div>
+    </div>
+    <div class="outline"><ul><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../index.html"><span class="num">1</span>Introduction</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/requirements.html"><span class="num">2</span>Requirements</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/installation.html"><span class="num">3</span>Installation</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/usage.html"><span class="num">4</span>Using the app</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/sherlock.html"><span class="num">5</span>Running on Sherlock</a></div></li><li class="chapter open"><div class="row"><button class="toggle" type="button" aria-expanded="true" aria-label="Show or hide Features">▶</button><a href="../../features/index.html"><span class="num">6</span>Features</a></div><ul><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Word level">▶</button><a href="../../features/word/index.html"><span class="num">6.1</span>Word level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/structural_ids.html">Structural identifier columns</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/structural_offsets.html">Structural character offsets</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/feat_struct_sentence_text.html">Sentence text</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexling_tokens.html">Tokens and lemmas</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexling_pos.html">Part-of-speech tags</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexling_morph.html">Morphological features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexling_dep.html">Dependency parse</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/freq_subtlex.html">Word frequency (Zipf, wordfreq)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/edu_zipf.html">Educator&#x27;s Word Frequency Guide (EWFG) grade-band frequencies<span class="tag" title="Not computed in this manual">◇</span></a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/pred_surprisal.html">Surprisal</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/pred_cloze.html">Cloze probability</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/pred_topmatch.html">Top-1 prediction match</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/sem_indicators.html">Semantic-domain category indicators</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/master_word2vec.html">Word2Vec static word embeddings</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/master_bert_word.html">BERT contextual word embeddings</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexical_norms.html">Lexical norms (AoA, concreteness, imageability, familiarity, VAD)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/acoustic_boundaries.html">Acoustic word boundaries (MFA)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/acoustic_durations.html">Acoustic word duration and gap</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/prosody_pitch.html">Word-level pitch features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/prosody_volume.html">Word-level volume (intensity) features</a></div></li></ul></li><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Document level">▶</button><a href="../../features/document/index.html"><span class="num">6.2</span>Document level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_counts.html">Document-level count columns</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_aggregates.html">Word-level feature aggregates</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/output_doc_lex_diversity.html">Lexical diversity (TTR + MTLD)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/output_doc_readability.html">Readability (Flesch Reading Ease + Flesch–Kincaid Grade Level)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/output_doc_category_proportions.html">Document-level category proportions</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_psych_composite.html">Composite psychological scores (LIWC-style summary variables)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_prosody_pitch.html">Document-level pitch summaries</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_prosody_volume.html">Document-level volume (intensity) summaries</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_prosody_pauses.html">Document-level pause statistics</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/feat_doc_prosody_articulation_rate.html">Articulation rate</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/feat_doc_prosody_hnr.html">Document-level Harmonics-to-Noise Ratio (HNR)</a></div></li></ul></li><li class="open"><div class="row"><button class="toggle" type="button" aria-expanded="true" aria-label="Show or hide Sub-word level">▶</button><a href="../../features/subword/index.html"><span class="num">6.3</span>Sub-word level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/syllable_timing.html">Syllable timing (Onset / End / Duration)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/syllable_labels.html">Syllable labels (orthographic + ARPABET + IPA)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/syllable_prosody.html">Syllable-level prosody (pitch + volume + deltas)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/feat_syllable_pcenter.html">Perceptual centre (P-center)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/phoneme.html">Phoneme-level columns</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/feat_phoneme_ipa.html">IPA phoneme symbol</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/g2p_oov.html" class="current">Out-of-dictionary words (MFA G2P)<span class="tag" title="Not computed in this manual">◇</span></a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/phoneme_surprisal.html">Phoneme surprisal + cohort entropy</a></div></li></ul></li><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Sentence level">▶</button><a href="../../features/sentence/index.html"><span class="num">6.4</span>Sentence level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/sentence_timing.html">Sentence timing</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/sentence_prosody_pitch.html">Sentence-level pitch features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/sentence_prosody_volume.html">Sentence-level volume (intensity) features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/feat_sentence_hnr.html">Sentence-level Harmonics-to-Noise Ratio (HNR)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/master_bert_sentence.html">BERT contextual sentence embeddings</a></div></li></ul></li><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Acoustic level">▶</button><a href="../../features/acoustic/index.html"><span class="num">6.5</span>Acoustic level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/acoustic/acoustic_envelope.html">Amplitude envelope (broadband)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/acoustic/acoustic_onset_envelope.html">Onset envelope (HWR derivative)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/acoustic/acoustic_logmel.html">Log-mel spectrogram</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/acoustic/acoustic_mfcc.html">MFCC (Mel-frequency cepstral coefficients)</a></div></li></ul></li></ul></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/outputs.html"><span class="num">7</span>Outputs reference</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../references.html"><span class="num">8</span>References</a></div></li></ul></div>
+  </nav>
+  <main>
+    <div class="content">
+      <div class="crumbs"><a href="../../features/index.html">Features</a> › <a href="../../features/subword/index.html">Sub-word level</a></div>
+      <h1><span class="num">6.3.7</span>Out-of-dictionary words (MFA G2P)</h1><p class="lede">An alignment option, not a feature column: it changes how MFA handles a word that is missing from its pronunciation dictionary.</p><div class="facts"><span class="chip">App: <b>Sub-word features</b> → <b>Phonemes</b></span><span class="chip">Libraries: <b>montreal-forced-aligner</b></span><span class="chip status">Not computed in this manual</span></div><section id="what"><a id="meaning"></a><h2><span class="num">6.3.7.1</span>What it is</h2><p>An <strong>alignment option</strong>, not a feature column: it changes how MFA handles
+a word that is missing from its pronunciation dictionary. It lives at
+<code>alignment.g2p_oov</code> in <code>config/features.yaml</code>, on the GUI's Sub-word page
+(&quot;Out-of-dictionary words&quot;); <code>run.py</code> reads the same setting.</p>
+<p><strong>Default: off.</strong> Turning it on adds phone identities that were never
+observed, so nothing gains them unasked.</p>
+<h3 id="the-problem-it-addresses">The problem it addresses</h3>
+<p>MFA is <em>lexicon-driven</em>: to align a word it must first look the word up
+in <code>english_us_arpa.dict</code> to know which phones to search the audio for.
+Words the dictionary has never heard of — unusual proper nouns, coinages,
+names — have no entry. MFA still aligns them, but against its unknown-word
+model, whose single phone is <code>spn</code> (&quot;spoken noise&quot;). You get a real
+interval with no phonetic content: one <code>spn</code> phoneme row, <code>Stress</code> empty,
+<code>IPA</code> empty, <code>Pron_Source = 'oov_unresolved'</code>.</p>
+<p>That is honest but lossy. If a stimulus contains a character named
+<em>Zorblax</em>, every sub-word analysis simply has a hole where that word was.</p>
+<h3 id="what-grapheme-to-phoneme-g2p-conversion-does">What grapheme-to-phoneme (G2P) conversion does</h3>
+<p>G2P predicts a word's pronunciation <strong>from its spelling</strong>. Given the
+letters <code>z-o-r-b-l-a-x</code>, a G2P model trained on the same dictionary's
+spelling↔pronunciation pairs proposes the phone sequence an English
+speaker would most plausibly produce: <code>Z AO1 R B L AE2 K S</code>. MFA ships
+pretrained G2P models per language, and <code>mfa align</code> accepts
+<code>--g2p_model_path</code>, documented as <em>&quot;Path to G2P model to use for OOV
+items&quot;</em> (<a href="#mfa-g2p">MFA G2P</a>). With the option on, SensiExtractor passes the
+vendored <code>english_us_arpa</code> G2P model on that flag, so out-of-dictionary
+words get a generated pronunciation and are aligned with real phone
+boundaries like any other word.</p>
+<p>The affected rows are then marked <code>Pron_Source = 'g2p'</code> — see
+<a href="../../features/subword/phoneme.html#pron_source--where-the-pronunciation-came-from"><code>phoneme</code></a>.</p>
+<h3 id="-the-pronunciation-is-modeled-not-observed">⚠️ The pronunciation is modeled, not observed</h3>
+<p>This is the whole reason the option is opt-in. A <code>g2p</code> phone sequence is
+a <strong>hypothesis derived from orthography</strong>, not a transcription of what the
+speaker did. English spelling is an unreliable guide to pronunciation, and
+proper nouns — exactly the population this option exists for — are the
+worst case: surnames and place names routinely violate the regularities a
+G2P model learned.</p>
+<p>MFA's own documentation makes essentially the same point, though about a
+different (adjacent) workflow. On the same <code>mfa g2p</code> dictionary-generating
+page, the &quot;Per-utterance G2P&quot; section describes a distinct sub-feature —
+concatenating a top-hypothesis-per-word G2P guess across an entire
+utterance, with no dictionary produced — and says of it: &quot;This method is
+largely not recommended as the output is only the top hypothesis per word
+in isolation as MFA does not have access to necessary higher order
+information, so homographs may often have the wrong pronunciation (i.e.,
+English present tense read [ɹ iː d] vs English past tense read [ɹ ɛ d]).
+Use at your own risk.&quot; (<a href="#mfa-generate">MFA generate</a>)</p>
+<p>That is not a claim about <code>--g2p_model_path</code> (the flag this project uses,
+which generates one dictionary entry per OOV word for alignment, not a
+whole-utterance transcript) — the two are related but not the same
+workflow, and this doc will not pretend otherwise. What carries over
+honestly is the <em>mechanism</em> the warning is about, not the warning's literal
+subject: both modes predict a pronunciation from a word's spelling alone,
+with no access to the sentence it sits in. <em>read</em> is the clean illustration
+of why that is risky — the same letters are <code>[ɹ iː d]</code> or <code>[ɹ ɛ d]</code>
+depending on tense, a distinction spelling does not encode and G2P-in-
+isolation cannot recover. A surname G2P guesses from <code>--g2p_model_path</code> is
+under the identical constraint: one plausible pronunciation from spelling,
+no sentence context to disambiguate it — which is exactly why this
+project treats every <code>g2p</code> phone as a hypothesis rather than ground truth.</p>
+<p>The <em>boundaries</em> MFA then finds are real (they come from the acoustic
+model searching the audio). The <em>identities</em> are not. Practical
+consequence: <code>g2p</code> rows are fine for onset/duration and phone-count
+analyses, and questionable for anything that treats the phone label as
+ground truth. <code>Pron_Source</code> exists so you can partition on this rather
+than guess.</p>
+<p>Verified on a real stimulus: with the option on, <em>Zorblax</em> received
+<code>Z AO1 R B L AE2 K S</code>, no word was left phone-less, and
+<strong>in-dictionary phones were untouched</strong> — diffing the two phone tiers,
+the only change outside the OOV word was its shared boundary with the
+following word moving 0.33 → 0.35 s. Every other interval was identical.</p>
+<h3 id="-it-does-not-tell-you-whether-a-word-was-actually-spoken">⚠️ It does <strong>not</strong> tell you whether a word was actually spoken</h3>
+<p>This is the most important thing on the page, because the option's name
+invites the opposite reading.</p>
+<p>MFA is a <strong>forced</strong> aligner (<a href="#mcauliffe-2017">McAuliffe 2017</a>). It takes the transcript as
+ground truth and must place every word in it somewhere on the timeline. It
+has no &quot;this word is absent from the audio&quot; output — not for OOV words,
+not for any word. A word that appears in the transcript but was never
+uttered gets squeezed into a sliver of time, stealing it from its
+neighbours. <strong>That limitation is pre-existing and applies to every word in
+every run</strong>, in-dictionary or not; this option neither introduces nor
+fixes it.</p>
+<p>G2P specifically does not adjudicate the question. Verified: because the
+test audio genuinely says <em>&quot;Bella&quot;</em>, the G2P run confidently aligned
+<code>Z AO1 R B L AE2 K S</code> across the interval where <em>Bella</em> was spoken. G2P
+recovers pronunciations for <em>unusual words that were spoken</em>; it has no
+opinion on whether they were.</p>
+<p>Detecting genuine transcript/audio mismatch needs per-word alignment
+likelihood or an ASR cross-check. MFA 3.4.0's <code>align</code> CLI exposes no such
+output (checked: no likelihood/confidence flag, and no
+<code>alignment_analysis.csv</code> is produced), so that work is parked as the
+<em>Correctness scoring</em> roadmap item and is out of scope here.</p>
+<h3 id="turning-it-on-or-off-re-runs-alignment--once">Turning it on or off re-runs alignment — once</h3>
+<p>The setting changes MFA's output, so a cached TextGrid produced under the
+other setting is stale. Alignment persistence handles this: the freshness
+sidecar written next to each TextGrid records an <code>mfa_g2p</code> key, and its
+<code>SIDECAR_VERSION</code> was bumped 1 → 2 when the key was added (and to 3 on
+2026-10-21 for the one-speaker-per-stimulus layout). So:</p>
+<ul>
+<li>The first batch run after upgrading re-aligns every stimulus <strong>once</strong>
+(the sidecar version changed), then caches normally.</li>
+<li>Flipping the toggle thereafter re-aligns <strong>once</strong> and caches again.</li>
+<li>MFA still runs at most once per document per dispatch — the option
+changes the <em>arguments</em>, never the number of alignment passes.</li>
+</ul>
+<p>Both alignment paths honour the setting. The batch pre-alignment pass
+(<code>aligner.ensure_alignments</code>) and the per-document path
+(<code>aligner.align_with_phones</code> with a <code>persist_dir</code>, used when the batch
+pre-pass failed and fell back) both reuse a TextGrid only when its sidecar
+matches the current inputs, <code>mfa_g2p</code> included. Before 2026-10-21 the
+per-document path trusted any existing TextGrid, so flipping this option
+could silently change nothing there. Only a direct <code>run()</code> call with no
+output folder (as in some tests) has no persistence directory and runs MFA
+every time.</p>
+</section><section id="see"><h2><span class="num">6.3.7.2</span>See it</h2><div class="card notcomputed"><div class="card-title">◇ Not computed in this manual</div><p>Needs a spoken word that is missing from the pronunciation dictionary; every word in the manual&#x27;s public-domain recordings is in it, and we do not fabricate audio. With the option on, such a word gets Pron_Source = g2p and modeled phones instead of a single spn.</p><p>Columns this feature writes when it runs: <code>ARPABET</code>, <code>Stress</code>, <code>IPA</code>, <code>Pron_Source</code></p></div></section><section id="output"><h2><span class="num">6.3.7.3</span>In your output</h2><p>When it runs, this feature writes these columns: <code>ARPABET</code>, <code>Stress</code>, <code>IPA</code>, <code>Pron_Source</code>.</p></section><section id="matlab"><h2><span class="num">6.3.7.4</span>MATLAB</h2><p>Nothing to load: this feature is not written in this manual's example outputs.</p></section><section id="x-usage"><a id="usage"></a><h2><span class="num">6.3.7.5</span>Usage</h2><p>Turn it <strong>on</strong> when your stimuli contain unusual proper nouns, invented
+names or domain jargon <em>and</em> you need sub-word coverage of those words —
+phoneme/syllable rows, <code>P_Center</code>, phoneme surprisal. Filter on
+<code>Pron_Source == 'g2p'</code> afterwards to see exactly which words it affected,
+and spot-check their <code>ARPABET</code> by ear before treating the labels as data.</p>
+<p>Leave it <strong>off</strong> — the default — when you want every phone label in the
+output to be dictionary-attested. The out-of-dictionary words then appear
+as single <code>oov_unresolved</code> rows carrying correct timing and no phone
+identity, which is a clean, self-labelling gap you can exclude in one
+filter.</p>
+<p>Either way you are told which words were affected: any word that ends up
+with no phonemes at all is reported to stderr and the run log,</p>
+<pre><code>[phonemes] WARNING: 2 words had no phonemes (likely OOV): zorblax, mciver
+</code></pre>
+<p>and if you request G2P on a machine whose G2P model is missing, the run
+warns and proceeds without it rather than failing:</p>
+<pre><code>[mfa] WARNING: g2p requested but no G2P model at …; out-of-dictionary
+words will align to spn. Run: python scripts/download_models.py
+</code></pre>
+</section><section id="code"><a id="implementation-in-sensiextractor"></a><h2><span class="num">6.3.7.6</span>In the code</h2><div class="card"><div class="card-title">Open in GitHub</div><ul><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/extractors/aligner.py"><code>sensi/extractors/aligner.py</code></a></li><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/extractors/syllabify.py"><code>sensi/extractors/syllabify.py</code></a></li><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/gui/planner/emit.py"><code>sensi/gui/planner/emit.py</code></a></li><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/utils/config_yaml.py"><code>sensi/utils/config_yaml.py</code></a></li></ul></div><p>Sources: <code>sensi/extractors/aligner.py</code> (the flag, the sidecar, the model path),
+<code>sensi/extractors/syllabify.py</code> (<code>Pron_Source</code>), <code>scripts/download_models.py</code>
+(fetching the model).</p>
+<ul>
+<li><strong>The model.</strong> <code>mfa model download g2p english_us_arpa</code>, ~11 MB, into
+the already-vendored, git-ignored <code>data/mfa_data/pretrained_models/g2p/</code>.
+<code>scripts/download_models.py</code> fetches it alongside the acoustic model and
+dictionary, so a fresh checkout that runs the setup script has it.
+<code>aligner.g2p_model_available()</code> is the existence check.</li>
+<li><strong>The flag.</strong> <code>_run_mfa(corpus_dir, output_dir, *, g2p=False)</code> appends
+<code>--g2p_model_path &lt;…/english_us_arpa.zip&gt;</code> only when <code>g2p</code> is true
+<strong>and</strong> the model file exists; otherwise it warns and runs unchanged.</li>
+<li><strong>Cache correctness.</strong> <code>_freshness_dict</code> includes <code>'mfa_g2p': bool(g2p)</code>
+and <code>SIDECAR_VERSION</code> is 2; <code>_is_fresh</code> compares it. <code>g2p</code> is also part
+of <code>align_with_phones</code>'s in-process memo key, so one process cannot
+serve an alignment cached under the opposite setting.
+⚠️ <code>g2p</code> is deliberately <strong>keyword-only with default <code>False</code></strong> on
+<code>align_with_phones</code>, <code>ensure_alignments</code>, <code>_write_sidecar</code>, <code>_is_fresh</code>
+and <code>_run_mfa</code>. Every pre-existing call site passes its arguments
+positionally, so making the parameter positional would have broken all
+of them at once.</li>
+<li><strong>Plumbing.</strong> <code>alignment.g2p_oov</code> (prefs) → <code>sensi/gui/planner/emit.py</code> sets
+<code>ns.g2p_oov</code> → <code>sensi.pipeline._prealign_batch</code> and <code>sensi.pipeline.run</code>
+pass it to <code>ensure_alignments</code> / <code>align_with_phones</code>. The GUI and <code>run.py</code>
+read the same pref. The option is <strong>not</strong> a per-column toggle
+and drops no columns — it changes the aligner's behaviour, so it sits in
+its own <code>alignment</code> prefs section rather than under <code>features</code>.
+It nonetheless lives in <code>features.yaml</code> rather than <code>run.yaml</code>
+(<code>sensi/utils/config_yaml.py</code> routes only <code>shared</code> to <code>run.yaml</code>). That is the
+right home: it is a &quot;what to extract&quot; decision, and it means the GUI's
+<strong>Reset settings</strong> turns it back off — the correct behaviour for an
+opt-in that adds modeled data.</li>
+<li><strong><code>Pron_Source</code> derivation</strong> is described in
+<a href="../../features/subword/phoneme.html#implementation-in-sensiextractor"><code>phoneme</code></a>. Briefly: MFA
+does not mark G2P-derived words in the TextGrid, so provenance is
+inferred from whether the <strong>MFA words-tier form</strong> is present in
+<code>english_us_arpa.dict</code>. Consequence worth knowing: <code>Pron_Source</code> reports
+<code>g2p</code> on the basis of that dictionary lookup, so a word absent from the
+dictionary is labelled <code>g2p</code> whenever it came back with real phones.
+With the option off it cannot have real phones — it can only be <code>spn</code> →
+<code>oov_unresolved</code> — so the two values do not collide in practice.</li>
+</ul>
+</section><section id="library"><h2><span class="num">6.3.7.7</span>Library</h2><p>No new dependency. MFA is already required for all alignment; the G2P
+model is a data asset MFA downloads, and <code>--g2p_model_path</code> is part of
+<code>mfa align</code>'s existing interface.</p>
+</section><section id="papers"><h2><span class="num">6.3.7.8</span>Papers</h2><ul>
+<li><a name="mfa-g2p"></a><strong><a href="#mfa-g2p">MFA G2P</a></strong> <em>Montreal Forced Aligner user guide — <code>mfa align</code> command reference.</em> <a href="https://montreal-forced-aligner.readthedocs.io/en/latest/user_guide/workflows/alignment.html">montreal-forced-aligner.readthedocs.io</a> — documents <code>--g2p_model_path</code>: &quot;Path to G2P model to use for OOV items.&quot;</li>
+<li><a name="mfa-generate"></a><strong><a href="#mfa-generate">MFA generate</a></strong> <em>Montreal Forced Aligner user guide — Generate pronunciations for words (<code>mfa g2p</code>).</em> <a href="https://montreal-forced-aligner.readthedocs.io/en/latest/user_guide/workflows/dictionary_generating.html">montreal-forced-aligner.readthedocs.io</a> — the page's &quot;Per-utterance G2P&quot; section describes concatenating per-word, in-isolation G2P hypotheses across an utterance and calls that specific mode &quot;largely not recommended&quot; because homographs (e.g. <em>read</em> as <code>[ɹ iː d]</code> vs <code>[ɹ ɛ d]</code>) may get the wrong pronunciation; &quot;Use at your own risk.&quot; That caution is about the per-utterance sub-feature, not <code>--g2p_model_path</code>, though the underlying mechanism — a pronunciation guessed from spelling with no sentence context — is the same one this project's <code>g2p</code> rows rely on.</li>
+<li><a name="mcauliffe-2017"></a><strong><a href="#mcauliffe-2017">McAuliffe 2017</a></strong> McAuliffe, Socolof, Mihuc, Wagner, Sonderegger. <em>Montreal Forced Aligner: trainable text-speech alignment using Kaldi.</em> Interspeech 2017. <a href="https://doi.org/10.21437/Interspeech.2017-1386">doi:10.21437/Interspeech.2017-1386</a> — the aligner, and the forced-alignment assumption that the transcript is what was said.</li>
+</ul>
+</section>
+      <nav class="pager">
+        <a class="prev" href="../../features/subword/feat_phoneme_ipa.html"><small>Previous</small>IPA phoneme symbol</a>
+        <a class="next" href="../../features/subword/phoneme_surprisal.html"><small>Next</small>Phoneme surprisal + cohort entropy</a>
+      </nav>
+      <footer>SensiExtractor User Manual · built 2026-10-27 from commit e0b7600 · source: <a href="https://github.com/edneuro/SENSI-Speech-Features">edneuro/SENSI-Speech-Features</a></footer>
+    </div>
+  </main>
+  <aside class="right" aria-label="On this page">
+    <div class="label">On this page</div>
+    <ul><li><a href="#what">What it is</a></li><li><a href="#see">See it</a></li><li><a href="#output">In your output</a></li><li><a href="#matlab">MATLAB</a></li><li><a href="#x-usage">Usage</a></li><li><a href="#code">In the code</a></li><li><a href="#library">Library</a></li><li><a href="#papers">Papers</a></li></ul>
+    <div class="meta"><div><b>Key</b> <code>g2p_oov</code></div><div><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/docs/features/g2p_oov.md">This page’s source text</a> (also the app’s ⓘ pop-up)</div></div>
+  </aside>
+</div>
+<script src="../../assets/search-index.js"></script>
+<script src="../../assets/manual.js"></script>
+</body>
+</html>

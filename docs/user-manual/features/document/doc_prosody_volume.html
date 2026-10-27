@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Document-level volume (intensity) summaries · SensiExtractor User Manual</title>
+<link rel="icon" href="../../assets/icon.svg">
+<link rel="stylesheet" href="../../assets/theme.css">
+<link rel="stylesheet" href="../../assets/layout.css">
+<link rel="stylesheet" href="../../assets/code.css">
+</head>
+<body data-root="../../">
+<button class="menu-btn" type="button" aria-label="Open the outline">☰ Contents</button>
+<div class="shell">
+  <nav class="left" aria-label="Manual outline">
+    <a class="brand" href="../../index.html"><img src="../../assets/icon.svg" alt="">SensiExtractor <span>User Manual</span></a>
+    <div class="search">
+      <input type="search" placeholder="Search features, columns…  ( / )" aria-label="Search the manual">
+      <div class="search-results" role="listbox"></div>
+    </div>
+    <div class="outline"><ul><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../index.html"><span class="num">1</span>Introduction</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/requirements.html"><span class="num">2</span>Requirements</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/installation.html"><span class="num">3</span>Installation</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/usage.html"><span class="num">4</span>Using the app</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/sherlock.html"><span class="num">5</span>Running on Sherlock</a></div></li><li class="chapter open"><div class="row"><button class="toggle" type="button" aria-expanded="true" aria-label="Show or hide Features">▶</button><a href="../../features/index.html"><span class="num">6</span>Features</a></div><ul><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Word level">▶</button><a href="../../features/word/index.html"><span class="num">6.1</span>Word level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/structural_ids.html">Structural identifier columns</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/structural_offsets.html">Structural character offsets</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/feat_struct_sentence_text.html">Sentence text</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexling_tokens.html">Tokens and lemmas</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexling_pos.html">Part-of-speech tags</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexling_morph.html">Morphological features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexling_dep.html">Dependency parse</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/freq_subtlex.html">Word frequency (Zipf, wordfreq)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/edu_zipf.html">Educator&#x27;s Word Frequency Guide (EWFG) grade-band frequencies<span class="tag" title="Not computed in this manual">◇</span></a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/pred_surprisal.html">Surprisal</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/pred_cloze.html">Cloze probability</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/pred_topmatch.html">Top-1 prediction match</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/sem_indicators.html">Semantic-domain category indicators</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/master_word2vec.html">Word2Vec static word embeddings</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/master_bert_word.html">BERT contextual word embeddings</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexical_norms.html">Lexical norms (AoA, concreteness, imageability, familiarity, VAD)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/acoustic_boundaries.html">Acoustic word boundaries (MFA)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/acoustic_durations.html">Acoustic word duration and gap</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/prosody_pitch.html">Word-level pitch features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/prosody_volume.html">Word-level volume (intensity) features</a></div></li></ul></li><li class="open"><div class="row"><button class="toggle" type="button" aria-expanded="true" aria-label="Show or hide Document level">▶</button><a href="../../features/document/index.html"><span class="num">6.2</span>Document level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_counts.html">Document-level count columns</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_aggregates.html">Word-level feature aggregates</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/output_doc_lex_diversity.html">Lexical diversity (TTR + MTLD)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/output_doc_readability.html">Readability (Flesch Reading Ease + Flesch–Kincaid Grade Level)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/output_doc_category_proportions.html">Document-level category proportions</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_psych_composite.html">Composite psychological scores (LIWC-style summary variables)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_prosody_pitch.html">Document-level pitch summaries</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_prosody_volume.html" class="current">Document-level volume (intensity) summaries</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_prosody_pauses.html">Document-level pause statistics</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/feat_doc_prosody_articulation_rate.html">Articulation rate</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/feat_doc_prosody_hnr.html">Document-level Harmonics-to-Noise Ratio (HNR)</a></div></li></ul></li><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Sub-word level">▶</button><a href="../../features/subword/index.html"><span class="num">6.3</span>Sub-word level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/syllable_timing.html">Syllable timing (Onset / End / Duration)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/syllable_labels.html">Syllable labels (orthographic + ARPABET + IPA)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/syllable_prosody.html">Syllable-level prosody (pitch + volume + deltas)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/feat_syllable_pcenter.html">Perceptual centre (P-center)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/phoneme.html">Phoneme-level columns</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/feat_phoneme_ipa.html">IPA phoneme symbol</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/g2p_oov.html">Out-of-dictionary words (MFA G2P)<span class="tag" title="Not computed in this manual">◇</span></a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/phoneme_surprisal.html">Phoneme surprisal + cohort entropy</a></div></li></ul></li><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Sentence level">▶</button><a href="../../features/sentence/index.html"><span class="num">6.4</span>Sentence level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/sentence_timing.html">Sentence timing</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/sentence_prosody_pitch.html">Sentence-level pitch features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/sentence_prosody_volume.html">Sentence-level volume (intensity) features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/feat_sentence_hnr.html">Sentence-level Harmonics-to-Noise Ratio (HNR)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/master_bert_sentence.html">BERT contextual sentence embeddings</a></div></li></ul></li><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Acoustic level">▶</button><a href="../../features/acoustic/index.html"><span class="num">6.5</span>Acoustic level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/acoustic/acoustic_envelope.html">Amplitude envelope (broadband)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/acoustic/acoustic_onset_envelope.html">Onset envelope (HWR derivative)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/acoustic/acoustic_logmel.html">Log-mel spectrogram</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/acoustic/acoustic_mfcc.html">MFCC (Mel-frequency cepstral coefficients)</a></div></li></ul></li></ul></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/outputs.html"><span class="num">7</span>Outputs reference</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../references.html"><span class="num">8</span>References</a></div></li></ul></div>
+  </nav>
+  <main>
+    <div class="content">
+      <div class="crumbs"><a href="../../features/index.html">Features</a> › <a href="../../features/document/index.html">Document level</a></div>
+      <h1><span class="num">6.2.8</span>Document-level volume (intensity) summaries</h1><p class="lede">Five document-level summaries of intensity (dB SPL) across the entire stimulus, in the same units as the word-level volume columns.</p><div class="facts"><span class="chip">App: <b>Document-level features</b> → <b>Document prosody</b></span><span class="chip">Output: <b>document/documents_summary.csv</b></span><span class="chip">Libraries: <b>parselmouth, praat</b></span></div><section id="what"><a id="meaning"></a><h2><span class="num">6.2.8.1</span>What it is</h2><p>Five document-level summaries of intensity (dB SPL) across the entire
+stimulus, in the same units as the
+<a href="../../features/word/prosody_volume.html">word-level volume</a> columns:</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>What it summarizes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>doc_volume_mean</code></td>
+<td>Mean intensity across the audio.</td>
+</tr>
+<tr>
+<td><code>doc_volume_min</code></td>
+<td>5th-percentile intensity.</td>
+</tr>
+<tr>
+<td><code>doc_volume_max</code></td>
+<td>95th-percentile intensity.</td>
+</tr>
+<tr>
+<td><code>doc_volume_std</code></td>
+<td>Standard deviation of intensity.</td>
+</tr>
+<tr>
+<td><code>doc_volume_delta_mean</code></td>
+<td>Mean of the <strong>absolute</strong> word-level <a href="../../features/word/prosody_volume.html"><code>Volume_Delta</code></a> values (rises and falls don't cancel).</td>
+</tr>
+</tbody>
+</table>
+<p>The first four operate on the <strong>raw intensity contour</strong> (all frames),
+the last on word-to-word deltas (averaged as magnitudes).</p>
+</section><section id="see"><h2><span class="num">6.2.8.2</span>See it</h2><div class="card"><div class="caption">One row per example stimulus: the five LJ Speech clips and the two invented text-only sentences (no audio, so their audio-based columns are empty).</div><div ><figure><img src="../../assets/figures/doc_prosody_volume.svg" alt="Document-level volume (intensity) summaries — Default settings" loading="lazy"></figure><figcaption>Document-level volume (intensity) summaries — Default settings</figcaption><div class="provenance">Read from <span class='file'>document/documents_summary.csv</span>, written by SensiExtractor on the example below. Nothing on this figure is typed in.</div></div></div></section><section id="output"><h2><span class="num">6.2.8.3</span>In your output</h2><div class="card"><div class="card-title">File <span class="file">document/documents_summary_&lt;timestamp&gt;.csv</span></div><table class="excerpt"><thead><tr><th class="">stimulus_id</th><th class="hl">doc_volume_mean</th><th class="hl">doc_volume_min</th><th class="hl">doc_volume_max</th><th class="hl">doc_volume_std</th><th class="hl">doc_volume_delta_mean</th></tr></thead><tbody><tr><td class="">LJ002-0321</td><td class="hl">62.44</td><td class="hl">26.7</td><td class="hl">77.35</td><td class="hl">15</td><td class="hl">3.165</td></tr><tr><td class="">LJ003-0007</td><td class="hl">65.38</td><td class="hl">34.57</td><td class="hl">77.88</td><td class="hl">11.8</td><td class="hl">4.055</td></tr><tr><td class="">LJ005-0063</td><td class="hl">61.77</td><td class="hl">38.21</td><td class="hl">76.24</td><td class="hl">11.47</td><td class="hl">4.346</td></tr><tr><td class="">LJ005-0066</td><td class="hl">62.23</td><td class="hl">33.48</td><td class="hl">75.6</td><td class="hl">12.45</td><td class="hl">5.316</td></tr><tr><td class="">LJ019-0027</td><td class="hl">62.1</td><td class="hl">27.93</td><td class="hl">76.91</td><td class="hl">14.9</td><td class="hl">4.474</td></tr><tr><td class="">predictable</td><td class="hl"></td><td class="hl"></td><td class="hl"></td><td class="hl"></td><td class="hl"></td></tr><tr><td class="">surprising</td><td class="hl"></td><td class="hl"></td><td class="hl"></td><td class="hl"></td><td class="hl"></td></tr></tbody></table><div class="caption">7 rows × 80 columns in the file; showing the feature's columns. An empty cell means no value (e.g. punctuation, or a word the measure doesn’t cover).</div><div class="provenance">Excerpt of the real file for <b>LJ002-0321</b>.</div></div></section><section id="matlab"><h2><span class="num">6.2.8.4</span>MATLAB</h2><div class="card" data-tabs><div class="tabpanel on"><pre data-copy><code>% Load the document-level table (one row per stimulus)
+T = readtable(&#x27;document/documents_summary_&lt;timestamp&gt;.csv&#x27;, &#x27;TextType&#x27;, &#x27;string&#x27;);
+T.Properties.VariableNames             % every column in the file
+T(1:10, {&#x27;stimulus_id&#x27;, &#x27;doc_volume_mean&#x27;, &#x27;doc_volume_min&#x27;, &#x27;doc_volume_max&#x27;, &#x27;doc_volume_std&#x27;, &#x27;doc_volume_delta_mean&#x27;})                       % this feature&#x27;s columns
+
+% Plot
+barh(T.doc_volume_mean); yticks(1:height(T)); yticklabels(T.stimulus_id); xlabel(&#x27;doc_volume_mean&#x27;)
+</code></pre></div><div class="caption">Run from the output folder. Variable and column names were checked against the real files when this manual was built; the code itself was not run in MATLAB.</div></div></section><section id="code"><a id="implementation-in-sensiextractor"></a><h2><span class="num">6.2.8.5</span>In the code</h2><p>See <a href="../../features/word/prosody_volume.html">word-level volume features</a> — the document-level
+columns reuse the same Praat intensity contour, aggregated over the
+full audio. <code>doc_volume_delta_mean</code> is the NaN-aware mean of the
+<strong>absolute</strong> word-level <code>Volume_Delta</code> values
+(<code>word_df[&quot;Volume_Delta&quot;].abs().mean()</code>), so rises and falls don't
+cancel.</p>
+</section><section id="eeg"><a id="eeg-rationale"></a><h2><span class="num">6.2.8.6</span>EEG rationale</h2><ul>
+<li><code>doc_volume_mean</code> is a <strong>gross-level acoustic confound</strong> — sound
+level drives the amplitude of the N100 component of the auditory
+evoked response in a linear fashion (<a href="../../features/word/prosody_volume.html#zelger-2024">Zelger 2024</a>), so loudness
+differences across stimuli will be reflected in early ERPs
+irrespective of any linguistic contrast. Either equalize loudness
+during stimulus preparation or include this column as a regression
+nuisance.</li>
+<li><code>doc_volume_std</code> captures dynamic-range variability — useful as a
+matching covariate when comparing studio-quality vs.
+in-the-wild recordings.</li>
+<li><code>doc_volume_delta_mean</code> is the document-level analogue of the
+word-level <code>Volume_Delta</code> average (unsigned) — captures how much loudness
+<em>changes</em> from word to word, a continuous proxy for prosodic
+expressiveness.</li>
+</ul>
+</section><section id="papers"><h2><span class="num">6.2.8.7</span>Papers</h2><p>See <a href="../../features/word/prosody_volume.html"><code>prosody_volume</code></a> — document-level summaries
+inherit the same foundational references (Boersma 2018, Zelger 2024,
+Cole 2019).</p>
+</section>
+      <nav class="pager">
+        <a class="prev" href="../../features/document/doc_prosody_pitch.html"><small>Previous</small>Document-level pitch summaries</a>
+        <a class="next" href="../../features/document/doc_prosody_pauses.html"><small>Next</small>Document-level pause statistics</a>
+      </nav>
+      <footer>SensiExtractor User Manual · built 2026-10-27 from commit e0b7600 · source: <a href="https://github.com/edneuro/SENSI-Speech-Features">edneuro/SENSI-Speech-Features</a></footer>
+    </div>
+  </main>
+  <aside class="right" aria-label="On this page">
+    <div class="label">On this page</div>
+    <ul><li><a href="#what">What it is</a></li><li><a href="#see">See it</a></li><li><a href="#output">In your output</a></li><li><a href="#matlab">MATLAB</a></li><li><a href="#code">In the code</a></li><li><a href="#eeg">EEG rationale</a></li><li><a href="#papers">Papers</a></li></ul>
+    <div class="meta"><div><b>Key</b> <code>doc_prosody_volume</code></div><div><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/docs/features/doc_prosody_volume.md">This page’s source text</a> (also the app’s ⓘ pop-up)</div></div>
+  </aside>
+</div>
+<script src="../../assets/search-index.js"></script>
+<script src="../../assets/manual.js"></script>
+</body>
+</html>

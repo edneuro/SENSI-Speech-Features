@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Word-level pitch features · SensiExtractor User Manual</title>
+<link rel="icon" href="../../assets/icon.svg">
+<link rel="stylesheet" href="../../assets/theme.css">
+<link rel="stylesheet" href="../../assets/layout.css">
+<link rel="stylesheet" href="../../assets/code.css">
+</head>
+<body data-root="../../">
+<button class="menu-btn" type="button" aria-label="Open the outline">☰ Contents</button>
+<div class="shell">
+  <nav class="left" aria-label="Manual outline">
+    <a class="brand" href="../../index.html"><img src="../../assets/icon.svg" alt="">SensiExtractor <span>User Manual</span></a>
+    <div class="search">
+      <input type="search" placeholder="Search features, columns…  ( / )" aria-label="Search the manual">
+      <div class="search-results" role="listbox"></div>
+    </div>
+    <div class="outline"><ul><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../index.html"><span class="num">1</span>Introduction</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/requirements.html"><span class="num">2</span>Requirements</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/installation.html"><span class="num">3</span>Installation</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/usage.html"><span class="num">4</span>Using the app</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/sherlock.html"><span class="num">5</span>Running on Sherlock</a></div></li><li class="chapter open"><div class="row"><button class="toggle" type="button" aria-expanded="true" aria-label="Show or hide Features">▶</button><a href="../../features/index.html"><span class="num">6</span>Features</a></div><ul><li class="open"><div class="row"><button class="toggle" type="button" aria-expanded="true" aria-label="Show or hide Word level">▶</button><a href="../../features/word/index.html"><span class="num">6.1</span>Word level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/structural_ids.html">Structural identifier columns</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/structural_offsets.html">Structural character offsets</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/feat_struct_sentence_text.html">Sentence text</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexling_tokens.html">Tokens and lemmas</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexling_pos.html">Part-of-speech tags</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexling_morph.html">Morphological features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexling_dep.html">Dependency parse</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/freq_subtlex.html">Word frequency (Zipf, wordfreq)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/edu_zipf.html">Educator&#x27;s Word Frequency Guide (EWFG) grade-band frequencies<span class="tag" title="Not computed in this manual">◇</span></a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/pred_surprisal.html">Surprisal</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/pred_cloze.html">Cloze probability</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/pred_topmatch.html">Top-1 prediction match</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/sem_indicators.html">Semantic-domain category indicators</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/master_word2vec.html">Word2Vec static word embeddings</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/master_bert_word.html">BERT contextual word embeddings</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexical_norms.html">Lexical norms (AoA, concreteness, imageability, familiarity, VAD)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/acoustic_boundaries.html">Acoustic word boundaries (MFA)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/acoustic_durations.html">Acoustic word duration and gap</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/prosody_pitch.html" class="current">Word-level pitch features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/prosody_volume.html">Word-level volume (intensity) features</a></div></li></ul></li><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Document level">▶</button><a href="../../features/document/index.html"><span class="num">6.2</span>Document level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_counts.html">Document-level count columns</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_aggregates.html">Word-level feature aggregates</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/output_doc_lex_diversity.html">Lexical diversity (TTR + MTLD)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/output_doc_readability.html">Readability (Flesch Reading Ease + Flesch–Kincaid Grade Level)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/output_doc_category_proportions.html">Document-level category proportions</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_psych_composite.html">Composite psychological scores (LIWC-style summary variables)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_prosody_pitch.html">Document-level pitch summaries</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_prosody_volume.html">Document-level volume (intensity) summaries</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_prosody_pauses.html">Document-level pause statistics</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/feat_doc_prosody_articulation_rate.html">Articulation rate</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/feat_doc_prosody_hnr.html">Document-level Harmonics-to-Noise Ratio (HNR)</a></div></li></ul></li><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Sub-word level">▶</button><a href="../../features/subword/index.html"><span class="num">6.3</span>Sub-word level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/syllable_timing.html">Syllable timing (Onset / End / Duration)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/syllable_labels.html">Syllable labels (orthographic + ARPABET + IPA)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/syllable_prosody.html">Syllable-level prosody (pitch + volume + deltas)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/feat_syllable_pcenter.html">Perceptual centre (P-center)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/phoneme.html">Phoneme-level columns</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/feat_phoneme_ipa.html">IPA phoneme symbol</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/g2p_oov.html">Out-of-dictionary words (MFA G2P)<span class="tag" title="Not computed in this manual">◇</span></a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/phoneme_surprisal.html">Phoneme surprisal + cohort entropy</a></div></li></ul></li><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Sentence level">▶</button><a href="../../features/sentence/index.html"><span class="num">6.4</span>Sentence level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/sentence_timing.html">Sentence timing</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/sentence_prosody_pitch.html">Sentence-level pitch features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/sentence_prosody_volume.html">Sentence-level volume (intensity) features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/feat_sentence_hnr.html">Sentence-level Harmonics-to-Noise Ratio (HNR)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/master_bert_sentence.html">BERT contextual sentence embeddings</a></div></li></ul></li><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Acoustic level">▶</button><a href="../../features/acoustic/index.html"><span class="num">6.5</span>Acoustic level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/acoustic/acoustic_envelope.html">Amplitude envelope (broadband)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/acoustic/acoustic_onset_envelope.html">Onset envelope (HWR derivative)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/acoustic/acoustic_logmel.html">Log-mel spectrogram</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/acoustic/acoustic_mfcc.html">MFCC (Mel-frequency cepstral coefficients)</a></div></li></ul></li></ul></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/outputs.html"><span class="num">7</span>Outputs reference</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../references.html"><span class="num">8</span>References</a></div></li></ul></div>
+  </nav>
+  <main>
+    <div class="content">
+      <div class="crumbs"><a href="../../features/index.html">Features</a> › <a href="../../features/word/index.html">Word level</a></div>
+      <h1><span class="num">6.1.19</span>Word-level pitch features</h1><p class="lede">Five per-word summary statistics of the fundamental frequency (F0) contour, computed within each word&#x27;s MFA-aligned acoustic window (Onset, End).</p><div class="facts"><span class="chip">App: <b>Word-level features</b> → <b>Prosody</b></span><span class="chip">Output: <b>word/&lt;stim&gt;_features.csv</b></span><span class="chip">Libraries: <b>parselmouth, praat</b></span></div><section id="what"><a id="meaning"></a><h2><span class="num">6.1.19.1</span>What it is</h2><p>Five per-word summary statistics of the <strong>fundamental frequency (F0)</strong>
+contour, computed within each word's MFA-aligned acoustic window
+(<a href="../../features/word/acoustic_boundaries.html"><code>Onset</code>, <code>End</code></a>).</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Statistic</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Pitch_Mean</code></td>
+<td>Arithmetic mean of F0 frames inside the word</td>
+<td>The primary &quot;what pitch is this word&quot; summary.</td>
+</tr>
+<tr>
+<td><code>Pitch_Min</code></td>
+<td>5th-percentile F0 inside the word</td>
+<td>Robust min — avoids the spurious zero from unvoiced/octave-jump frames.</td>
+</tr>
+<tr>
+<td><code>Pitch_Max</code></td>
+<td>95th-percentile F0 inside the word</td>
+<td>Robust max — same reason.</td>
+</tr>
+<tr>
+<td><code>Pitch_Std</code></td>
+<td>Standard deviation of F0 inside the word</td>
+<td>Within-word pitch variability.</td>
+</tr>
+<tr>
+<td><code>Pitch_Delta</code></td>
+<td><code>Pitch_Mean[i] − Pitch_Mean[j]</code>, <code>j</code> = most recent earlier word with a <code>Pitch_Mean</code></td>
+<td>Word-to-word pitch change; PUNCT/unaligned rows are skipped (like <code>Word_Gap</code>). <code>NaN</code> for the first aligned word.</td>
+</tr>
+</tbody>
+</table>
+<p>Words with no aligned acoustic interval (failed alignment, PUNCT) get
+<code>NaN</code> for all five columns.</p>
+<p><strong>Units:</strong> <strong>semitones relative to the speaker's median pitch</strong> by
+default; <code>Hz</code> if <code>prosody.pitch_units: hz</code> is set in <code>config/features.yaml</code>
+(the GUI's pitch-units combo). Semitone units are perceptually linear and
+speaker-normalized — recommended for cross-speaker analyses.</p>
+</section><section id="see"><h2><span class="num">6.1.19.2</span>See it</h2><div class="card"><div class="caption">Example <b>LJ002-0321</b> (LJ Speech, public domain): “Others who arrived just after the time of distribution were often 48 hours without food. The latter might also be six days without meat.”</div><audio controls preload="none" src="../../assets/audio/LJ002-0321.wav"></audio><div data-tabs><div class="tabs" role="tablist"><button type="button" class="on">Default settings</button><button type="button" class="">pitch_units: hz</button></div><div class="tabpanel on"><figure><img src="../../assets/figures/prosody_pitch.svg" alt="Word-level pitch features — Default settings" loading="lazy"></figure><figcaption>Word-level pitch features — Default settings</figcaption><div class="provenance">Read from <span class='file'>word/LJ002-0321_features.csv</span>, written by SensiExtractor on the example below. Nothing on this figure is typed in.</div></div><div class="tabpanel"><figure><img src="../../assets/figures/prosody_pitch__pitch_hz.svg" alt="Word-level pitch features — pitch_units: hz" loading="lazy"></figure><figcaption>Word-level pitch features — pitch_units: hz</figcaption><div class="provenance">Read from <span class='file'>word/LJ002-0321_features.csv</span>, written by SensiExtractor on the example below. Nothing on this figure is typed in.</div></div></div><div class="caption">Switch between real runs that differ only in this one setting.</div></div></section><section id="output"><h2><span class="num">6.1.19.3</span>In your output</h2><div class="card"><div class="card-title">File <span class="file">word/&lt;stim&gt;_features.csv</span></div><table class="excerpt"><thead><tr><th class="">token</th><th class="hl">Pitch_Mean</th><th class="hl">Pitch_Min</th><th class="hl">Pitch_Max</th><th class="hl">Pitch_Std</th><th class="hl">Pitch_Delta</th></tr></thead><tbody><tr><td class="">Others</td><td class="hl">1.914</td><td class="hl">-1.646</td><td class="hl">6.354</td><td class="hl">3.214</td><td class="hl"></td></tr><tr><td class="">who</td><td class="hl">2.523</td><td class="hl">1.124</td><td class="hl">3.623</td><td class="hl">0.8916</td><td class="hl">0.6087</td></tr><tr><td class="">arrived</td><td class="hl">2.653</td><td class="hl">1.934</td><td class="hl">4.12</td><td class="hl">0.7801</td><td class="hl">0.1301</td></tr><tr><td class="">just</td><td class="hl">2.802</td><td class="hl">0.6392</td><td class="hl">4.048</td><td class="hl">1.55</td><td class="hl">0.1491</td></tr><tr><td class="">after</td><td class="hl">0.1619</td><td class="hl">-3.471</td><td class="hl">2.887</td><td class="hl">2.126</td><td class="hl">-2.64</td></tr><tr><td class="">the</td><td class="hl">-3.222</td><td class="hl">-4.6</td><td class="hl">-1.941</td><td class="hl">1.062</td><td class="hl">-3.384</td></tr><tr><td class="">time</td><td class="hl">-2.012</td><td class="hl">-3.754</td><td class="hl">0.1519</td><td class="hl">1.352</td><td class="hl">1.21</td></tr><tr><td class="">of</td><td class="hl">-3.426</td><td class="hl">-3.585</td><td class="hl">-3.317</td><td class="hl">0.09635</td><td class="hl">-1.413</td></tr><tr><td class="">distribution</td><td class="hl">-0.9869</td><td class="hl">-6.074</td><td class="hl">6.532</td><td class="hl">4.179</td><td class="hl">2.439</td></tr><tr><td class="">were</td><td class="hl">1.043</td><td class="hl">0.2381</td><td class="hl">3.509</td><td class="hl">1.499</td><td class="hl">2.03</td></tr><tr><td class="">often</td><td class="hl">-0.1133</td><td class="hl">-4.568</td><td class="hl">4.645</td><td class="hl">3.151</td><td class="hl">-1.157</td></tr><tr><td class="">48</td><td class="hl">-0.1599</td><td class="hl">-3.006</td><td class="hl">3.459</td><td class="hl">2.636</td><td class="hl">-0.04656</td></tr></tbody></table><div class="caption">26 rows × 56 columns in the file; showing the feature's columns for the first sentence. An empty cell means no value (e.g. punctuation, or a word the measure doesn’t cover).</div><div class="provenance">Excerpt of the real file for <b>LJ002-0321</b>.</div></div></section><section id="matlab"><h2><span class="num">6.1.19.4</span>MATLAB</h2><div class="card" data-tabs><div class="tabpanel on"><pre data-copy><code>% Load the word-level table (one row per word)
+T = readtable(&#x27;word/LJ002-0321_features.csv&#x27;, &#x27;TextType&#x27;, &#x27;string&#x27;);
+T.Properties.VariableNames             % every column in the file
+T(1:10, {&#x27;token&#x27;, &#x27;Pitch_Mean&#x27;, &#x27;Pitch_Min&#x27;, &#x27;Pitch_Max&#x27;, &#x27;Pitch_Std&#x27;, &#x27;Pitch_Delta&#x27;})                       % this feature&#x27;s columns
+
+% Plot
+ok = ~isnan(T.Pitch_Mean);
+plot([T.Onset(ok) T.End(ok)]&#x27;, [T.Pitch_Mean(ok) T.Pitch_Mean(ok)]&#x27;, &#x27;LineWidth&#x27;, 2)
+xlabel(&#x27;Time (s)&#x27;); ylabel(&#x27;Pitch_Mean&#x27;)
+</code></pre></div><div class="caption">Run from the output folder. Variable and column names were checked against the real files when this manual was built; the code itself was not run in MATLAB.</div></div></section><section id="x-math-implementation-details"><a id="math--implementation-details"></a><h2><span class="num">6.1.19.5</span>Math / implementation details</h2><ul>
+<li>F0 is estimated by Praat (<a href="#boersma-2018">Boersma 2018</a>) — autocorrelation-based,
+with configurable floor / ceiling (defaults 75 / 500 Hz, GUI-tunable).</li>
+<li>Aggregates are computed over <strong>non-NaN F0 frames inside [Onset, End)</strong>.
+Unvoiced frames are NaN in Praat's output and are excluded from all
+five statistics.</li>
+<li><code>Pitch_Min</code> / <code>Pitch_Max</code> use the 5th and 95th percentiles rather
+than absolute extrema — this discards isolated octave-jump errors
+that would otherwise dominate the per-word min/max.</li>
+<li>For single-frame words, <code>Pitch_Std = 0</code> and min/max/mean all collapse
+to the same value (deliberate, not a bug).</li>
+</ul>
+<p>Semitone conversion (when <code>pitch_units == &quot;semitones&quot;</code>):</p>
+<pre><code>pitch_st = 12 · log₂(pitch_hz / speaker_median_pitch_hz)
+</code></pre>
+<p><code>speaker_median_pitch_hz</code> is computed once per audio file from all
+voiced frames.</p>
+</section><section id="x-configuration"><a id="configuration"></a><h2><span class="num">6.1.19.6</span>Configuration</h2><p>Configurable from the GUI (Word-level features → Prosody card → config
+row):</p>
+<ul>
+<li><strong>Pitch units</strong> — semitones (default) or Hz.</li>
+<li><strong>Pitch floor / ceiling</strong> — Praat F0 estimation range. Defaults
+<code>75 / 500 Hz</code> work for most adult voices; raise the floor (~120 Hz)
+for child speakers, lower the ceiling (~300 Hz) for bass voices.</li>
+</ul>
+<p>Validation ranges:</p>
+<ul>
+<li><code>Pitch_Mean</code> in <strong>60–300 Hz</strong> (or <strong>−12 to +12 semitones</strong> relative
+to speaker median). Outside this → suspect pitch range misconfig.</li>
+</ul>
+</section><section id="code"><a id="implementation-in-sensiextractor"></a><h2><span class="num">6.1.19.7</span>In the code</h2><div class="card"><div class="card-title">Open in GitHub</div><ul><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/extractors/prosody.py#L49"><code>sensi/extractors/prosody.py → add_word_prosody()</code></a></li><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/extractors/audio_features.py#L33"><code>sensi/extractors/audio_features.py → Contours()</code></a></li></ul></div><p>Source: <code>sensi/extractors/prosody.py:add_word_prosody</code>. Underlying contours:
+<code>sensi/extractors/audio_features.py:Contours</code> (Parselmouth call).</p>
+<p><strong>What the code does:</strong></p>
+<ol>
+<li>Receives a precomputed <code>Contours</code> object (pitch + intensity time
+series at a uniform Praat-derived time step).</li>
+<li>Converts the pitch series to semitones relative to
+<code>speaker_median_pitch_hz</code> if requested.</li>
+<li>For each word row (in order), slices contour frames to <code>[Onset, End)</code> and computes <code>_agg(slice)</code> = <code>(mean, p5, p95, std)</code>.</li>
+<li>Computes <code>Pitch_Delta</code> as <code>Pitch_Mean − Pitch_Mean.ffill().shift(1)</code>:
+the change from the most recent earlier word that has a value, so
+a PUNCT or unaligned row in between doesn't turn the next word's
+delta into NaN.</li>
+<li>PUNCT rows / unaligned rows receive NaN for all five columns
+uniformly.</li>
+</ol>
+<p><strong>Why:</strong></p>
+<ul>
+<li><em>Robust percentiles instead of true min/max</em> — Praat's
+autocorrelation pitch tracker occasionally jumps an octave;
+percentile-based extrema absorb those outliers without losing the
+legitimate within-word range.</li>
+<li><em>Semitone default</em> — speaker-normalized and perceptually linear
+(a 1-semitone change is the same perceived pitch interval whether
+the speaker's median is 100 Hz or 200 Hz), so cross-speaker
+comparisons stay meaningful.</li>
+<li><em>Single forward pass over Contours</em> — pitch and intensity share a
+single Praat call upstream, then both word-level and document-level
+prosody reuse the same numpy arrays; computationally cheap.</li>
+</ul>
+</section><section id="library"><h2><span class="num">6.1.19.8</span>Library</h2><pre><code class="language-python">import parselmouth
+snd = parselmouth.Sound(&quot;stimulus.wav&quot;)
+pitch = snd.to_pitch(time_step=0.01, pitch_floor=75, pitch_ceiling=500)
+hz = pitch.selected_array[&quot;frequency&quot;]
+hz[hz == 0] = np.nan   # Praat marks unvoiced as 0
+times = pitch.xs()
+</code></pre>
+</section><section id="eeg"><a id="eeg-rationale"></a><h2><span class="num">6.1.19.9</span>EEG rationale</h2><p>Pitch is the primary acoustic carrier of <strong>prosodic prominence</strong>,
+<strong>intonation</strong>, and <strong>lexical tone</strong> (in tonal languages). For
+naturalistic-EEG analyses:</p>
+<ul>
+<li>Pitch accents on prominent words elicit a P200 whose amplitude is
+modulated by the onset latency of the F0 peak (<a href="#heim-2006">Heim 2006</a>); this
+is the canonical &quot;accent positivity&quot; in the ERP-prosody literature.</li>
+<li>Pitch resets at boundaries cue prosodic phrasing and modulate the
+closure-positive-shift (CPS, <a href="#steinhauer-1999">Steinhauer 1999</a>).</li>
+<li><code>Pitch_Delta</code> captures <em>pitch movement across words</em> — a continuous
+proxy for the rises and falls that signal interrogatives, lists, and
+emphasis.</li>
+<li>Speaker-normalized semitone units make individual-speaker effects
+comparable and avoid Hz-scale outliers from low-pitched vs
+high-pitched voices.</li>
+</ul>
+<p>Pitch features are also standard nuisance regressors in
+<a href="../../features/word/pred_surprisal.html">surprisal</a>-locked EEG analyses, because
+prominent words tend to be both higher-pitched <strong>and</strong> more
+informative — confounded if pitch isn't controlled (<a href="#wagner-2010">Wagner 2010</a>;
+see also <a href="#heilbron-2022">Heilbron 2022</a>, who model EEG/MEG responses to GPT-2
+surprisal alongside acoustic regressors during naturalistic
+listening).</p>
+</section><section id="papers"><h2><span class="num">6.1.19.10</span>Papers</h2><p><strong>Praat / pitch estimation:</strong></p>
+<ul>
+<li><a name="boersma-2018"></a><strong><a href="#boersma-2018">Boersma 2018</a></strong> Boersma &amp; Weenink. <em>Praat: doing phonetics by computer.</em> <a href="https://www.praat.org/">praat.org</a> — Praat reference; autocorrelation pitch detection (<code>To Pitch (ac)</code>).</li>
+</ul>
+<p><strong>Pitch and EEG:</strong></p>
+<ul>
+<li><a name="steinhauer-1999"></a><strong><a href="#steinhauer-1999">Steinhauer 1999</a></strong> Steinhauer, Alter, Friederici. <em>Brain potentials indicate immediate use of prosodic cues in natural speech processing.</em> Nature Neuroscience 2(2), 191–196. <a href="https://doi.org/10.1038/5757">doi:10.1038/5757</a> — closure-positive-shift driven by pitch resets at intonational phrase boundaries.</li>
+<li><a name="heim-2006"></a><strong><a href="#heim-2006">Heim 2006</a></strong> Heim &amp; Alter. <em>Prosodic pitch accents in language comprehension and production: ERP data and acoustic analyses.</em> Acta Neurobiologiae Experimentalis 66(1), 55–68. <a href="https://doi.org/10.55782/ane-2006-1587">doi:10.55782/ane-2006-1587</a> — sentence-initial pitch accents elicit a P200 modulated by the onset latency of the F0 peak.</li>
+<li><a name="wagner-2010"></a><strong><a href="#wagner-2010">Wagner 2010</a></strong> Wagner &amp; Watson. <em>Experimental and theoretical advances in prosody: A review.</em> Language and Cognitive Processes 25(7), 905–945. <a href="https://doi.org/10.1080/01690961003589492">doi:10.1080/01690961003589492</a> — review covering how prosodic prominence is shaped by predictability and information structure.</li>
+<li><a name="heilbron-2022"></a><strong><a href="#heilbron-2022">Heilbron 2022</a></strong> Heilbron, Armeni, Schoffelen, Hagoort, De Lange. <em>A hierarchy of linguistic predictions during natural language comprehension.</em> PNAS 119(32), e2201968119. <a href="https://doi.org/10.1073/pnas.2201968119">doi:10.1073/pnas.2201968119</a> — naturalistic-listening EEG/MEG analysis combining GPT-2 surprisal with acoustic regressors.</li>
+</ul>
+</section>
+      <nav class="pager">
+        <a class="prev" href="../../features/word/acoustic_durations.html"><small>Previous</small>Acoustic word duration and gap</a>
+        <a class="next" href="../../features/word/prosody_volume.html"><small>Next</small>Word-level volume (intensity) features</a>
+      </nav>
+      <footer>SensiExtractor User Manual · built 2026-10-27 from commit e0b7600 · source: <a href="https://github.com/edneuro/SENSI-Speech-Features">edneuro/SENSI-Speech-Features</a></footer>
+    </div>
+  </main>
+  <aside class="right" aria-label="On this page">
+    <div class="label">On this page</div>
+    <ul><li><a href="#what">What it is</a></li><li><a href="#see">See it</a></li><li><a href="#output">In your output</a></li><li><a href="#matlab">MATLAB</a></li><li><a href="#x-math-implementation-details">Math / implementation details</a></li><li><a href="#x-configuration">Configuration</a></li><li><a href="#code">In the code</a></li><li><a href="#library">Library</a></li><li><a href="#eeg">EEG rationale</a></li><li><a href="#papers">Papers</a></li></ul>
+    <div class="meta"><div><b>Key</b> <code>prosody_pitch</code></div><div><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/docs/features/prosody_pitch.md">This page’s source text</a> (also the app’s ⓘ pop-up)</div></div>
+  </aside>
+</div>
+<script src="../../assets/search-index.js"></script>
+<script src="../../assets/manual.js"></script>
+</body>
+</html>

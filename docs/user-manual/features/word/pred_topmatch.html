@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Top-1 prediction match · SensiExtractor User Manual</title>
+<link rel="icon" href="../../assets/icon.svg">
+<link rel="stylesheet" href="../../assets/theme.css">
+<link rel="stylesheet" href="../../assets/layout.css">
+<link rel="stylesheet" href="../../assets/code.css">
+</head>
+<body data-root="../../">
+<button class="menu-btn" type="button" aria-label="Open the outline">☰ Contents</button>
+<div class="shell">
+  <nav class="left" aria-label="Manual outline">
+    <a class="brand" href="../../index.html"><img src="../../assets/icon.svg" alt="">SensiExtractor <span>User Manual</span></a>
+    <div class="search">
+      <input type="search" placeholder="Search features, columns…  ( / )" aria-label="Search the manual">
+      <div class="search-results" role="listbox"></div>
+    </div>
+    <div class="outline"><ul><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../index.html"><span class="num">1</span>Introduction</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/requirements.html"><span class="num">2</span>Requirements</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/installation.html"><span class="num">3</span>Installation</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/usage.html"><span class="num">4</span>Using the app</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/sherlock.html"><span class="num">5</span>Running on Sherlock</a></div></li><li class="chapter open"><div class="row"><button class="toggle" type="button" aria-expanded="true" aria-label="Show or hide Features">▶</button><a href="../../features/index.html"><span class="num">6</span>Features</a></div><ul><li class="open"><div class="row"><button class="toggle" type="button" aria-expanded="true" aria-label="Show or hide Word level">▶</button><a href="../../features/word/index.html"><span class="num">6.1</span>Word level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/structural_ids.html">Structural identifier columns</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/structural_offsets.html">Structural character offsets</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/feat_struct_sentence_text.html">Sentence text</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexling_tokens.html">Tokens and lemmas</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexling_pos.html">Part-of-speech tags</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexling_morph.html">Morphological features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexling_dep.html">Dependency parse</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/freq_subtlex.html">Word frequency (Zipf, wordfreq)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/edu_zipf.html">Educator&#x27;s Word Frequency Guide (EWFG) grade-band frequencies<span class="tag" title="Not computed in this manual">◇</span></a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/pred_surprisal.html">Surprisal</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/pred_cloze.html">Cloze probability</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/pred_topmatch.html" class="current">Top-1 prediction match</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/sem_indicators.html">Semantic-domain category indicators</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/master_word2vec.html">Word2Vec static word embeddings</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/master_bert_word.html">BERT contextual word embeddings</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexical_norms.html">Lexical norms (AoA, concreteness, imageability, familiarity, VAD)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/acoustic_boundaries.html">Acoustic word boundaries (MFA)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/acoustic_durations.html">Acoustic word duration and gap</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/prosody_pitch.html">Word-level pitch features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/prosody_volume.html">Word-level volume (intensity) features</a></div></li></ul></li><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Document level">▶</button><a href="../../features/document/index.html"><span class="num">6.2</span>Document level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_counts.html">Document-level count columns</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_aggregates.html">Word-level feature aggregates</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/output_doc_lex_diversity.html">Lexical diversity (TTR + MTLD)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/output_doc_readability.html">Readability (Flesch Reading Ease + Flesch–Kincaid Grade Level)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/output_doc_category_proportions.html">Document-level category proportions</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_psych_composite.html">Composite psychological scores (LIWC-style summary variables)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_prosody_pitch.html">Document-level pitch summaries</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_prosody_volume.html">Document-level volume (intensity) summaries</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_prosody_pauses.html">Document-level pause statistics</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/feat_doc_prosody_articulation_rate.html">Articulation rate</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/feat_doc_prosody_hnr.html">Document-level Harmonics-to-Noise Ratio (HNR)</a></div></li></ul></li><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Sub-word level">▶</button><a href="../../features/subword/index.html"><span class="num">6.3</span>Sub-word level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/syllable_timing.html">Syllable timing (Onset / End / Duration)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/syllable_labels.html">Syllable labels (orthographic + ARPABET + IPA)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/syllable_prosody.html">Syllable-level prosody (pitch + volume + deltas)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/feat_syllable_pcenter.html">Perceptual centre (P-center)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/phoneme.html">Phoneme-level columns</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/feat_phoneme_ipa.html">IPA phoneme symbol</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/g2p_oov.html">Out-of-dictionary words (MFA G2P)<span class="tag" title="Not computed in this manual">◇</span></a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/phoneme_surprisal.html">Phoneme surprisal + cohort entropy</a></div></li></ul></li><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Sentence level">▶</button><a href="../../features/sentence/index.html"><span class="num">6.4</span>Sentence level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/sentence_timing.html">Sentence timing</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/sentence_prosody_pitch.html">Sentence-level pitch features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/sentence_prosody_volume.html">Sentence-level volume (intensity) features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/feat_sentence_hnr.html">Sentence-level Harmonics-to-Noise Ratio (HNR)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/master_bert_sentence.html">BERT contextual sentence embeddings</a></div></li></ul></li><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Acoustic level">▶</button><a href="../../features/acoustic/index.html"><span class="num">6.5</span>Acoustic level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/acoustic/acoustic_envelope.html">Amplitude envelope (broadband)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/acoustic/acoustic_onset_envelope.html">Onset envelope (HWR derivative)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/acoustic/acoustic_logmel.html">Log-mel spectrogram</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/acoustic/acoustic_mfcc.html">MFCC (Mel-frequency cepstral coefficients)</a></div></li></ul></li></ul></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/outputs.html"><span class="num">7</span>Outputs reference</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../references.html"><span class="num">8</span>References</a></div></li></ul></div>
+  </nav>
+  <main>
+    <div class="content">
+      <div class="crumbs"><a href="../../features/index.html">Features</a> › <a href="../../features/word/index.html">Word level</a></div>
+      <h1><span class="num">6.1.12</span>Top-1 prediction match</h1><p class="lede">Binary flag (0 or 1) indicating whether a selected model&#x27;s most likely next word at this position matched the actual word in the transcript.</p><div class="facts"><span class="chip">App: <b>Word-level features</b> → <b>Predictability</b></span><span class="chip">Output: <b>word/&lt;stim&gt;_features.csv</b></span><span class="chip">Libraries: <b>transformers, torch</b></span></div><section id="what"><a id="meaning"></a><h2><span class="num">6.1.12.1</span>What it is</h2><p>Binary flag (<code>0</code> or <code>1</code>) indicating whether a selected model's <strong>most
+likely next word</strong> at this position matched the actual word in the
+transcript:</p>
+<pre><code>&lt;slug&gt;_TopMatch(wᵢ) = 1   if  argmaxⱼ P_model(j | w₁ … wᵢ₋₁) == subword(wᵢ)
+                      0   otherwise
+</code></pre>
+<p>Comparison is made at the <strong>first subword</strong> of the spaCy token (model
+subwords don't always align 1:1 with spaCy tokens). PUNCT rows are
+<code>NaN</code>, and so is the document's first word — it has no preceding
+context, so the model makes no prediction for it. Enabling Top-match
+for several roster models writes one column per model, e.g.
+<code>gpt2_TopMatch</code> and <code>llama3_8b_TopMatch</code> side by side.</p>
+</section><section id="see"><h2><span class="num">6.1.12.2</span>See it</h2><div class="card"><div class="caption">Example text (invented, run without audio): <b>predictable.txt</b>: “She spread butter on her toast.”; <b>surprising.txt</b>: “She spread butter on her violin.”</div><div ><figure><img src="../../assets/figures/pred_topmatch.svg" alt="Top-1 prediction match — Default settings" loading="lazy"></figure><figcaption>Top-1 prediction match — Default settings</figcaption><div class="provenance">Read from <span class='file'>word/predictable_features.csv</span> and <span class='file'>word/surprising_features.csv</span>, written by SensiExtractor on the example below. Nothing on this figure is typed in.</div></div></div></section><section id="output"><h2><span class="num">6.1.12.3</span>In your output</h2><div class="card"><div class="card-title">File <span class="file">word/&lt;stim&gt;_features.csv</span></div><table class="excerpt"><thead><tr><th class="">token</th><th class="hl">gpt2_TopMatch</th></tr></thead><tbody><tr><td class="">She</td><td class="hl"></td></tr><tr><td class="">spread</td><td class="hl">0</td></tr><tr><td class="">butter</td><td class="hl">0</td></tr><tr><td class="">on</td><td class="hl">0</td></tr><tr><td class="">her</td><td class="hl">0</td></tr><tr><td class="">violin</td><td class="hl">0</td></tr><tr><td class="">.</td><td class="hl"></td></tr></tbody></table><div class="caption">7 rows × 43 columns in the file; showing the feature's columns. An empty cell means no value (e.g. punctuation, or a word the measure doesn’t cover).</div><div class="provenance">Excerpt of the real file for <b>surprising</b>.</div></div></section><section id="matlab"><h2><span class="num">6.1.12.4</span>MATLAB</h2><div class="card" data-tabs><div class="tabpanel on"><pre data-copy><code>% Load the word-level table (one row per word)
+T = readtable(&#x27;word/predictable_features.csv&#x27;, &#x27;TextType&#x27;, &#x27;string&#x27;);
+T.Properties.VariableNames             % every column in the file
+T(1:10, {&#x27;token&#x27;, &#x27;gpt2_TopMatch&#x27;})                       % this feature&#x27;s columns
+
+% Plot
+w = ~T.upos == &quot;PUNCT&quot;;            % words only
+bar(T.gpt2_TopMatch(w)); xticks(1:nnz(w)); xticklabels(T.token(w)); ylabel(&#x27;gpt2_TopMatch&#x27;)
+</code></pre></div><div class="caption">Run from the output folder. Variable and column names were checked against the real files when this manual was built; the code itself was not run in MATLAB.</div></div></section><section id="code"><a id="implementation-in-sensiextractor"></a><h2><span class="num">6.1.12.5</span>In the code</h2><div class="card"><div class="card-title">Open in GitHub</div><ul><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/extractors/predictability.py#L35"><code>sensi/extractors/predictability.py → add_predictability()</code></a></li></ul></div><p>Source: <code>sensi/extractors/predictability.py:add_predictability</code> (the
+unified, roster-driven extractor; it replaced the old <code>extractors/llm_cloze.py</code>,
+which was removed on 2026-07-11) and
+<code>_HuggingFaceBackend.score</code>.</p>
+<p>Computed in the same forward pass as <code>&lt;slug&gt;_Cloze</code> and
+<code>&lt;slug&gt;_Surprisal</code> for a given model: per subword, the backend already
+computes <code>argmax(log_probs)</code> over the vocabulary. For each spaCy
+token, the flag is set by comparing the argmax at the token's <strong>first
+subword</strong> position to the actual id at that position:</p>
+<pre><code class="language-python">top_match = 1 if sub_top1[first_sub] == ids[first_sub] else 0
+</code></pre>
+<p>The comparison is done at the token's first subword, in vocabulary-id
+space (<code>argmax</code> id vs. the actual next-token id) from the local model's
+logits.</p>
+<p><code>upos == &quot;PUNCT&quot;</code> → <code>NaN</code>, and the document's first word is <code>NaN</code> too
+(no preceding context, so no prediction to match). The output is stored
+as <code>int</code> for <code>0</code> / <code>1</code> and remains <code>NaN</code> (a <code>Nullable Int64</code> view in
+pandas) for those rows.</p>
+</section><section id="library"><h2><span class="num">6.1.12.6</span>Library</h2><p>See <code>sensi/extractors/predictability.py:_HuggingFaceBackend.score</code>. Every
+backend — GPT-2 included, via <code>AutoModelForCausalLM</code> — emits
+<code>{&quot;p&quot;: ..., &quot;surprisal&quot;: ..., &quot;top_match&quot;: 0|1}</code> per spaCy token.</p>
+</section><section id="eeg"><a id="eeg-rationale"></a><h2><span class="num">6.1.12.7</span>EEG rationale</h2><p>Whereas <a href="../../features/word/pred_cloze.html"><code>&lt;slug&gt;_Cloze</code></a> and
+<a href="../../features/word/pred_surprisal.html"><code>&lt;slug&gt;_Surprisal</code></a> are graded measures of
+predictability, <code>&lt;slug&gt;_TopMatch</code> is a <strong>discrete</strong> prediction-correctness
+flag. It's useful when:</p>
+<ul>
+<li>The downstream model wants a binary regressor — e.g. an &quot;expected&quot;
+vs &quot;violation&quot; contrast — without picking a probability threshold.</li>
+<li>You want to count <em>strict-prediction hits</em> across a stimulus
+(proportion of positions where the model nailed the next word).</li>
+<li>You're comparing against psycholinguistic experiments that operate
+on &quot;predictable&quot; vs &quot;unpredictable&quot; rather than continuous cloze.</li>
+</ul>
+<p>For ERP-amplitude regressions, the graded
+<a href="../../features/word/pred_surprisal.html"><code>&lt;slug&gt;_Surprisal</code></a> is the better default.
+<code>&lt;slug&gt;_TopMatch</code> is binary by design, so it discards everything below the
+top guess: every word the model did not rank first scores the same, yet N400
+facilitation is graded even among unpredictable words <a href="#szewczyk-2022-tm">Szewczyk 2022</a>. No
+paper we know of tests top-match against surprisal directly; this is a
+recommendation, not a measured result.</p>
+</section><section id="papers"><h2><span class="num">6.1.12.8</span>Papers</h2><p>The exact &quot;top-1 prediction match&quot; framing is more common in NLP
+benchmarking than in EEG papers. The closest neuroscience precedent
+is work that links transformer next-word predictions to brain
+responses during natural listening:</p>
+<ul>
+<li>
+<p><a name="goldstein-2022"></a><strong><a href="#goldstein-2022">Goldstein 2022</a></strong> Goldstein et al. <em>Shared computational principles for language processing in humans and deep language models.</em> Nature Neuroscience 25(3), 369–380. <a href="https://doi.org/10.1038/s41593-022-01026-4">doi:10.1038/s41593-022-01026-4</a> — ECoG study showing that humans and autoregressive transformer models share next-word prediction as a computational principle during natural language processing.</p>
+</li>
+<li>
+<p><a name="szewczyk-2022-tm"></a><strong><a href="#szewczyk-2022-tm">Szewczyk 2022</a></strong> Szewczyk &amp; Federmeier. <em>Context-based facilitation of semantic access follows both logarithmic and linear functions of stimulus probability.</em> Journal of Memory and Language 123, 104311. <a href="https://doi.org/10.1016/j.jml.2021.104311">doi:10.1016/j.jml.2021.104311</a> — N400 facilitation &quot;combines linear and logarithmic functions&quot;; graded even among unpredictable words.</p>
+</li>
+</ul>
+</section>
+      <nav class="pager">
+        <a class="prev" href="../../features/word/pred_cloze.html"><small>Previous</small>Cloze probability</a>
+        <a class="next" href="../../features/word/sem_indicators.html"><small>Next</small>Semantic-domain category indicators</a>
+      </nav>
+      <footer>SensiExtractor User Manual · built 2026-10-27 from commit e0b7600 · source: <a href="https://github.com/edneuro/SENSI-Speech-Features">edneuro/SENSI-Speech-Features</a></footer>
+    </div>
+  </main>
+  <aside class="right" aria-label="On this page">
+    <div class="label">On this page</div>
+    <ul><li><a href="#what">What it is</a></li><li><a href="#see">See it</a></li><li><a href="#output">In your output</a></li><li><a href="#matlab">MATLAB</a></li><li><a href="#code">In the code</a></li><li><a href="#library">Library</a></li><li><a href="#eeg">EEG rationale</a></li><li><a href="#papers">Papers</a></li></ul>
+    <div class="meta"><div><b>Key</b> <code>pred_topmatch</code></div><div><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/docs/features/pred_topmatch.md">This page’s source text</a> (also the app’s ⓘ pop-up)</div></div>
+  </aside>
+</div>
+<script src="../../assets/search-index.js"></script>
+<script src="../../assets/manual.js"></script>
+</body>
+</html>

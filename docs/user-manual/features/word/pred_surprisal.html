@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Surprisal · SensiExtractor User Manual</title>
+<link rel="icon" href="../../assets/icon.svg">
+<link rel="stylesheet" href="../../assets/theme.css">
+<link rel="stylesheet" href="../../assets/layout.css">
+<link rel="stylesheet" href="../../assets/code.css">
+</head>
+<body data-root="../../">
+<button class="menu-btn" type="button" aria-label="Open the outline">☰ Contents</button>
+<div class="shell">
+  <nav class="left" aria-label="Manual outline">
+    <a class="brand" href="../../index.html"><img src="../../assets/icon.svg" alt="">SensiExtractor <span>User Manual</span></a>
+    <div class="search">
+      <input type="search" placeholder="Search features, columns…  ( / )" aria-label="Search the manual">
+      <div class="search-results" role="listbox"></div>
+    </div>
+    <div class="outline"><ul><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../index.html"><span class="num">1</span>Introduction</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/requirements.html"><span class="num">2</span>Requirements</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/installation.html"><span class="num">3</span>Installation</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/usage.html"><span class="num">4</span>Using the app</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/sherlock.html"><span class="num">5</span>Running on Sherlock</a></div></li><li class="chapter open"><div class="row"><button class="toggle" type="button" aria-expanded="true" aria-label="Show or hide Features">▶</button><a href="../../features/index.html"><span class="num">6</span>Features</a></div><ul><li class="open"><div class="row"><button class="toggle" type="button" aria-expanded="true" aria-label="Show or hide Word level">▶</button><a href="../../features/word/index.html"><span class="num">6.1</span>Word level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/structural_ids.html">Structural identifier columns</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/structural_offsets.html">Structural character offsets</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/feat_struct_sentence_text.html">Sentence text</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexling_tokens.html">Tokens and lemmas</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexling_pos.html">Part-of-speech tags</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexling_morph.html">Morphological features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexling_dep.html">Dependency parse</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/freq_subtlex.html">Word frequency (Zipf, wordfreq)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/edu_zipf.html">Educator&#x27;s Word Frequency Guide (EWFG) grade-band frequencies<span class="tag" title="Not computed in this manual">◇</span></a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/pred_surprisal.html" class="current">Surprisal</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/pred_cloze.html">Cloze probability</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/pred_topmatch.html">Top-1 prediction match</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/sem_indicators.html">Semantic-domain category indicators</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/master_word2vec.html">Word2Vec static word embeddings</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/master_bert_word.html">BERT contextual word embeddings</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexical_norms.html">Lexical norms (AoA, concreteness, imageability, familiarity, VAD)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/acoustic_boundaries.html">Acoustic word boundaries (MFA)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/acoustic_durations.html">Acoustic word duration and gap</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/prosody_pitch.html">Word-level pitch features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/prosody_volume.html">Word-level volume (intensity) features</a></div></li></ul></li><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Document level">▶</button><a href="../../features/document/index.html"><span class="num">6.2</span>Document level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_counts.html">Document-level count columns</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_aggregates.html">Word-level feature aggregates</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/output_doc_lex_diversity.html">Lexical diversity (TTR + MTLD)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/output_doc_readability.html">Readability (Flesch Reading Ease + Flesch–Kincaid Grade Level)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/output_doc_category_proportions.html">Document-level category proportions</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_psych_composite.html">Composite psychological scores (LIWC-style summary variables)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_prosody_pitch.html">Document-level pitch summaries</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_prosody_volume.html">Document-level volume (intensity) summaries</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_prosody_pauses.html">Document-level pause statistics</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/feat_doc_prosody_articulation_rate.html">Articulation rate</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/feat_doc_prosody_hnr.html">Document-level Harmonics-to-Noise Ratio (HNR)</a></div></li></ul></li><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Sub-word level">▶</button><a href="../../features/subword/index.html"><span class="num">6.3</span>Sub-word level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/syllable_timing.html">Syllable timing (Onset / End / Duration)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/syllable_labels.html">Syllable labels (orthographic + ARPABET + IPA)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/syllable_prosody.html">Syllable-level prosody (pitch + volume + deltas)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/feat_syllable_pcenter.html">Perceptual centre (P-center)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/phoneme.html">Phoneme-level columns</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/feat_phoneme_ipa.html">IPA phoneme symbol</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/g2p_oov.html">Out-of-dictionary words (MFA G2P)<span class="tag" title="Not computed in this manual">◇</span></a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/phoneme_surprisal.html">Phoneme surprisal + cohort entropy</a></div></li></ul></li><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Sentence level">▶</button><a href="../../features/sentence/index.html"><span class="num">6.4</span>Sentence level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/sentence_timing.html">Sentence timing</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/sentence_prosody_pitch.html">Sentence-level pitch features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/sentence_prosody_volume.html">Sentence-level volume (intensity) features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/feat_sentence_hnr.html">Sentence-level Harmonics-to-Noise Ratio (HNR)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/master_bert_sentence.html">BERT contextual sentence embeddings</a></div></li></ul></li><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Acoustic level">▶</button><a href="../../features/acoustic/index.html"><span class="num">6.5</span>Acoustic level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/acoustic/acoustic_envelope.html">Amplitude envelope (broadband)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/acoustic/acoustic_onset_envelope.html">Onset envelope (HWR derivative)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/acoustic/acoustic_logmel.html">Log-mel spectrogram</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/acoustic/acoustic_mfcc.html">MFCC (Mel-frequency cepstral coefficients)</a></div></li></ul></li></ul></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/outputs.html"><span class="num">7</span>Outputs reference</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../references.html"><span class="num">8</span>References</a></div></li></ul></div>
+  </nav>
+  <main>
+    <div class="content">
+      <div class="crumbs"><a href="../../features/index.html">Features</a> › <a href="../../features/word/index.html">Word level</a></div>
+      <h1><span class="num">6.1.10</span>Surprisal</h1><p class="lede">Per-word surprisal — the negative log probability that a language model assigns to a word given everything that came before it in the document, in bits.</p><div class="facts"><span class="chip">App: <b>Word-level features</b> → <b>Predictability</b></span><span class="chip">Output: <b>word/&lt;stim&gt;_features.csv</b></span><span class="chip">Libraries: <b>transformers, torch</b></span></div><section id="what"><a id="meaning"></a><h2><span class="num">6.1.10.1</span>What it is</h2><p>Per-word <strong>surprisal</strong> — the negative log probability that a language
+model assigns to a word given everything that came before it in the
+document, in <strong>bits</strong>:</p>
+<pre><code>&lt;slug&gt;_Surprisal(wᵢ) = -log₂ P_model(wᵢ | w₁ … wᵢ₋₁)
+</code></pre>
+<p>A high-frequency word in a strongly constraining context has low
+surprisal (≈ 1–3 bits); a low-frequency or contextually unexpected word
+has high surprisal (≈ 8–20 bits). PUNCT rows are <code>NaN</code>, and so is the
+document's first word (no left context to condition on).</p>
+<p>The metric itself is <strong>identical across models</strong> — only the estimator
+(which language model computes <code>P</code>) changes. Enabling multiple models
+writes one namespaced column per model (e.g. <code>gpt2_Surprisal</code> and
+<code>llama3_8b_Surprisal</code> side by side), so a single run can directly
+compare estimator quality on the same stimulus rather than committing
+to one model.</p>
+</section><section id="see"><h2><span class="num">6.1.10.2</span>See it</h2><div class="card"><div class="caption">Example text (invented, run without audio): <b>predictable.txt</b>: “She spread butter on her toast.”; <b>surprising.txt</b>: “She spread butter on her violin.”</div><div ><figure><img src="../../assets/figures/pred_surprisal.svg" alt="Surprisal — Default settings" loading="lazy"></figure><figcaption>Surprisal — Default settings</figcaption><div class="provenance">Read from <span class='file'>word/predictable_features.csv</span> and <span class='file'>word/surprising_features.csv</span>, written by SensiExtractor on the example below. Nothing on this figure is typed in.</div></div></div></section><section id="output"><h2><span class="num">6.1.10.3</span>In your output</h2><div class="card"><div class="card-title">File <span class="file">word/&lt;stim&gt;_features.csv</span></div><table class="excerpt"><thead><tr><th class="">token</th><th class="hl">gpt2_Surprisal</th></tr></thead><tbody><tr><td class="">She</td><td class="hl"></td></tr><tr><td class="">spread</td><td class="hl">13.94</td></tr><tr><td class="">butter</td><td class="hl">11.24</td></tr><tr><td class="">on</td><td class="hl">2.868</td></tr><tr><td class="">her</td><td class="hl">3.09</td></tr><tr><td class="">violin</td><td class="hl">16.95</td></tr><tr><td class="">.</td><td class="hl"></td></tr></tbody></table><div class="caption">7 rows × 43 columns in the file; showing the feature's columns. An empty cell means no value (e.g. punctuation, or a word the measure doesn’t cover).</div><div class="provenance">Excerpt of the real file for <b>surprising</b>.</div></div></section><section id="matlab"><h2><span class="num">6.1.10.4</span>MATLAB</h2><div class="card" data-tabs><div class="tabpanel on"><pre data-copy><code>% Load the word-level table (one row per word)
+T = readtable(&#x27;word/predictable_features.csv&#x27;, &#x27;TextType&#x27;, &#x27;string&#x27;);
+T.Properties.VariableNames             % every column in the file
+T(1:10, {&#x27;token&#x27;, &#x27;gpt2_Surprisal&#x27;})                       % this feature&#x27;s columns
+
+% Plot
+w = ~T.upos == &quot;PUNCT&quot;;            % words only
+bar(T.gpt2_Surprisal(w)); xticks(1:nnz(w)); xticklabels(T.token(w)); ylabel(&#x27;gpt2_Surprisal&#x27;)
+</code></pre></div><div class="caption">Run from the output folder. Variable and column names were checked against the real files when this manual was built; the code itself was not run in MATLAB.</div></div></section><section id="computed"><a id="math--linguistics"></a><h2><span class="num">6.1.10.5</span>How it&#x27;s computed</h2><p>A causal language model outputs a probability distribution over its
+vocabulary at every position. The probability of an actual
+continuation token <code>wᵢ</code> given all prior tokens is read off this
+distribution; its negative log₂ is the surprisal. When a spaCy token
+maps to multiple model subwords (e.g. <code>&quot;unbelievable&quot;</code> →
+<code>[&quot;un&quot;, &quot;bel&quot;, &quot;iev&quot;, &quot;able&quot;]</code>), their log-probabilities are <strong>summed</strong>
+(equivalent to multiplying probabilities), since they jointly
+constitute the word:</p>
+<pre><code>P(w) = P(s₁) · P(s₂ | s₁) · ... · P(sₖ | s₁..sₖ₋₁)
+</code></pre>
+<p>so</p>
+<pre><code>-log₂ P(w) = Σᵢ -log₂ P(sᵢ | s₁..sᵢ₋₁)
+</code></pre>
+<p>The sum is correct because every model in the roster is autoregressive
+and conditions each subword on the prior context (including earlier
+subwords of the same spaCy token). This holds identically whether the
+backend is GPT-2 or a Llama-3 variant.</p>
+</section><section id="x-models"><a id="models"></a><h2><span class="num">6.1.10.6</span>Models</h2><p>Surprisal is available for every model in the roster
+(<code>sensi/extractors/predictability_models.py</code>): <strong>GPT-2</strong> (<code>gpt2</code>, free, no
+token, CPU-capable baseline) and three gated <strong>Llama-3</strong> variants
+(<code>llama32_3b</code>, <code>llama3_8b</code>, <code>llama3_70b</code>) that need a HuggingFace token</p>
+<ul>
+<li>accepted license — see <strong><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/docs/features/llm_credentials.md">LLM access &amp; credentials</a></strong>.
+Pick one or several from the GUI's Predictability card's model
+multi-select; each selected model is scored once per stimulus and
+contributes its own <code>&lt;slug&gt;_Surprisal</code> column when the Surprisal metric
+checkbox is on. Better/larger LMs generally produce surprisal estimates
+that predict reading time and neural responses more tightly than
+GPT-2's (see <em>EEG rationale</em> below); GPT-2 is retained as a free,
+always-available baseline and for cross-study comparability with the
+pre-unification <code>Surprisal</code> column.</li>
+</ul>
+</section><section id="code"><a id="implementation-in-sensiextractor"></a><h2><span class="num">6.1.10.7</span>In the code</h2><div class="card"><div class="card-title">Open in GitHub</div><ul><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/extractors/predictability.py#L35"><code>sensi/extractors/predictability.py → add_predictability()</code></a></li><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/extractors/predictability_models.py"><code>sensi/extractors/predictability_models.py</code></a></li></ul></div><p>Source: <code>sensi/extractors/predictability.py:add_predictability</code> (the unified,
+roster-driven extractor; it replaced the old per-model
+<code>extractors/surprisal.py</code> / <code>extractors/llm_cloze.py</code>, both removed on
+2026-07-11); long-text handling is in
+<code>_chunk_slices</code> / <code>_HuggingFaceBackend.score</code>.</p>
+<p><strong>This also produces</strong> <a href="../../features/word/pred_cloze.html"><code>Cloze</code></a> and
+<a href="../../features/word/pred_topmatch.html"><code>TopMatch</code></a> from the same forward pass per model —
+they're three views of the same per-token prediction. Enabling any of
+the three metrics for a given model triggers that model's scoring
+pass; cost (and runtime) for that model is the same whether you enable
+one or all three of its metrics.</p>
+<h3 id="what-each-words-surprisal-is-conditioned-on">What each word's surprisal is conditioned on</h3>
+<p>Each word <code>wᵢ</code> is scored against the model's distribution over the
+next token <strong>conditioned on its own preceding text</strong> <code>w₁ … wᵢ₋₁</code> —
+exactly the per-word, growing-prefix recipe the metric is defined by.</p>
+<p>Because every roster model has <strong>causal (left-only) attention</strong>, one
+forward pass over a span of subwords already produces a <em>separate</em>
+next-token distribution at every position, each conditioned only on
+the tokens to its left. So feeding the model <code>w₁ … w_N</code> once is
+equivalent to running it <code>N</code> times with prefixes of growing length —
+just faster. The per-position distributions are independent: nothing
+is pooled across positions.</p>
+<p>For the <strong>very first</strong> word of the document there is no preceding
+text to condition on; the extractor stores <code>NaN</code> (not a meaningful
+surprisal — those rows are dropped or skipped in regressions).</p>
+<h3 id="short-transcripts-fit-the-models-context-window-exact">Short transcripts (fit the model's context window): exact</h3>
+<p>Every model has a hard architectural context limit
+(<code>model.config.max_position_embeddings</code>) — GPT-2's is 1024 subwords;
+the Llama-3.2-3B/8B/70B variants are 131072/8192/8192 (see
+<code>sensi/extractors/predictability_models.py</code>'s <code>native_ctx</code>). When the
+transcript tokenises to at or under that limit for the model in use,
+the whole document fits in one forward pass and every word's surprisal
+is conditioned on its complete natural preceding text. <strong>No
+approximation.</strong></p>
+<h3 id="long-transcripts-exceed-the-context-window-chunked-bounded-preceding-context">Long transcripts (exceed the context window): chunked, bounded preceding context</h3>
+<p>Podcast episodes and audiobook chapters routinely exceed a model's
+context window (most visibly GPT-2's 1024-subword limit, or the two
+8K-context Llama-3 models) and cannot fit in a single forward pass.
+<code>_HuggingFaceBackend.score</code> then walks the input via <code>_chunk_slices</code>
+with a stride of <code>window // 2</code>, where <code>window</code> is that model's context
+limit. Each forward pass takes one <code>window // 2</code>-subword chunk plus the
+immediately preceding <code>window // 2</code> subwords as left context — exactly
+<code>window</code> subwords, the most the model can hold. Only the logits for the
+chunk itself are kept; the prefix logits are discarded and re-computed
+(with a longer prefix) on the previous pass.</p>
+<p>For a transcript twice GPT-2's window (2000 subwords, <code>window = 1024</code>,
+<code>chunk = 512</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Chunk being scored</th>
+<th>Forward-pass input</th>
+<th>Preceding context the chunk's first subword sees</th>
+<th>Vs. ideal full-context</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>subwords 0 – 511</td>
+<td><code>input[0:512]</code></td>
+<td>none (grows naturally within chunk)</td>
+<td>identical</td>
+</tr>
+<tr>
+<td>subwords 512 – 1023</td>
+<td><code>input[0:1024]</code></td>
+<td>512 subwords (positions 0 – 511)</td>
+<td>identical</td>
+</tr>
+<tr>
+<td>subwords 1024 – 1535</td>
+<td><code>input[512:1536]</code></td>
+<td>512 subwords (positions 512 – 1023)</td>
+<td>positions 0 – 511 lost</td>
+</tr>
+<tr>
+<td>subwords 1536 – 1999</td>
+<td><code>input[1024:2000]</code></td>
+<td>512 subwords (positions 1024 – 1535)</td>
+<td>positions 0 – 1023 lost</td>
+</tr>
+</tbody>
+</table>
+<p>So every position past the first window is scored with <strong>between
+<code>window // 2</code> and <code>window - 1</code> preceding subwords</strong> of context,
+depending on where it sits inside its chunk. The earliest subwords
+drop out of view at every chunk boundary. This is the unavoidable cost
+of a fixed context window on long texts — <em>which</em> subwords to drop is
+the only choice.</p>
+<p>Scoring inside each chunk remains correct: causal attention guarantees
+each position's conditional distribution depends only on its own
+(possibly-truncated) left context.</p>
+<h3 id="per-model-context-size-optional-cap">Per-model context size (optional cap)</h3>
+<p>Each model row in the Predictability card has a <strong>context</strong> spinner:
+the maximum context (subwords) fed per forward pass, defaulting to the
+model's full native window (<code>native_ctx</code>). Lowering it makes the
+chunking above kick in sooner — each word conditions on less preceding
+text, which is <strong>faster and uses less memory on long stimuli</strong>, and
+lets you fix a common context length across models for comparability.
+The cap is clamped to <code>[128, native_ctx]</code> (helper
+<code>predictability_models.effective_context</code>); the effective window is
+<code>min(cap, model's real max)</code>, so it never exceeds what the model can
+hold. Stored per model in <code>prefs[&quot;predictability&quot;][&quot;context&quot;]</code> (a slug
+absent from the map = uncapped = the default).</p>
+<blockquote>
+<p>⚠️ Lowering a model's context <strong>changes</strong> the emitted <code>&lt;slug&gt;_Surprisal</code>
+/ <code>_Cloze</code> values for stimuli longer than the cap (each word sees less
+history) — by design, and only when you opt in. Leave it at the
+default to reproduce the full-context values.</p>
+</blockquote>
+<h3 id="why-a-window--2-stride">Why a <code>window // 2</code> stride</h3>
+<p>The stride trades preceding-context budget against forward-pass count:</p>
+<table>
+<thead>
+<tr>
+<th>Stride</th>
+<th>Forward passes for N subwords</th>
+<th>Minimum preceding context past the first window</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>window</code> (no overlap)</td>
+<td>≈ N / window</td>
+<td>0 subwords at every chunk boundary — first position of each chunk has no context, yielding spurious surprisal</td>
+</tr>
+<tr>
+<td><strong><code>window // 2</code> (current)</strong></td>
+<td>≈ N / (window / 2)</td>
+<td><code>window // 2</code> subwords</td>
+</tr>
+<tr>
+<td>1 (true sliding window)</td>
+<td>≈ N</td>
+<td><code>window - 1</code> subwords everywhere</td>
+</tr>
+</tbody>
+</table>
+<p>A 1-subword stride would maximise context but costs roughly <code>window / 2</code>× more passes than the current setting. A causal LM's per-token loss
+flattens well before its full context window is consumed, so the
+marginal accuracy gain from a smaller stride is small. The <code>window // 2</code> stride trades up to <code>window // 2 - 1</code> subwords of additional
+context for a <code>window // 2</code>× compute reduction. This is the same
+trade-off historically documented for GPT-2 alone (512-subword stride
+against its 1024-subword window); it now applies uniformly to every
+roster model via its own <code>window</code>.</p>
+<h3 id="step-by-step">Step by step</h3>
+<ol>
+<li><code>_get_backend</code> / <code>_cached_backend</code> lazily load an
+<code>AutoModelForCausalLM</code> + <code>AutoTokenizer</code> for the model's HuggingFace
+repo id (<code>gpt2</code> for the GPT-2 slug, <code>meta-llama/...</code> for the Llama
+slugs), cached process-wide per <code>hf_id</code> — a load costs minutes for
+the larger Llamas, so it happens once per run, shared across the
+word-level and document-level passes.</li>
+<li><code>_HuggingFaceBackend.score</code> tokenises the <strong>whole transcript</strong> with
+character offsets, so every subword carries a <code>(char_start, char_end)</code> span, and runs one forward pass (or the chunked sliding
+window above) to get per-subword log-probabilities and top-1
+predictions.</li>
+<li><code>map_tokens_to_subwords</code> walks the spaCy tokens in document order
+and assigns each subword to exactly ONE token — the first token
+whose character span it overlaps (a subword straddling a token
+boundary, e.g. <code>&quot;don&quot;</code> over spaCy <code>&quot;do&quot;</code> + <code>&quot;n't&quot;</code>, is never charged
+twice). Per-token log-probabilities are summed and converted to
+bits (<code>-Σ log_e P / log_e 2</code>) — the joint log-probability of the
+word; see <em>Math / linguistics</em>.</li>
+<li><code>add_predictability</code> writes the result to <code>&lt;slug&gt;_Surprisal</code> (and,
+if requested, <code>&lt;slug&gt;_Cloze</code> / <code>&lt;slug&gt;_TopMatch</code>) for each selected
+model.</li>
+<li>Rows with <code>upos == &quot;PUNCT&quot;</code> are masked to <code>NaN</code>.</li>
+<li>Scores are memoized per <code>(hf_id, text/tokens digest)</code>: when the
+word-level and document-level batches process the same stimulus in
+one run, each model runs its forward pass once and the second pass
+is a cache hit.</li>
+</ol>
+<p><strong>GPT-2 is pinned full-precision on CPU</strong> (<code>_FULL_PRECISION_CPU_HF_IDS</code>)
+— unlike the Llama models, it never loads 4-bit/fp16 on a GPU, so
+<code>gpt2_Surprisal</code> values match the historical GPT-2-only extractor
+bit-for-bit regardless of the machine's GPU availability.</p>
+<h3 id="why-design-notes">Why (design notes)</h3>
+<ul>
+<li><em><code>NaN</code> for the first word</em>: its first subword has no left context,
+so the model cannot assign it a probability. Emitting <code>0</code> bits there
+(the pre-2026-07 behavior) faked a &quot;perfectly predictable&quot; first
+word; <code>NaN</code> follows the pipeline-wide no-value convention. Any word
+whose subwords include position 0 is affected (i.e. exactly the
+document-initial word).</li>
+<li><em>PUNCT → <code>NaN</code></em>: language models do assign probabilities to
+punctuation, but ERP work on predictability is &quot;usually investigated
+on content words only&quot;, and in <a href="#frank-2015">Frank 2015</a> the surprisal effect on the
+N400 came mostly from content words; punctuation is not a separate item
+in those analyses. The mask is applied here so
+downstream code doesn't accidentally include punctuation rows;
+remove the mask in <code>add_predictability</code> if you specifically want
+punctuation surprisal.</li>
+<li><em>One backend implementation for every model</em>: GPT-2 loads through
+<code>AutoModelForCausalLM</code> exactly like the Llama models (it resolves to
+the same <code>GPT2LMHeadModel</code> class, identical weights/logits as the
+legacy direct-load code) — there is exactly one scoring path, used
+by every roster model, instead of a GPT-2-specific extractor and a
+separate LLM extractor.</li>
+</ul>
+</section><section id="library"><h2><span class="num">6.1.10.8</span>Library</h2><pre><code class="language-python">from transformers import AutoModelForCausalLM, AutoTokenizer
+import torch, math
+
+model_id = &quot;gpt2&quot;   # or e.g. &quot;meta-llama/Llama-3.2-3B&quot;
+tokenizer = AutoTokenizer.from_pretrained(model_id)
+model     = AutoModelForCausalLM.from_pretrained(model_id)
+model.eval()
+
+enc = tokenizer(&quot;The cat sat on the mat.&quot;, return_tensors=&quot;pt&quot;)
+with torch.no_grad():
+    logits = model(enc[&quot;input_ids&quot;]).logits[0]
+log_probs = torch.log_softmax(logits, dim=-1)
+# Surprisal of token i is -log2 P(token_i | tokens_0..i-1)
+ids = enc[&quot;input_ids&quot;][0].tolist()
+for i in range(1, len(ids)):
+    lp = log_probs[i - 1, ids[i]].item()
+    print(tokenizer.decode([ids[i]]), -lp / math.log(2), &quot;bits&quot;)
+</code></pre>
+</section><section id="eeg"><a id="eeg-rationale"></a><h2><span class="num">6.1.10.9</span>EEG rationale</h2><p>Surprisal is a well-replicated word-level predictor of <strong>N400
+amplitude</strong> in naturalistic reading and listening (<a href="#frank-2015">Frank 2015</a>,
+<a href="#michaelov-2024">Michaelov 2024</a>) and of <strong>reading time</strong> (<a href="#smith-2013">Smith 2013</a>,
+<a href="#goodkind-2018">Goodkind 2018</a>). Surprisal Theory (<a href="#hale-2001">Hale 2001</a>, <a href="#levy-2008">Levy 2008</a>) proposes
+that processing cost is <strong>linear in surprisal</strong> — equivalently,
+logarithmic in word probability. Each halving of a word's probability
+adds one bit to its surprisal and a fixed increment to processing
+cost, regardless of where on the probability scale the halving occurs.
+<a href="#michaelov-2024">Michaelov 2024</a> further shows that language-model surprisal explains
+N400 amplitude better than competing predictors such as cloze
+probability and distributional semantic similarity.</p>
+<p><a href="#heilbron-2022">Heilbron 2022</a> used GPT-2-derived surprisal specifically to predict
+EEG and source-localized MEG responses during naturalistic audiobook
+listening, dissociating syntactic, phonemic and semantic prediction
+signatures — the <code>gpt2_Surprisal</code> column is the one to use when
+reproducing analyses of that kind.</p>
+<p>Model quality matters, not just architecture: better LMs produce
+surprisal estimates that predict <strong>reading time</strong> more tightly
+(<a href="#goodkind-2018">Goodkind 2018</a>, <a href="#wilcox-2020">Wilcox 2020</a>) and predict more variance in
+fMRI / ECoG responses to language (<a href="#schrimpf-2021">Schrimpf 2021</a>, <a href="#goldstein-2022">Goldstein 2022</a>).
+Empirically, larger / better LMs improve N400 prediction up to a point
+and then plateau (<a href="#schrimpf-2021">Schrimpf 2021</a>, <a href="#caucheteux-2022">Caucheteux 2022</a>) — enabling both a
+small and a large model on the same run lets you study how estimator
+quality affects your specific neural fit, rather than assuming a
+larger model is automatically better for your data.</p>
+</section><section id="papers"><h2><span class="num">6.1.10.10</span>Papers</h2><p><strong>Surprisal theory:</strong></p>
+<ul>
+<li><a name="hale-2001"></a><strong><a href="#hale-2001">Hale 2001</a></strong> Hale. <em>A probabilistic Earley parser as a psycholinguistic model.</em> NAACL 2001. <a href="https://aclanthology.org/N01-1021/">PDF</a> — introduces surprisal as a cognitive complexity metric.</li>
+<li><a name="levy-2008"></a><strong><a href="#levy-2008">Levy 2008</a></strong> Levy. <em>Expectation-based syntactic comprehension.</em> Cognition. <a href="https://doi.org/10.1016/j.cognition.2007.05.006">doi:10.1016/j.cognition.2007.05.006</a> — surprisal theory formalized; linearity prediction.</li>
+</ul>
+<p><strong>Surprisal ↔ N400 / reading time:</strong></p>
+<ul>
+<li><a name="smith-2013"></a><strong><a href="#smith-2013">Smith 2013</a></strong> Smith &amp; Levy. <em>The effect of word predictability on reading time is logarithmic.</em> Cognition 128(3), 302–319. <a href="https://doi.org/10.1016/j.cognition.2013.02.013">doi:10.1016/j.cognition.2013.02.013</a> — empirical support for the linear-surprisal prediction in reading time.</li>
+<li><a name="frank-2015"></a><strong><a href="#frank-2015">Frank 2015</a></strong> Frank, Otten, Galli, Vigliocco. <em>The ERP response to the amount of information conveyed by words in sentences.</em> Brain &amp; Language 140, 1–11. <a href="https://doi.org/10.1016/j.bandl.2014.10.006">doi:10.1016/j.bandl.2014.10.006</a> — N400 amplitude ∝ surprisal in sentence reading.</li>
+<li><a name="goodkind-2018"></a><strong><a href="#goodkind-2018">Goodkind 2018</a></strong> Goodkind &amp; Bicknell. <em>Predictive power of word surprisal for reading times is a linear function of language model quality.</em> CMCL 2018, 10–18. <a href="https://aclanthology.org/W18-0102/">ACL Anthology W18-0102</a> — better LMs give better surprisal estimates for reading time.</li>
+<li><a name="michaelov-2024"></a><strong><a href="#michaelov-2024">Michaelov 2024</a></strong> Michaelov, Bardolph, Van Petten, Bergen, Coulson. <em>Strong Prediction: Language Model Surprisal Explains Multiple N400 Effects.</em> Neurobiology of Language 5(1), 107–135. <a href="https://doi.org/10.1162/nol_a_00105">doi:10.1162/nol_a_00105</a> — direct comparison: LM surprisal explains N400 amplitude better than cloze probability or distributional semantic similarity.</li>
+</ul>
+<p><strong>Naturalistic EEG/MEG using GPT-2 surprisal:</strong></p>
+<ul>
+<li><a name="heilbron-2022"></a><strong><a href="#heilbron-2022">Heilbron 2022</a></strong> Heilbron, Armeni, Schoffelen, Hagoort, De Lange. <em>A hierarchy of linguistic predictions during natural language comprehension.</em> PNAS 119(32), e2201968119. <a href="https://doi.org/10.1073/pnas.2201968119">doi:10.1073/pnas.2201968119</a> — GPT-2 surprisal regressed against EEG and source-localized MEG during naturalistic audiobook listening; dissociates syntactic, phonemic, and semantic prediction signatures.</li>
+</ul>
+<p><strong>Surprisal ↔ LM quality:</strong></p>
+<ul>
+<li><a name="wilcox-2020"></a><strong><a href="#wilcox-2020">Wilcox 2020</a></strong> Wilcox, Gauthier, Hu, Qian, Levy. <em>On the Predictive Power of Neural Language Models for Human Real-Time Comprehension Behavior.</em> CogSci 2020. <a href="https://arxiv.org/abs/2006.01912">arXiv:2006.01912</a> — across architectures, better next-word prediction correlates with stronger prediction of human reading times and eye movements.</li>
+</ul>
+<p><strong>Modern LM ↔ neural data:</strong></p>
+<ul>
+<li><a name="schrimpf-2021"></a><strong><a href="#schrimpf-2021">Schrimpf 2021</a></strong> Schrimpf et al. <em>The neural architecture of language: Integrative modeling converges on predictive processing.</em> PNAS. <a href="https://doi.org/10.1073/pnas.2105646118">doi:10.1073/pnas.2105646118</a></li>
+<li><a name="caucheteux-2022"></a><strong><a href="#caucheteux-2022">Caucheteux 2022</a></strong> Caucheteux &amp; King. <em>Brains and algorithms partially converge in natural language processing.</em> Communications Biology. <a href="https://doi.org/10.1038/s42003-022-03036-1">doi:10.1038/s42003-022-03036-1</a></li>
+<li><a name="goldstein-2022"></a><strong><a href="#goldstein-2022">Goldstein 2022</a></strong> Goldstein et al. <em>Shared computational principles for language processing in humans and deep language models.</em> Nature Neuroscience. <a href="https://doi.org/10.1038/s41593-022-01026-4">doi:10.1038/s41593-022-01026-4</a></li>
+</ul>
+</section>
+      <nav class="pager">
+        <a class="prev" href="../../features/word/edu_zipf.html"><small>Previous</small>Educator's Word Frequency Guide (EWFG) grade-band frequencies</a>
+        <a class="next" href="../../features/word/pred_cloze.html"><small>Next</small>Cloze probability</a>
+      </nav>
+      <footer>SensiExtractor User Manual · built 2026-10-27 from commit e0b7600 · source: <a href="https://github.com/edneuro/SENSI-Speech-Features">edneuro/SENSI-Speech-Features</a></footer>
+    </div>
+  </main>
+  <aside class="right" aria-label="On this page">
+    <div class="label">On this page</div>
+    <ul><li><a href="#what">What it is</a></li><li><a href="#see">See it</a></li><li><a href="#output">In your output</a></li><li><a href="#matlab">MATLAB</a></li><li><a href="#computed">How it's computed</a></li><li><a href="#x-models">Models</a></li><li><a href="#code">In the code</a></li><li><a href="#library">Library</a></li><li><a href="#eeg">EEG rationale</a></li><li><a href="#papers">Papers</a></li></ul>
+    <div class="meta"><div><b>Key</b> <code>pred_surprisal</code></div><div><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/docs/features/pred_surprisal.md">This page’s source text</a> (also the app’s ⓘ pop-up)</div></div>
+  </aside>
+</div>
+<script src="../../assets/search-index.js"></script>
+<script src="../../assets/manual.js"></script>
+</body>
+</html>

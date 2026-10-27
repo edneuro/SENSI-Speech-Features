@@ -133,6 +133,7 @@ def word_timeline(df, stem, examples_dir, out, title, show_gaps=False):
         ax.plot(t[m], y[m] / (np.abs(y).max() or 1), color=GREY_LIGHT, lw=.5)
     for i, r in d.iterrows():
         ax.axvspan(r["Onset"], r["End"], ymin=.06, ymax=.94, color=ACCENT if i % 2 == 0 else ACCENT_DARK, alpha=.18, lw=0)
+        ax.axvline(r["Onset"], ymin=.06, ymax=.94, color=ACCENT_DARK, lw=.6, alpha=.7)
         ax.text((r["Onset"] + r["End"]) / 2, 1.08 if i % 2 == 0 else -1.18, r["token"], ha="center", fontsize=7.5,
                 color=TEXT)
     if show_gaps and "Word_Gap" in d:
@@ -170,6 +171,7 @@ def syllable_timeline(df, stem, examples_dir, out, title, pcenter=False):
         ax.plot(t[m], y[m] / (np.abs(y).max() or 1), color=GREY_LIGHT, lw=.5)
     for i, (_, r) in enumerate(d.iterrows()):
         ax.axvspan(r["Onset"], r["End"], ymin=.08, ymax=.92, color=ACCENT if i % 2 == 0 else ACCENT_DARK, alpha=.18, lw=0)
+        ax.axvline(r["Onset"], ymin=.08, ymax=.92, color=ACCENT_DARK, lw=.6, alpha=.7)
         ax.text((r["Onset"] + r["End"]) / 2, 1.1 if i % 2 == 0 else -1.22, str(r["Label"]), ha="center", fontsize=7.5)
         if pcenter and r.get("P_Center") == r.get("P_Center"):
             ax.plot([r["P_Center"]] * 2, [-.85, .85], color=SECOND, lw=1.4)
@@ -372,9 +374,12 @@ def char_offsets_html(df) -> str:
 def dependency_svg(df, out: Path, title) -> None:
     d = first_sentence(df).reset_index(drop=True)
     n = len(d)
-    xs = np.arange(n) * 1.0
-    fig, ax = plt.subplots(figsize=(max(8.6, n * .55), 3.0))
+    # space tokens by their length so long words don't collide
+    w = np.array([max(len(str(t)), 3) for t in d["token"]], dtype=float) * .13 + .35
+    xs = np.cumsum(w) - w / 2
+    fig, ax = plt.subplots(figsize=(max(8.6, xs[-1] * .62), 3.6))
     tid = dict(zip(d["token_in_sentence_id"], xs))
+    top = 2.0
     for x, (_, r) in zip(xs, d.iterrows()):
         ax.text(x, 0, r["token"], ha="center", va="top", fontsize=8.5)
         ax.text(x, -.42, r["upos"], ha="center", va="top", fontsize=6.5, color=GREY)
@@ -393,6 +398,7 @@ def dependency_svg(df, out: Path, title) -> None:
         ax.plot(px, py, color=ACCENT_DARK, lw=.9)
         ax.annotate("", xy=(x, .12), xytext=(px[-3], py[-3]), arrowprops=dict(arrowstyle="->", color=ACCENT_DARK, lw=.9))
         ax.text(mid, .12 + height + .03, r["dep_rel"], ha="center", fontsize=6.5, color=ACCENT_DARK)
-    ax.set_xlim(-.7, n - .3); ax.set_ylim(-.8, max(2.0, .12 + .35 + .28 * n * .6)); ax.axis("off")
+        top = max(top, .12 + height + .35)
+    ax.set_xlim(-.4, xs[-1] + w[-1] / 2); ax.set_ylim(-.8, top); ax.axis("off")
     ax.set_title(title, loc="left")
     _save(fig, out)

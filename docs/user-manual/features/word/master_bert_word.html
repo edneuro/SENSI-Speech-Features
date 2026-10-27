@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BERT contextual word embeddings · SensiExtractor User Manual</title>
+<link rel="icon" href="../../assets/icon.svg">
+<link rel="stylesheet" href="../../assets/theme.css">
+<link rel="stylesheet" href="../../assets/layout.css">
+<link rel="stylesheet" href="../../assets/code.css">
+</head>
+<body data-root="../../">
+<button class="menu-btn" type="button" aria-label="Open the outline">☰ Contents</button>
+<div class="shell">
+  <nav class="left" aria-label="Manual outline">
+    <a class="brand" href="../../index.html"><img src="../../assets/icon.svg" alt="">SensiExtractor <span>User Manual</span></a>
+    <div class="search">
+      <input type="search" placeholder="Search features, columns…  ( / )" aria-label="Search the manual">
+      <div class="search-results" role="listbox"></div>
+    </div>
+    <div class="outline"><ul><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../index.html"><span class="num">1</span>Introduction</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/requirements.html"><span class="num">2</span>Requirements</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/installation.html"><span class="num">3</span>Installation</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/usage.html"><span class="num">4</span>Using the app</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/sherlock.html"><span class="num">5</span>Running on Sherlock</a></div></li><li class="chapter open"><div class="row"><button class="toggle" type="button" aria-expanded="true" aria-label="Show or hide Features">▶</button><a href="../../features/index.html"><span class="num">6</span>Features</a></div><ul><li class="open"><div class="row"><button class="toggle" type="button" aria-expanded="true" aria-label="Show or hide Word level">▶</button><a href="../../features/word/index.html"><span class="num">6.1</span>Word level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/structural_ids.html">Structural identifier columns</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/structural_offsets.html">Structural character offsets</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/feat_struct_sentence_text.html">Sentence text</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexling_tokens.html">Tokens and lemmas</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexling_pos.html">Part-of-speech tags</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexling_morph.html">Morphological features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexling_dep.html">Dependency parse</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/freq_subtlex.html">Word frequency (Zipf, wordfreq)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/edu_zipf.html">Educator&#x27;s Word Frequency Guide (EWFG) grade-band frequencies<span class="tag" title="Not computed in this manual">◇</span></a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/pred_surprisal.html">Surprisal</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/pred_cloze.html">Cloze probability</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/pred_topmatch.html">Top-1 prediction match</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/sem_indicators.html">Semantic-domain category indicators</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/master_word2vec.html">Word2Vec static word embeddings</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/master_bert_word.html" class="current">BERT contextual word embeddings</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexical_norms.html">Lexical norms (AoA, concreteness, imageability, familiarity, VAD)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/acoustic_boundaries.html">Acoustic word boundaries (MFA)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/acoustic_durations.html">Acoustic word duration and gap</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/prosody_pitch.html">Word-level pitch features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/prosody_volume.html">Word-level volume (intensity) features</a></div></li></ul></li><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Document level">▶</button><a href="../../features/document/index.html"><span class="num">6.2</span>Document level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_counts.html">Document-level count columns</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_aggregates.html">Word-level feature aggregates</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/output_doc_lex_diversity.html">Lexical diversity (TTR + MTLD)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/output_doc_readability.html">Readability (Flesch Reading Ease + Flesch–Kincaid Grade Level)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/output_doc_category_proportions.html">Document-level category proportions</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_psych_composite.html">Composite psychological scores (LIWC-style summary variables)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_prosody_pitch.html">Document-level pitch summaries</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_prosody_volume.html">Document-level volume (intensity) summaries</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_prosody_pauses.html">Document-level pause statistics</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/feat_doc_prosody_articulation_rate.html">Articulation rate</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/feat_doc_prosody_hnr.html">Document-level Harmonics-to-Noise Ratio (HNR)</a></div></li></ul></li><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Sub-word level">▶</button><a href="../../features/subword/index.html"><span class="num">6.3</span>Sub-word level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/syllable_timing.html">Syllable timing (Onset / End / Duration)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/syllable_labels.html">Syllable labels (orthographic + ARPABET + IPA)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/syllable_prosody.html">Syllable-level prosody (pitch + volume + deltas)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/feat_syllable_pcenter.html">Perceptual centre (P-center)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/phoneme.html">Phoneme-level columns</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/feat_phoneme_ipa.html">IPA phoneme symbol</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/g2p_oov.html">Out-of-dictionary words (MFA G2P)<span class="tag" title="Not computed in this manual">◇</span></a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/phoneme_surprisal.html">Phoneme surprisal + cohort entropy</a></div></li></ul></li><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Sentence level">▶</button><a href="../../features/sentence/index.html"><span class="num">6.4</span>Sentence level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/sentence_timing.html">Sentence timing</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/sentence_prosody_pitch.html">Sentence-level pitch features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/sentence_prosody_volume.html">Sentence-level volume (intensity) features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/feat_sentence_hnr.html">Sentence-level Harmonics-to-Noise Ratio (HNR)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/master_bert_sentence.html">BERT contextual sentence embeddings</a></div></li></ul></li><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Acoustic level">▶</button><a href="../../features/acoustic/index.html"><span class="num">6.5</span>Acoustic level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/acoustic/acoustic_envelope.html">Amplitude envelope (broadband)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/acoustic/acoustic_onset_envelope.html">Onset envelope (HWR derivative)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/acoustic/acoustic_logmel.html">Log-mel spectrogram</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/acoustic/acoustic_mfcc.html">MFCC (Mel-frequency cepstral coefficients)</a></div></li></ul></li></ul></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/outputs.html"><span class="num">7</span>Outputs reference</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../references.html"><span class="num">8</span>References</a></div></li></ul></div>
+  </nav>
+  <main>
+    <div class="content">
+      <div class="crumbs"><a href="../../features/index.html">Features</a> › <a href="../../features/word/index.html">Word level</a></div>
+      <h1><span class="num">6.1.15</span>BERT contextual word embeddings</h1><p class="lede">A 768-dimensional vector per word, emitted at every one of BERT&#x27;s 12 transformer layers.</p><div class="facts"><span class="chip">App: <b>Word-level features</b> → <b>Semantic similarity</b></span><span class="chip">Output: <b>word/&lt;stim&gt;_bert_word.mat</b></span><span class="chip">Libraries: <b>transformers, torch</b></span></div><section id="what"><a id="meaning"></a><h2><span class="num">6.1.15.1</span>What it is</h2><p>A 768-dimensional vector per word, emitted at every one of BERT's 12
+transformer layers. Output shape: <code>(n_words, 12, 768)</code>. Each word's vector
+encodes its meaning <em>in context</em> — the same surface word (&quot;bank&quot;) receives
+different vectors in &quot;river bank&quot; vs. &quot;savings bank&quot;.</p>
+</section><section id="see"><h2><span class="num">6.1.15.2</span>See it</h2><div class="card"><div class="caption">Example <b>LJ002-0321</b> (LJ Speech, public domain): “Others who arrived just after the time of distribution were often 48 hours without food. The latter might also be six days without meat.”</div><audio controls preload="none" src="../../assets/audio/LJ002-0321.wav"></audio><div ><figure><img src="../../assets/figures/master_bert_word.svg" alt="BERT contextual word embeddings — Default settings" loading="lazy"></figure><figcaption>BERT contextual word embeddings — Default settings</figcaption><div class="provenance">Read from <span class='file'>word/LJ002-0321_bert_word.mat</span>, written by SensiExtractor on the example below. Nothing on this figure is typed in.</div></div></div></section><section id="output"><h2><span class="num">6.1.15.3</span>In your output</h2><div class="card"><div class="card-title">File <span class="file">word/&lt;stim&gt;_bert_word.mat</span></div><table class="excerpt vars"><thead><tr><th>variable</th><th>size</th><th>MATLAB class</th></tr></thead><tbody><tr><td><code>embeddings</code></td><td>26 × 12 × 768</td><td>single</td></tr><tr><td><code>tokens</code></td><td>1 × 26</td><td>cell</td></tr><tr><td><code>word_id</code></td><td>1 × 26</td><td>int64</td></tr><tr><td><code>sentence_id</code></td><td>1 × 26</td><td>int64</td></tr><tr><td><code>is_valid</code></td><td>1 × 26</td><td>uint8</td></tr></tbody></table><div class="provenance">Excerpt of the real file for <b>LJ002-0321</b>.</div></div></section><section id="matlab"><h2><span class="num">6.1.15.4</span>MATLAB</h2><div class="card" data-tabs><div class="tabpanel on"><pre data-copy><code>S = load(&#x27;word/LJ002-0321_bert_word.mat&#x27;);
+whos(&#x27;-file&#x27;, &#x27;word/LJ002-0321_bert_word.mat&#x27;)                % variables, sizes, classes
+
+size(S.embeddings)                         % words x 12 layers x 768 (single)
+L = 9;                                     % pick a layer
+E = squeeze(S.embeddings(S.is_valid == 1, L, :));
+En = E ./ vecnorm(E, 2, 2);
+imagesc(En * En&#x27;); axis square; colorbar   % cosine similarity at layer L
+</code></pre></div><div class="caption">Run from the output folder. Variable and column names were checked against the real files when this manual was built; the code itself was not run in MATLAB.</div></div></section><section id="computed"><a id="math--linguistics"></a><h2><span class="num">6.1.15.5</span>How it&#x27;s computed</h2><p>Each layer's vector is the mean of the contextual subword embeddings
+that BERT's WordPiece tokenizer produced for that word. For a word <code>w</code>
+that tokenizes into subwords <code>s_1, …, s_k</code> at layer <code>ℓ</code>:</p>
+<pre><code>h_ℓ(w) = mean(h_ℓ(s_1), …, h_ℓ(s_k))
+</code></pre>
+<p>The hidden state <code>h_ℓ(s_i)</code> is the output of layer <code>ℓ</code>'s self-attention +
+feed-forward block, which incorporates information from all other tokens
+in the same input window via attention.</p>
+</section><section id="x-example"><a id="example"></a><h2><span class="num">6.1.15.6</span>Example</h2><pre><code class="language-python">import torch
+
+words = [&quot;The&quot;, &quot;cat&quot;, &quot;sat&quot;, &quot;on&quot;, &quot;the&quot;, &quot;mat&quot;]
+enc   = tokenizer(words, is_split_into_words=True, return_tensors=&quot;pt&quot;)
+with torch.no_grad():
+    out = model(**enc)
+
+# out.hidden_states[0] is the embedding layer; [1:] are the 12 transformer layers
+layers = torch.stack(out.hidden_states[1:])     # (12, 1, seq_len, 768)
+layers = layers.squeeze(1).permute(1, 0, 2)     # (seq_len, 12, 768)
+
+# Mean-pool subwords belonging to each word
+word_ids = enc.word_ids()
+word_vecs = []
+for w in range(len(words)):
+    positions = [i for i, wid in enumerate(word_ids) if wid == w]
+    word_vecs.append(layers[positions].mean(dim=0))
+</code></pre>
+</section><section id="code"><a id="implementation-in-sensiextractor"></a><h2><span class="num">6.1.15.7</span>In the code</h2><div class="card"><div class="card-title">Open in GitHub</div><ul><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/extractors/bert_embed.py"><code>sensi/extractors/bert_embed.py</code></a></li></ul></div><p>Source: <code>sensi/extractors/bert_embed.py</code>.</p>
+<p><strong>What the code does</strong> (verified against the source):</p>
+<ol>
+<li>Outer loop is <strong>per sentence</strong> (sentence IDs from spaCy via the
+word-level CSV).</li>
+<li>For each sentence, BERT input is built as
+<code>[preceding-sentences-context] + [current-sentence-content-words]</code>,
+where the context is grown by <strong>prepending complete preceding
+sentences</strong> (oldest dropped first) as long as the total stays within
+the <strong>510-token effective limit</strong> (512 minus <code>[CLS]</code> / <code>[SEP]</code>).
+Preceding sentences are never split mid-way.</li>
+<li><strong>PUNCT tokens are excluded from BERT input</strong> entirely (the spaCy
+<code>upos == &quot;PUNCT&quot;</code> mask is applied before tokenization).</li>
+<li>A single forward pass runs on the resulting window
+(<code>is_split_into_words=True</code>, <code>truncation=True</code> as a safety net).</li>
+<li>For each target-sentence word, the WordPiece subwords belonging to it
+are <strong>mean-pooled</strong> at each layer to produce a single <code>(12, 768)</code>
+vector. Output rows for PUNCT words stay as zero vectors.</li>
+<li><strong>All 12 transformer layers</strong> are emitted —
+<code>hidden_states[1:13]</code>, skipping the embedding layer at index 0.</li>
+<li>The sentence-level sidecar (<code>&lt;stim&gt;_bert_sentence.mat</code>) is the
+mean-pool of the non-PUNCT word embeddings within each sentence, at
+each layer.</li>
+<li>The extractor returns word- and sentence-level validity masks
+(<code>word_valid</code>, <code>sent_valid</code>) alongside the matrices; both are written
+to the <code>.mat</code> as <code>is_valid</code>. For the word level, a row is valid iff it
+is a non-PUNCT word that was embedded (PUNCT rows, and any word in a
+skipped window, stay zero + invalid).</li>
+</ol>
+<p><strong>Output <code>.mat</code> fields</strong> — flat top-level variables (not a nested struct),
+so <code>embeddings</code> stays backward-compatible:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Shape</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>embeddings</code></td>
+<td><code>(n_words, 12, 768)</code> float32</td>
+<td>per-layer vectors, row-aligned to the word CSV</td>
+</tr>
+<tr>
+<td><code>tokens</code></td>
+<td><code>{n_words}</code> cellstr</td>
+<td>surface token per row</td>
+</tr>
+<tr>
+<td><code>word_id</code></td>
+<td><code>(n_words,)</code> int</td>
+<td>the word CSV <code>token_id</code> (global token index)</td>
+</tr>
+<tr>
+<td><code>sentence_id</code></td>
+<td><code>(n_words,)</code> int</td>
+<td>spaCy sentence id</td>
+</tr>
+<tr>
+<td><code>is_valid</code></td>
+<td><code>(n_words,)</code> logical</td>
+<td>False for PUNCT (zero rows)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Why:</strong></p>
+<ul>
+<li><em>Left-context, sentence-complete sliding window</em> is the chosen
+fix for the 512-token cap.</li>
+<li><em>PUNCT excluded from input</em> — BERT's WordPiece doesn't represent punctuation semantically, and including PUNCT tokens
+perturbs attention over content words.</li>
+<li><em>All 12 layers emitted</em> —
+<code>hidden_states[1:13]</code>; the choice of layer for downstream EEG
+prediction is left to the analyst.</li>
+</ul>
+<p><strong>Alternatives that were <em>not</em> chosen</strong> (for reader context):</p>
+<table>
+<thead>
+<tr>
+<th>Approach</th>
+<th>Why we didn't pick it</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Hard truncation at 512 tokens</td>
+<td>Drops the tail of every long passage.</td>
+</tr>
+<tr>
+<td>Fixed-stride sliding window (e.g. 256 stride / 512 window)</td>
+<td>Heavy overlap, ~2× compute, harder to attribute a vector to a specific word position.</td>
+</tr>
+<tr>
+<td>Sentence-by-sentence with no prior context</td>
+<td>Loses cross-sentence semantic continuity, which is a large part of why contextual embeddings predict EEG/MEG well in the first place (<a href="#toneva-2019">Toneva 2019</a>).</td>
+</tr>
+<tr>
+<td>Pool layers in-extractor (e.g. mean of layers 9–12)</td>
+<td>Smaller file but discards per-layer signal the downstream analyst may want.</td>
+</tr>
+<tr>
+<td>Bidirectional (left + right) context</td>
+<td>Each word's vector would depend on words the listener has not heard yet, so it would mix information from after the word into a predictor of the brain's response at that word.</td>
+</tr>
+</tbody>
+</table>
+</section><section id="library"><h2><span class="num">6.1.15.8</span>Library</h2><pre><code class="language-python">from transformers import BertTokenizerFast, BertModel
+tokenizer = BertTokenizerFast.from_pretrained(&quot;bert-base-uncased&quot;)
+model     = BertModel.from_pretrained(&quot;bert-base-uncased&quot;, output_hidden_states=True)
+</code></pre>
+</section><section id="eeg"><a id="eeg-rationale"></a><h2><span class="num">6.1.15.9</span>EEG rationale</h2><p>Contextual embeddings predict word-level neural responses to
+naturalistic language with high explained variance. Comparative
+benchmarks of dozens of language models against fMRI and ECoG show
+transformer models outperforming static baselines (<a href="#schrimpf-2021">Schrimpf 2021</a>);
+per-layer analyses identify different best-layers per ROI for
+MEG/EEG-style word-by-word data (<a href="#toneva-2019">Toneva 2019</a>); and intracranial
+ECoG recordings of audiobook listening show that the human brain and
+autoregressive transformer models share contextual-prediction
+computations during natural language processing (<a href="#goldstein-2022">Goldstein 2022</a>).
+The brain processes meaning relative to the unfolding sentence, not
+relative to a corpus-averaged sense, so a vector that encodes the
+in-context meaning of &quot;bank&quot; is a better regressor for the N400 than
+a single static vector.</p>
+<p>The 12-layer stack is shipped intact rather than pre-pooled because
+layer choice matters and is task-dependent. BERT's layers encode a
+rough linguistic hierarchy — surface form and POS in early layers,
+syntactic structure in middle layers, semantic and discourse-level
+information in late layers (<a href="#tenney-2019">Tenney 2019</a>, <a href="#rogers-2020">Rogers 2020</a>) — and the
+optimal layer for predicting EEG signal is itself an empirical question
+(<a href="#toneva-2019">Toneva 2019</a> sweep across layers and report different best-layer per
+ROI). Pre-pooling would discard that signal.</p>
+</section><section id="papers"><h2><span class="num">6.1.15.10</span>Papers</h2><p><strong>Model:</strong></p>
+<ul>
+<li><a name="devlin-2019"></a><strong><a href="#devlin-2019">Devlin 2019</a></strong> Devlin, Chang, Lee, Toutanova. <em>BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding.</em> NAACL 2019. <a href="https://arxiv.org/abs/1810.04805">arXiv:1810.04805</a></li>
+</ul>
+<p><strong>BERTology — what the layers encode:</strong></p>
+<ul>
+<li><a name="tenney-2019"></a><strong><a href="#tenney-2019">Tenney 2019</a></strong> Tenney, Das, Pavlick. <em>BERT Rediscovers the Classical NLP Pipeline.</em> ACL 2019. <a href="https://arxiv.org/abs/1905.05950">arXiv:1905.05950</a></li>
+<li><a name="rogers-2020"></a><strong><a href="#rogers-2020">Rogers 2020</a></strong> Rogers, Kovaleva, Rumshisky. <em>A Primer in BERTology: What We Know About How BERT Works.</em> TACL 2020. <a href="https://arxiv.org/abs/2002.12327">arXiv:2002.12327</a></li>
+</ul>
+<p><strong>Contextual embeddings ↔ brain:</strong></p>
+<ul>
+<li><a name="toneva-2019"></a><strong><a href="#toneva-2019">Toneva 2019</a></strong> Toneva &amp; Wehbe. <em>Interpreting and improving natural-language processing (in machines) with natural language-processing (in the brain).</em> NeurIPS 2019. <a href="https://arxiv.org/abs/1905.11833">arXiv:1905.11833</a> — per-layer fMRI/MEG alignment; demonstrates that the best layer differs by ROI and that contextual depth improves brain prediction.</li>
+<li><a name="schrimpf-2021"></a><strong><a href="#schrimpf-2021">Schrimpf 2021</a></strong> Schrimpf, Blank, Tuckute, Kauf, Hosseini, Kanwisher, Tenenbaum, Fedorenko. <em>The neural architecture of language: Integrative modeling converges on predictive processing.</em> PNAS 2021. <a href="https://doi.org/10.1073/pnas.2105646118">doi:10.1073/pnas.2105646118</a></li>
+<li><a name="goldstein-2022"></a><strong><a href="#goldstein-2022">Goldstein 2022</a></strong> Goldstein et al. <em>Shared computational principles for language processing in humans and deep language models.</em> Nature Neuroscience 25(3), 369–380. <a href="https://doi.org/10.1038/s41593-022-01026-4">doi:10.1038/s41593-022-01026-4</a> — ECoG (9 participants, 30-min podcast) demonstrating that brain responses and autoregressive transformer models share next-word prediction, prediction-error encoding, and contextual-embedding-based representation of words.</li>
+</ul>
+</section>
+      <nav class="pager">
+        <a class="prev" href="../../features/word/master_word2vec.html"><small>Previous</small>Word2Vec static word embeddings</a>
+        <a class="next" href="../../features/word/lexical_norms.html"><small>Next</small>Lexical norms (AoA, concreteness, imageability, familiarity, VAD)</a>
+      </nav>
+      <footer>SensiExtractor User Manual · built 2026-10-27 from commit e0b7600 · source: <a href="https://github.com/edneuro/SENSI-Speech-Features">edneuro/SENSI-Speech-Features</a></footer>
+    </div>
+  </main>
+  <aside class="right" aria-label="On this page">
+    <div class="label">On this page</div>
+    <ul><li><a href="#what">What it is</a></li><li><a href="#see">See it</a></li><li><a href="#output">In your output</a></li><li><a href="#matlab">MATLAB</a></li><li><a href="#computed">How it's computed</a></li><li><a href="#x-example">Example</a></li><li><a href="#code">In the code</a></li><li><a href="#library">Library</a></li><li><a href="#eeg">EEG rationale</a></li><li><a href="#papers">Papers</a></li></ul>
+    <div class="meta"><div><b>Key</b> <code>master_bert_word</code></div><div><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/docs/features/master_bert_word.md">This page’s source text</a> (also the app’s ⓘ pop-up)</div></div>
+  </aside>
+</div>
+<script src="../../assets/search-index.js"></script>
+<script src="../../assets/manual.js"></script>
+</body>
+</html>
