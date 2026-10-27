@@ -23,6 +23,7 @@
   <main>
     <div class="content">
       <div class="crumbs"><a href="../../features/index.html">Features</a> › <a href="../../features/word/index.html">Word level</a></div>
+      <details class="toc-inline"><summary>On this page</summary><ul><li><a href="#what">What it is</a></li><li><a href="#see">See it</a></li><li><a href="#output">In your output</a></li><li><a href="#matlab">MATLAB</a></li><li><a href="#computed">How it's computed</a></li><li><a href="#x-models">Models</a></li><li><a href="#code">In the code</a></li><li><a href="#library">Library</a></li><li><a href="#eeg">EEG rationale</a></li><li><a href="#papers">Papers</a></li></ul></details>
       <h1><span class="num">6.1.10</span>Surprisal</h1><p class="lede">Per-word surprisal — the negative log probability that a language model assigns to a word given everything that came before it in the document, in bits.</p><div class="facts"><span class="chip">App: <b>Word-level features</b> → <b>Predictability</b></span><span class="chip">Output: <b>word/&lt;stim&gt;_features.csv</b></span><span class="chip">Libraries: <b>transformers, torch</b></span></div><section id="what"><a id="meaning"></a><h2><span class="num">6.1.10.1</span>What it is</h2><p>Per-word <strong>surprisal</strong> — the negative log probability that a language
 model assigns to a word given everything that came before it in the
 document, in <strong>bits</strong>:</p>
@@ -38,13 +39,13 @@ writes one namespaced column per model (e.g. <code>gpt2_Surprisal</code> and
 <code>llama3_8b_Surprisal</code> side by side), so a single run can directly
 compare estimator quality on the same stimulus rather than committing
 to one model.</p>
-</section><section id="see"><h2><span class="num">6.1.10.2</span>See it</h2><div class="card"><div class="caption">Example text (invented, run without audio): <b>predictable.txt</b>: “She spread butter on her toast.”; <b>surprising.txt</b>: “She spread butter on her violin.”</div><div ><figure><img src="../../assets/figures/pred_surprisal.svg" alt="Surprisal — Default settings" loading="lazy"></figure><figcaption>Surprisal — Default settings</figcaption><div class="provenance">Read from <span class='file'>word/predictable_features.csv</span> and <span class='file'>word/surprising_features.csv</span>, written by SensiExtractor on the example below. Nothing on this figure is typed in.</div></div></div></section><section id="output"><h2><span class="num">6.1.10.3</span>In your output</h2><div class="card"><div class="card-title">File <span class="file">word/&lt;stim&gt;_features.csv</span></div><table class="excerpt"><thead><tr><th class="">token</th><th class="hl">gpt2_Surprisal</th></tr></thead><tbody><tr><td class="">She</td><td class="hl"></td></tr><tr><td class="">spread</td><td class="hl">13.94</td></tr><tr><td class="">butter</td><td class="hl">11.24</td></tr><tr><td class="">on</td><td class="hl">2.868</td></tr><tr><td class="">her</td><td class="hl">3.09</td></tr><tr><td class="">violin</td><td class="hl">16.95</td></tr><tr><td class="">.</td><td class="hl"></td></tr></tbody></table><div class="caption">7 rows × 43 columns in the file; showing the feature's columns. An empty cell means no value (e.g. punctuation, or a word the measure doesn’t cover).</div><div class="provenance">Excerpt of the real file for <b>surprising</b>.</div></div></section><section id="matlab"><h2><span class="num">6.1.10.4</span>MATLAB</h2><div class="card" data-tabs><div class="tabpanel on"><pre data-copy><code>% Load the word-level table (one row per word)
-T = readtable(&#x27;word/predictable_features.csv&#x27;, &#x27;TextType&#x27;, &#x27;string&#x27;);
+</section><section id="see"><h2><span class="num">6.1.10.2</span>See it</h2><div class="card"><div class="caption">Example text (invented, run without audio): <b>predictable.txt</b>: “She spread butter on her toast.”; <b>surprising.txt</b>: “She spread butter on her violin.”</div><div ><figure><img src="../../assets/figures/pred_surprisal.svg" alt="Surprisal — Default settings"></figure><figcaption>Surprisal — Default settings</figcaption><div class="provenance">Read from <span class='file'>word/predictable_features.csv</span> and <span class='file'>word/surprising_features.csv</span>, written by SensiExtractor on the example shown here. Nothing on this figure is typed in.</div></div></div></section><section id="output"><h2><span class="num">6.1.10.3</span>In your output</h2><div class="card"><div class="card-title">File <span class="file">word/&lt;stim&gt;_features.csv</span></div><table class="excerpt"><thead><tr><th class="">token</th><th class="hl">gpt2_Surprisal</th></tr></thead><tbody><tr><td class="">She</td><td class="hl"></td></tr><tr><td class="">spread</td><td class="hl">13.94</td></tr><tr><td class="">butter</td><td class="hl">11.24</td></tr><tr><td class="">on</td><td class="hl">2.868</td></tr><tr><td class="">her</td><td class="hl">3.09</td></tr><tr><td class="">violin</td><td class="hl">16.95</td></tr><tr><td class="">.</td><td class="hl"></td></tr></tbody></table><div class="caption">7 rows × 43 columns in the file; showing the feature's columns. An empty cell means no value (e.g. punctuation, or a word the measure doesn’t cover).</div><div class="provenance">Excerpt of the real file for <b>surprising</b>.</div></div></section><section id="matlab"><h2><span class="num">6.1.10.4</span>MATLAB</h2><div class="card" data-tabs><div class="tabpanel on"><pre data-copy><code>% Load the word-level table (one row per word)
+T = readtable(&#x27;word/surprising_features.csv&#x27;, &#x27;TextType&#x27;, &#x27;string&#x27;);
 T.Properties.VariableNames             % every column in the file
-T(1:10, {&#x27;token&#x27;, &#x27;gpt2_Surprisal&#x27;})                       % this feature&#x27;s columns
+head(T(:, {&#x27;token&#x27;, &#x27;gpt2_Surprisal&#x27;}), 10)                % this feature&#x27;s columns (first rows)
 
 % Plot
-w = ~T.upos == &quot;PUNCT&quot;;            % words only
+w = T.upos ~= &quot;PUNCT&quot;;            % words only
 bar(T.gpt2_Surprisal(w)); xticks(1:nnz(w)); xticklabels(T.token(w)); ylabel(&#x27;gpt2_Surprisal&#x27;)
 </code></pre></div><div class="caption">Run from the output folder. Variable and column names were checked against the real files when this manual was built; the code itself was not run in MATLAB.</div></div></section><section id="computed"><a id="math--linguistics"></a><h2><span class="num">6.1.10.5</span>How it&#x27;s computed</h2><p>A causal language model outputs a probability distribution over its
 vocabulary at every position. The probability of an actual
@@ -68,7 +69,7 @@ backend is GPT-2 or a Llama-3 variant.</p>
 token, CPU-capable baseline) and three gated <strong>Llama-3</strong> variants
 (<code>llama32_3b</code>, <code>llama3_8b</code>, <code>llama3_70b</code>) that need a HuggingFace token</p>
 <ul>
-<li>accepted license — see <strong><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/docs/features/llm_credentials.md">LLM access &amp; credentials</a></strong>.
+<li>accepted license — see <strong><a href="../../chapters/usage.html#huggingface-token">LLM access &amp; credentials</a></strong>.
 Pick one or several from the GUI's Predictability card's model
 multi-select; each selected model is scored once per stimulus and
 contributes its own <code>&lt;slug&gt;_Surprisal</code> column when the Surprisal metric
@@ -352,7 +353,7 @@ larger model is automatically better for your data.</p>
         <a class="prev" href="../../features/word/edu_zipf.html"><small>Previous</small>Educator's Word Frequency Guide (EWFG) grade-band frequencies</a>
         <a class="next" href="../../features/word/pred_cloze.html"><small>Next</small>Cloze probability</a>
       </nav>
-      <footer>SensiExtractor User Manual · built 2026-10-27 from commit e0b7600 · source: <a href="https://github.com/edneuro/SENSI-Speech-Features">edneuro/SENSI-Speech-Features</a></footer>
+      <footer>SensiExtractor User Manual · version 0.2.0 · built 2026-10-27 · source: <a href="https://github.com/edneuro/SENSI-Speech-Features">edneuro/SENSI-Speech-Features</a></footer>
     </div>
   </main>
   <aside class="right" aria-label="On this page">

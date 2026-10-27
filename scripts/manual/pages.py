@@ -22,6 +22,7 @@ class Context:
     report: object
     md: object
     citations: dict = field(default_factory=dict)   # url -> {"label","html","pages":[(title,url)]}
+    chapter_links: dict = field(default_factory=dict)  # chapter-placed doc key -> url#anchor
 
 
 def _plain(s: str, n: int = 400) -> str:
@@ -64,12 +65,16 @@ def _chapter(page: Page, ctx: Context):
 
     def doc_inline(m):
         key = m.group(1)
+        if key not in ctx.docs:
+            ctx.report.errors.append(f"chapter {meta['id']}: unknown doc {key}")
+            return ""
         d = ctx.docs[key]
         inner = "".join(p.html for p in d.parts.values())
         return rewrite_links(inner, page, ctx.pages_by_key)
     src = re.sub(r"\{\{doc:([\w]+)\}\}", doc_inline, src)
     src = re.sub(r"\{\{include:([^}]+)\}\}", lambda m: _include(m.group(1), ctx), src)
     src = re.sub(r"\{\{file:([^}|]+)(?:\|([^}]*))?\}\}", lambda m: _file_block(m.group(1), m.group(2), ctx), src)
+    src = re.sub(r"\{\{yaml:([^}|]+)\|([\w]+)(?:\|(\d+))?\}\}", lambda m: _yaml_block(m.group(1), m.group(2), m.group(3), ctx), src)
     src = re.sub(r"\{\{screen:([\w-]+)\|([^}]*)\}\}", lambda m: _screen(m.group(1), m.group(2), page, ctx), src)
     src = src.replace("{{outputs_table}}", _outputs_table(page, ctx))
     src = src.replace("{{root}}", page.root)
@@ -86,7 +91,7 @@ def _chapter(page: Page, ctx: Context):
     body_html = re.sub(r"<h2>(.*?)</h2>", h2, body_html)
     lede = f'<p class="lede">{html.escape(meta["lede"])}</p>' if meta.get("lede") else ""
     body = f'<h1><span class="num">{page.num}</span>{html.escape(page.title)}</h1>{lede}{body_html}'
-    entries = [_entry(page.title, "Chapter", page.url, meta.get("keywords", ""), _plain(body_html), 6)]
+    entries = [_entry(page.title, "Chapter", page.url, meta.get("keywords", ""), _plain(body_html, 6000), 6)]
     entries += [_entry(t["title"], page.title, f"{page.url}#{t['id']}", "", "", 2) for t in toc]
     return body, toc, [], entries
 
@@ -128,6 +133,28 @@ def _file_block(rel: str, lines: str | None, ctx: Context) -> str:
     return f"\n```{lang}\n" + "\n".join(content) + "\n```\n"
 
 
+def _yaml_block(rel: str, key: str, limit: str | None, ctx: Context) -> str:
+    """One top-level block of a real YAML file (its key line + indented lines), by key."""
+    from sensi.paths import PROJECT_ROOT
+    p = PROJECT_ROOT / rel.strip()
+    lines = p.read_text(encoding="utf-8").splitlines() if p.exists() else []
+    try:
+        i = next(n for n, l in enumerate(lines) if l.startswith(f"{key}:"))
+    except StopIteration:
+        ctx.report.errors.append(f"yaml: {rel} has no top-level key '{key}'")
+        return ""
+    block = [lines[i]]
+    for l in lines[i + 1:]:
+        if l and not l.startswith(" "):
+            break
+        block.append(l)
+    block = [l for l in block if l.strip()]
+    if limit:
+        extra = len(block) - 1 - int(limit)
+        block = block[:1 + int(limit)] + ([f"  # … {extra} more keys" ] if extra > 0 else [])
+    return "\n```yaml\n" + "\n".join(block) + "\n```\n"
+
+
 def _screen(name: str, caption: str, page: Page, ctx: Context) -> str:
     import shutil
     from manual.screenshots import SCREENS_DIR
@@ -139,7 +166,7 @@ def _screen(name: str, caption: str, page: Page, ctx: Context) -> str:
     dest.parent.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(matches[0], dest)
     return (f'\n<figure class="card"><img class="shot" src="{page.root}assets/screens/{matches[0].name}" '
-            f'alt="{html.escape(caption)}" loading="lazy"><figcaption>{html.escape(caption)} '
+            f'alt="{html.escape(caption)}"><figcaption>{html.escape(caption)} '
             '(screenshot of the real app)</figcaption></figure>\n')
 
 
@@ -229,7 +256,7 @@ def _feature(page: Page, ctx: Context):
     gui = ctx.manifest["gui_pages"][level["id"]]
     chips = [f'<span class="chip">App: <b>{html.escape(gui)}</b> → <b>{html.escape(section["title"])}</b></span>']
     for o in G.outputs(entry):
-        chips.append(f'<span class="chip">Output: <b>{html.escape(o.format(stem="<stim>"))}</b></span>')
+        chips.append(f'<span class="chip">Output: <b>{html.escape(G.user_path(o))}</b></span>')
     if meta_fm.get("libraries"):
         chips.append(f'<span class="chip">Libraries: <b>{html.escape(", ".join(meta_fm["libraries"]))}</b></span>')
     if entry.get("not_computed"):
@@ -238,12 +265,14 @@ def _feature(page: Page, ctx: Context):
         chips.append(f'<span class="chip status">Status: {html.escape(str(meta_fm["status"]))}</span>')
     head = (f'<h1><span class="num">{page.num}</span>{html.escape(doc.name)}</h1>'
             f'<p class="lede">{html.escape(html.unescape(doc.summary))}</p><div class="facts">{"".join(chips)}</div>')
+    if doc.preamble:                       # the doc's opening note (also at the top of the app's pop-up)
+        head += f'<div class="doc-note">{rewrite_links(doc.preamble, page, ctx.pages_by_key, ctx.chapter_links)}</div>'
 
     # parts
     parts: list[tuple[str, str, str]] = []
     def doc_part(pid):
         p = doc.parts.get(pid)
-        return rewrite_links(p.html, page, ctx.pages_by_key) if p else None
+        return rewrite_links(p.html, page, ctx.pages_by_key, ctx.chapter_links) if p else None
 
     order = []
     for pid in D.PART_ORDER:
@@ -260,7 +289,7 @@ def _feature(page: Page, ctx: Context):
             elif pid == "output":
                 inner, title = G.in_output(entry, OUTPUTS_DIR, meta_fm), "In your output"
             elif pid == "matlab":
-                inner, title = G.matlab(entry), "MATLAB"
+                inner, title = G.matlab(entry, OUTPUTS_DIR), "MATLAB"
             elif pid == "code":
                 raw = doc.parts.get("code")
                 if not raw:

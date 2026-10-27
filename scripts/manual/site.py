@@ -27,6 +27,9 @@ CHAPTERS_DIR = MANUAL_SRC / "chapters"
 STATIC_DIR = MANUAL_SRC / "static"
 TEMPLATES_DIR = MANUAL_SRC / "templates"
 MANIFEST = MANUAL_SRC / "features.yaml"
+# docs placed inside a chapter: the heading id they live under there
+CHAPTER_DOC_ANCHOR = {"llm_credentials": "huggingface-token"}
+MARKER = ".sensi-user-manual"      # written into the output folder; only such a folder is ever emptied
 EXAMPLES_DIR = MANUAL_SRC / "examples"
 OUTPUTS_DIR = MANUAL_SRC / "example_outputs"
 
@@ -80,7 +83,10 @@ def md_renderer() -> MarkdownIt:
 def _chapter_sources() -> list[tuple[dict, str]]:
     out = []
     for p in sorted(CHAPTERS_DIR.glob("*.md")):
-        _, fm, body = p.read_text(encoding="utf-8").split("---", 2)
+        text = p.read_text(encoding="utf-8")
+        if not text.startswith("---"):
+            raise ValueError(f"chapter {p.name} has no front matter (--- id/title ---)")
+        _, fm, body = text.split("---", 2)
         meta = yaml.safe_load(fm)
         meta.setdefault("id", p.stem.split("-", 1)[-1])
         out.append((meta, body))
@@ -168,8 +174,9 @@ def outline_html(root: Page, current: Page) -> str:
 _HREF = re.compile(r'(href|src)="([^"]+)"')
 
 
-def rewrite_links(fragment: str, page: Page, pages_by_key: dict[str, Page]) -> str:
+def rewrite_links(fragment: str, page: Page, pages_by_key: dict[str, Page], chapter_links=None) -> str:
     page_of = {k: page.root + p.url for k, p in pages_by_key.items()}
+    page_of.update({k: page.root + u for k, u in (chapter_links or {}).items()})
 
     def sub(m):
         attr, val = m.group(1), m.group(2)
@@ -197,11 +204,15 @@ def build_site(out_dir: Path, *, check_links: bool = False) -> BuildReport:
     root, order = build_tree(manifest, docs)
     pages_by_key = {p.id: p for p in order if p.kind == "feature"}
 
-    # Empty the folder rather than delete it (a viewer or server may hold it open).
+    # Empty the folder rather than delete it (a viewer or server may hold it open) —
+    # but only a folder this builder made (marker) or an empty one.
     out_dir.mkdir(parents=True, exist_ok=True)
+    if any(out_dir.iterdir()) and not (out_dir / MARKER).exists():
+        raise SystemExit(f"refusing to empty {out_dir}: not a User Manual build folder (no {MARKER})")
     for child in out_dir.iterdir():
         shutil.rmtree(child) if child.is_dir() else child.unlink()
     (out_dir / "assets").mkdir(parents=True)
+    (out_dir / MARKER).write_text("Built by scripts/build_manual.py; this folder is emptied on every build.\n", encoding="utf-8")
     for name in ("theme.css", "layout.css", "manual.js"):
         shutil.copyfile(STATIC_DIR / name, out_dir / "assets" / name)
     shutil.copyfile(ASSETS_DIR / "icon.svg", out_dir / "assets" / "icon.svg")
@@ -211,9 +222,12 @@ def build_site(out_dir: Path, *, check_links: bool = False) -> BuildReport:
     env = Environment(loader=FileSystemLoader(str(TEMPLATES_DIR)), autoescape=False,
                       keep_trailing_newline=True)
     base = env.get_template("base.html.j2")
-    build = {"date": dt.date.today().isoformat(), "commit": _git("rev-parse", "--short", "HEAD")}
+    from sensi import __version__
+    build = {"date": dt.date.today().isoformat(), "version": __version__}
     ctx = P.Context(out_dir=out_dir, root=root, order=order, docs=docs, manifest=manifest,
-                    pages_by_key=pages_by_key, report=report, md=md_renderer())
+                    pages_by_key=pages_by_key, report=report, md=md_renderer(),
+                    chapter_links={k: f"chapters/{ch}.html#{CHAPTER_DOC_ANCHOR.get(k, k)}"
+                                   for k, ch in manifest.get("chapter_docs", {}).items()})
     index = []
     for i, page in enumerate(order):
         body, toc, meta, entries = P.render(page, ctx)

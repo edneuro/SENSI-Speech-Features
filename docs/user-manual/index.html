@@ -23,6 +23,7 @@
   <main>
     <div class="content">
       
+      <details class="toc-inline"><summary>On this page</summary><ul><li><a href="#what-sensiextractor-is-for">What SensiExtractor is for</a></li><li><a href="#how-it-works">How it works</a></li><li><a href="#the-five-output-levels">The five output levels</a></li><li><a href="#how-to-use-this-manual">How to use this manual</a></li></ul></details>
       <h1><span class="num">1</span>Introduction</h1><p class="lede">SensiExtractor turns a spoken stimulus — an audio recording and its transcript — into time-aligned tables of linguistic and acoustic features, ready to relate to EEG.</p><h2 id="what-sensiextractor-is-for"><span class="num">1.1</span>What SensiExtractor is for</h2>
 <p>Naturalistic EEG studies play people real speech — stories, lectures, conversations — and
 ask how the brain follows it. To analyse that, every stimulus first has to be described in
@@ -60,11 +61,12 @@ so it lines up with your EEG events.</p>
 <ol>
 <li>The transcript is cleaned (numbers spelled out, spacing normalized) and parsed by spaCy
 into tokens, sentences and grammatical annotations.</li>
-<li>If there is a recording, the Montreal Forced Aligner finds when each word — and each
-syllable and sound inside it — was spoken. This runs <strong>once per stimulus</strong> and is saved, so
+<li>If there is a recording, the Montreal Forced Aligner finds when each word and each speech
+sound (phone) was spoken; syllables are then built from the phones. This runs <strong>once per stimulus</strong> and is saved, so
 later runs reuse it.</li>
 <li>Each feature you switched on is computed from those pieces and written into the table for
-its level. Features you leave off are not computed and leave no columns behind.</li>
+its level. Features you leave off are not computed and add no columns (a few identifying
+columns, such as the token and its ids, are always written).</li>
 </ol>
 <h2 id="the-five-output-levels"><span class="num">1.3</span>The five output levels</h2>
 <table>
@@ -133,7 +135,7 @@ predictability features. No study stimuli are included.
         <span></span>
         <a class="next" href="chapters/requirements.html"><small>Next</small>Requirements</a>
       </nav>
-      <footer>SensiExtractor User Manual · built 2026-10-27 from commit e0b7600 · source: <a href="https://github.com/edneuro/SENSI-Speech-Features">edneuro/SENSI-Speech-Features</a></footer>
+      <footer>SensiExtractor User Manual · version 0.2.0 · built 2026-10-27 · source: <a href="https://github.com/edneuro/SENSI-Speech-Features">edneuro/SENSI-Speech-Features</a></footer>
     </div>
   </main>
   <aside class="right" aria-label="On this page">

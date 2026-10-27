@@ -26,6 +26,11 @@ class ManualError(RuntimeError):
     pass
 
 
+def user_path(pattern: str) -> str:
+    """The file name a user's run writes (the manual's copy drops the timestamp)."""
+    return pattern.format(stem="<stim>").replace("documents_summary.csv", "documents_summary_<timestamp>.csv")
+
+
 def stems(entry) -> list[str]:
     ex = entry.get("example", DEFAULT_STEM)
     return list(ex) if isinstance(ex, list) else [ex]
@@ -60,12 +65,20 @@ def check_names(entry, outputs_root: Path) -> list[str]:
             for n in want:
                 if n not in names:
                     errs.append(f"{entry['key']}: '{n}' is not in {p.name}")
+            y = entry.get("y")
+            if y and stem == stems(entry)[0] and pattern == outputs(entry)[0]:
+                need = [f"{y}_Mean", f"{y}_Min", f"{y}_Max"] if entry.get("figure") == "word_prosody" else [y]
+                errs += [f"{entry['key']}: y '{n}' is not in {p.name}" for n in need if n not in names]
+        for v in entry.get("variants") or []:
+            vp = _path(outputs_root, v, outputs(entry)[0], stems(entry)[0])
+            if not vp.exists():
+                errs.append(f"{entry['key']}: variant {v} has no {vp.relative_to(PROJECT_ROOT).as_posix()}")
     return errs
 
 
 # ---------------------------------------------------------------------- See it
 def _figure_card(src_rel: str, caption: str, provenance: str) -> str:
-    return (f'<figure><img src="{src_rel}" alt="{html.escape(caption)}" loading="lazy"></figure>'
+    return (f'<figure><img src="{src_rel}" alt="{html.escape(caption)}"></figure>'
             f'<figcaption>{caption}</figcaption><div class="provenance">{provenance}</div>')
 
 
@@ -133,8 +146,8 @@ def see_it(entry, page_root: str, out_dir: Path, outputs_root: Path, examples_di
                 f'{"<p>Columns this feature writes when it runs: " + cols + "</p>" if cols else ""}</div>')
     kind = entry.get("figure", "table")
     stem = stems(entry)[0]
-    src_note = " and ".join(f"<span class='file'>{o.format(stem=s)}</span>" for o in outputs(entry)[:1] for s in stems(entry))
-    prov = f"Read from {src_note}, written by SensiExtractor on the example below. Nothing on this figure is typed in."
+    src_note = " and ".join(f"<span class='file'>{user_path(o).replace('<stim>', s)}</span>" for o in outputs(entry)[:1] for s in stems(entry))
+    prov = f"Read from {src_note}, written by SensiExtractor on the example shown here. Nothing on this figure is typed in."
     audio = ""
     wav = examples_dir / "audio" / f"{stem}.wav"
     if wav.exists() and entry.get("_level") != "document":
@@ -222,10 +235,10 @@ def in_output(entry, outputs_root: Path, front: dict) -> str:
         return ("<p>When it runs, this feature writes these columns: "
                 + ", ".join(f"<code>{html.escape(c)}</code>" for c in cols) + ".</p>")
     parts = []
-    stem = stems(entry)[-1] if entry.get("figure") == "predict_compare" else stems(entry)[0]
+    stem = display_stem(entry)
     for pattern in outputs(entry):
         p = _path(outputs_root, "base", pattern, stem)
-        where = pattern.format(stem="<stim>").replace("documents_summary.csv", "documents_summary_<timestamp>.csv")
+        where = user_path(pattern)
         if p.suffix == ".csv":
             body = _excerpt_csv(p, entry["show"], stem)
         else:
@@ -256,6 +269,11 @@ def _plot_line(kind, entry, var):
         return (f"ok = ~isnan(T.{y}_Mean);\n"
                 f"plot([T.Onset(ok) T.End(ok)]', [T.{y}_Mean(ok) T.{y}_Mean(ok)]', 'LineWidth', 2)\n"
                 f"xlabel('Time (s)'); ylabel('{y}_Mean')")
+    if kind == "syllable_timeline" and "P_Center" in entry["show"]:
+        return ("ok = ~isnan(T.Onset);\n"
+                "plot([T.Onset(ok) T.End(ok)]', [1 1], 'LineWidth', 6); hold on\n"
+                "xline(T.P_Center(~isnan(T.P_Center)), 'Color', [.78 .48 0])   % one line per P-center\n"
+                "xlabel('Time (s)')")
     if kind in ("syllable_timeline", "syllable_prosody", "phoneme_timeline", "phoneme_surprisal"):
         col = "phoneme_surprisal" if kind == "phoneme_surprisal" else ("Pitch_Mean" if kind == "syllable_prosody" else "Duration")
         return (f"ok = ~isnan(T.Onset);\n"
@@ -270,11 +288,22 @@ def _plot_line(kind, entry, var):
     return None
 
 
-def matlab(entry) -> str:
+def display_stem(entry) -> str:
+    """The example whose file the excerpt and the MATLAB code both use."""
+    return stems(entry)[-1] if entry.get("figure") == "predict_compare" else stems(entry)[0]
+
+
+def _shape(path: Path, var: str) -> str:
+    v = F.read_mat(path)[var]
+    cls = _MAT_CLASS.get(str(v.dtype), str(v.dtype))
+    return f"{' x '.join(str(n) for n in v.shape)} ({cls})"
+
+
+def matlab(entry, outputs_root: Path | None = None) -> str:
     if entry.get("not_computed"):
         return "<p>Nothing to load: this feature is not written in this manual's example outputs.</p>"
     kind = entry.get("figure", "table")
-    stem = stems(entry)[0]
+    stem = display_stem(entry)
     blocks = []
     for pattern in outputs(entry):
         rel = pattern.format(stem=stem)
@@ -284,13 +313,13 @@ def matlab(entry) -> str:
                     f"{'stimulus' if 'documents_summary' in rel else rel.split('/')[0]})\n"
                     f"T = readtable('{rel}', 'TextType', 'string');\n"
                     f"T.Properties.VariableNames             % every column in the file\n"
-                    f"T(1:10, {{{cols}}})                       % this feature's columns\n")
+                    f"head(T(:, {{{cols}}}), 10)                % this feature's columns (first rows)\n")
             if "documents_summary" in rel:
                 code = code.replace(f"'{rel}'", "'document/documents_summary_<timestamp>.csv'")
             line = _plot_line(kind, entry, None)
             if line:
                 code += "\n% Plot\n" + line.replace("T.token{i}", "T.token(i)") + "\n"
-            code = code.replace("strcmp(T.upos, 'PUNCT')", "T.upos == \"PUNCT\"")
+            code = code.replace("~strcmp(T.upos, 'PUNCT')", "T.upos ~= \"PUNCT\"")
         else:
             show = entry.get("mat_show") or entry["show"]
             code = (f"S = load('{rel}');\n"
@@ -304,19 +333,20 @@ def matlab(entry) -> str:
                 if y == "logmel":
                     code += "% band centre frequencies (Hz): S.mel_center_freqs\n"
             elif kind == "embedding":
-                code += ("\nE = S.embeddings(S.is_valid == 1, :);    % words x 300 (single)\n"
+                code += (f"\n% S.embeddings is {_shape(_path(outputs_root, 'base', pattern, stem), 'embeddings')} in this example\n"
+                         "E = S.embeddings(S.is_valid == 1, :);    % words x dimensions\n"
                          "words = S.tokens(S.is_valid == 1);       % cell array of the matching words\n"
                          "En = E ./ vecnorm(E, 2, 2);               % unit length\n"
                          "imagesc(En * En'); axis square; colorbar  % cosine similarity between words\n"
                          "xticks(1:numel(words)); xticklabels(words); yticks(1:numel(words)); yticklabels(words)\n")
             elif kind == "embedding_layers":
-                code += ("\nsize(S.embeddings)                         % words x 12 layers x 768 (single)\n"
+                code += (f"\nsize(S.embeddings)                         % {_shape(_path(outputs_root, 'base', pattern, stem), 'embeddings')} = words x layers x dims\n"
                          "L = 9;                                     % pick a layer\n"
                          "E = squeeze(S.embeddings(S.is_valid == 1, L, :));\n"
                          "En = E ./ vecnorm(E, 2, 2);\n"
                          "imagesc(En * En'); axis square; colorbar   % cosine similarity at layer L\n")
             elif kind == "sentence_similarity":
-                code += ("\nsize(S.embeddings)                         % sentences x 12 layers x 768\n"
+                code += (f"\nsize(S.embeddings)                         % {_shape(_path(outputs_root, 'base', pattern, stem), 'embeddings')} = sentences x layers x dims\n"
                          "a = squeeze(S.embeddings(1, :, :)); b = squeeze(S.embeddings(2, :, :));\n"
                          "c = sum(a .* b, 2) ./ (vecnorm(a, 2, 2) .* vecnorm(b, 2, 2));\n"
                          "plot(1:12, c, 'o-'); xlabel('BERT layer'); ylabel('cosine(sentence 1, sentence 2)')\n")

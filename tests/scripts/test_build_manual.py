@@ -65,3 +65,45 @@ def test_not_computed_feature_shows_its_reason_and_no_figure(tmp_path):
     html = G.see_it(entry, "../../", tmp_path, OUTPUTS_DIR, ROOT / "dev" / "manual" / "examples")
     assert "No lookup table exists." in html and "<img" not in html
     assert "Edu_Zipf_K2" in html
+
+
+# --- final-review fixes ------------------------------------------------------
+def test_doc_opening_note_is_kept(built):
+    """The note before a doc's first heading (shown atop the app's pop-up) is on the page."""
+    out, _ = built
+    page = (out / "features" / "word" / "edu_zipf.html").read_text(encoding="utf-8")
+    assert "doc-note" in page and "Unavailable in SensiExtractor" in page
+
+
+def test_matlab_snippets_use_valid_filters_and_short_tables(built):
+    out, _ = built
+    for page in (out / "features").rglob("*.html"):
+        text = page.read_text(encoding="utf-8")
+        assert "~T.upos ==" not in text and "~T.upos ~=" not in text, page.name   # MATLAB precedence bug
+        assert "T(1:10" not in text, page.name             # errors when a file has < 10 rows
+
+
+def test_section_names_are_the_apps_card_names():
+    import yaml
+    gui = "".join((ROOT / "sensi" / "gui" / f).read_text(encoding="utf-8") for f in (
+        "section_word_features.py", "section_doc_features.py", "section_subword_features.py",
+        "section_sentence_features.py", "section_acoustic_features.py"))
+    manifest = yaml.safe_load((ROOT / "dev" / "manual" / "features.yaml").read_text(encoding="utf-8"))
+    for lv in manifest["levels"]:
+        for s in lv["sections"]:
+            assert f'"{s["title"]}"' in gui, s["title"]
+    from sensi.gui.main_window import SECTIONS
+    assert set(manifest["gui_pages"].values()) <= set(SECTIONS)
+
+
+def test_refuses_to_empty_a_folder_that_is_not_a_manual_build(tmp_path):
+    (tmp_path / "precious.txt").write_text("keep me")
+    with pytest.raises(SystemExit):
+        build_site(tmp_path)
+    assert (tmp_path / "precious.txt").exists()
+
+
+def test_links_to_the_token_doc_stay_in_the_manual(built):
+    out, _ = built
+    for page in out.rglob("*.html"):
+        assert "llm_credentials.md" not in page.read_text(encoding="utf-8"), page.name

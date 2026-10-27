@@ -23,7 +23,20 @@
   <main>
     <div class="content">
       <div class="crumbs"><a href="../../features/index.html">Features</a> › <a href="../../features/word/index.html">Word level</a></div>
-      <h1><span class="num">6.1.9</span>Educator&#x27;s Word Frequency Guide (EWFG) grade-band frequencies</h1><p class="lede">Per-word Zipf-scale frequencies derived from the Educator&#x27;s Word Frequency Guide (Zeno 1995), a corpus of texts that American schoolchildren actually encounter, bucketed by grade band.</p><div class="facts"><span class="chip">App: <b>Word-level features</b> → <b>Frequency</b></span><span class="chip">Libraries: <b>pyarrow</b></span><span class="chip status">Not computed in this manual</span><span class="chip status">Status: unavailable</span></div><section id="what"><a id="meaning"></a><h2><span class="num">6.1.9.1</span>What it is</h2><p>Per-word Zipf-scale frequencies derived from the <em>Educator's Word
+      <details class="toc-inline"><summary>On this page</summary><ul><li><a href="#what">What it is</a></li><li><a href="#see">See it</a></li><li><a href="#output">In your output</a></li><li><a href="#matlab">MATLAB</a></li><li><a href="#x-data-acquisition">Data acquisition</a></li><li><a href="#code">In the code</a></li><li><a href="#library">Library</a></li><li><a href="#eeg">EEG rationale</a></li><li><a href="#papers">Papers</a></li></ul></details>
+      <h1><span class="num">6.1.9</span>Educator&#x27;s Word Frequency Guide (EWFG) grade-band frequencies</h1><p class="lede">Per-word Zipf-scale frequencies derived from the Educator&#x27;s Word Frequency Guide (Zeno 1995), a corpus of texts that American schoolchildren actually encounter, bucketed by grade band.</p><div class="facts"><span class="chip">App: <b>Word-level features</b> → <b>Frequency</b></span><span class="chip">Libraries: <b>pyarrow</b></span><span class="chip status">Not computed in this manual</span><span class="chip status">Status: unavailable</span></div><div class="doc-note"><blockquote>
+<p>⚠️ <strong>Unavailable in SensiExtractor — no data.</strong> These grade-band
+frequencies are <strong>not produced</strong>. Their source, <em>The Educator's Word
+Frequency Guide</em> (<a href="#zeno-1995">Zeno 1995</a>), exists <strong>only in print and has never
+been digitized</strong>, so there is no lookup table to query. The toggles are
+<strong>disabled</strong> in the app, and every run (app or <code>run.py</code>) leaves them out
+while <code>data/dictionaries/edu_zipf.parquet</code> is absent, even when
+<code>config/features.yaml</code> switches them on. We may add this later if a
+digital version becomes available.
+Book reference:
+<a href="https://books.google.com/books/about/The_Educator_s_Word_Frequency_Guide.html?id=jsJ1QgAACAAJ">The Educator's Word Frequency Guide</a>.</p>
+</blockquote>
+</div><section id="what"><a id="meaning"></a><h2><span class="num">6.1.9.1</span>What it is</h2><p>Per-word Zipf-scale frequencies derived from the <em>Educator's Word
 Frequency Guide</em> (<a href="#zeno-1995">Zeno 1995</a>), a corpus of texts that
 American schoolchildren actually encounter, <strong>bucketed by grade band</strong>:</p>
 <table>
@@ -154,7 +167,7 @@ the SUBTLEX value.</li>
         <a class="prev" href="../../features/word/freq_subtlex.html"><small>Previous</small>Word frequency (Zipf, wordfreq)</a>
         <a class="next" href="../../features/word/pred_surprisal.html"><small>Next</small>Surprisal</a>
       </nav>
-      <footer>SensiExtractor User Manual · built 2026-10-27 from commit e0b7600 · source: <a href="https://github.com/edneuro/SENSI-Speech-Features">edneuro/SENSI-Speech-Features</a></footer>
+      <footer>SensiExtractor User Manual · version 0.2.0 · built 2026-10-27 · source: <a href="https://github.com/edneuro/SENSI-Speech-Features">edneuro/SENSI-Speech-Features</a></footer>
     </div>
   </main>
   <aside class="right" aria-label="On this page">

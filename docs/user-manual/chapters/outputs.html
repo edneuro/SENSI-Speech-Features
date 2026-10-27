@@ -23,6 +23,7 @@
   <main>
     <div class="content">
       
+      <details class="toc-inline"><summary>On this page</summary><ul><li><a href="#the-output-folder">The output folder</a></li><li><a href="#which-features-are-in-which-file">Which features are in which file</a></li><li><a href="#reading-the-files">Reading the files</a></li><li><a href="#the-run-logs">The run logs</a></li></ul></details>
       <h1><span class="num">7</span>Outputs reference</h1><p class="lede">Every folder and file a run writes, and which feature pages explain their columns.</p><h2 id="the-output-folder"><span class="num">7.1</span>The output folder</h2>
 <pre><code class="language-text">&lt;output folder&gt;/
 ├── word/        &lt;stim&gt;_features.csv            one row per word (and punctuation token)
@@ -35,7 +36,7 @@
 ├── document/    documents_summary_&lt;timestamp&gt;.csv   one row per stimulus
 ├── acoustic/    &lt;stim&gt;_acoustic.mat            audio-only time series
 ├── Montreal Forced Alignment/                   saved alignments, reused by later runs
-└── logs/        &lt;level&gt;_run_&lt;timestamp&gt;.log, …_manifest.json, …_session_units.csv
+└── logs/        word_run_…, doc_run_…, acoustic_run_… (.log, _manifest.json, …)
 </code></pre>
 <p><code>&lt;stim&gt;</code> is the file name of the transcript (or recording) without its extension. A folder
 appears only when its output level is switched on and at least one feature you ticked
@@ -51,10 +52,12 @@ no norm, a transcript without audio has no timing or prosody.</li>
 series share one time grid: <code>t</code> (seconds, one row per sample) and <code>fs</code> (samples per
 second), so they stack directly as columns of a predictor matrix.</li>
 <li><strong>Times</strong> (<code>Onset</code>, <code>End</code>, <code>t</code>) are in seconds from the start of the recording.</li>
-<li><strong>Units</strong> of every column are in <code>logs/&lt;level&gt;_session_units_&lt;timestamp&gt;.csv</code>.</li>
+<li><strong>Units</strong> of every column are in <code>logs/&lt;pass&gt;_session_units_&lt;timestamp&gt;.csv</code>.</li>
 </ul>
 <h2 id="the-run-logs"><span class="num">7.4</span>The run logs</h2>
 <p>Each run writes into <code>logs/</code>:</p>
+<p><code>&lt;pass&gt;</code> is <code>word</code> (the word, sub-word and sentence files are written in the word pass), <code>doc</code>
+(the document summary) or <code>acoustic</code>.</p>
 <table>
 <thead>
 <tr>
@@ -64,19 +67,19 @@ second), so they stack directly as columns of a predictor matrix.</li>
 </thead>
 <tbody>
 <tr>
-<td><code>&lt;level&gt;_run_&lt;timestamp&gt;.log</code></td>
+<td><code>&lt;pass&gt;_run_&lt;timestamp&gt;.log</code></td>
 <td>every progress message (what the Logs page shows)</td>
 </tr>
 <tr>
-<td><code>&lt;level&gt;_run_&lt;timestamp&gt;_manifest.json</code></td>
+<td><code>&lt;pass&gt;_run_&lt;timestamp&gt;_manifest.json</code></td>
 <td>inputs, settings, software versions, analyzer name, per-stimulus results and any problems</td>
 </tr>
 <tr>
-<td><code>&lt;level&gt;_session_units_&lt;timestamp&gt;.csv</code></td>
+<td><code>&lt;pass&gt;_session_units_&lt;timestamp&gt;.csv</code></td>
 <td>each output column with its unit</td>
 </tr>
 <tr>
-<td><code>&lt;level&gt;_run_&lt;timestamp&gt;_no-match.csv</code></td>
+<td><code>&lt;pass&gt;_run_&lt;timestamp&gt;_no-match.csv</code></td>
 <td>transcripts or recordings that found no partner</td>
 </tr>
 </tbody>
@@ -87,7 +90,7 @@ second), so they stack directly as columns of a predictor matrix.</li>
         <a class="prev" href="../features/acoustic/acoustic_mfcc.html"><small>Previous</small>MFCC (Mel-frequency cepstral coefficients)</a>
         <a class="next" href="../references.html"><small>Next</small>References</a>
       </nav>
-      <footer>SensiExtractor User Manual · built 2026-10-27 from commit e0b7600 · source: <a href="https://github.com/edneuro/SENSI-Speech-Features">edneuro/SENSI-Speech-Features</a></footer>
+      <footer>SensiExtractor User Manual · version 0.2.0 · built 2026-10-27 · source: <a href="https://github.com/edneuro/SENSI-Speech-Features">edneuro/SENSI-Speech-Features</a></footer>
     </div>
   </main>
   <aside class="right" aria-label="On this page">

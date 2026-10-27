@@ -23,6 +23,7 @@
   <main>
     <div class="content">
       
+      <details class="toc-inline"><summary>On this page</summary><ul><li><a href="#the-idea">The idea</a></li><li><a href="#what-this-is-and-why">What this is and why</a></li><li><a href="#fill-in-your-own-identifiers">Fill in your own identifiers</a></li><li><a href="#two-folders-on-sherlock-fixed-names-used-everywhere-below">Two folders on Sherlock (fixed names — used everywhere below)</a></li><li><a href="#which-terminal-runs-what">Which terminal runs what</a></li><li><a href="#1-build-the-container-linux-once">1 · Build the container — [linux], once</a></li><li><a href="#2-configure-the-extraction-local">2 · Configure the extraction — [local]</a></li><li><a href="#3-connect-note-your-paths-make-the-folders-sherlock-login-once">3 · Connect, note your paths, make the folders — [Sherlock-login], once</a></li><li><a href="#4-upload-code-container-data-linux">4 · Upload code, container, data — [linux]</a></li><li><a href="#5-get-your-hf-token-save-it-download-the-weights-sherlock-login-once">5 · Get your HF token, save it, download the weights — [Sherlock-login], once</a></li><li><a href="#6-optional-dry-run-sherlock-compute">6 · (Optional) dry-run — [Sherlock-compute]</a></li><li><a href="#7-build-amp-submit-the-gpu-job-sherlock-login">7 · Build &amp; submit the GPU job — [Sherlock-login]</a></li><li><a href="#8-collect-results">8 · Collect results</a></li><li><a href="#gotchas">Gotchas</a></li></ul></details>
       <h1><span class="num">5</span>Running on Sherlock</h1><p class="lede">Large batches and the bigger language models run on Stanford&#x27;s Sherlock cluster, inside a container, driven by the same features.yaml you set up in the app.</p><h2 id="the-idea"><span class="num">5.1</span>The idea</h2>
 <p>The app's environment is built for one operating system, and Sherlock's compute nodes are
 headless Linux machines, so SensiExtractor runs there inside a portable <strong>Apptainer
@@ -301,7 +302,7 @@ VRAM, so you can verify you got the size you asked for.</p>
         <a class="prev" href="../chapters/usage.html"><small>Previous</small>Using the app</a>
         <a class="next" href="../features/index.html"><small>Next</small>Features</a>
       </nav>
-      <footer>SensiExtractor User Manual · built 2026-10-27 from commit e0b7600 · source: <a href="https://github.com/edneuro/SENSI-Speech-Features">edneuro/SENSI-Speech-Features</a></footer>
+      <footer>SensiExtractor User Manual · version 0.2.0 · built 2026-10-27 · source: <a href="https://github.com/edneuro/SENSI-Speech-Features">edneuro/SENSI-Speech-Features</a></footer>
     </div>
   </main>
   <aside class="right" aria-label="On this page">

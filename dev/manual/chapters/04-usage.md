@@ -113,7 +113,7 @@ cp config/run_defaults.yaml config/run.yaml
 
 ### `run.yaml` — where
 
-{{file:config/run_defaults.yaml|12-19}}
+{{yaml:config/run_defaults.yaml|shared}}
 
 Set `analyzer_name` and the three folders. Folder paths can be absolute (recommended) or
 relative — a relative path is taken from the folder that holds `run.yaml`.
@@ -122,20 +122,20 @@ relative — a relative path is taken from the folder that holds `run.yaml`.
 
 The file has one block per part of the app. The output levels:
 
-{{file:config/features_defaults.yaml|184-189}}
+{{yaml:config/features_defaults.yaml|output|5}}
 
 Feature switches are `true` / `false` under `features:` (each feature page in this manual
 lists the keys it uses). Settings that aren't switches have their own blocks, for example:
 
-{{file:config/features_defaults.yaml|210-215}}
+{{yaml:config/features_defaults.yaml|prosody}}
 
-{{file:config/features_defaults.yaml|223-231}}
+{{yaml:config/features_defaults.yaml|acoustic_ts}}
 
 Predictability is chosen by model and metric:
 
 ```yaml
 predictability:
-  models: [gpt2]           # gpt2, or the gated llama3_* models (need a token)
+  models: [gpt2]           # gpt2, or the gated Llama models (llama32_3b, llama3_8b, … — need a token)
   metrics:
     surprisal: true
     cloze: true

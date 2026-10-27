@@ -17,7 +17,7 @@ pre code { background: none; padding: 0; }
 .left { background: var(--bg-panel); border-right: 1px solid var(--border); padding: 18px 14px 40px; }
 .right { padding: 34px 16px 40px; color: var(--text-secondary); }
 main { padding: 34px 48px 80px; min-width: 0; }
-.content { max-width: var(--content-max); margin: 0 auto; }
+.content { max-width: var(--content-max); margin: 0 auto; overflow-wrap: anywhere; }
 
 /* ---------- left: brand, search, outline ---------- */
 .brand { display: flex; align-items: center; gap: 8px; color: var(--text); font-weight: 700; font-size: 15px; margin-bottom: 12px; }
@@ -30,7 +30,7 @@ main { padding: 34px 48px 80px; min-width: 0; }
 }
 .search input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
 .search-results {
-  position: absolute; z-index: 20; left: 0; right: -60px; top: 38px; max-height: 60vh; overflow-y: auto;
+  position: absolute; z-index: 20; left: 0; right: 0; top: 38px; max-height: 60vh; overflow-y: auto;
   background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: 0 6px 20px rgba(0,0,0,.12);
 }
 .search-results a { display: block; padding: 7px 10px; color: var(--text); border-bottom: 1px solid var(--border); }
@@ -137,7 +137,8 @@ audio { width: 100%; margin: 6px 0; }
 .shot { border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow-card); }
 .callout { border-left: 3px solid var(--accent); background: var(--note-bg); padding: 10px 14px; border-radius: 0 var(--radius-small) var(--radius-small) 0; margin: 14px 0; font-family: var(--font-ui); font-size: var(--size-ui); }
 .callout.warn { border-left-color: var(--warn); background: var(--warn-bg); }
-.grid-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+.grid-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(220px, 100%), 1fr)); gap: 12px; }
+.grid-cards .card { min-width: 0; overflow-wrap: anywhere; }
 .grid-cards .card { margin: 0; }
 .grid-cards .card a { font-weight: 600; }
 
@@ -147,16 +148,23 @@ audio { width: 100%; margin: 6px 0; }
 .pager small { display: block; color: var(--text-muted); }
 footer { margin-top: 40px; font: 12px var(--font-ui); color: var(--text-muted); border-top: 1px solid var(--border); padding-top: 12px; }
 
+/* long code, file names and URLs wrap instead of widening the page */
+.content p code, .content li code, .content td code, .file, .content a, .chip, .caption, .provenance { overflow-wrap: anywhere; }
+.toc-inline { display: none; margin: 4px 0 14px; font: var(--size-ui) var(--font-ui); border: 1px solid var(--border); border-radius: var(--radius-small); padding: 6px 12px; background: var(--bg-panel); }
+.toc-inline summary { cursor: pointer; font-weight: 600; color: var(--text-secondary); }
+.toc-inline ul { margin: 6px 0 2px; padding-left: 18px; }
 /* ---------- narrow screens ---------- */
-.menu-btn, .toc-btn { display: none; }
+.menu-btn { display: none; }
 @media (max-width: 1180px) {
   .shell { grid-template-columns: var(--left-width) minmax(0, 1fr); }
   .right { display: none; }
+  .toc-inline { display: block; }
 }
 @media (max-width: 860px) {
   .shell { display: block; }
   .left { position: fixed; z-index: 30; left: 0; top: 0; width: min(86vw, 320px); transform: translateX(-102%); transition: transform .2s; box-shadow: 4px 0 20px rgba(0,0,0,.15); }
   body.menu-open .left { transform: none; }
+  .left { padding-top: 56px; }
   main { padding: 58px 16px 60px; }
   .menu-btn {
     display: block; position: fixed; z-index: 31; top: 10px; left: 10px; border: 1px solid var(--border-strong);
@@ -172,6 +180,10 @@ footer { margin-top: 40px; font: 12px var(--font-ui); color: var(--text-muted); 
   .shell { display: block; }
   main { padding: 0; }
   .tabpanel { display: block !important; }
+  .toc-inline { display: none !important; }
+  pre { white-space: pre-wrap; overflow: visible; word-break: break-word; }
+  .content table { display: table; font-size: 10px; overflow: visible; }
+  .excerpt td { white-space: normal; }
   .card { box-shadow: none; break-inside: avoid; }
   a { color: var(--text); }
   h2 { break-after: avoid; }
@@ -186,3 +198,7 @@ footer { margin-top: 40px; font: 12px var(--font-ui); color: var(--text-muted); 
 .flow-box.out { background: var(--accent-soft); border-color: var(--accent); }
 .flow-arrow { font-size: 24px; color: var(--accent); }
 kbd { border: 1px solid var(--border-strong); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; font-size: .8em; background: var(--bg-card); }
+
+/* the doc's opening note (same as the top of the app's pop-up) */
+.doc-note { margin: 14px 0 0; }
+.doc-note blockquote { margin: 0; border-left-color: var(--warn); background: var(--warn-bg); }

@@ -17,7 +17,7 @@ gui_pages:
   document: Document-level features
   subword: Sub-word features
   sentence: Sentence features
-  acoustic: Acoustic features
+  acoustic: Acoustic
 
 chapter_docs:
   llm_credentials: usage
@@ -41,7 +41,7 @@ levels:
             output: "word/{stem}_features.csv"
             show: [sentence_id, token, sentence]
             figure: table
-      - title: Linguistic annotations
+      - title: Lexical–linguistic
         features:
           - key: lexling_tokens
             output: "word/{stem}_features.csv"
@@ -57,7 +57,7 @@ levels:
             figure: table
           - key: lexling_dep
             output: "word/{stem}_features.csv"
-            show: [token_in_sentence_id, token, dep_rel, head_token_id]
+            show: [token_id, token_in_sentence_id, token, dep_rel, head_token_id]
             figure: dependency
       - title: Frequency
         features:
@@ -112,7 +112,7 @@ levels:
             output: "word/{stem}_features.csv"
             show: [token, AoA_Mean, AoA_SD, Concreteness, Imageability, Familiarity, Valence, Arousal, Dominance]
             figure: norms
-      - title: Acoustic (word timing)
+      - title: Acoustic
         features:
           - key: acoustic_boundaries
             output: "word/{stem}_features.csv"
@@ -176,7 +176,7 @@ levels:
             output: document/documents_summary.csv
             show: [stimulus_id, psych_authentic, psych_analytic, psych_tone, psych_clout]
             figure: doc_bars
-      - title: Document prosody
+      - title: Prosody
         features:
           - key: doc_prosody_pitch
             output: document/documents_summary.csv
@@ -237,6 +237,8 @@ levels:
             output: "phoneme/{stem}_phonemes.csv"
             show: [token, ARPABET, Stress, IPA]
             figure: table
+      - title: Out-of-dictionary words
+        features:
           - key: g2p_oov
             not_computed: "Needs a spoken word that is missing from the pronunciation dictionary; every word in the manual's public-domain recordings is in it, and we do not fabricate audio. With the option on, such a word gets Pron_Source = g2p and modeled phones instead of a single spn."
             show: [ARPABET, Stress, IPA, Pron_Source]
@@ -272,7 +274,7 @@ levels:
             output: "sentence/{stem}_sentences.csv"
             show: [sentence_id, sentence, HNR]
             figure: table
-      - title: Sentence similarity
+      - title: Semantic similarity
         features:
           - key: master_bert_sentence
             example: LJ003-0007
@@ -284,7 +286,7 @@ levels:
     title: Acoustic level
     blurb: Audio-only time series in acoustic/<stim>_acoustic.mat, on one shared time grid set by the analysis rate.
     sections:
-      - title: Time series
+      - title: Acoustic features (audio-only)
         features:
           - key: acoustic_envelope
             output: "acoustic/{stem}_acoustic.mat"

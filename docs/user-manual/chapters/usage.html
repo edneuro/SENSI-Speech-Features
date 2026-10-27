@@ -23,6 +23,7 @@
   <main>
     <div class="content">
       
+      <details class="toc-inline"><summary>On this page</summary><ul><li><a href="#the-workflow-at-a-glance">The workflow at a glance</a></li><li><a href="#inputs">Inputs</a></li><li><a href="#feature-pages">Feature pages</a></li><li><a href="#run">Run</a></li><li><a href="#logs">Logs</a></li><li><a href="#headless-runs-run-py">Headless runs: run.py</a></li><li><a href="#huggingface-token">HuggingFace token</a></li></ul></details>
       <h1><span class="num">4</span>Using the app</h1><p class="lede">The app is eight pages in a sidebar — choose your files, tick the features you want, run. The same settings also drive a headless run with run.py.</p><h2 id="the-workflow-at-a-glance"><span class="num">4.1</span>The workflow at a glance</h2>
 <ol class="steps">
 <li><b>Inputs</b> — say who is running it, and pick the transcripts, audio and output folders.</li>
@@ -35,7 +36,7 @@
 <code>run.yaml</code> (<em>where</em>: folders, your name — specific to this computer). Close the app and
 everything is still there next time.</p>
 <h2 id="inputs"><span class="num">4.2</span>Inputs</h2>
-<figure class="card"><img class="shot" src="../assets/screens/01-inputs.png" alt="The Inputs page with the manual&#x27;s example files" loading="lazy"><figcaption>The Inputs page with the manual&#x27;s example files (screenshot of the real app)</figcaption></figure>
+<figure class="card"><img class="shot" src="../assets/screens/01-inputs.png" alt="The Inputs page with the manual&#x27;s example files"><figcaption>The Inputs page with the manual&#x27;s example files (screenshot of the real app)</figcaption></figure>
 <ul>
 <li><strong>Analyzer</strong> — your name; it is recorded in every run's log and manifest, so you can tell
 later who produced a set of outputs.</li>
@@ -51,7 +52,7 @@ example above, two text-only sentences have no recording and one recording has n
 transcript (it is used only by the audio-only Acoustic level).</li>
 </ul>
 <h2 id="feature-pages"><span class="num">4.3</span>Feature pages</h2>
-<figure class="card"><img class="shot" src="../assets/screens/02-word.png" alt="The Word-level features page" loading="lazy"><figcaption>The Word-level features page (screenshot of the real app)</figcaption></figure>
+<figure class="card"><img class="shot" src="../assets/screens/02-word.png" alt="The Word-level features page"><figcaption>The Word-level features page (screenshot of the real app)</figcaption></figure>
 <p>Each page groups its features in <strong>cards</strong> — the same grouping as the
 <a href="../features/index.html">Features</a> chapters of this manual. On every card:</p>
 <ul>
@@ -66,23 +67,23 @@ explained on the feature's page.</li>
 <div data-tabs>
 <div class="tabs" role="tablist"><button type="button" class="on">Document</button><button type="button">Sub-word</button><button type="button">Sentence</button><button type="button">Acoustic</button></div>
 <div class="tabpanel on">
-<figure class="card"><img class="shot" src="../assets/screens/03-document.png" alt="Document-level features" loading="lazy"><figcaption>Document-level features (screenshot of the real app)</figcaption></figure>
+<figure class="card"><img class="shot" src="../assets/screens/03-document.png" alt="Document-level features"><figcaption>Document-level features (screenshot of the real app)</figcaption></figure>
 </div>
 <div class="tabpanel">
-<figure class="card"><img class="shot" src="../assets/screens/04-subword.png" alt="Sub-word features" loading="lazy"><figcaption>Sub-word features (screenshot of the real app)</figcaption></figure>
+<figure class="card"><img class="shot" src="../assets/screens/04-subword.png" alt="Sub-word features"><figcaption>Sub-word features (screenshot of the real app)</figcaption></figure>
 </div>
 <div class="tabpanel">
-<figure class="card"><img class="shot" src="../assets/screens/05-sentence.png" alt="Sentence features" loading="lazy"><figcaption>Sentence features (screenshot of the real app)</figcaption></figure>
+<figure class="card"><img class="shot" src="../assets/screens/05-sentence.png" alt="Sentence features"><figcaption>Sentence features (screenshot of the real app)</figcaption></figure>
 </div>
 <div class="tabpanel">
-<figure class="card"><img class="shot" src="../assets/screens/06-acoustic.png" alt="Acoustic features" loading="lazy"><figcaption>Acoustic features (screenshot of the real app)</figcaption></figure>
+<figure class="card"><img class="shot" src="../assets/screens/06-acoustic.png" alt="Acoustic features"><figcaption>Acoustic features (screenshot of the real app)</figcaption></figure>
 </div>
 </div>
 <p><strong>Reset settings</strong> (top right) puts every feature choice back to the shipped defaults — a
 minimal run with only the structural word columns. It rewrites <code>features.yaml</code> only; your
 folders and name in <code>run.yaml</code> are kept.</p>
 <h2 id="run"><span class="num">4.4</span>Run</h2>
-<figure class="card"><img class="shot" src="../assets/screens/07-run.png" alt="The Run page: output levels, estimates, readiness" loading="lazy"><figcaption>The Run page: output levels, estimates, readiness (screenshot of the real app)</figcaption></figure>
+<figure class="card"><img class="shot" src="../assets/screens/07-run.png" alt="The Run page: output levels, estimates, readiness"><figcaption>The Run page: output levels, estimates, readiness (screenshot of the real app)</figcaption></figure>
 <ul>
 <li><strong>Output levels</strong> — one switch per level. Each lists the files it will write for every
 stimulus; a file is crossed out when nothing you ticked would go into it. A level writes
@@ -98,7 +99,7 @@ line above it says what's missing (a folder, a token for a gated model, …).</l
 <p>Alignment runs once per stimulus and is saved in the output folder
 (<code>Montreal Forced Alignment/</code>); the next run on unchanged files reuses it.</p>
 <h2 id="logs"><span class="num">4.5</span>Logs</h2>
-<figure class="card"><img class="shot" src="../assets/screens/08-logs.png" alt="The Logs page" loading="lazy"><figcaption>The Logs page (screenshot of the real app)</figcaption></figure>
+<figure class="card"><img class="shot" src="../assets/screens/08-logs.png" alt="The Logs page"><figcaption>The Logs page (screenshot of the real app)</figcaption></figure>
 <p><strong>Current run</strong> shows the progress messages live (with a search box and <strong>Copy</strong>); <strong>Past
 runs</strong> lists earlier runs in this output folder. Each run also leaves files in
 <code>&lt;output&gt;/logs/</code>: the log, a JSON manifest (inputs, settings, versions, per-stimulus results
@@ -135,6 +136,7 @@ relative — a relative path is taken from the folder that holds <code>run.yaml<
 <span class="w">  </span><span class="nt">level_subword</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
 <span class="w">  </span><span class="nt">level_sentence</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
 <span class="w">  </span><span class="nt">level_acoustic</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="w">  </span><span class="c1"># … 18 more keys</span>
 </code></pre>
 <p>Feature switches are <code>true</code> / <code>false</code> under <code>features:</code> (each feature page in this manual
 lists the keys it uses). Settings that aren't switches have their own blocks, for example:</p>
@@ -156,7 +158,7 @@ lists the keys it uses). Settings that aren't switches have their own blocks, fo
 </code></pre>
 <p>Predictability is chosen by model and metric:</p>
 <pre><code class="language-yaml"><span class="nt">predictability</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">models</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">gpt2</span><span class="p p-Indicator">]</span><span class="w">           </span><span class="c1"># gpt2, or the gated llama3_* models (need a token)</span>
+<span class="w">  </span><span class="nt">models</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">gpt2</span><span class="p p-Indicator">]</span><span class="w">           </span><span class="c1"># gpt2, or the gated Llama models (llama32_3b, llama3_8b, … — need a token)</span>
 <span class="w">  </span><span class="nt">metrics</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">surprisal</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
 <span class="w">    </span><span class="nt">cloze</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
@@ -229,7 +231,7 @@ Sherlock/HPC is documented separately.</p>
         <a class="prev" href="../chapters/installation.html"><small>Previous</small>Installation</a>
         <a class="next" href="../chapters/sherlock.html"><small>Next</small>Running on Sherlock</a>
       </nav>
-      <footer>SensiExtractor User Manual · built 2026-10-27 from commit e0b7600 · source: <a href="https://github.com/edneuro/SENSI-Speech-Features">edneuro/SENSI-Speech-Features</a></footer>
+      <footer>SensiExtractor User Manual · version 0.2.0 · built 2026-10-27 · source: <a href="https://github.com/edneuro/SENSI-Speech-Features">edneuro/SENSI-Speech-Features</a></footer>
     </div>
   </main>
   <aside class="right" aria-label="On this page">

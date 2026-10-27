@@ -155,7 +155,7 @@ def word_prosody(df, prefix, out, title, unit):
         ax.plot([r["Onset"], r["End"]], [r[f"{prefix}_Mean"]] * 2, color=ACCENT_DARK, lw=2)
         ax.text((r["Onset"] + r["End"]) / 2, r[f"{prefix}_Max"], r["token"], ha="center", va="bottom", fontsize=7)
     ax.set_xlabel("Time (s)"); ax.set_ylabel(f"{prefix} ({unit})")
-    ax.set_title(title + "  — line: mean; band: min–max within the word", loc="left")
+    ax.set_title(title + f"  — line: {prefix}_Mean; band: {prefix}_Min to {prefix}_Max (5th–95th percentile)", loc="left")
     _save(fig, out)
 
 
@@ -210,6 +210,7 @@ def phoneme_timeline(df, out, title, ycol=None):
     ax.set_xlabel("Time (s)")
     if ycol is None:
         ax.set_yticks([]); ax.set_ylim(0, 1.35); ax.grid(False)
+        title += "  (amber = vowel carrying stress 1 or 2)"
     else:
         ax.set_ylabel(ycol)
     ax.set_title(title, loc="left")
@@ -322,7 +323,8 @@ def doc_bars(df, cols, out, title):
         v = pd.to_numeric(d[c], errors="coerce")
         ax.barh(range(len(d)), v.fillna(0), color=[ACCENT if x == x else GREY_LIGHT for x in v], height=.65)
         ax.set_yticks(range(len(d)), d["stimulus_id"], fontsize=7.5); ax.invert_yaxis()
-        ax.set_title(c, loc="left", fontsize=9.5); ax.grid(axis="y", visible=False)
+        note = "  — NaN for every example (texts too short for this measure)" if v.isna().all() else ""
+        ax.set_title(c + note, loc="left", fontsize=9.5); ax.grid(axis="y", visible=False)
         for i, x in enumerate(v):
             ax.text(x if x == x else 0, i, " NaN" if x != x else f" {x:.3g}", va="center", fontsize=7, color="#5B6370")
     for ax in axes.ravel()[n:]:
@@ -378,7 +380,7 @@ def dependency_svg(df, out: Path, title) -> None:
     w = np.array([max(len(str(t)), 3) for t in d["token"]], dtype=float) * .13 + .35
     xs = np.cumsum(w) - w / 2
     fig, ax = plt.subplots(figsize=(max(8.6, xs[-1] * .62), 3.6))
-    tid = dict(zip(d["token_in_sentence_id"], xs))
+    tid = dict(zip(d["token_id"], xs))            # head_token_id refers to the global token_id
     top = 2.0
     for x, (_, r) in zip(xs, d.iterrows()):
         ax.text(x, 0, r["token"], ha="center", va="top", fontsize=8.5)

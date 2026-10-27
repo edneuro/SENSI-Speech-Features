@@ -23,6 +23,7 @@
   <main>
     <div class="content">
       <div class="crumbs"><a href="../../features/index.html">Features</a> › <a href="../../features/sentence/index.html">Sentence level</a></div>
+      <details class="toc-inline"><summary>On this page</summary><ul><li><a href="#what">What it is</a></li><li><a href="#see">See it</a></li><li><a href="#output">In your output</a></li><li><a href="#matlab">MATLAB</a></li><li><a href="#code">In the code</a></li><li><a href="#eeg">EEG rationale</a></li></ul></details>
       <h1><span class="num">6.4.1</span>Sentence timing</h1><p class="lede">Per-sentence timing and text in the &lt;stim&gt;_sentences.csv sidecar.</p><div class="facts"><span class="chip">App: <b>Sentence features</b> → <b>Sentence timing</b></span><span class="chip">Output: <b>sentence/&lt;stim&gt;_sentences.csv</b></span><span class="chip">Libraries: <b>montreal-forced-aligner, spaCy</b></span></div><section id="what"><a id="meaning"></a><h2><span class="num">6.4.1.1</span>What it is</h2><p>Per-sentence timing and text in the <code>&lt;stim&gt;_sentences.csv</code> sidecar:</p>
 <table>
 <thead>
@@ -50,13 +51,13 @@
 where no word aligned (very rare) → <code>NaN</code> for <code>Onset</code> / <code>End</code>.</p>
 </section><section id="see"><h2><span class="num">6.4.1.2</span>See it</h2><div class="card"><div class="caption">Example <b>LJ002-0321</b> (LJ Speech, public domain): “Others who arrived just after the time of distribution were often 48 hours without food. The latter might also be six days without meat.”</div><audio controls preload="none" src="../../assets/audio/LJ002-0321.wav"></audio><table class="excerpt strip"><thead><tr><th>sentence_id</th><th>1</th></tr></thead><tbody><tr><th class="hl">sentence</th><td>Others who arrived just after the time of distribution
 were often 48 hours without food.
-</td></tr><tr><th class="hl">Onset</th><td>0.0</td></tr><tr><th class="hl">End</th><td>6.47</td></tr></tbody></table><div class="provenance">Read from <span class='file'>sentence/LJ002-0321_sentences.csv</span>, written by SensiExtractor on the example below. Nothing on this figure is typed in.</div></div></section><section id="output"><h2><span class="num">6.4.1.3</span>In your output</h2><div class="card"><div class="card-title">File <span class="file">sentence/&lt;stim&gt;_sentences.csv</span></div><table class="excerpt"><thead><tr><th class="">sentence_id</th><th class="hl">sentence</th><th class="hl">Onset</th><th class="hl">End</th></tr></thead><tbody><tr><td class="">1</td><td class="hl">Others who arrived just after the time of distribution
+</td></tr><tr><th class="hl">Onset</th><td>0.0</td></tr><tr><th class="hl">End</th><td>6.47</td></tr></tbody></table><div class="provenance">Read from <span class='file'>sentence/LJ002-0321_sentences.csv</span>, written by SensiExtractor on the example shown here. Nothing on this figure is typed in.</div></div></section><section id="output"><h2><span class="num">6.4.1.3</span>In your output</h2><div class="card"><div class="card-title">File <span class="file">sentence/&lt;stim&gt;_sentences.csv</span></div><table class="excerpt"><thead><tr><th class="">sentence_id</th><th class="hl">sentence</th><th class="hl">Onset</th><th class="hl">End</th></tr></thead><tbody><tr><td class="">1</td><td class="hl">Others who arrived just after the time of distribution
 were often 48 hours without food.
 </td><td class="hl">0</td><td class="hl">6.47</td></tr><tr><td class="">2</td><td class="hl">The latter might also be six days without meat.
 </td><td class="hl">7.11</td><td class="hl">9.99</td></tr></tbody></table><div class="caption">2 rows × 16 columns in the file; showing the feature's columns. An empty cell means no value (e.g. punctuation, or a word the measure doesn’t cover).</div><div class="provenance">Excerpt of the real file for <b>LJ002-0321</b>.</div></div></section><section id="matlab"><h2><span class="num">6.4.1.4</span>MATLAB</h2><div class="card" data-tabs><div class="tabpanel on"><pre data-copy><code>% Load the sentence-level table (one row per sentence)
 T = readtable(&#x27;sentence/LJ002-0321_sentences.csv&#x27;, &#x27;TextType&#x27;, &#x27;string&#x27;);
 T.Properties.VariableNames             % every column in the file
-T(1:10, {&#x27;sentence_id&#x27;, &#x27;sentence&#x27;, &#x27;Onset&#x27;, &#x27;End&#x27;})                       % this feature&#x27;s columns
+head(T(:, {&#x27;sentence_id&#x27;, &#x27;sentence&#x27;, &#x27;Onset&#x27;, &#x27;End&#x27;}), 10)                % this feature&#x27;s columns (first rows)
 </code></pre></div><div class="caption">Run from the output folder. Variable and column names were checked against the real files when this manual was built; the code itself was not run in MATLAB.</div></div></section><section id="code"><a id="implementation-in-sensiextractor"></a><h2><span class="num">6.4.1.5</span>In the code</h2><div class="card"><div class="card-title">Open in GitHub</div><ul><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/extractors/sentence_prosody.py"><code>sensi/extractors/sentence_prosody.py</code></a></li></ul></div><p>Source: <code>sensi/extractors/sentence_prosody.py</code> (the sentence-level
 extractor that builds the sidecar; despite the name, also handles the
 timing columns). Implementation derives sentence timing as the
@@ -83,7 +84,7 @@ aggregates downstream of the SensiExtractor outputs.</li>
         <a class="prev" href="../../features/sentence/index.html"><small>Previous</small>Sentence level</a>
         <a class="next" href="../../features/sentence/sentence_prosody_pitch.html"><small>Next</small>Sentence-level pitch features</a>
       </nav>
-      <footer>SensiExtractor User Manual · built 2026-10-27 from commit e0b7600 · source: <a href="https://github.com/edneuro/SENSI-Speech-Features">edneuro/SENSI-Speech-Features</a></footer>
+      <footer>SensiExtractor User Manual · version 0.2.0 · built 2026-10-27 · source: <a href="https://github.com/edneuro/SENSI-Speech-Features">edneuro/SENSI-Speech-Features</a></footer>
     </div>
   </main>
   <aside class="right" aria-label="On this page">

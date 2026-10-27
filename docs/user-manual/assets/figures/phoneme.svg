@@ -421,7 +421,7 @@ L 487.08 165.117281
     <text style="font-size: 8px; font-family: 'Segoe UI', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle" x="458.682298" y="53.300748" transform="rotate(-0 458.682298 53.300748)">s</text>
    </g>
    <g id="text_36">
-    <text style="font-weight: 600; font-size: 10.5px; font-family: 'Segoe UI', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: start" x="7.2" y="14.973281" transform="rotate(-0 7.2 14.973281)">Phoneme-level columns</text>
+    <text style="font-weight: 600; font-size: 10.5px; font-family: 'Segoe UI', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: start" x="7.2" y="14.973281" transform="rotate(-0 7.2 14.973281)">Phoneme-level columns  (amber = vowel carrying stress 1 or 2)</text>
    </g>
   </g>
  </g>

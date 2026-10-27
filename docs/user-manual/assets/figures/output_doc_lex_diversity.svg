@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" standalone="no"?>
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
   "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="630.864pt" height="166.231125pt" viewBox="0 0 630.864 166.231125" xmlns="http://www.w3.org/2000/svg" version="1.1">
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="656.929391pt" height="166.231125pt" viewBox="0 0 656.929391 166.231125" xmlns="http://www.w3.org/2000/svg" version="1.1">
  <metadata>
   <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
    <cc:Work>
@@ -16,8 +16,8 @@
  <g id="figure_1">
   <g id="patch_1">
    <path d="M 0 166.231125 
-L 630.864 166.231125 
-L 630.864 0 
+L 656.929391 166.231125 
+L 656.929391 0 
 L 0 0 
 z
 " style="fill: #ffffff"/>
@@ -542,7 +542,7 @@ L 623.664 142.328
     <text style="font-size: 7px; font-family: 'Segoe UI', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: start; fill: #5b6370" x="495.854" y="135.833998" transform="rotate(-0 495.854 135.833998)"> NaN</text>
    </g>
    <g id="text_41">
-    <text style="font-weight: 600; font-size: 9.5px; font-family: 'Segoe UI', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: start" x="368.044" y="44.208" transform="rotate(-0 368.044 44.208)">mtld</text>
+    <text style="font-weight: 600; font-size: 9.5px; font-family: 'Segoe UI', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: start" x="368.044" y="44.208" transform="rotate(-0 368.044 44.208)">mtld  — NaN for every example (texts too short for this measure)</text>
    </g>
   </g>
   <g id="text_42">

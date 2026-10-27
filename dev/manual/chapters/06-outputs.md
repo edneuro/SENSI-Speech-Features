@@ -20,7 +20,7 @@ keywords: outputs files folders csv mat logs manifest
 ├── document/    documents_summary_<timestamp>.csv   one row per stimulus
 ├── acoustic/    <stim>_acoustic.mat            audio-only time series
 ├── Montreal Forced Alignment/                   saved alignments, reused by later runs
-└── logs/        <level>_run_<timestamp>.log, …_manifest.json, …_session_units.csv
+└── logs/        word_run_…, doc_run_…, acoustic_run_… (.log, _manifest.json, …)
 ```
 
 `<stim>` is the file name of the transcript (or recording) without its extension. A folder
@@ -40,17 +40,20 @@ writes into it.
   series share one time grid: `t` (seconds, one row per sample) and `fs` (samples per
   second), so they stack directly as columns of a predictor matrix.
 - **Times** (`Onset`, `End`, `t`) are in seconds from the start of the recording.
-- **Units** of every column are in `logs/<level>_session_units_<timestamp>.csv`.
+- **Units** of every column are in `logs/<pass>_session_units_<timestamp>.csv`.
 
 ## The run logs
 
 Each run writes into `logs/`:
 
+`<pass>` is `word` (the word, sub-word and sentence files are written in the word pass), `doc`
+(the document summary) or `acoustic`.
+
 | File | What it holds |
 |---|---|
-| `<level>_run_<timestamp>.log` | every progress message (what the Logs page shows) |
-| `<level>_run_<timestamp>_manifest.json` | inputs, settings, software versions, analyzer name, per-stimulus results and any problems |
-| `<level>_session_units_<timestamp>.csv` | each output column with its unit |
-| `<level>_run_<timestamp>_no-match.csv` | transcripts or recordings that found no partner |
+| `<pass>_run_<timestamp>.log` | every progress message (what the Logs page shows) |
+| `<pass>_run_<timestamp>_manifest.json` | inputs, settings, software versions, analyzer name, per-stimulus results and any problems |
+| `<pass>_session_units_<timestamp>.csv` | each output column with its unit |
+| `<pass>_run_<timestamp>_no-match.csv` | transcripts or recordings that found no partner |
 
 Keep the manifest with your outputs: it records exactly how they were made.

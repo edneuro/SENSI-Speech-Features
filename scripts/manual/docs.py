@@ -70,6 +70,7 @@ class FeatureDoc:
     parts: dict[str, Part] = field(default_factory=dict)    # id -> Part (doc-derived)
     extra_order: list[str] = field(default_factory=list)    # extra part ids, doc order
     summary: str = ""                                       # first sentence, plain text
+    preamble: str = ""                                      # text before the first ## (a note)
 
     @property
     def name(self) -> str:
@@ -85,15 +86,17 @@ def _split(body: str) -> list[tuple[str, str]]:
     (`[X]: #anchor`, usually at the very end) are appended to every section so
     each renders its citations on its own."""
     refs = "\n".join(l for l in body.splitlines() if re.match(r"^\[[^\]]+\]:\s*\S", l))
-    out, cur, buf = [], None, []
+    out, cur, buf, pre = [], None, [], []
     for line in body.splitlines():
         m = re.match(r"^## (.+?)\s*$", line)
         if m:
             if cur is not None:
                 out.append((cur, "\n".join(buf)))
             cur, buf = m.group(1), []
-        elif cur is not None and not re.match(r"^\[[^\]]+\]:\s*\S", line):
-            buf.append(line)
+        elif not re.match(r"^\[[^\]]+\]:\s*\S", line):
+            (buf if cur is not None else pre).append(line)
+    if "\n".join(pre).strip():
+        out.insert(0, ("", "\n".join(pre)))
     if cur is not None:
         out.append((cur, "\n".join(buf)))
     return [(h, f"{t}\n\n{refs}\n") for h, t in out]
@@ -133,6 +136,9 @@ def load_feature_doc(path: Path) -> FeatureDoc:
     md = _md()
     for heading, section in _split(body):
         if _is_empty(section):
+            continue
+        if heading == "":                         # the note before the first heading
+            doc.preamble = _heading_ids(md.render(section))
             continue
         pid, title = HEADING_MAP.get(heading.strip().lower(), (None, heading.strip()))
         if pid is None:

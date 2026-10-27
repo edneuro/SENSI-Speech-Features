@@ -46,11 +46,12 @@ so it lines up with your EEG events.
 
 1. The transcript is cleaned (numbers spelled out, spacing normalized) and parsed by spaCy
    into tokens, sentences and grammatical annotations.
-2. If there is a recording, the Montreal Forced Aligner finds when each word — and each
-   syllable and sound inside it — was spoken. This runs **once per stimulus** and is saved, so
+2. If there is a recording, the Montreal Forced Aligner finds when each word and each speech
+   sound (phone) was spoken; syllables are then built from the phones. This runs **once per stimulus** and is saved, so
    later runs reuse it.
 3. Each feature you switched on is computed from those pieces and written into the table for
-   its level. Features you leave off are not computed and leave no columns behind.
+   its level. Features you leave off are not computed and add no columns (a few identifying
+   columns, such as the token and its ids, are always written).
 
 ## The five output levels
 

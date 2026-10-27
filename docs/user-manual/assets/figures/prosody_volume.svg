@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" standalone="no"?>
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
   "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="525.764375pt" height="219.472016pt" viewBox="0 0 525.764375 219.472016" xmlns="http://www.w3.org/2000/svg" version="1.1">
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="610.649844pt" height="219.472016pt" viewBox="0 0 610.649844 219.472016" xmlns="http://www.w3.org/2000/svg" version="1.1">
  <metadata>
   <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
    <cc:Work>
@@ -16,8 +16,8 @@
  <g id="figure_1">
   <g id="patch_1">
    <path d="M 0 219.472016 
-L 525.764375 219.472016 
-L 525.764375 0 
+L 610.649844 219.472016 
+L 610.649844 0 
 L 0 0 
 z
 " style="fill: #ffffff"/>
@@ -779,7 +779,7 @@ L 518.564375 181.865766
     <text style="font-size: 7px; font-family: 'Segoe UI', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle" x="488.236169" y="58.69787" transform="rotate(-0 488.236169 58.69787)">meat</text>
    </g>
    <g id="text_38">
-    <text style="font-weight: 600; font-size: 10.5px; font-family: 'Segoe UI', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: start" x="38.684375" y="15.089766" transform="rotate(-0 38.684375 15.089766)">Word-level volume (intensity) features  — line: mean; band: min–max within the word</text>
+    <text style="font-weight: 600; font-size: 10.5px; font-family: 'Segoe UI', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: start" x="38.684375" y="15.089766" transform="rotate(-0 38.684375 15.089766)">Word-level volume (intensity) features  — line: Volume_Mean; band: Volume_Min to Volume_Max (5th–95th percentile)</text>
    </g>
   </g>
  </g>
