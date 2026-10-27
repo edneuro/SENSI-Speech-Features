@@ -5,22 +5,22 @@ Run: python gui.py
 
 import os
 import sys
-from pathlib import Path
 
-_HERE = Path(__file__).parent.resolve()
 # Keep all model/cache downloads inside the project folder.
-from sensi.utils.local_caches import use_project_caches
+from sensi.utils.local_caches import move_legacy_model_dirs, use_project_caches
+move_legacy_model_dirs()
 use_project_caches()
 # MKL on AMD CPUs (Windows/Ryzen) raises a fatal exception (0xc06d007f) during
 # BLAS matmul (e.g. librosa's mel-filterbank einsum in the acoustic level) under
 # the default Intel threading layer. Force sequential threading before any
-# numpy/MKL initialisation. Mirrors tests/conftest.py + main.py.
+# numpy/MKL initialisation. Mirrors tests/conftest.py + sensi/pipeline.py.
 os.environ.setdefault("MKL_THREADING_LAYER", "sequential")
 
 from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QPalette, QColor, QIcon
 
 from sensi.gui.main_window import MainWindow
+from sensi.paths import ASSETS_DIR
 from sensi.gui.theme import (
     qss_for_appearance,
     BG_PAGE, BG_PANEL, TEXT_PRIMARY, TEXT_SECONDARY,
@@ -28,7 +28,7 @@ from sensi.gui.theme import (
 )
 
 
-_ICON_PATH = _HERE / "assets" / "icon.svg"
+_ICON_PATH = ASSETS_DIR / "icon.svg"
 
 # Windows picks the taskbar button's icon by the process's AppUserModelID, not
 # by the window. Without an explicit ID the GUI runs as plain python.exe, gets

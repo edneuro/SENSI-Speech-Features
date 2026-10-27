@@ -14,6 +14,7 @@ from PySide6.QtWidgets import (
     QDialog, QHBoxLayout, QLabel, QPushButton, QTextBrowser, QVBoxLayout,
 )
 
+from sensi.paths import ASSETS_DIR
 from sensi.gui.feature_docs import (
     FeatureDoc, load_feature_doc, load_doc_file, resolve_doc_link,
 )
@@ -21,9 +22,7 @@ from sensi.gui.feature_docs import (
 _EXTERNAL_SCHEMES = {"http", "https", "mailto", "ftp"}
 
 
-_INFO_ICON_PATH = (
-    Path(__file__).resolve().parent.parent / "assets" / "info.svg"
-)
+_INFO_ICON_PATH = ASSETS_DIR / "info.svg"
 
 
 class InfoIcon(QPushButton):

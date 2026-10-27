@@ -13,7 +13,7 @@ import os
 import sys
 
 # MKL on AMD CPUs crashes with the default Intel-thread layer (0xc06d007f);
-# every entry point must set this before numpy does BLAS work (cf. main.py).
+# every entry point must set this before numpy does BLAS work (cf. sensi/pipeline.py).
 os.environ.setdefault("MKL_THREADING_LAYER", "sequential")
 
 _REPO_ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -21,7 +21,9 @@ if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
 # Keep all model/cache downloads inside the project folder.
-from sensi.utils.local_caches import use_project_caches  # noqa: E402
+from sensi.utils.local_caches import (  # noqa: E402
+    move_legacy_model_dirs, use_project_caches)
+move_legacy_model_dirs()
 use_project_caches()
 
 

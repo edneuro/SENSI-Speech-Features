@@ -22,12 +22,14 @@ imputed). The expected parquet schema for each source is documented in
 import logging
 from pathlib import Path
 
+from sensi.paths import DICT_DIR
+
 import numpy as np
 import pandas as pd
 
 logger = logging.getLogger(__name__)
 
-_DICT_DIR = Path(__file__).resolve().parent.parent / 'dictionaries'
+_DICT_DIR = DICT_DIR
 
 # source -> (default filename, {lookup_column: Output_Column})
 _SOURCES: dict[str, tuple[str, dict[str, str]]] = {

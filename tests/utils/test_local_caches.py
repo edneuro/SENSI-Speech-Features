@@ -37,9 +37,9 @@ def _probe(entry: str, extra_env: dict | None = None) -> dict:
 @pytest.mark.parametrize("entry", ["sensi.pipeline", "run", "sensi.extractors"])
 def test_caches_default_to_project(entry):
     got = _probe(entry)
-    assert Path(got["gensim"]) == _ROOT / "gensim_data"
-    assert Path(got["hf"]).is_relative_to(_ROOT / "hf_cache")
-    assert Path(got["mfa"]) == _ROOT / "mfa_data"
+    assert Path(got["gensim"]) == _ROOT / "data" / "gensim_data"
+    assert Path(got["hf"]).is_relative_to(_ROOT / "data" / "hf_cache")
+    assert Path(got["mfa"]) == _ROOT / "data" / "mfa_data"
 
 
 def test_preset_location_wins(tmp_path):
@@ -49,3 +49,37 @@ def test_preset_location_wins(tmp_path):
     assert Path(got["gensim"]) == tmp_path / "g"
     assert Path(got["hf"]).is_relative_to(tmp_path / "h")
     assert Path(got["mfa"]) == tmp_path / "m"
+
+
+def _layout(tmp_path, monkeypatch):
+    from sensi.utils import local_caches as lc
+    new, old = tmp_path / "data" / "hf_cache", tmp_path / "hf_cache"
+    monkeypatch.setattr(lc, "LEGACY_MODEL_DIRS", {new: old})
+    return lc, new, old
+
+
+def test_legacy_folder_used_until_moved(tmp_path, monkeypatch):
+    lc, new, old = _layout(tmp_path, monkeypatch)
+    old.mkdir()
+    assert lc._resolve(new) == old          # old layout, not moved yet
+    new.mkdir(parents=True)
+    assert lc._resolve(new) == new          # data/ copy wins once it exists
+
+
+def test_move_legacy_model_dirs_moves_once(tmp_path, monkeypatch, capsys):
+    lc, new, old = _layout(tmp_path, monkeypatch)
+    (old / "hub").mkdir(parents=True)
+    (old / "hub" / "w.bin").write_text("weights")
+    lc.move_legacy_model_dirs()
+    assert not old.exists() and (new / "hub" / "w.bin").read_text() == "weights"
+    assert "Moved hf_cache/" in capsys.readouterr().err
+    lc.move_legacy_model_dirs()             # nothing left to move: no-op
+    assert (new / "hub" / "w.bin").exists()
+
+
+def test_move_never_overwrites_existing_data_dir(tmp_path, monkeypatch):
+    lc, new, old = _layout(tmp_path, monkeypatch)
+    old.mkdir(); (old / "old.txt").write_text("old")
+    new.mkdir(parents=True); (new / "new.txt").write_text("new")
+    lc.move_legacy_model_dirs()
+    assert (old / "old.txt").exists() and (new / "new.txt").exists()

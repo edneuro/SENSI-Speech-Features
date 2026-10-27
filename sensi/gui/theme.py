@@ -7,6 +7,8 @@ than a system-tracking palette.
 
 from pathlib import Path
 
+from sensi.paths import ASSETS_DIR
+
 
 ACCENT_COLOR = "#00B2D0"      # SENSI cyan — matches assets/icon.svg
 ACCENT_HOVER = "#0093AB"
@@ -43,7 +45,7 @@ FONT_MONO = ("JetBrains Mono", 10)
 # Checkbox/radio indicator images. PySide6 6.11 ignores data: URIs in QSS
 # `image:` rules, so we point at real SVG files in assets/. Path is computed
 # absolutely so Qt can always locate the file regardless of CWD.
-_ASSETS_DIR = Path(__file__).resolve().parent.parent / "assets"
+_ASSETS_DIR = ASSETS_DIR
 # Qt QSS url() uses forward slashes even on Windows.
 _CHECK_URL = "url('" + (_ASSETS_DIR / "check.svg").as_posix() + "')"
 _DASH_URL = "url('" + (_ASSETS_DIR / "dash.svg").as_posix() + "')"

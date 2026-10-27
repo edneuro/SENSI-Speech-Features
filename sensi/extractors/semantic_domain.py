@@ -24,13 +24,15 @@ POS filter: only NOUN, VERB, ADJ, ADV, PROPN (CONTENT_POS) are scored. Other tok
 from pathlib import Path
 from typing import Iterable
 
+from sensi.paths import DICT_DIR
+
 import numpy as np
 import pandas as pd
 
 
 CONTENT_POS = {'NOUN', 'VERB', 'ADJ', 'ADV', 'PROPN'}
 
-_DICTIONARIES_DIR = Path(__file__).resolve().parent.parent / 'dictionaries'
+_DICTIONARIES_DIR = DICT_DIR
 
 
 class BackendNotAvailable(Exception):

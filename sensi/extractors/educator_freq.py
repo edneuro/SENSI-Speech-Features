@@ -15,6 +15,8 @@ analysis even when EWFG data acquisition is pending.
 import logging
 from pathlib import Path
 
+from sensi.paths import DICT_DIR
+
 import numpy as np
 import pandas as pd
 
@@ -28,7 +30,7 @@ _LOOKUP_COLUMNS = [
     'edu_zipf_k2', 'edu_zipf_3to5', 'edu_zipf_6to8', 'edu_zipf_9to12', 'edu_zipf_overall',
 ]
 
-_DEFAULT_LOOKUP_PATH = Path(__file__).resolve().parent.parent / 'dictionaries' / 'edu_zipf.parquet'
+_DEFAULT_LOOKUP_PATH = DICT_DIR / 'edu_zipf.parquet'
 
 _lookup_cache: dict[Path, pd.DataFrame] = {}
 

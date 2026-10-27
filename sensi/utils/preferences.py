@@ -56,6 +56,7 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
+from sensi.paths import CONFIG_DIR_DEFAULT
 from sensi.utils.config_yaml import (FEATURES_YAML, RUN_YAML, read_yaml,
                                split_prefs, join_yaml_pair,
                                write_features_yaml, write_run_yaml)
@@ -1075,7 +1076,7 @@ def get_config_dir() -> Path:
     legacy = os.environ.get('SENSI_PREFS_PATH')
     if legacy:
         return Path(legacy).parent
-    return Path(__file__).resolve().parent.parent / 'config'
+    return CONFIG_DIR_DEFAULT
 
 
 def get_features_yaml_path() -> Path:

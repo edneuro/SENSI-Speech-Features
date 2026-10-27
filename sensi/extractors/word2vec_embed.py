@@ -18,10 +18,9 @@ import pandas as pd
 from pathlib import Path
 from typing import Any
 
-_DEFAULT_MODEL_PATH = (
-    Path(__file__).parent.parent / "hf_cache" / "word2vec"
-    / "GoogleNews-vectors-negative300.bin"
-)
+from sensi.paths import HF_CACHE_DIR
+
+_DEFAULT_MODEL_PATH = HF_CACHE_DIR / "word2vec" / "GoogleNews-vectors-negative300.bin"
 
 
 class Word2VecUnavailable(RuntimeError):

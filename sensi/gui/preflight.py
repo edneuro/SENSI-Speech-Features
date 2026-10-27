@@ -29,6 +29,7 @@ from sensi.extractors.predictability_models import is_gated, all_specs
 # monkeypatch `extractors.aligner.g2p_model_available` and have it take
 # effect here.
 from sensi.extractors import aligner
+from sensi.paths import DICT_DIR
 
 
 @dataclass(frozen=True)
@@ -38,8 +39,7 @@ class Warning:
     message: str
 
 
-_PROJECT_ROOT = Path(__file__).resolve().parent.parent
-_EWFG_PARQUET = _PROJECT_ROOT / "dictionaries" / "edu_zipf.parquet"
+_EWFG_PARQUET = DICT_DIR / "edu_zipf.parquet"
 _LIWC_DIC_GLOB = "*.dic"
 
 # MFA detection is expensive (shutil.which is cheap, but the subprocess
@@ -149,7 +149,7 @@ def compute_warnings(session_api_key: str = "", session_hf_token: str = "") -> l
 
     # LIWC backend selected but no .dic
     if "sem_domain" in in_plan and prefs["semantic"].get("backend") == "liwc":
-        dict_dir = _PROJECT_ROOT / "dictionaries"
+        dict_dir = DICT_DIR
         if not any(dict_dir.glob(_LIWC_DIC_GLOB)):
             out.append(Warning(
                 toggle_key="sem_indicators", severity="amber",

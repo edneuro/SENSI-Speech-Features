@@ -36,6 +36,7 @@ from pathlib import Path
 
 import pandas as pd
 
+from sensi.paths import mfa_pretrained
 from sensi.utils.transcript_prep import prepare_for_aligner
 from sensi.utils.textgrid_parser import parse_words, parse_phones
 
@@ -47,9 +48,7 @@ ALIGNMENT_SUBDIR = 'Montreal Forced Alignment'
 # layout (v2) are re-aligned once.
 SIDECAR_VERSION = 3
 
-G2P_MODEL_PATH = (Path(__file__).resolve().parent.parent
-                  / 'mfa_data' / 'pretrained_models' / 'g2p'
-                  / 'english_us_arpa.zip')
+G2P_MODEL_PATH = mfa_pretrained('g2p', 'english_us_arpa.zip')
 
 
 def g2p_model_available() -> bool:

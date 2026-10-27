@@ -15,8 +15,10 @@ from pathlib import Path
 
 import yaml
 
+from sensi.paths import DOCS_FEATURES_DIR
 
-DOCS_ROOT = Path(__file__).resolve().parent.parent / "docs" / "features"
+
+DOCS_ROOT = DOCS_FEATURES_DIR
 
 # Toggle keys that share a single .md file. When several toggles describe
 # facets of one concept (the five `_pitch_*` derived stats; the

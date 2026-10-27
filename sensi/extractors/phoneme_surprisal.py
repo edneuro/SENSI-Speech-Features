@@ -16,6 +16,8 @@ import math
 import os
 from dataclasses import dataclass, field
 
+from sensi.paths import mfa_pretrained
+
 
 @dataclass
 class _Node:
@@ -106,10 +108,7 @@ def phoneme_scores(trie: CohortTrie, phones: list[str], *,
 _SILENCE_PHONES = {"sil", "sp", "spn", ""}
 _STRESS_DIGITS = ("0", "1", "2")
 
-DEFAULT_DICT_PATH = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-    "mfa_data", "pretrained_models", "dictionary", "english_us_arpa.dict",
-)
+DEFAULT_DICT_PATH = str(mfa_pretrained("dictionary", "english_us_arpa.dict"))
 
 _TRIE_CACHE: dict[tuple, CohortTrie] = {}
 
