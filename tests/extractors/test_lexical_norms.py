@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from extractors.lexical_norms import (
+from sensi.extractors.lexical_norms import (
     add_lexical_norms, ALL_OUTPUT_COLUMNS, _lookup_cache,
 )
 

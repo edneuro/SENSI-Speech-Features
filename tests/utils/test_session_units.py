@@ -1,7 +1,7 @@
 """Tests for utils.session_units."""
 import pytest
-from gui.planner.stages import Plan
-from utils.session_units import build_session_units
+from sensi.gui.planner.stages import Plan
+from sensi.utils.session_units import build_session_units
 
 
 def _mk_plan(stages: tuple[str, ...] = (),

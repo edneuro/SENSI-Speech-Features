@@ -40,7 +40,7 @@ def make_word_df(rows):
 
 
 def test_word_embed_shape(tmp_path):
-    from extractors.bert_embed import embed_bert_words_and_sentences
+    from sensi.extractors.bert_embed import embed_bert_words_and_sentences
 
     tokenizer, model = _make_tiny_bert()
     df = make_word_df([
@@ -58,7 +58,7 @@ def test_word_embed_shape(tmp_path):
 
 
 def test_word_embed_dtype_is_float32(tmp_path):
-    from extractors.bert_embed import embed_bert_words_and_sentences
+    from sensi.extractors.bert_embed import embed_bert_words_and_sentences
 
     tokenizer, model = _make_tiny_bert()
     df = make_word_df([("doc1", 0, "hello", "hello")])
@@ -67,7 +67,7 @@ def test_word_embed_dtype_is_float32(tmp_path):
 
 
 def test_sentence_embed_different_from_each_other(tmp_path):
-    from extractors.bert_embed import embed_bert_words_and_sentences
+    from sensi.extractors.bert_embed import embed_bert_words_and_sentences
 
     tokenizer, model = _make_tiny_bert()
     df = make_word_df([
@@ -81,7 +81,7 @@ def test_sentence_embed_different_from_each_other(tmp_path):
 
 
 def test_sliding_window_does_not_exceed_512_tokens():
-    from extractors.bert_embed import embed_bert_words_and_sentences
+    from sensi.extractors.bert_embed import embed_bert_words_and_sentences
 
     tokenizer, model = _make_tiny_bert()
     words_per_sent = 20
@@ -104,7 +104,7 @@ def test_sentence_mean_is_single_stage_over_subwords_not_word_vectors():
     this uses "debtor" (tokenizes to 2 subwords under bert-base-uncased) to
     tell them apart -- a regression guard for docs/features/master_bert_sentence.md's
     documented (and independently verified) aggregation formula."""
-    from extractors.bert_embed import embed_bert_words_and_sentences
+    from sensi.extractors.bert_embed import embed_bert_words_and_sentences
 
     tokenizer, model = _make_tiny_bert()
     df = make_word_df([
@@ -145,7 +145,7 @@ def test_sentence_mean_is_single_stage_over_subwords_not_word_vectors():
 
 
 def test_punct_excluded_from_sentence_mean():
-    from extractors.bert_embed import embed_bert_words_and_sentences
+    from sensi.extractors.bert_embed import embed_bert_words_and_sentences
 
     tokenizer, model = _make_tiny_bert()
     df_with = pd.DataFrame([
@@ -169,7 +169,7 @@ def test_oversize_sentence_warns_and_marks_tail_invalid(caplog):
     # with word_valid=False. Now the extractor logs a warning naming the
     # sentence so the silent data loss is visible.
     import logging
-    from extractors.bert_embed import embed_bert_words_and_sentences
+    from sensi.extractors.bert_embed import embed_bert_words_and_sentences
 
     tokenizer, model = _make_tiny_bert()
     n_words = 600                      # > 510 single-subword tokens
@@ -186,7 +186,7 @@ def test_oversize_sentence_warns_and_marks_tail_invalid(caplog):
 
 def test_normal_sentence_does_not_warn(caplog):
     import logging
-    from extractors.bert_embed import embed_bert_words_and_sentences
+    from sensi.extractors.bert_embed import embed_bert_words_and_sentences
 
     tokenizer, model = _make_tiny_bert()
     df = make_word_df([("d", 0, "short one", "short"),
@@ -197,7 +197,7 @@ def test_normal_sentence_does_not_warn(caplog):
 
 
 def test_punct_word_is_zero_and_invalid():
-    from extractors.bert_embed import embed_bert_words_and_sentences
+    from sensi.extractors.bert_embed import embed_bert_words_and_sentences
 
     tokenizer, model = _make_tiny_bert()
     df = pd.DataFrame([
@@ -216,7 +216,7 @@ def test_punct_word_is_zero_and_invalid():
 
 
 def test_sentence_valid_mask():
-    from extractors.bert_embed import embed_bert_words_and_sentences
+    from sensi.extractors.bert_embed import embed_bert_words_and_sentences
 
     tokenizer, model = _make_tiny_bert()
     df = make_word_df([
@@ -231,7 +231,7 @@ def test_sentence_valid_mask():
 
 
 def test_sentence_valid_mixed():
-    from extractors.bert_embed import embed_bert_words_and_sentences
+    from sensi.extractors.bert_embed import embed_bert_words_and_sentences
 
     tokenizer, model = _make_tiny_bert()
     # Sentence 0 has a content word (valid); sentence 1 is all PUNCT (invalid).
@@ -248,7 +248,7 @@ def test_sentence_valid_mixed():
 
 
 def test_all_punct_sentence_is_invalid():
-    from extractors.bert_embed import embed_bert_words_and_sentences
+    from sensi.extractors.bert_embed import embed_bert_words_and_sentences
 
     tokenizer, model = _make_tiny_bert()
     df = pd.DataFrame([
@@ -267,7 +267,7 @@ def test_all_punct_sentence_is_invalid():
 def test_bert_loads_once_per_process(monkeypatch):
     """Tokenizer + model are loaded once and reused for every stimulus."""
     import transformers
-    from extractors import bert_embed as b
+    from sensi.extractors import bert_embed as b
     calls = []
 
     class _Fake:

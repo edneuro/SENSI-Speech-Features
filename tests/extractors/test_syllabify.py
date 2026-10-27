@@ -1,8 +1,8 @@
 """Unit tests for the Maximum Onset Principle syllabification."""
 import pandas as pd
 import pytest
-from extractors import syllabify
-from extractors.syllabify import (
+from sensi.extractors import syllabify
+from sensi.extractors.syllabify import (
     LabelResult, Phone, Syllable, assign_labels, syllabify_word, syllabify_pairs,
 )
 
@@ -156,7 +156,7 @@ def test_pyphen_missing_module_falls_back_to_arpabet_no_stress(monkeypatch):
     time and never re-imports pyphen, so patching the flag is sufficient —
     no sys.modules manipulation needed.
     """
-    from extractors import syllabify
+    from sensi.extractors import syllabify
     monkeypatch.setattr(syllabify, '_pyphen_dict', None)
     monkeypatch.setattr(syllabify, '_pyphen_unavailable', True)
 
@@ -497,7 +497,7 @@ def test_lexicon_empty_warns_once_to_stderr(monkeypatch, capsys):
     """Final-review Fix 5: an unreadable MFA dictionary makes _pron_source
     report 'dictionary' for EVERY word (including genuinely G2P-derived
     ones) with no signal that anything went wrong. Warn once to stderr."""
-    import extractors.phoneme_surprisal as ps
+    import sensi.extractors.phoneme_surprisal as ps
     monkeypatch.setattr(syllabify, "_LEXICON_CACHE", None)
     monkeypatch.setattr(syllabify, "_LEXICON_EMPTY_WARNED", False)
     monkeypatch.setattr(ps, "DEFAULT_DICT_PATH", "Z:/does/not/exist_at_all.dict")

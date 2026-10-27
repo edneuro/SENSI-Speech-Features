@@ -3,8 +3,8 @@ import json
 
 import pytest
 
-from utils import timing_history as th
-from utils.timing_history import Sample
+from sensi.utils import timing_history as th
+from sensi.utils.timing_history import Sample
 
 
 def _samples(n, *, step="spacy_parse", model=None, device="cpu", rate=0.5):
@@ -99,7 +99,7 @@ def test_model_device_rule():
     # GPT-2 is pinned to full-precision CPU by the extractor even with CUDA.
     assert th.model_device("predictability", "gpt2", True) == "cpu"
     # Other roster models go to the GPU exactly when CUDA is available.
-    from extractors.predictability_models import ALL_SPECS
+    from sensi.extractors.predictability_models import ALL_SPECS
     other = next(s.slug for s in ALL_SPECS if s.hf_id != "gpt2")
     assert th.model_device("predictability", other, True) == "cuda"
     assert th.model_device("predictability", other, False) == "cpu"

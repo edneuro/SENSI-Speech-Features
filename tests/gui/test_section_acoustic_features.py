@@ -1,7 +1,7 @@
 import pytest
 pytest.importorskip("PySide6")
 
-from gui.section_acoustic_features import AcousticFeaturesSection
+from sensi.gui.section_acoustic_features import AcousticFeaturesSection
 
 
 def test_section_constructs_with_four_toggles(qtbot, tmp_path, monkeypatch):
@@ -15,7 +15,7 @@ def test_section_constructs_with_four_toggles(qtbot, tmp_path, monkeypatch):
 
 def test_rate_change_persists(qtbot, tmp_path, monkeypatch):
     monkeypatch.setenv("SENSI_PREFS_PATH", str(tmp_path / "preferences.json"))
-    from utils.preferences import load_preferences
+    from sensi.utils.preferences import load_preferences
     sec = AcousticFeaturesSection()
     qtbot.addWidget(sec)
     sec._rate_spin.setValue(64)
@@ -24,7 +24,7 @@ def test_rate_change_persists(qtbot, tmp_path, monkeypatch):
 
 def test_param_greying_follows_feature_toggles(qtbot, tmp_path, monkeypatch):
     monkeypatch.setenv("SENSI_PREFS_PATH", str(tmp_path / "preferences.json"))
-    from utils.preferences import save_preferences
+    from sensi.utils.preferences import save_preferences
     # The card (and so every param) is greyed while the Acoustic level is
     # off — the fresh-install default. Include it to test per-feature greying.
     save_preferences({"output": {"level_acoustic": True}})
@@ -62,7 +62,7 @@ def test_param_greying_follows_feature_toggles(qtbot, tmp_path, monkeypatch):
 
 def test_refresh_from_prefs_mirrors_run_tab_level_switch(qtbot, tmp_path, monkeypatch):
     monkeypatch.setenv("SENSI_PREFS_PATH", str(tmp_path / "preferences.json"))
-    from utils.preferences import save_preferences
+    from sensi.utils.preferences import save_preferences
     save_preferences({"output": {"level_acoustic": False}})
     sec = AcousticFeaturesSection()
     qtbot.addWidget(sec)

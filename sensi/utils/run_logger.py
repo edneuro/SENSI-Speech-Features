@@ -17,10 +17,10 @@ import traceback
 from pathlib import Path
 from typing import Any
 
-from utils.system_info import gather_system_info
+from sensi.utils.system_info import gather_system_info
 
 try:
-    from __init__ import __version__  # type: ignore
+    from sensi import __version__  # type: ignore
 except Exception:
     __version__ = "unknown"
 

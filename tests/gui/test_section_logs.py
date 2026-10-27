@@ -3,7 +3,7 @@ from pathlib import Path
 
 
 def test_logs_section_has_text_viewer(qtbot):
-    from gui.section_logs import LogsSection
+    from sensi.gui.section_logs import LogsSection
     w = LogsSection()
     qtbot.addWidget(w)
     assert w.viewer is not None
@@ -18,7 +18,7 @@ def test_past_runs_lists_logs_from_logs_subfolder(qtbot, tmp_path):
     (logs / "doc_run_2026-05-12_14-30-22.log").write_text("done", encoding="utf-8")
     (logs / "word_run_2026-05-11_10-15-44.log").write_text("done", encoding="utf-8")
 
-    from gui.section_logs import LogsSection
+    from sensi.gui.section_logs import LogsSection
     w = LogsSection(output_folder=tmp_path)
     qtbot.addWidget(w)
 
@@ -40,7 +40,7 @@ def test_past_runs_inserts_separator_between_batches(qtbot, tmp_path):
     (logs / "doc_run_2026-05-12_14-30-22.log").write_text("", encoding="utf-8")
     (logs / "word_run_2026-05-11_10-15-44.log").write_text("", encoding="utf-8")
 
-    from gui.section_logs import LogsSection, _GROUP_SEPARATOR
+    from sensi.gui.section_logs import LogsSection, _GROUP_SEPARATOR
     w = LogsSection(output_folder=tmp_path)
     qtbot.addWidget(w)
 
@@ -53,7 +53,7 @@ def test_past_runs_inserts_separator_between_batches(qtbot, tmp_path):
 def test_live_tail_picks_up_new_log_file(qtbot, tmp_path):
     """When start_live is called and a new log appears under <output>/logs/,
     a subsequent _poll_tail picks up its contents into the viewer."""
-    from gui.section_logs import LogsSection
+    from sensi.gui.section_logs import LogsSection
     w = LogsSection(output_folder=tmp_path)
     qtbot.addWidget(w)
 
@@ -78,7 +78,7 @@ def test_live_tail_picks_up_new_log_file(qtbot, tmp_path):
 
 def test_load_past_run_replaces_viewer_contents(qtbot, tmp_path):
     """Activating a past-run list item loads that file into the viewer."""
-    from gui.section_logs import LogsSection
+    from sensi.gui.section_logs import LogsSection
     logs = tmp_path / "logs"
     logs.mkdir()
     log_path = logs / "word_run_2026-05-12_14-30-22.log"

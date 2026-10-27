@@ -1,5 +1,5 @@
 import platform
-from utils.system_info import gather_system_info
+from sensi.utils.system_info import gather_system_info
 
 
 def test_system_info_returns_dict_with_expected_keys():

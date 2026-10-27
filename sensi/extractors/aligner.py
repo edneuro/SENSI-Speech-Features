@@ -36,8 +36,8 @@ from pathlib import Path
 
 import pandas as pd
 
-from utils.transcript_prep import prepare_for_aligner
-from utils.textgrid_parser import parse_words, parse_phones
+from sensi.utils.transcript_prep import prepare_for_aligner
+from sensi.utils.textgrid_parser import parse_words, parse_phones
 
 MFA_ACOUSTIC_MODEL = 'english_us_arpa'
 MFA_DICTIONARY = 'english_us_arpa'

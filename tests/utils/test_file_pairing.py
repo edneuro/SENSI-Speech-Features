@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from utils.file_pairing import find_pairs, PairingResult
+from sensi.utils.file_pairing import find_pairs, PairingResult
 
 
 def _touch(p: Path):

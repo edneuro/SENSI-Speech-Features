@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 import soundfile as sf
 
-from utils.preferences import load_preferences, save_preferences
+from sensi.utils.preferences import load_preferences, save_preferences
 
 _TEXT = "The quick brown fox jumps over the lazy dog. It was a bright day."
 
@@ -39,7 +39,7 @@ def _approx(text: str) -> bool:
 
 
 def _fake_system(monkeypatch, ram, vram=0.0):
-    import utils.system_info as si
+    import sensi.utils.system_info as si
     monkeypatch.setattr(si, "gather_system_info", lambda: {
         "system_ram_gb": ram,
         "gpu": {"name": "GPU" if vram else None, "vram_gb": vram}})
@@ -47,13 +47,13 @@ def _fake_system(monkeypatch, ram, vram=0.0):
 
 def _settled(qtbot, w):
     """Wait until the latest estimate request has been applied."""
-    from gui.section_run import wait_for_estimate_threads
+    from sensi.gui.section_run import wait_for_estimate_threads
     assert wait_for_estimate_threads(10.0)
     qtbot.waitUntil(lambda: w._est_applied_gen == w._est_gen, timeout=5000)
 
 
 def _section(qtbot, settle=True):
-    from gui.section_run import RunSection
+    from sensi.gui.section_run import RunSection
     w = RunSection(get_session_api_key=lambda: "", status_strip=None)
     qtbot.addWidget(w)
     if settle:
@@ -95,7 +95,7 @@ def test_ram_warning_only_when_it_does_not_fit(qtbot, tmp_path, monkeypatch):
     _inputs(tmp_path, pred={"models": ["llama3_8b"],
                             "metrics": {"surprisal": True, "cloze": False,
                                         "topmatch": False}})
-    from gui.planner import plan_from_prefs
+    from sensi.gui.planner import plan_from_prefs
     assert plan_from_prefs(load_preferences()).predictability_word
     _fake_system(monkeypatch, 4.0)
     w = _section(qtbot)
@@ -118,7 +118,7 @@ def test_estimates_never_disable_run(qtbot, tmp_path, monkeypatch):
     assert w.estimate_warning.isVisibleTo(w)
     assert w.run_button.isEnabled()
     # And a crashing estimator leaves the tab usable, with dashes.
-    import utils.run_estimates as re_
+    import sensi.utils.run_estimates as re_
     monkeypatch.setattr(re_, "estimate_disk",
                         lambda *a, **k: (_ for _ in ()).throw(RuntimeError("x")))
     w.refresh()
@@ -132,10 +132,10 @@ def test_first_estimate_note_hidden_when_learned(qtbot, tmp_path, monkeypatch):
     _inputs(tmp_path)
     w = _section(qtbot)
     assert w.estimate_note.isVisibleTo(w)
-    from gui.planner import plan_from_prefs
-    from utils import run_estimates as re_
-    from utils.preferences import get_config_dir
-    from utils.timing_history import MIN_SAMPLES_FOR_RATE
+    from sensi.gui.planner import plan_from_prefs
+    from sensi.utils import run_estimates as re_
+    from sensi.utils.preferences import get_config_dir
+    from sensi.utils.timing_history import MIN_SAMPLES_FOR_RATE
     plan = plan_from_prefs(load_preferences())
     steps = {re_.STAGE_TO_STEP[s] for s in plan.stages_to_run
              if s in re_.STAGE_TO_STEP}
@@ -168,7 +168,7 @@ def test_audio_only_inputs_show_dash_for_text_levels(qtbot, tmp_path, monkeypatc
 def test_slow_estimate_does_not_block_refresh(qtbot, tmp_path, monkeypatch):
     import threading
     import time
-    import utils.run_estimates as re_
+    import sensi.utils.run_estimates as re_
     _fake_system(monkeypatch, 64.0)
     _inputs(tmp_path)
     w = _section(qtbot)
@@ -197,7 +197,7 @@ def test_stale_estimate_result_is_discarded(qtbot, tmp_path, monkeypatch):
     # result is dropped; only request 2's result is shown, and the two
     # scans never run side by side.
     import threading
-    import utils.run_estimates as re_
+    import sensi.utils.run_estimates as re_
     _fake_system(monkeypatch, 64.0)
     _inputs(tmp_path)
     w = _section(qtbot)
@@ -234,9 +234,9 @@ def test_stale_estimate_result_is_discarded(qtbot, tmp_path, monkeypatch):
 
 
 def _learned_history_for(plan):
-    from utils import run_estimates as re_
-    from utils.preferences import get_config_dir
-    from utils.timing_history import MIN_SAMPLES_FOR_RATE
+    from sensi.utils import run_estimates as re_
+    from sensi.utils.preferences import get_config_dir
+    from sensi.utils.timing_history import MIN_SAMPLES_FOR_RATE
     steps = {re_.STAGE_TO_STEP[s] for s in plan.stages_to_run
              if s in re_.STAGE_TO_STEP}
     samples = []
@@ -257,7 +257,7 @@ def test_finished_run_refreshes_estimates(qtbot, tmp_path, monkeypatch):
     _inputs(tmp_path)
     w = _section(qtbot)
     assert w.estimate_note.isVisibleTo(w)
-    from gui.planner import plan_from_prefs
+    from sensi.gui.planner import plan_from_prefs
     _learned_history_for(plan_from_prefs(load_preferences()))
     gen = w._est_gen
     w._on_done_main("done")
@@ -297,7 +297,7 @@ def test_failed_emit_does_not_stick_busy(qtbot, tmp_path, monkeypatch):
 
     w._estimates_event = _Broken()
     w.refresh()
-    from gui.section_run import wait_for_estimate_threads
+    from sensi.gui.section_run import wait_for_estimate_threads
     assert wait_for_estimate_threads(10.0)
     assert not w._est_busy
     del w._estimates_event               # back to the real signal
@@ -309,7 +309,7 @@ def test_failed_emit_does_not_stick_busy(qtbot, tmp_path, monkeypatch):
 def test_refresh_mid_run_keeps_run_disabled(qtbot, tmp_path, monkeypatch):
     # A tab switch or level toggle during a run refreshes readiness; Run must
     # stay disabled until the run reports done.
-    import gui.section_run as sr
+    import sensi.gui.section_run as sr
     _fake_system(monkeypatch, 64.0)
     _inputs(tmp_path)
     monkeypatch.setattr(sr, "dispatch_run", lambda **kw: None)

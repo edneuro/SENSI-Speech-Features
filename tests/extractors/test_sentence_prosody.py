@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from extractors.audio_features import Contours
+from sensi.extractors.audio_features import Contours
 
 
 def make_contours(pitch_hz, intensity_db, frame_rate=100, hnr=15.0,
@@ -45,7 +45,7 @@ def make_word_df(rows):
 
 def test_basic_sentence_timing():
     """Sentence onset = min word Onset, end = max word End."""
-    from extractors.sentence_prosody import add_sentence_prosody
+    from sensi.extractors.sentence_prosody import add_sentence_prosody
 
     df = make_word_df([
         ("doc1", 0, "Hello world", "Hello", 0.1, 0.5),
@@ -63,7 +63,7 @@ def test_basic_sentence_timing():
 
 
 def test_sentence_text_is_preserved():
-    from extractors.sentence_prosody import add_sentence_prosody
+    from sensi.extractors.sentence_prosody import add_sentence_prosody
 
     df = make_word_df([
         ("doc1", 0, "The cat sat.", "The", 0.0, 0.3),
@@ -77,7 +77,7 @@ def test_sentence_text_is_preserved():
 
 def test_pitch_mean_aggregates_over_sentence_window():
     """Uniform 200 Hz pitch across 0-2 s -> Pitch_Mean = 200 Hz."""
-    from extractors.sentence_prosody import add_sentence_prosody
+    from sensi.extractors.sentence_prosody import add_sentence_prosody
 
     contours = make_contours(np.full(200, 200.0), np.full(200, 60.0))
     df = make_word_df([
@@ -89,7 +89,7 @@ def test_pitch_mean_aggregates_over_sentence_window():
 
 
 def test_pitch_delta_nan_for_first_sentence():
-    from extractors.sentence_prosody import add_sentence_prosody
+    from sensi.extractors.sentence_prosody import add_sentence_prosody
 
     contours = make_contours(
         np.concatenate([np.full(100, 200.0), np.full(100, 250.0)]),
@@ -106,7 +106,7 @@ def test_pitch_delta_nan_for_first_sentence():
 
 def test_nan_onset_yields_nan_prosody():
     """Words with NaN alignment -> sentence onset/end NaN -> NaN prosody."""
-    from extractors.sentence_prosody import add_sentence_prosody
+    from sensi.extractors.sentence_prosody import add_sentence_prosody
 
     contours = make_contours(np.full(100, 200.0), np.full(100, 60.0))
     df = make_word_df([
@@ -122,7 +122,7 @@ def test_pitch_delta_skips_unaligned_sentence_not_just_first():
     """Sentence B fails to align entirely; sentence C's delta must be
     measured back to sentence A, not NaN'd out by B (regression for the
     fix mirroring Word_Gap's ffill behavior)."""
-    from extractors.sentence_prosody import add_sentence_prosody
+    from sensi.extractors.sentence_prosody import add_sentence_prosody
 
     contours = make_contours(
         np.concatenate([np.full(100, 200.0), np.full(100, 250.0)]),
@@ -141,7 +141,7 @@ def test_pitch_delta_skips_unaligned_sentence_not_just_first():
 
 def test_none_contours_yields_nan_prosody():
     """If contours is None (no audio), timing comes from word_df but prosody is NaN."""
-    from extractors.sentence_prosody import add_sentence_prosody
+    from sensi.extractors.sentence_prosody import add_sentence_prosody
 
     df = make_word_df([
         ("doc1", 0, "hello", "hello", 0.0, 1.0),
@@ -154,7 +154,7 @@ def test_none_contours_yields_nan_prosody():
 
 def test_hnr_aggregated_per_sentence_window():
     """HNR frames 0-1 s = 12 dB, frames 1-2 s = 20 dB. Two sentences should differ."""
-    from extractors.sentence_prosody import add_sentence_prosody
+    from sensi.extractors.sentence_prosody import add_sentence_prosody
 
     times = np.arange(200) / 100.0       # 0.00, 0.01, ..., 1.99
     hnr_vals = np.where(times < 1.0, 12.0, 20.0)
@@ -172,7 +172,7 @@ def test_hnr_aggregated_per_sentence_window():
 
 
 def test_output_columns_present():
-    from extractors.sentence_prosody import add_sentence_prosody
+    from sensi.extractors.sentence_prosody import add_sentence_prosody
 
     contours = make_contours(np.full(100, 200.0), np.full(100, 60.0))
     df = make_word_df([("doc1", 0, "hi", "hi", 0.0, 1.0)])

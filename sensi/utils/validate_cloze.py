@@ -25,8 +25,8 @@ _ROOT = Path(__file__).resolve().parent.parent
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
-from extractors.predictability import add_predictability, select_model
-from extractors.predictability_models import slug_for_hf_id
+from sensi.extractors.predictability import add_predictability, select_model
+from sensi.extractors.predictability_models import slug_for_hf_id
 
 PROVO_CSV_URL = 'https://osf.io/download/eyfxq/'  # Provo Corpus item-level cloze data
 PROVO_DIR = _ROOT / 'data' / 'provo'

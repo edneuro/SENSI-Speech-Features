@@ -175,7 +175,7 @@ def write_run_yaml(path, data: dict) -> None:
 def validate_features_yaml(data: dict) -> list[str]:
     """Errors for a features.yaml payload; [] means valid. Derived live from
     DEFAULT_PREFS (lazy import: preferences imports this module's writers)."""
-    from utils.preferences import DEFAULT_PREFS as _defaults
+    from sensi.utils.preferences import DEFAULT_PREFS as _defaults
     if not isinstance(data, dict):
         return ["features.yaml root must be a mapping"]
     errors: list[str] = []
@@ -221,7 +221,7 @@ def validate_features_yaml(data: dict) -> list[str]:
         for k in (sem_raw or {}):
             if k not in _defaults["semantic"]:
                 errors.append(f"unknown semantic key: {k!r}")
-    from utils.config_checks import value_errors
+    from sensi.utils.config_checks import value_errors
     errors.extend(value_errors(data))
     return errors
 
@@ -260,7 +260,7 @@ def retired_keys_present(data: dict) -> list[str]:
 
 
 def validate_run_yaml(data: dict) -> list[str]:
-    from utils.preferences import DEFAULT_PREFS as _defaults
+    from sensi.utils.preferences import DEFAULT_PREFS as _defaults
     if not isinstance(data, dict):
         return ["run.yaml root must be a mapping"]
     errors: list[str] = []

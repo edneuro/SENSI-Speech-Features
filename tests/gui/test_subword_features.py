@@ -1,7 +1,7 @@
 import pytest
 pytest.importorskip("PySide6")
 
-from gui.section_subword_features import SubwordFeaturesSection
+from sensi.gui.section_subword_features import SubwordFeaturesSection
 
 
 def test_phoneme_surprisal_card_present(qtbot, tmp_path, monkeypatch):
@@ -14,7 +14,7 @@ def test_phoneme_surprisal_card_present(qtbot, tmp_path, monkeypatch):
 
 def test_phoneme_surprisal_analysis_sr_persists(qtbot, tmp_path, monkeypatch):
     monkeypatch.setenv("SENSI_PREFS_PATH", str(tmp_path / "preferences.json"))
-    from utils.preferences import load_preferences
+    from sensi.utils.preferences import load_preferences
     w = SubwordFeaturesSection()
     qtbot.addWidget(w)
     w._psr_sr_spin.setValue(64)
@@ -36,7 +36,7 @@ def test_g2p_oov_toggle_writes_to_alignment_section(qtbot, tmp_path, monkeypatch
     """g2p_oov must round-trip through prefs["alignment"], not prefs["features"] —
     a toggle wired to the wrong section would silently do nothing."""
     monkeypatch.setenv("SENSI_PREFS_PATH", str(tmp_path / "preferences.json"))
-    from utils.preferences import load_preferences
+    from sensi.utils.preferences import load_preferences
     w = SubwordFeaturesSection()
     qtbot.addWidget(w)
     row = w.toggle("g2p_oov")

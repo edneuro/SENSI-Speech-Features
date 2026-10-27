@@ -1,7 +1,7 @@
 import math
 import pandas as pd
 import pytest
-from extractors.phoneme_surprisal import (
+from sensi.extractors.phoneme_surprisal import (
     add_phoneme_surprisal, build_cohort_trie, get_cohort_trie, phoneme_scores,
 )
 
@@ -52,7 +52,7 @@ def test_guard_flags_raise_on_non_default():
 
 
 def test_load_mfa_lexicon_parses_variable_columns(tmp_path):
-    from extractors.phoneme_surprisal import load_mfa_lexicon
+    from sensi.extractors.phoneme_surprisal import load_mfa_lexicon
     d = tmp_path / "mini.dict"
     d.write_text(
         "cat\t0.99\t0.62\t0.58\t1.07\tK AE1 T\n"   # 4 prob cols then phones
@@ -88,7 +88,7 @@ def _cat_phon_df():
 
 
 def test_add_phoneme_surprisal_appends_two_columns(monkeypatch):
-    from extractors import phoneme_surprisal as ps
+    from sensi.extractors import phoneme_surprisal as ps
     trie = ps.build_cohort_trie([
         (("K", "AE", "T"), 3.0), (("K", "AE", "B"), 1.0), (("D", "AO", "G"), 2.0)])
     monkeypatch.setattr(ps, "get_cohort_trie", lambda *a, **k: trie)
@@ -98,7 +98,7 @@ def test_add_phoneme_surprisal_appends_two_columns(monkeypatch):
 
 
 def test_phoneme_surprisal_mat_vars_impulses_and_controls():
-    from extractors import phoneme_surprisal as ps
+    from sensi.extractors import phoneme_surprisal as ps
     df = _cat_phon_df()
     df["phoneme_surprisal"] = [0.585, 0.0, 0.415]
     df["cohort_entropy"] = [0.811, 0.811, 0.0]

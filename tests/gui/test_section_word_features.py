@@ -1,14 +1,14 @@
 def test_word_section_does_not_duplicate_output_toggle(qtbot):
     """Output toggle ('Word-level CSV') is owned by the Run page —
     Word-level page is purely feature configuration. Confirms no duplicate."""
-    from gui.section_word_features import WordFeaturesSection
+    from sensi.gui.section_word_features import WordFeaturesSection
     w = WordFeaturesSection()
     qtbot.addWidget(w)
     assert w.toggle("output_word_level_csv") is None
 
 
 def test_word_section_structural_has_eight_per_column_toggles(qtbot):
-    from gui.section_word_features import WordFeaturesSection
+    from sensi.gui.section_word_features import WordFeaturesSection
     w = WordFeaturesSection()
     qtbot.addWidget(w)
     for k in ("feat_struct_doc_id", "feat_struct_paragraph_id",
@@ -19,7 +19,7 @@ def test_word_section_structural_has_eight_per_column_toggles(qtbot):
 
 
 def test_word_section_acoustic_has_four_per_column_toggles(qtbot):
-    from gui.section_word_features import WordFeaturesSection
+    from sensi.gui.section_word_features import WordFeaturesSection
     w = WordFeaturesSection()
     qtbot.addWidget(w)
     for k in ("feat_acoustic_onset", "feat_acoustic_end",
@@ -31,15 +31,15 @@ def test_credentials_help_icon_opens_shared_doc(qtbot, monkeypatch):
     """The Predictability card exposes the standard blue ⓘ info-icon next to
     text, targeting the shared LLM-credentials doc; clicking it opens the
     feature-info dialog on 'llm_credentials'."""
-    from gui.section_word_features import WordFeaturesSection
-    from gui.info_popup import InfoIcon
+    from sensi.gui.section_word_features import WordFeaturesSection
+    from sensi.gui.info_popup import InfoIcon
     w = WordFeaturesSection()
     qtbot.addWidget(w)
     assert isinstance(w.credentials_help_icon, InfoIcon)
     assert w.credentials_help_icon._toggle_key == "llm_credentials"
 
     opened = {}
-    import gui.info_popup as ip
+    import sensi.gui.info_popup as ip
 
     class _FakeDialog:
         def __init__(self, key, parent=None):
@@ -55,7 +55,7 @@ def test_credentials_help_icon_opens_shared_doc(qtbot, monkeypatch):
 def test_llm_credentials_doc_exists_and_is_loadable():
     """The shared credentials doc the button targets must resolve as a real
     feature-doc file (key == filename), else the button opens a 'not found'."""
-    from gui.feature_docs import load_feature_doc
+    from sensi.gui.feature_docs import load_feature_doc
     doc = load_feature_doc("llm_credentials")
     assert doc is not None
     # Local HF backend only; the doc must cover the HF token setup.
@@ -63,7 +63,7 @@ def test_llm_credentials_doc_exists_and_is_loadable():
 
 
 def test_word_section_has_configure_categories_button(qtbot):
-    from gui.section_word_features import WordFeaturesSection
+    from sensi.gui.section_word_features import WordFeaturesSection
     w = WordFeaturesSection()
     qtbot.addWidget(w)
     assert w.configure_cats_button is not None
@@ -77,7 +77,7 @@ def test_word_section_lexling_freq_predict_sem_carried_over(qtbot):
     model_checkboxes + metric_checkboxes — so it's checked separately here
     rather than via toggle().
     """
-    from gui.section_word_features import WordFeaturesSection
+    from sensi.gui.section_word_features import WordFeaturesSection
     w = WordFeaturesSection()
     qtbot.addWidget(w)
     for k in ("lexling_tokens", "freq_subtlex",
@@ -90,7 +90,7 @@ def test_word_section_lexling_freq_predict_sem_carried_over(qtbot):
 def test_ewfg_toggles_are_disabled_unavailable(qtbot, prefs_tmp):
     """EWFG has no digital source (print-only), so its toggles are hard-disabled
     and unchecked — even though the SUBTLEX toggle in the same card is fine."""
-    from gui.section_word_features import WordFeaturesSection
+    from sensi.gui.section_word_features import WordFeaturesSection
     section = WordFeaturesSection()
     qtbot.addWidget(section)
     for key in ("freq_ewfg_k2", "freq_ewfg_3to5", "freq_ewfg_6to8",
@@ -106,7 +106,7 @@ def test_ewfg_toggles_are_disabled_unavailable(qtbot, prefs_tmp):
 
 
 def test_word_prosody_card_has_ten_toggles(qtbot, prefs_tmp):
-    from gui.section_word_features import WordFeaturesSection
+    from sensi.gui.section_word_features import WordFeaturesSection
     section = WordFeaturesSection()
     qtbot.addWidget(section)
     for key in (
@@ -121,8 +121,8 @@ def test_word_prosody_card_has_ten_toggles(qtbot, prefs_tmp):
 
 
 def test_word_prosody_pitch_units_combo_persists(qtbot, prefs_tmp):
-    from gui.section_word_features import WordFeaturesSection
-    from utils.preferences import load_preferences
+    from sensi.gui.section_word_features import WordFeaturesSection
+    from sensi.utils.preferences import load_preferences
     section = WordFeaturesSection()
     qtbot.addWidget(section)
     section.pitch_units_combo.setCurrentText('Hz')
@@ -135,16 +135,16 @@ def test_word_prosody_pitch_units_combo_persists(qtbot, prefs_tmp):
 # extractors/predictability_models.py).
 
 def test_model_rows_persist_selection(qtbot, prefs_tmp):
-    from gui.section_word_features import WordFeaturesSection
-    from utils.preferences import load_preferences
+    from sensi.gui.section_word_features import WordFeaturesSection
+    from sensi.utils.preferences import load_preferences
     w = WordFeaturesSection(); qtbot.addWidget(w)
     w.model_checkboxes["gpt2"].setChecked(True)
     assert "gpt2" in load_preferences()["predictability"]["models"]
 
 
 def test_metric_toggles_persist(qtbot, prefs_tmp):
-    from gui.section_word_features import WordFeaturesSection
-    from utils.preferences import load_preferences
+    from sensi.gui.section_word_features import WordFeaturesSection
+    from sensi.utils.preferences import load_preferences
     w = WordFeaturesSection(); qtbot.addWidget(w)
     w.metric_checkboxes["cloze"].setChecked(True)
     assert load_preferences()["predictability"]["metrics"]["cloze"] is True
@@ -155,8 +155,8 @@ def test_model_rows_cover_full_roster_with_gating_hint(qtbot):
     with the spec's label + note (the 'free, no token' vs 'gated' hint) on
     the row's word-wrapping label (checkbox text can't wrap, so the text
     lives on a companion label — see the horizontal-scrollbar fix)."""
-    from gui.section_word_features import WordFeaturesSection
-    from extractors.predictability_models import all_specs
+    from sensi.gui.section_word_features import WordFeaturesSection
+    from sensi.extractors.predictability_models import all_specs
     w = WordFeaturesSection(); qtbot.addWidget(w)
     for spec in all_specs():
         assert spec.slug in w.model_checkboxes
@@ -169,7 +169,7 @@ def test_model_rows_cover_full_roster_with_gating_hint(qtbot):
 def test_no_openai_widgets_anymore(qtbot):
     """OpenAI is no longer a selectable backend — the old combo/API-key
     widgets from the pre-unification design must be gone entirely."""
-    from gui.section_word_features import WordFeaturesSection
+    from sensi.gui.section_word_features import WordFeaturesSection
     w = WordFeaturesSection(); qtbot.addWidget(w)
     assert not hasattr(w, "llm_model_combo")
     assert not hasattr(w, "api_key_row")
@@ -180,9 +180,9 @@ def test_hf_box_always_shown_when_no_token_detected(qtbot, prefs_tmp, monkeypatc
     # Discoverability: with no token auto-detected, the input is always
     # present (so the user can find where to paste it) regardless of model
     # selection — including nothing selected or only the free GPT-2.
-    import extractors.predictability as m
+    import sensi.extractors.predictability as m
     monkeypatch.setattr(m, "has_hf_token", lambda: False)
-    from gui.section_word_features import WordFeaturesSection
+    from sensi.gui.section_word_features import WordFeaturesSection
     w = WordFeaturesSection(); qtbot.addWidget(w); w.show()
     # Nothing selected → still visible.
     assert w.hf_token_row.isVisible() is True
@@ -197,9 +197,9 @@ def test_hf_box_always_shown_when_no_token_detected(qtbot, prefs_tmp, monkeypatc
 
 
 def test_gated_model_with_token_shows_detected_label(qtbot, monkeypatch):
-    import extractors.predictability as m
+    import sensi.extractors.predictability as m
     monkeypatch.setattr(m, 'has_hf_token', lambda: True)
-    from gui.section_word_features import WordFeaturesSection
+    from sensi.gui.section_word_features import WordFeaturesSection
     w = WordFeaturesSection(); qtbot.addWidget(w)
     w.show()  # isVisible() requires a shown top-level ancestor (Qt semantics)
     w.model_checkboxes['llama3_8b'].setChecked(True)
@@ -208,9 +208,9 @@ def test_gated_model_with_token_shows_detected_label(qtbot, monkeypatch):
 
 
 def test_session_hf_token_returns_text_only_when_visible(qtbot, monkeypatch):
-    import extractors.predictability as m
+    import sensi.extractors.predictability as m
     monkeypatch.setattr(m, 'has_hf_token', lambda: False)
-    from gui.section_word_features import WordFeaturesSection
+    from sensi.gui.section_word_features import WordFeaturesSection
     w = WordFeaturesSection(); qtbot.addWidget(w)
     w.show()  # isVisible() requires a shown top-level ancestor (Qt semantics)
     w.model_checkboxes['llama3_8b'].setChecked(True)
@@ -226,7 +226,7 @@ def test_session_hf_token_returns_text_only_when_visible(qtbot, monkeypatch):
 def test_session_api_key_is_inert(qtbot):
     """OpenAI backend removed — session_api_key() is a permanent no-op kept
     only so gui/main_window.py's existing wiring stays valid."""
-    from gui.section_word_features import WordFeaturesSection
+    from sensi.gui.section_word_features import WordFeaturesSection
     w = WordFeaturesSection(); qtbot.addWidget(w)
     assert w.session_api_key() == ""
 
@@ -234,17 +234,17 @@ def test_session_api_key_is_inert(qtbot):
 # --- Project B: per-model context spinner ------------------------------------
 
 def test_context_spin_persists_cap_below_native(qtbot, prefs_tmp):
-    from gui.section_word_features import WordFeaturesSection
-    from utils.preferences import load_preferences
+    from sensi.gui.section_word_features import WordFeaturesSection
+    from sensi.utils.preferences import load_preferences
     w = WordFeaturesSection(); qtbot.addWidget(w)
     w.context_spins["llama3_8b"].setValue(2048)
     assert load_preferences()["predictability"]["context"]["llama3_8b"] == 2048
 
 
 def test_context_spin_at_native_is_stored_as_absence(qtbot, prefs_tmp):
-    from gui.section_word_features import WordFeaturesSection
-    from utils.preferences import load_preferences
-    from extractors.predictability_models import spec_for
+    from sensi.gui.section_word_features import WordFeaturesSection
+    from sensi.utils.preferences import load_preferences
+    from sensi.extractors.predictability_models import spec_for
     w = WordFeaturesSection(); qtbot.addWidget(w)
     # Lower it, then raise back to native → the key is removed (default).
     w.context_spins["llama3_8b"].setValue(2048)
@@ -253,8 +253,8 @@ def test_context_spin_at_native_is_stored_as_absence(qtbot, prefs_tmp):
 
 
 def test_context_spin_range_capped_at_native(qtbot, prefs_tmp):
-    from gui.section_word_features import WordFeaturesSection
-    from extractors.predictability_models import spec_for, FLOOR_CONTEXT
+    from sensi.gui.section_word_features import WordFeaturesSection
+    from sensi.extractors.predictability_models import spec_for, FLOOR_CONTEXT
     w = WordFeaturesSection(); qtbot.addWidget(w)
     spin = w.context_spins["gpt2"]
     assert spin.maximum() == spec_for("gpt2").native_ctx
@@ -267,7 +267,7 @@ def test_context_spin_not_greyed_by_model_checkbox(qtbot, prefs_tmp):
     # editable whether or not its model is ticked; the value simply takes
     # effect whenever its model is selected. (It greys out with the card
     # when the section is left out — see test_feature_pages_switches.py.)
-    from gui.section_word_features import WordFeaturesSection
+    from sensi.gui.section_word_features import WordFeaturesSection
     w = WordFeaturesSection(); qtbot.addWidget(w)
     assert w.context_spins["gpt2"].isEnabled() is True    # even unchecked
     w.model_checkboxes["gpt2"].setChecked(True)
@@ -278,9 +278,9 @@ def test_metric_rows_have_info_icons_routing_to_docs(qtbot, prefs_tmp):
     """Regression (user report): the metric checkboxes lost the ⓘ doc links
     the old per-column ToggleRows auto-rendered. Each metric row must carry
     an InfoIcon targeting its feature doc, and the doc must resolve."""
-    from gui.section_word_features import WordFeaturesSection
-    from gui.info_popup import InfoIcon
-    from gui.feature_docs import load_feature_doc
+    from sensi.gui.section_word_features import WordFeaturesSection
+    from sensi.gui.info_popup import InfoIcon
+    from sensi.gui.feature_docs import load_feature_doc
     w = WordFeaturesSection(); qtbot.addWidget(w)
     expected = {"surprisal": "pred_surprisal", "cloze": "pred_cloze",
                 "topmatch": "pred_topmatch"}
@@ -295,7 +295,7 @@ def test_context_spin_uses_adaptive_steps(qtbot, prefs_tmp):
     """Regression (user report): a fixed 128 step against a 131072 range made
     arrow clicks look like the box 'does nothing'. Steps must be adaptive."""
     from PySide6.QtWidgets import QSpinBox
-    from gui.section_word_features import WordFeaturesSection
+    from sensi.gui.section_word_features import WordFeaturesSection
     w = WordFeaturesSection(); qtbot.addWidget(w)
     for slug, spin in w.context_spins.items():
         assert spin.stepType() == QSpinBox.StepType.AdaptiveDecimalStepType, slug
@@ -310,13 +310,13 @@ def test_save_hf_token_button_persists_and_hides_row(qtbot, monkeypatch, tmp_pat
     monkeypatch.setenv("SENSI_CONFIG_DIR", str(tmp_path))
     monkeypatch.setattr("huggingface_hub.get_token", lambda: None)
     monkeypatch.delenv("HF_TOKEN", raising=False)
-    from gui.section_word_features import WordFeaturesSection
+    from sensi.gui.section_word_features import WordFeaturesSection
     w = WordFeaturesSection(); qtbot.addWidget(w); w.show()
     assert w.hf_token_row.isVisible() is True
     w.hf_token_line.setText("hf_gui_token")
     w.hf_token_save_btn.click()
     assert (tmp_path / "hf_token.txt").read_text(encoding="utf-8") == "hf_gui_token\n"
-    from utils.preferences import load_preferences
+    from sensi.utils.preferences import load_preferences
     assert load_preferences()["shared"]["hf_token_file"] == "hf_token.txt"
     assert w.hf_token_line.text() == ""              # field cleared after save
     assert w.hf_token_row.isVisible() is False       # real has_hf_token now sees the file
@@ -331,10 +331,10 @@ def test_replace_button_reveals_row_to_swap_a_saved_token(qtbot, monkeypatch, tm
     monkeypatch.setattr("huggingface_hub.get_token", lambda: None)
     monkeypatch.delenv("HF_TOKEN", raising=False)
     (tmp_path / "hf_token.txt").write_text("hf_stale_token\n", encoding="utf-8")
-    from utils.preferences import save_preferences, load_preferences
+    from sensi.utils.preferences import save_preferences, load_preferences
     save_preferences({"shared": {"hf_token_file": "hf_token.txt"}})
 
-    from gui.section_word_features import WordFeaturesSection
+    from sensi.gui.section_word_features import WordFeaturesSection
     w = WordFeaturesSection(); qtbot.addWidget(w); w.show()
     assert w.hf_token_row.isVisible() is False
     assert w.hf_token_detected_label.isVisible() is True
@@ -351,10 +351,10 @@ def test_replace_button_reveals_row_to_swap_a_saved_token(qtbot, monkeypatch, tm
 
 
 def test_save_hf_token_button_ignores_empty(qtbot, monkeypatch, tmp_path):
-    import extractors.predictability as m
+    import sensi.extractors.predictability as m
     monkeypatch.setenv("SENSI_CONFIG_DIR", str(tmp_path))
     monkeypatch.setattr(m, "has_hf_token", lambda: False)
-    from gui.section_word_features import WordFeaturesSection
+    from sensi.gui.section_word_features import WordFeaturesSection
     w = WordFeaturesSection(); qtbot.addWidget(w)
     w.hf_token_line.setText("   ")
     w.hf_token_save_btn.click()

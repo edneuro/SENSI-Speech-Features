@@ -1,8 +1,8 @@
 """Peak-memory estimate (utils/run_estimates.estimate_ram)."""
 from types import SimpleNamespace
 
-from utils import estimate_constants as K
-from utils.run_estimates import estimate_ram
+from sensi.utils import estimate_constants as K
+from sensi.utils.run_estimates import estimate_ram
 
 B = K.RAM_GB["baseline"]
 
@@ -63,7 +63,7 @@ def test_llama_too_big_for_vram_warns():
 
 
 def test_has_cuda_needs_a_named_gpu_with_memory():
-    from utils.run_estimates import has_cuda
+    from sensi.utils.run_estimates import has_cuda
     assert has_cuda(_sys(64, 8))
     assert not has_cuda(_sys(64, 0))
     assert not has_cuda({"gpu": {"name": "GPU", "vram_gb": 0}})

@@ -1,9 +1,9 @@
 """Value checks shared by run.py (validate_features_yaml) and the GUI Run tab."""
 import pytest
 
-from utils.config_checks import value_errors
-from utils.config_yaml import validate_features_yaml
-from utils.preferences import DEFAULT_PREFS
+from sensi.utils.config_checks import value_errors
+from sensi.utils.config_yaml import validate_features_yaml
+from sensi.utils.preferences import DEFAULT_PREFS
 
 
 def test_defaults_are_valid():

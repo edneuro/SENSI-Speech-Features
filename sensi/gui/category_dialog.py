@@ -4,7 +4,7 @@ from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QPushButton,
 )
 
-from gui.category_picker import CategoryPicker
+from sensi.gui.category_picker import CategoryPicker
 
 
 class CategoryDialog(QDialog):

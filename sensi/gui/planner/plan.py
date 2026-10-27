@@ -18,9 +18,9 @@ from __future__ import annotations
 
 from typing import Any
 
-from gui.planner.registry import STAGES, CLUSTERS, PREDICTABILITY_CLUSTER_NAME
-from gui.planner.stages import Stage
-from gui.planner.stages import Plan, FeatureCluster
+from sensi.gui.planner.registry import STAGES, CLUSTERS, PREDICTABILITY_CLUSTER_NAME
+from sensi.gui.planner.stages import Stage
+from sensi.gui.planner.stages import Plan, FeatureCluster
 
 DOC_AGG_PREDICTABILITY_CLUSTER_NAME = "doc agg predictability"
 

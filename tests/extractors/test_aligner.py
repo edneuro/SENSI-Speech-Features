@@ -8,7 +8,7 @@ import os
 
 import pandas as pd
 
-from extractors import aligner
+from sensi.extractors import aligner
 
 
 def _fake_result(tag):

@@ -8,7 +8,7 @@ from PySide6.QtWidgets import (
     QFileDialog, QWidget, QLayout, QToolTip, QSizePolicy,
 )
 
-from gui.theme import ACCENT_COLOR
+from sensi.gui.theme import ACCENT_COLOR
 
 
 class SectionHeader(QWidget):
@@ -104,9 +104,9 @@ class ToggleRow(QWidget):
         # Info icon appears iff a docs/features/<info_key>.md exists. Cluster
         # master toggles pass info_key=None, so they remain icon-free.
         if info_key is not None:
-            from gui.feature_docs import has_feature_doc
+            from sensi.gui.feature_docs import has_feature_doc
             if has_feature_doc(info_key):
-                from gui.info_popup import InfoIcon
+                from sensi.gui.info_popup import InfoIcon
                 layout.addWidget(InfoIcon(info_key, self))
         self.warning = None  # populated by set_warning
         self._perma_disabled = False
@@ -308,7 +308,7 @@ class ClusterCard(Card):
         self._open_segment: QWidget | None = None
         super().__init__(title, subtitle, parent)
 
-        from utils.preferences import load_preferences
+        from sensi.utils.preferences import load_preferences
         prefs = load_preferences()
         initial = prefs.get(master_section, {}).get(master_key, True)
 
@@ -484,7 +484,7 @@ class ClusterCard(Card):
         self._available = available
         self._master.setEnabled(available)
         if available:
-            from utils.preferences import load_preferences
+            from sensi.utils.preferences import load_preferences
             prefs = load_preferences()
             saved = prefs.get(self._master_section, {}).get(self._master_key, True)
         else:
@@ -500,7 +500,7 @@ class ClusterCard(Card):
         return self._master.isChecked() and self._available
 
     def _on_master_toggled(self, v: bool) -> None:
-        from utils.preferences import save_preferences
+        from sensi.utils.preferences import save_preferences
         save_preferences({self._master_section: {self._master_key: v}})
         self._apply_gate()
         self.settings_changed.emit()

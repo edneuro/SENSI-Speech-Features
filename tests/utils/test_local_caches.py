@@ -34,7 +34,7 @@ def _probe(entry: str, extra_env: dict | None = None) -> dict:
     return json.loads(out.stdout.strip().splitlines()[-1])
 
 
-@pytest.mark.parametrize("entry", ["main", "run", "extractors"])
+@pytest.mark.parametrize("entry", ["sensi.pipeline", "run", "sensi.extractors"])
 def test_caches_default_to_project(entry):
     got = _probe(entry)
     assert Path(got["gensim"]) == _ROOT / "gensim_data"
@@ -43,7 +43,7 @@ def test_caches_default_to_project(entry):
 
 
 def test_preset_location_wins(tmp_path):
-    got = _probe("extractors", {"GENSIM_DATA_DIR": str(tmp_path / "g"),
+    got = _probe("sensi.extractors", {"GENSIM_DATA_DIR": str(tmp_path / "g"),
                                 "HF_HOME": str(tmp_path / "h"),
                                 "MFA_ROOT_DIR": str(tmp_path / "m")})
     assert Path(got["gensim"]) == tmp_path / "g"

@@ -9,7 +9,7 @@ import os
 import pandas as pd
 import pytest
 
-from extractors import aligner
+from sensi.extractors import aligner
 
 
 def _staged_files(corpus_dir):
@@ -41,7 +41,7 @@ def test_sha256_text_is_stable_and_prepared():
 
 
 def aligner_prepared(t):
-    from utils.transcript_prep import prepare_for_aligner
+    from sensi.utils.transcript_prep import prepare_for_aligner
     return prepare_for_aligner(t)
 
 

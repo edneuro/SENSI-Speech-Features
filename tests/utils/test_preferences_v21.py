@@ -6,11 +6,11 @@ from pathlib import Path
 
 import pytest
 
-from utils.config_yaml import (
+from sensi.utils.config_yaml import (
     retired_keys_present, split_prefs, validate_features_yaml,
     write_features_yaml,
 )
-from utils.preferences import (
+from sensi.utils.preferences import (
     DEFAULT_PREFS, DEFAULT_PREFS_V20, RETIRED_OUTPUT_KEYS_V21,
     _merged_from_user, get_features_yaml_path, load_preferences,
 )

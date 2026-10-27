@@ -21,7 +21,7 @@ from typing import Protocol
 import numpy as np
 import pandas as pd
 
-from extractors.predictability_models import spec_for, effective_context
+from sensi.extractors.predictability_models import spec_for, effective_context
 
 logger = logging.getLogger(__name__)
 
@@ -299,8 +299,8 @@ def has_hf_token() -> bool:
     if bool(get_token()):
         return True
     try:
-        from utils.credentials import read_hf_token
-        from utils.preferences import load_preferences
+        from sensi.utils.credentials import read_hf_token
+        from sensi.utils.preferences import load_preferences
         return bool(read_hf_token(load_preferences().get("shared", {})))
     except Exception:
         return False

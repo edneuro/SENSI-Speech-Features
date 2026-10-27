@@ -18,7 +18,7 @@ _ROOT = Path(__file__).resolve().parent.parent
 
 def main() -> int:
     sys.path.insert(0, str(_ROOT))
-    from utils.local_caches import use_project_caches
+    from sensi.utils.local_caches import use_project_caches
     use_project_caches()
     mfa_dir = Path(os.environ['MFA_ROOT_DIR'])
 

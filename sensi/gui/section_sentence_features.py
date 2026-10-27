@@ -3,8 +3,8 @@
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QGridLayout
 
-from gui.widgets import ClusterCard, ToggleRow
-from utils.preferences import load_preferences, save_preferences
+from sensi.gui.widgets import ClusterCard, ToggleRow
+from sensi.utils.preferences import load_preferences, save_preferences
 
 
 class SentenceFeaturesSection(QWidget):

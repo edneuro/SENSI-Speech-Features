@@ -203,11 +203,11 @@ def main() -> int:
 
     metrics = [m.strip() for m in args.metrics.split(",") if m.strip()]
 
-    from extractors.text_parser import parse
-    from extractors.predictability import (
+    from sensi.extractors.text_parser import parse
+    from sensi.extractors.predictability import (
         add_predictability, _get_backend, _scores_from_subwords, _chunk_slices,
     )
-    from extractors.predictability_models import spec_for, is_gated, effective_context
+    from sensi.extractors.predictability_models import spec_for, is_gated, effective_context
 
     spec = spec_for(args.model_slug)
     print(f"Model slug: {spec.slug}  hf_id: {spec.hf_id}  gated: {spec.gated}  "

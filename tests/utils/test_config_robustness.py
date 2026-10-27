@@ -6,7 +6,7 @@ import sys
 import pytest
 import yaml
 
-from utils import config_yaml, preferences
+from sensi.utils import config_yaml, preferences
 
 
 def test_replace_retries_a_transient_lock(tmp_path, monkeypatch):

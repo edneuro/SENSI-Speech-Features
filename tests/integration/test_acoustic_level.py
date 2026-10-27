@@ -8,7 +8,7 @@ import numpy as np
 import scipy.io
 import soundfile as sf
 
-import main
+from sensi import pipeline
 
 _PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
@@ -35,7 +35,7 @@ def test_acoustic_batch_writes_mat_without_transcript(tmp_path):
     audio = tmp_path / "audio"
     out = tmp_path / "out"
     _make_audio(audio, "stimA.wav")
-    main.run_acoustic_level_batch(_args(audio, out))
+    pipeline.run_acoustic_level_batch(_args(audio, out))
     mat_path = out / "acoustic" / "stimA_acoustic.mat"
     assert mat_path.is_file()
     data = scipy.io.loadmat(str(mat_path))

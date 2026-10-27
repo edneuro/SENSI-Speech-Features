@@ -7,10 +7,10 @@ from PySide6.QtWidgets import (
     QDoubleSpinBox,
 )
 
-from gui.widgets import ClusterCard, ToggleRow
-from gui.planner import plan_from_prefs
-from gui.planner.plan import _active_clusters, _active_output_csvs
-from utils.preferences import load_preferences, save_preferences
+from sensi.gui.widgets import ClusterCard, ToggleRow
+from sensi.gui.planner import plan_from_prefs
+from sensi.gui.planner.plan import _active_clusters, _active_output_csvs
+from sensi.utils.preferences import load_preferences, save_preferences
 
 # Doc-aggregate output toggles whose means can come out NaN, with the hover
 # tooltip shown when that happens. The source extractors themselves always run
@@ -311,7 +311,7 @@ class DocFeaturesSection(QWidget):
         prefs = load_preferences()
         backend = prefs["semantic"].get("backend", "auto")
         if backend == "auto":
-            from extractors.semantic_domain import detect_backend
+            from sensi.extractors.semantic_domain import detect_backend
             backend, _ = detect_backend()
         key = f"categories_{backend}"
         sel = prefs["semantic"].get(key, [])

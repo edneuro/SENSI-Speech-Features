@@ -4,7 +4,7 @@ import types
 import numpy as np
 import pandas as pd
 import pytest
-from extractors.predictability import (
+from sensi.extractors.predictability import (
     add_predictability,
     map_tokens_to_subwords,
     _token_surprisals,
@@ -39,7 +39,7 @@ def _df():
 def test_tiny_cloze_keeps_precision_instead_of_flooring_to_zero():
     """Cloze is stored to 6 significant digits, so a very unlikely word (38.9
     bits) keeps a positive probability consistent with its surprisal."""
-    from extractors.predictability import _write_metric_columns
+    from sensi.extractors.predictability import _write_metric_columns
     p = 2.0 ** -38.9
     out = {}
     _write_metric_columns(out, "gpt2", ["surprisal", "cloze"], ["NOUN"],
@@ -128,7 +128,7 @@ def test_gpt2_backend_stays_cpu_even_when_cuda_available(monkeypatch):
     # must preserve that — quantized/fp16 GPT-2 would emit different
     # surprisal values than previously-computed CSVs, even though the GPU
     # tiers are correct for the Llama models.
-    from extractors.predictability import _HuggingFaceBackend
+    from sensi.extractors.predictability import _HuggingFaceBackend
     monkeypatch.setattr('torch.cuda.is_available', lambda: True)
     _patch_transformers(monkeypatch, lambda model_id, **kw: _DummyModel('cuda:0'))
     b = _HuggingFaceBackend('gpt2')
@@ -237,7 +237,7 @@ def test_scores_from_subwords_straddling_subword_counted_once():
 
 
 def test_add_predictability_caches_scores_across_passes(monkeypatch):
-    import extractors.predictability as m
+    import sensi.extractors.predictability as m
 
     calls = []
 
@@ -269,17 +269,17 @@ def test_select_model_never_returns_openai_even_with_key(monkeypatch):
     # served there). select_model must not route to a backend that can only
     # fail at run time, even if a key is present.
     monkeypatch.setenv('OPENAI_API_KEY', 'sk-test')
-    monkeypatch.setattr('extractors.predictability._available_vram_gb', lambda: 0.0)
+    monkeypatch.setattr('sensi.extractors.predictability._available_vram_gb', lambda: 0.0)
     assert select_model() == 'meta-llama/Llama-3.2-3B'
 
 
 def test_select_model_picks_local_by_vram(monkeypatch):
     monkeypatch.delenv('OPENAI_API_KEY', raising=False)
-    monkeypatch.setattr('extractors.predictability._available_vram_gb', lambda: 8.0)
+    monkeypatch.setattr('sensi.extractors.predictability._available_vram_gb', lambda: 8.0)
     assert select_model() == 'meta-llama/Llama-3.2-3B'
-    monkeypatch.setattr('extractors.predictability._available_vram_gb', lambda: 14.0)
+    monkeypatch.setattr('sensi.extractors.predictability._available_vram_gb', lambda: 14.0)
     assert select_model() == 'meta-llama/Meta-Llama-3-8B'
-    monkeypatch.setattr('extractors.predictability._available_vram_gb', lambda: 50.0)
+    monkeypatch.setattr('sensi.extractors.predictability._available_vram_gb', lambda: 50.0)
     assert select_model() == 'meta-llama/Meta-Llama-3-70B'
 
 
@@ -314,7 +314,7 @@ def test_has_hf_token_false_when_no_token(monkeypatch):
 
 
 def test_backend_raises_actionable_error_on_gated(monkeypatch):
-    from extractors.predictability import _HuggingFaceBackend
+    from sensi.extractors.predictability import _HuggingFaceBackend
 
     def raise_gated(*a, **k):
         raise OSError("401 Client Error: gated repo")
@@ -431,7 +431,7 @@ def test_load_tiers_prefers_gpu_only_when_cuda():
 
 
 def test_backend_loads_4bit_on_gpu(monkeypatch):
-    from extractors.predictability import _HuggingFaceBackend
+    from sensi.extractors.predictability import _HuggingFaceBackend
     monkeypatch.setattr('torch.cuda.is_available', lambda: True)
     _patch_transformers(monkeypatch, lambda model_id, **kw: _DummyModel('cuda:0'))
     b = _HuggingFaceBackend('meta-llama/Meta-Llama-3-8B')
@@ -441,7 +441,7 @@ def test_backend_loads_4bit_on_gpu(monkeypatch):
 def test_backend_falls_back_to_fp16_gpu_on_bnb_error(monkeypatch):
     """bitsandbytes broken (typical on Windows) but a GPU is present → fp16 GPU,
     NOT a silent drop to CPU."""
-    from extractors.predictability import _HuggingFaceBackend
+    from sensi.extractors.predictability import _HuggingFaceBackend
     monkeypatch.setattr('torch.cuda.is_available', lambda: True)
     calls = []
 
@@ -463,7 +463,7 @@ def test_backend_falls_back_to_cpu_and_warns(monkeypatch, caplog):
     """Both GPU loads fail while CUDA is present → CPU, with a loud warning so
     the CPU landing is never silent."""
     import logging
-    from extractors.predictability import _HuggingFaceBackend
+    from sensi.extractors.predictability import _HuggingFaceBackend
     monkeypatch.setattr('torch.cuda.is_available', lambda: True)
 
     def fake_model(model_id, **kw):
@@ -482,7 +482,7 @@ def test_backend_cpu_only_when_no_cuda(monkeypatch, caplog):
     """No GPU at all → only the CPU tier is attempted (no bnb/CUDA load), and
     no false 'GPU idle' warning."""
     import logging
-    from extractors.predictability import _HuggingFaceBackend
+    from sensi.extractors.predictability import _HuggingFaceBackend
     monkeypatch.setattr('torch.cuda.is_available', lambda: False)
     calls = []
 
@@ -501,7 +501,7 @@ def test_backend_cpu_only_when_no_cuda(monkeypatch, caplog):
 # --- Project B: per-model context cap threading ------------------------------
 
 def test_backend_caps_context_limit(monkeypatch):
-    import extractors.predictability as m
+    import sensi.extractors.predictability as m
     monkeypatch.setattr('torch.cuda.is_available', lambda: False)
     _patch_transformers(monkeypatch, lambda model_id, **kw: _DummyModel('cpu'))
     # _DummyModel.config.max_position_embeddings == 1024; a lower cap wins.
@@ -510,7 +510,7 @@ def test_backend_caps_context_limit(monkeypatch):
 
 
 def test_backend_context_none_uses_native(monkeypatch):
-    import extractors.predictability as m
+    import sensi.extractors.predictability as m
     monkeypatch.setattr('torch.cuda.is_available', lambda: False)
     _patch_transformers(monkeypatch, lambda model_id, **kw: _DummyModel('cpu'))
     b = m._HuggingFaceBackend('gpt2')
@@ -518,7 +518,7 @@ def test_backend_context_none_uses_native(monkeypatch):
 
 
 def test_backend_cap_above_native_clamps(monkeypatch):
-    import extractors.predictability as m
+    import sensi.extractors.predictability as m
     monkeypatch.setattr('torch.cuda.is_available', lambda: False)
     _patch_transformers(monkeypatch, lambda model_id, **kw: _DummyModel('cpu'))
     b = m._HuggingFaceBackend('gpt2', max_context=5000)
@@ -529,7 +529,7 @@ def test_get_backend_reuses_same_cap_but_evicts_other_caps(monkeypatch):
     # Within a run the same cap is reused (cached); a DIFFERENT cap for the
     # same model evicts the old instance so at most one loaded model per
     # model_id is retained (each holds GBs of weights).
-    import extractors.predictability as m
+    import sensi.extractors.predictability as m
     m._BACKEND_CACHE.clear()
     monkeypatch.setattr('torch.cuda.is_available', lambda: False)
     _patch_transformers(monkeypatch, lambda model_id, **kw: _DummyModel('cpu'))
@@ -542,7 +542,7 @@ def test_get_backend_reuses_same_cap_but_evicts_other_caps(monkeypatch):
 
 
 def test_get_backend_keeps_distinct_models(monkeypatch):
-    import extractors.predictability as m
+    import sensi.extractors.predictability as m
     m._BACKEND_CACHE.clear()
     monkeypatch.setattr('torch.cuda.is_available', lambda: False)
     _patch_transformers(monkeypatch, lambda model_id, **kw: _DummyModel('cpu'))
@@ -553,7 +553,7 @@ def test_get_backend_keeps_distinct_models(monkeypatch):
 
 
 def test_add_predictability_threads_effective_context(monkeypatch):
-    import extractors.predictability as m
+    import sensi.extractors.predictability as m
 
     calls = []
 

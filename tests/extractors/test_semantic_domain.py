@@ -3,7 +3,7 @@ import math
 import pandas as pd
 import pytest
 
-from extractors.semantic_domain import (
+from sensi.extractors.semantic_domain import (
     add_semantic_domain,
     detect_backend,
     BackendNotAvailable,

@@ -9,14 +9,14 @@ from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QFrame,
 )
 
-from gui.widgets import SectionHeader, SectionSwitch, _set_state_property
-from gui.preflight import compute_warnings
-from gui.run_dispatch import run as dispatch_run
-from gui.planner import plan_from_prefs
-from gui.planner.plan import LEVEL_ARTIFACTS
-from gui.theme import TEXT_MUTED
-from utils.config_checks import value_errors
-from utils.preferences import load_preferences, save_preferences
+from sensi.gui.widgets import SectionHeader, SectionSwitch, _set_state_property
+from sensi.gui.preflight import compute_warnings
+from sensi.gui.run_dispatch import run as dispatch_run
+from sensi.gui.planner import plan_from_prefs
+from sensi.gui.planner.plan import LEVEL_ARTIFACTS
+from sensi.gui.theme import TEXT_MUTED
+from sensi.utils.config_checks import value_errors
+from sensi.utils.preferences import load_preferences, save_preferences
 
 _log = logging.getLogger(__name__)
 
@@ -407,7 +407,7 @@ class RunSection(QWidget):
         Called from estimate workers, hence the lock."""
         with self._system_info_lock:
             if self._system_info is None:
-                from utils.system_info import gather_system_info
+                from sensi.utils.system_info import gather_system_info
                 self._system_info = gather_system_info()
             return self._system_info
 
@@ -483,8 +483,8 @@ class RunSection(QWidget):
         degrades to dashes, never an error."""
         empty = _EMPTY_ESTIMATES
         try:
-            from utils import run_estimates as re_
-            from utils.timing_history import load_history
+            from sensi.utils import run_estimates as re_
+            from sensi.utils.timing_history import load_history
             shared = prefs["shared"]
             stats = re_.scan_inputs(
                 shared.get("last_transcripts_folder", ""),

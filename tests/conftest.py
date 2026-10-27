@@ -8,7 +8,7 @@ if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
 # Tests that load models use the project's caches, not the home directory.
-from utils.local_caches import use_project_caches  # noqa: E402
+from sensi.utils.local_caches import use_project_caches  # noqa: E402
 use_project_caches()
 
 # MKL on AMD CPUs crashes when using the default Intel-thread layer for

@@ -8,9 +8,9 @@ from PySide6.QtWidgets import (
     QDoubleSpinBox, QSpinBox, QCheckBox,
 )
 
-from gui.widgets import ClusterCard, ToggleRow
-from utils.preferences import load_preferences, save_preferences
-from extractors.predictability_models import (
+from sensi.gui.widgets import ClusterCard, ToggleRow
+from sensi.utils.preferences import load_preferences, save_preferences
+from sensi.extractors.predictability_models import (
     all_specs, is_gated, spec_for, FLOOR_CONTEXT,
 )
 # Imported as a module (not `from ... import has_hf_token`) so that tests can
@@ -18,7 +18,7 @@ from extractors.predictability_models import (
 # effect here — a direct-name import would bind a stale reference at
 # module-load time (mirrors gui/preflight.py's `from extractors import
 # llm_cloze` pattern).
-from extractors import predictability as _predictability_mod
+from sensi.extractors import predictability as _predictability_mod
 
 
 class WordFeaturesSection(QWidget):
@@ -159,7 +159,7 @@ class WordFeaturesSection(QWidget):
         models_box = QVBoxLayout()
         models_box.setContentsMargins(0, 0, 0, 0)
         saved_context = pred_prefs.get("context") or {}
-        from gui.widgets import _ClickToToggleLabel
+        from sensi.gui.widgets import _ClickToToggleLabel
         self.model_checkboxes: dict[str, QCheckBox] = {}
         self.model_labels: dict[str, QLabel] = {}
         self.context_spins: dict[str, QSpinBox] = {}
@@ -209,7 +209,7 @@ class WordFeaturesSection(QWidget):
 
         metrics_box = QVBoxLayout()
         metrics_box.setContentsMargins(0, 0, 0, 0)
-        from gui.info_popup import InfoIcon
+        from sensi.gui.info_popup import InfoIcon
         self.metric_checkboxes: dict[str, QCheckBox] = {}
         self.metric_labels: dict[str, QLabel] = {}
         self.metric_info_icons: dict[str, InfoIcon] = {}
@@ -245,7 +245,7 @@ class WordFeaturesSection(QWidget):
         # toggles, opening the shared setup doc (gated Llama license + HF
         # token) in the in-app feature-info dialog. OpenAI is no longer
         # offered (see extractors/predictability.py), so this is HF-only.
-        from gui.info_popup import InfoIcon
+        from sensi.gui.info_popup import InfoIcon
         cred_help = QHBoxLayout()
         cred_help.setContentsMargins(0, 0, 0, 0)
         cred_help.addWidget(QLabel("How to get HuggingFace access"))
@@ -531,7 +531,7 @@ class WordFeaturesSection(QWidget):
         token = self.hf_token_line.text().strip()
         if not token:
             return
-        from utils.credentials import save_hf_token
+        from sensi.utils.credentials import save_hf_token
         save_hf_token(token)
         self.hf_token_line.clear()
         self._force_show_token_row = False
@@ -554,7 +554,7 @@ class WordFeaturesSection(QWidget):
         self.settings_changed.emit()
 
     def refresh_warnings(self, session_api_key: str = "", session_hf_token: str = "") -> None:
-        from gui.preflight import compute_warnings
+        from sensi.gui.preflight import compute_warnings
         warnings = compute_warnings(session_api_key=session_api_key,
                                     session_hf_token=session_hf_token)
         for row in self._toggles.values():
@@ -622,7 +622,7 @@ class WordFeaturesSection(QWidget):
         prefs = load_preferences()
         backend = prefs["semantic"].get("backend", "auto")
         if backend == "auto":
-            from extractors.semantic_domain import detect_backend
+            from sensi.extractors.semantic_domain import detect_backend
             backend, _ = detect_backend()
         key = f"categories_{backend}"
         sel = prefs["semantic"].get(key, [])
@@ -632,11 +632,11 @@ class WordFeaturesSection(QWidget):
         self.cats_count_label.setText(self._cats_count_text())
 
     def _open_category_dialog(self):
-        from gui.category_dialog import CategoryDialog
+        from sensi.gui.category_dialog import CategoryDialog
         prefs = load_preferences()
         backend = prefs["semantic"].get("backend", "auto")
         if backend == "auto":
-            from extractors.semantic_domain import detect_backend
+            from sensi.extractors.semantic_domain import detect_backend
             backend, _ = detect_backend()
         dlg = CategoryDialog(backend=backend, level="word", parent=self)
         dlg.exec()

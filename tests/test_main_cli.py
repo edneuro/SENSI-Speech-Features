@@ -3,7 +3,7 @@ import pytest
 
 
 def test_build_parser_accepts_prosody_flags():
-    from main import build_parser
+    from sensi.pipeline import build_parser
     p = build_parser()
     args = p.parse_args([
         '--audio', 'a.wav', '--transcript', 't.txt',
@@ -21,7 +21,7 @@ def test_build_parser_accepts_prosody_flags():
 
 
 def test_pitch_units_default_is_semitones():
-    from main import build_parser
+    from sensi.pipeline import build_parser
     args = build_parser().parse_args(['--audio', 'a.wav', '--transcript', 't.txt'])
     assert args.pitch_units == 'semitones'
 
@@ -32,10 +32,10 @@ def test_single_run_without_transcript_errors_cleanly(monkeypatch, capsys):
     """`python main.py` with no --transcript used to die with
     FileNotFoundError: '' — an opaque stack trace. It must exit(1) with a
     message that names the missing flag."""
-    import main
+    from sensi import pipeline
     monkeypatch.setattr('sys.argv', ['main.py', '--no-align'])
     with __import__('pytest').raises(SystemExit) as ei:
-        main.main()
+        pipeline.main()
     # SystemExit carries the human-readable message; it must name the missing
     # --transcript rather than surfacing FileNotFoundError on the empty path.
     assert 'transcript' in str(ei.value).lower()
@@ -46,9 +46,9 @@ def test_single_run_without_transcript_errors_cleanly(monkeypatch, capsys):
 def test_batch_allows_missing_audio_folder(monkeypatch, tmp_path):
     """A text-only batch (transcripts + output, no audio) must not be rejected
     by the batch-arg validation."""
-    import main
+    from sensi import pipeline
     called = {}
-    monkeypatch.setattr(main, 'run_word_level_batch',
+    monkeypatch.setattr(pipeline, 'run_word_level_batch',
                         lambda args, **k: called.setdefault('ran', args))
     monkeypatch.setattr('sys.argv', [
         'main.py',
@@ -56,20 +56,20 @@ def test_batch_allows_missing_audio_folder(monkeypatch, tmp_path):
         '--output-folder', str(tmp_path / 'out'),
         '--analyzer', 'tester',
     ])
-    main.main()
+    pipeline.main()
     assert 'ran' in called
     # audio_folder defaulted to empty/None → no audio paired.
     assert not called['ran'].audio_folder
 
 
 def test_batch_still_requires_transcripts_and_output(monkeypatch, tmp_path):
-    import main
+    from sensi import pipeline
     import pytest
     monkeypatch.setattr('sys.argv', [
         'main.py', '--audio-folder', str(tmp_path / 'a'),
     ])
     with pytest.raises(SystemExit):
-        main.main()
+        pipeline.main()
 
 
 # --- acoustic batch: per-file failure is a recorded pair error --------------
@@ -79,13 +79,13 @@ def test_acoustic_batch_records_pair_error_on_failure(monkeypatch, tmp_path):
     a pair error in the manifest (like word/doc batches), not only as a
     free-text warning."""
     import json
-    import main
+    from sensi import pipeline
     audio_dir = tmp_path / 'audio'
     audio_dir.mkdir()
     (audio_dir / 'bad.wav').write_bytes(b'not really a wav')
     out_dir = tmp_path / 'out'
 
-    monkeypatch.setattr('extractors.acoustic_ts.extract_acoustic',
+    monkeypatch.setattr('sensi.extractors.acoustic_ts.extract_acoustic',
                         lambda *a, **k: (_ for _ in ()).throw(RuntimeError('boom')))
 
     import argparse
@@ -97,7 +97,7 @@ def test_acoustic_batch_records_pair_error_on_failure(monkeypatch, tmp_path):
                      'env_comp': 0.3, 'env_window': 1.0, 'n_mels': 16,
                      'n_mfcc': 13, 'mel_preset': 'speech'},
     )
-    main.run_acoustic_level_batch(args)
+    pipeline.run_acoustic_level_batch(args)
 
     manifests = list((out_dir / 'logs').glob('acoustic_run_*_manifest.json'))
     assert manifests, 'no manifest written'
@@ -113,7 +113,7 @@ def test_removed_predictability_flags_are_gone():
     """The old separate surprisal/LLM-cloze CLI flags are retired in favor of
     a single ns.predictability config (models x metrics) consumed by
     extractors.predictability.add_predictability."""
-    from main import build_parser
+    from sensi.pipeline import build_parser
     p = build_parser()
     for flag in ('--no-surprisal', '--no-llm-cloze', '--llm-model'):
         with pytest.raises(SystemExit):
@@ -123,8 +123,8 @@ def test_removed_predictability_flags_are_gone():
 def test_run_reads_predictability_from_namespace(monkeypatch, tmp_path):
     """A namespace carrying predictability config drives add_predictability
     with the models/metrics it specifies, regardless of preferences.json."""
-    import main
-    from main import build_parser
+    from sensi import pipeline
+    from sensi.pipeline import build_parser
 
     called = {}
 
@@ -132,7 +132,7 @@ def test_run_reads_predictability_from_namespace(monkeypatch, tmp_path):
         called['k'] = kwargs
         return df
 
-    monkeypatch.setattr('extractors.predictability.add_predictability',
+    monkeypatch.setattr('sensi.extractors.predictability.add_predictability',
                         fake_add_predictability)
 
     transcript = tmp_path / 't.txt'
@@ -147,7 +147,7 @@ def test_run_reads_predictability_from_namespace(monkeypatch, tmp_path):
         'metrics': {'surprisal': True, 'cloze': False, 'topmatch': False},
     }
 
-    main.run(args)
+    pipeline.run(args)
 
     assert called['k']['models'] == ['fake_slug']
     assert called['k']['metrics'] == ['surprisal']

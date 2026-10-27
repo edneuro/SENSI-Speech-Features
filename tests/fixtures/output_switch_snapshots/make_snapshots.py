@@ -15,8 +15,8 @@ os.environ.setdefault("MKL_THREADING_LAYER", "SEQUENTIAL")
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT))
 
-from utils.preferences import DEFAULT_PREFS  # noqa: E402
-from gui.planner import plan_from_prefs  # noqa: E402
+from sensi.utils.preferences import DEFAULT_PREFS  # noqa: E402
+from sensi.gui.planner import plan_from_prefs  # noqa: E402
 
 
 def deep_merge(base: dict, over: dict) -> dict:

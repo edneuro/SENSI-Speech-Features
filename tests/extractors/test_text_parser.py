@@ -7,7 +7,7 @@ added when paragraph-splitting and doc_id threading went in.
 
 import pytest
 
-from extractors.text_parser import (
+from sensi.extractors.text_parser import (
     _paragraph_id_for_char,
     _paragraph_spans,
     parse,
@@ -70,7 +70,7 @@ class TestParagraphSpans:
 def spacy_available():
     try:
         import spacy  # noqa: F401
-        from extractors.text_parser import _get_nlp
+        from sensi.extractors.text_parser import _get_nlp
         _get_nlp()
     except Exception as exc:
         pytest.skip(f'spaCy en_core_web_sm not available: {exc}')

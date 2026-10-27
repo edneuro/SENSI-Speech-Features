@@ -4,8 +4,8 @@ from PySide6.QtWidgets import (
     QCheckBox, QGridLayout, QHBoxLayout, QPushButton, QSpinBox, QWidget,
 )
 
-from gui.widgets import ClusterCard, SectionSwitch, ToggleRow
-from utils.preferences import load_preferences, save_preferences
+from sensi.gui.widgets import ClusterCard, SectionSwitch, ToggleRow
+from sensi.utils.preferences import load_preferences, save_preferences
 
 
 def _isolate(tmp_path, monkeypatch):

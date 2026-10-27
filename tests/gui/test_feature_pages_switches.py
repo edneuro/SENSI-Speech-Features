@@ -7,12 +7,12 @@ pytest.importorskip("PySide6")
 
 from PySide6.QtWidgets import QAbstractButton, QLabel
 
-from gui.section_acoustic_features import AcousticFeaturesSection
-from gui.section_doc_features import DocFeaturesSection
-from gui.section_sentence_features import SentenceFeaturesSection
-from gui.section_subword_features import SubwordFeaturesSection
-from gui.section_word_features import WordFeaturesSection
-from gui.widgets import Card, ClusterCard, SectionSwitch
+from sensi.gui.section_acoustic_features import AcousticFeaturesSection
+from sensi.gui.section_doc_features import DocFeaturesSection
+from sensi.gui.section_sentence_features import SentenceFeaturesSection
+from sensi.gui.section_subword_features import SubwordFeaturesSection
+from sensi.gui.section_word_features import WordFeaturesSection
+from sensi.gui.widgets import Card, ClusterCard, SectionSwitch
 
 PAGES = (WordFeaturesSection, DocFeaturesSection, SubwordFeaturesSection,
          SentenceFeaturesSection, AcousticFeaturesSection)
@@ -38,14 +38,14 @@ def test_no_enable_all_wording(qtbot, page_cls):
 
 
 def test_predictability_models_greyed_when_left_out(qtbot, monkeypatch):
-    from extractors import predictability
+    from sensi.extractors import predictability
     monkeypatch.setattr(predictability, "has_hf_token", lambda: False)
     page = WordFeaturesSection()
     qtbot.addWidget(page)
     card = _card_titled(page, "Predictability")
     card.master_toggle().set_checked(False)
 
-    from utils.preferences import load_preferences
+    from sensi.utils.preferences import load_preferences
     assert load_preferences()["features"]["master_predictability"] is False
     for cb in page.model_checkboxes.values():
         assert not cb.isEnabled()
@@ -78,7 +78,7 @@ def test_g2p_card_has_no_switch(qtbot):
 
 
 def test_acoustic_card_switch_is_level_acoustic(qtbot):
-    from utils.preferences import load_preferences
+    from sensi.utils.preferences import load_preferences
     page = AcousticFeaturesSection()
     qtbot.addWidget(page)
     card = _card_titled(page, "Acoustic features (audio-only)")
@@ -91,9 +91,9 @@ def test_acoustic_card_switch_is_level_acoustic(qtbot):
 
 
 def test_embedding_ticks_write_feature_keys_only(qtbot, monkeypatch):
-    import gui.section_sentence_features as sent_mod
-    import gui.section_word_features as word_mod
-    from utils.preferences import load_preferences, save_preferences
+    import sensi.gui.section_sentence_features as sent_mod
+    import sensi.gui.section_word_features as word_mod
+    from sensi.utils.preferences import load_preferences, save_preferences
     word = WordFeaturesSection()
     qtbot.addWidget(word)
     sent = SentenceFeaturesSection()
@@ -121,7 +121,7 @@ def test_semantic_categories_stay_editable(qtbot):
     qtbot.addWidget(page)
     card = _card_titled(page, "Semantic indicators")
     card.master_toggle().set_checked(False)
-    from utils.preferences import load_preferences
+    from sensi.utils.preferences import load_preferences
     assert load_preferences()["features"]["master_semantic_indicators"] is False
     assert page.configure_cats_button.isEnabled()
     radios = card.findChildren(QRadioButton)
@@ -135,12 +135,12 @@ def test_semantic_categories_stay_editable(qtbot):
 
 
 def test_phoneme_surprisal_mat_tick(qtbot):
-    from utils.preferences import load_preferences
+    from sensi.utils.preferences import load_preferences
     page = SubwordFeaturesSection()
     qtbot.addWidget(page)
     row = page.toggle("feat_phoneme_surprisal_mat")
     assert "_phoneme_surprisal.mat" in row.label.text()
-    from gui.info_popup import InfoIcon
+    from sensi.gui.info_popup import InfoIcon
     assert row.findChildren(InfoIcon), "the .mat tick should have an info icon"
     row.set_checked(True)
     assert load_preferences()["features"]["feat_phoneme_surprisal_mat"] is True
@@ -162,7 +162,7 @@ def test_phoneme_surprisal_mat_tick(qtbot):
     (SentenceFeaturesSection, "Semantic similarity", "master_sentence_similarity", "features"),
 ])
 def test_new_section_switches_write_their_key(qtbot, page_cls, title, key, section):
-    from utils.preferences import load_preferences
+    from sensi.utils.preferences import load_preferences
     page = page_cls()
     qtbot.addWidget(page)
     card = _card_titled(page, title)
@@ -174,7 +174,7 @@ def test_new_section_switches_write_their_key(qtbot, page_cls, title, key, secti
 
 
 def test_radio_backend_does_not_count_as_a_selected_feature(qtbot):
-    from utils.preferences import save_preferences
+    from sensi.utils.preferences import save_preferences
     save_preferences({"features": {"sem_indicators": False,
                                    "master_semantic_indicators": True}})
     page = WordFeaturesSection()

@@ -1,14 +1,14 @@
 def test_doc_section_does_not_duplicate_output_toggle(qtbot):
     """Output toggle ('Document-level summary') is owned by the Run page —
     Doc-level page is purely feature configuration. Confirms no duplicate."""
-    from gui.section_doc_features import DocFeaturesSection
+    from sensi.gui.section_doc_features import DocFeaturesSection
     w = DocFeaturesSection()
     qtbot.addWidget(w)
     assert w.toggle("output_document_summary") is None
 
 
 def test_doc_section_counts_has_four_per_column_toggles(qtbot):
-    from gui.section_doc_features import DocFeaturesSection
+    from sensi.gui.section_doc_features import DocFeaturesSection
     w = DocFeaturesSection()
     qtbot.addWidget(w)
     for k in ("output_out_count_tokens", "output_out_count_content_tokens",
@@ -17,7 +17,7 @@ def test_doc_section_counts_has_four_per_column_toggles(qtbot):
 
 
 def test_doc_section_psych_has_four_per_column_toggles(qtbot):
-    from gui.section_doc_features import DocFeaturesSection
+    from sensi.gui.section_doc_features import DocFeaturesSection
     w = DocFeaturesSection()
     qtbot.addWidget(w)
     for k in ("feat_psych_authentic", "feat_psych_analytic",
@@ -28,7 +28,7 @@ def test_doc_section_psych_has_four_per_column_toggles(qtbot):
 def test_doc_section_shows_categories_count_and_hint(qtbot):
     """v7: doc-level page is read-only for categories. It shows a count label
     and a hint pointing to the word-level page; the old configure button is gone."""
-    from gui.section_doc_features import DocFeaturesSection
+    from sensi.gui.section_doc_features import DocFeaturesSection
     w = DocFeaturesSection()
     qtbot.addWidget(w)
     # Count label must exist and mention categories
@@ -39,7 +39,7 @@ def test_doc_section_shows_categories_count_and_hint(qtbot):
 
 
 def test_doc_prosody_card_has_sixteen_toggles(qtbot, prefs_tmp):
-    from gui.section_doc_features import DocFeaturesSection
+    from sensi.gui.section_doc_features import DocFeaturesSection
     section = DocFeaturesSection()
     qtbot.addWidget(section)
     expected_keys = [
@@ -57,8 +57,8 @@ def test_doc_prosody_card_has_sixteen_toggles(qtbot, prefs_tmp):
 
 
 def test_pause_threshold_spinbox_persists(qtbot, prefs_tmp):
-    from gui.section_doc_features import DocFeaturesSection
-    from utils.preferences import load_preferences
+    from sensi.gui.section_doc_features import DocFeaturesSection
+    from sensi.utils.preferences import load_preferences
     section = DocFeaturesSection()
     qtbot.addWidget(section)
     section.pause_threshold_spin.setValue(0.5)
@@ -69,8 +69,8 @@ def test_agg_nan_warnings_track_shared_config(qtbot, prefs_tmp):
     """Doc means compute without the word-level section, so the only NaN
     warning left is an empty predictability roster; mean Zipf frequency
     never warns (word_freq is pulled in)."""
-    from utils.preferences import save_preferences
-    from gui.section_doc_features import DocFeaturesSection
+    from sensi.utils.preferences import save_preferences
+    from sensi.gui.section_doc_features import DocFeaturesSection
     save_preferences({
         "output": {"level_word": False, "level_document": True,
                    "doc_agg_zipf_freq": True, "doc_agg_predictability": True},

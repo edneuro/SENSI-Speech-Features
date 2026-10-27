@@ -8,8 +8,8 @@ import copy
 
 import pytest
 
-from gui.planner.plan import plan_from_prefs
-from utils.preferences import DEFAULT_PREFS
+from sensi.gui.planner.plan import plan_from_prefs
+from sensi.utils.preferences import DEFAULT_PREFS
 
 
 # v7 master toggle defaults (all True) — included in every test prefs dict
@@ -214,8 +214,8 @@ def test_stage_configs_carries_predictability_models_and_metrics():
 # master_toggle and available_when activation tests
 # ---------------------------------------------------------------------------
 
-import gui.planner.plan as _plan_mod
-from gui.planner.stages import FeatureCluster, Stage
+import sensi.gui.planner.plan as _plan_mod
+from sensi.gui.planner.stages import FeatureCluster, Stage
 
 
 def _install_test_cluster(monkeypatch, cluster: FeatureCluster, extra_stages=()):
@@ -347,8 +347,8 @@ def test_phoneme_surprisal_off_by_default():
 # ---------------------------------------------------------------------------
 
 def test_predictability_stage_active_and_columns(monkeypatch):
-    from gui.planner import plan_from_prefs
-    from utils.preferences import DEFAULT_PREFS
+    from sensi.gui.planner import plan_from_prefs
+    from sensi.utils.preferences import DEFAULT_PREFS
     import copy
     prefs = copy.deepcopy(DEFAULT_PREFS)
     prefs["features"]["master_predictability"] = True
@@ -363,8 +363,8 @@ def test_predictability_stage_active_and_columns(monkeypatch):
                     "llama3_8b_Surprisal", "llama3_8b_Cloze"}
 
 def test_predictability_inactive_when_no_metric(monkeypatch):
-    from gui.planner import plan_from_prefs
-    from utils.preferences import DEFAULT_PREFS
+    from sensi.gui.planner import plan_from_prefs
+    from sensi.utils.preferences import DEFAULT_PREFS
     import copy
     prefs = copy.deepcopy(DEFAULT_PREFS)
     prefs["features"]["master_predictability"] = True
@@ -378,8 +378,8 @@ def test_predictability_inactive_when_no_metric(monkeypatch):
 def test_predictability_inactive_when_master_off(monkeypatch):
     # The third leg of the activation AND: models + metrics populated but the
     # card master is off → nothing runs (and no dynamic columns emitted).
-    from gui.planner import plan_from_prefs
-    from utils.preferences import DEFAULT_PREFS
+    from sensi.gui.planner import plan_from_prefs
+    from sensi.utils.preferences import DEFAULT_PREFS
     import copy
     prefs = copy.deepcopy(DEFAULT_PREFS)
     prefs["features"]["master_predictability"] = False

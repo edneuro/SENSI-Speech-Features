@@ -6,8 +6,8 @@ the planner would resolve automatically.
 """
 import pytest
 
-from utils.preferences import save_preferences
-from gui.preflight import compute_warnings
+from sensi.utils.preferences import save_preferences
+from sensi.gui.preflight import compute_warnings
 
 
 def _no_outputs(features=None):
@@ -59,7 +59,7 @@ def test_empty_plan_yields_single_info_hint(prefs_tmp):
 def test_mfa_warning_attaches_to_no_toggle(prefs_tmp, monkeypatch):
     """The MFA binary-missing warning is now a session/env warning,
     not a toggle warning — toggle_key should be None."""
-    import gui.preflight as pf
+    import sensi.gui.preflight as pf
     monkeypatch.setattr(pf, "_mfa_available", False)
     save_preferences({"output": {"level_subword": True},
                       "features": {"feat_syllable_onset": True}})

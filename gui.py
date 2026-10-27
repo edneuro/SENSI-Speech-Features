@@ -9,7 +9,7 @@ from pathlib import Path
 
 _HERE = Path(__file__).parent.resolve()
 # Keep all model/cache downloads inside the project folder.
-from utils.local_caches import use_project_caches
+from sensi.utils.local_caches import use_project_caches
 use_project_caches()
 # MKL on AMD CPUs (Windows/Ryzen) raises a fatal exception (0xc06d007f) during
 # BLAS matmul (e.g. librosa's mel-filterbank einsum in the acoustic level) under
@@ -20,8 +20,8 @@ os.environ.setdefault("MKL_THREADING_LAYER", "sequential")
 from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QPalette, QColor, QIcon
 
-from gui.main_window import MainWindow
-from gui.theme import (
+from sensi.gui.main_window import MainWindow
+from sensi.gui.theme import (
     qss_for_appearance,
     BG_PAGE, BG_PANEL, TEXT_PRIMARY, TEXT_SECONDARY,
     ACCENT_COLOR, BORDER_DEFAULT,

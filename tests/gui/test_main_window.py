@@ -1,5 +1,5 @@
 def test_main_window_has_expected_sidebar_items(qtbot):
-    from gui.main_window import MainWindow
+    from sensi.gui.main_window import MainWindow
     w = MainWindow()
     qtbot.addWidget(w)
     labels = [w.sidebar.item(i).text() for i in range(w.sidebar.count())]
@@ -9,14 +9,14 @@ def test_main_window_has_expected_sidebar_items(qtbot):
 
 
 def test_main_window_default_section_is_inputs(qtbot):
-    from gui.main_window import MainWindow
+    from sensi.gui.main_window import MainWindow
     w = MainWindow()
     qtbot.addWidget(w)
     assert w.stack.currentIndex() == 0
 
 
 def test_main_window_clicking_sidebar_switches_stack(qtbot):
-    from gui.main_window import MainWindow
+    from sensi.gui.main_window import MainWindow
     w = MainWindow()
     qtbot.addWidget(w)
     w.sidebar.setCurrentRow(2)  # Document-level features
@@ -24,7 +24,7 @@ def test_main_window_clicking_sidebar_switches_stack(qtbot):
 
 
 def test_main_window_min_size(qtbot):
-    from gui.main_window import MainWindow
+    from sensi.gui.main_window import MainWindow
     w = MainWindow()
     qtbot.addWidget(w)
     assert w.minimumWidth() >= 1000
@@ -32,7 +32,7 @@ def test_main_window_min_size(qtbot):
 
 
 def test_main_window_title_is_sensi(qtbot):
-    from gui.main_window import MainWindow
+    from sensi.gui.main_window import MainWindow
     w = MainWindow()
     qtbot.addWidget(w)
     assert w.windowTitle() == "SENSI-FeatureExtractor"
@@ -40,8 +40,8 @@ def test_main_window_title_is_sensi(qtbot):
 
 def test_reset_settings_restores_defaults_and_rebuilds(qtbot, prefs_tmp, monkeypatch):
     from PySide6.QtWidgets import QMessageBox
-    from gui.main_window import MainWindow
-    from utils.preferences import save_preferences, load_preferences, DEFAULT_PREFS
+    from sensi.gui.main_window import MainWindow
+    from sensi.utils.preferences import save_preferences, load_preferences, DEFAULT_PREFS
 
     save_preferences({"features": {"lexling_dep": False},
                       "shared": {"analyzer_name": "Alice"}})
@@ -67,8 +67,8 @@ def test_reset_settings_restores_defaults_and_rebuilds(qtbot, prefs_tmp, monkeyp
 
 def test_reset_settings_cancel_leaves_prefs_untouched(qtbot, prefs_tmp, monkeypatch):
     from PySide6.QtWidgets import QMessageBox
-    from gui.main_window import MainWindow
-    from utils.preferences import save_preferences, load_preferences
+    from sensi.gui.main_window import MainWindow
+    from sensi.utils.preferences import save_preferences, load_preferences
 
     save_preferences({"features": {"lexling_dep": False}})
     w = MainWindow()

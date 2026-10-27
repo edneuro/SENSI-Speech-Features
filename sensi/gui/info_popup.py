@@ -14,7 +14,7 @@ from PySide6.QtWidgets import (
     QDialog, QHBoxLayout, QLabel, QPushButton, QTextBrowser, QVBoxLayout,
 )
 
-from gui.feature_docs import (
+from sensi.gui.feature_docs import (
     FeatureDoc, load_feature_doc, load_doc_file, resolve_doc_link,
 )
 

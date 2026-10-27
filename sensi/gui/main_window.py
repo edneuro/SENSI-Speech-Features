@@ -8,17 +8,17 @@ from PySide6.QtWidgets import (
     QPushButton, QMessageBox,
 )
 
-from gui.theme import qss_for_appearance
-from gui.status_strip import StatusStrip
-from gui.section_inputs import InputsSection
-from gui.section_word_features import WordFeaturesSection
-from gui.section_doc_features import DocFeaturesSection
-from gui.section_subword_features import SubwordFeaturesSection
-from gui.section_sentence_features import SentenceFeaturesSection
-from gui.section_acoustic_features import AcousticFeaturesSection
-from gui.section_run import RunSection
-from gui.section_logs import LogsSection
-from utils.preferences import load_preferences, reset_to_defaults
+from sensi.gui.theme import qss_for_appearance
+from sensi.gui.status_strip import StatusStrip
+from sensi.gui.section_inputs import InputsSection
+from sensi.gui.section_word_features import WordFeaturesSection
+from sensi.gui.section_doc_features import DocFeaturesSection
+from sensi.gui.section_subword_features import SubwordFeaturesSection
+from sensi.gui.section_sentence_features import SentenceFeaturesSection
+from sensi.gui.section_acoustic_features import AcousticFeaturesSection
+from sensi.gui.section_run import RunSection
+from sensi.gui.section_logs import LogsSection
+from sensi.utils.preferences import load_preferences, reset_to_defaults
 
 
 APP_NAME = "SENSI-FeatureExtractor"
@@ -82,7 +82,7 @@ class MainWindow(QMainWindow):
         self.status_strip = StatusStrip()
         # A settings save that fails even after retrying (file locked by
         # another program) is shown in the strip instead of only the console.
-        from utils.preferences import set_save_error_handler
+        from sensi.utils.preferences import set_save_error_handler
         set_save_error_handler(self.status_strip.show_message)
 
         # Content stack (populated by _build_and_wire_sections; rebuilt on reset)

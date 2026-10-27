@@ -8,14 +8,14 @@ VIEWPORT_BUDGET = 780
 
 
 def _sections():
-    from gui.section_inputs import InputsSection
-    from gui.section_word_features import WordFeaturesSection
-    from gui.section_doc_features import DocFeaturesSection
-    from gui.section_subword_features import SubwordFeaturesSection
-    from gui.section_sentence_features import SentenceFeaturesSection
-    from gui.section_acoustic_features import AcousticFeaturesSection
-    from gui.section_run import RunSection
-    from gui.section_logs import LogsSection
+    from sensi.gui.section_inputs import InputsSection
+    from sensi.gui.section_word_features import WordFeaturesSection
+    from sensi.gui.section_doc_features import DocFeaturesSection
+    from sensi.gui.section_subword_features import SubwordFeaturesSection
+    from sensi.gui.section_sentence_features import SentenceFeaturesSection
+    from sensi.gui.section_acoustic_features import AcousticFeaturesSection
+    from sensi.gui.section_run import RunSection
+    from sensi.gui.section_logs import LogsSection
     return {
         "inputs": InputsSection(),
         "word": WordFeaturesSection(),
@@ -44,7 +44,7 @@ def test_every_page_fits_min_window_width(qtbot, prefs_tmp):
 def test_section_scroll_areas_disable_horizontal_scrollbar(qtbot, prefs_tmp):
     from PySide6.QtCore import Qt
     from PySide6.QtWidgets import QScrollArea
-    from gui.main_window import MainWindow
+    from sensi.gui.main_window import MainWindow
     win = MainWindow()
     qtbot.addWidget(win)
     areas = [win.stack.widget(i) for i in range(win.stack.count())]

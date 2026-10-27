@@ -1,7 +1,7 @@
 """ARPABET -> IPA mapping (extractors/arpabet_ipa.py)."""
 import pytest
 
-from extractors.arpabet_ipa import ARPABET_TO_IPA, to_ipa, syllable_to_ipa
+from sensi.extractors.arpabet_ipa import ARPABET_TO_IPA, to_ipa, syllable_to_ipa
 
 
 def test_stress_dependent_ah_is_schwa_when_unstressed():

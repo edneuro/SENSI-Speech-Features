@@ -22,8 +22,8 @@ Group B (deleted — toggle-dep warnings removed):
 
 
 def test_preflight_warns_on_missing_ewfg(prefs_tmp):
-    from utils.preferences import save_preferences
-    from gui.preflight import compute_warnings
+    from sensi.utils.preferences import save_preferences
+    from sensi.gui.preflight import compute_warnings
     # Need ewfg_freq in plan: word_level_csv + an EWFG band toggle on.
     save_preferences({
         "output": {"level_word": True},
@@ -40,8 +40,8 @@ def test_preflight_ignores_unrecognized_model_slug(prefs_tmp):
     file, or an old OpenAI id from before the predictability unification)
     must not crash preflight — is_gated() would KeyError on it, so it's
     simply skipped for the gating check rather than raising."""
-    from utils.preferences import save_preferences
-    from gui.preflight import compute_warnings
+    from sensi.utils.preferences import save_preferences
+    from sensi.gui.preflight import compute_warnings
     save_preferences({
         "output": {"level_word": True},
         "predictability": {"models": ["gpt-4o-mini"],
@@ -52,10 +52,10 @@ def test_preflight_ignores_unrecognized_model_slug(prefs_tmp):
 
 
 def test_preflight_warns_on_gated_model_without_token(prefs_tmp, monkeypatch):
-    import extractors.predictability as m
+    import sensi.extractors.predictability as m
     monkeypatch.setattr(m, 'has_hf_token', lambda: False)
-    from utils.preferences import save_preferences
-    from gui.preflight import compute_warnings
+    from sensi.utils.preferences import save_preferences
+    from sensi.gui.preflight import compute_warnings
     save_preferences({
         "output": {"level_word": True},
         "predictability": {"models": ["llama3_8b"],
@@ -66,10 +66,10 @@ def test_preflight_warns_on_gated_model_without_token(prefs_tmp, monkeypatch):
 
 
 def test_preflight_no_gated_warning_when_token_present(prefs_tmp, monkeypatch):
-    import extractors.predictability as m
+    import sensi.extractors.predictability as m
     monkeypatch.setattr(m, 'has_hf_token', lambda: True)
-    from utils.preferences import save_preferences
-    from gui.preflight import compute_warnings
+    from sensi.utils.preferences import save_preferences
+    from sensi.gui.preflight import compute_warnings
     save_preferences({
         "output": {"level_word": True},
         "predictability": {"models": ["llama3_8b"],
@@ -80,10 +80,10 @@ def test_preflight_no_gated_warning_when_token_present(prefs_tmp, monkeypatch):
 
 
 def test_preflight_no_gated_warning_when_session_token_pasted(prefs_tmp, monkeypatch):
-    import extractors.predictability as m
+    import sensi.extractors.predictability as m
     monkeypatch.setattr(m, 'has_hf_token', lambda: False)
-    from utils.preferences import save_preferences
-    from gui.preflight import compute_warnings
+    from sensi.utils.preferences import save_preferences
+    from sensi.gui.preflight import compute_warnings
     save_preferences({
         "output": {"level_word": True},
         "predictability": {"models": ["llama3_8b"],
@@ -96,10 +96,10 @@ def test_preflight_no_gated_warning_when_session_token_pasted(prefs_tmp, monkeyp
 def test_preflight_no_gated_warning_for_free_model(prefs_tmp, monkeypatch):
     """GPT-2 is the roster's only ungated model — selecting it must never
     trigger the HuggingFace-token warning, even with no token available."""
-    import extractors.predictability as m
+    import sensi.extractors.predictability as m
     monkeypatch.setattr(m, 'has_hf_token', lambda: False)
-    from utils.preferences import save_preferences
-    from gui.preflight import compute_warnings
+    from sensi.utils.preferences import save_preferences
+    from sensi.gui.preflight import compute_warnings
     save_preferences({
         "output": {"level_word": True},
         "predictability": {"models": ["gpt2"],
@@ -112,8 +112,8 @@ def test_preflight_no_gated_warning_for_free_model(prefs_tmp, monkeypatch):
 def test_preflight_warns_models_without_metrics(prefs_tmp):
     """A model is picked but no metric is turned on — nothing will be
     produced; preflight should say so."""
-    from utils.preferences import save_preferences
-    from gui.preflight import compute_warnings
+    from sensi.utils.preferences import save_preferences
+    from sensi.gui.preflight import compute_warnings
     save_preferences({
         "output": {"level_word": True},
         "predictability": {"models": ["gpt2"],
@@ -125,8 +125,8 @@ def test_preflight_warns_models_without_metrics(prefs_tmp):
 
 def test_preflight_warns_metrics_without_models(prefs_tmp):
     """A metric is turned on but no model is picked — the mirror case."""
-    from utils.preferences import save_preferences
-    from gui.preflight import compute_warnings
+    from sensi.utils.preferences import save_preferences
+    from sensi.gui.preflight import compute_warnings
     save_preferences({
         "output": {"level_word": True},
         "predictability": {"models": [],
@@ -137,10 +137,10 @@ def test_preflight_warns_metrics_without_models(prefs_tmp):
 
 
 def test_preflight_no_predictability_warnings_when_fully_configured(prefs_tmp, monkeypatch):
-    import extractors.predictability as m
+    import sensi.extractors.predictability as m
     monkeypatch.setattr(m, 'has_hf_token', lambda: True)
-    from utils.preferences import save_preferences
-    from gui.preflight import compute_warnings
+    from sensi.utils.preferences import save_preferences
+    from sensi.gui.preflight import compute_warnings
     save_preferences({
         "output": {"level_word": True},
         "predictability": {"models": ["gpt2"],
@@ -156,8 +156,8 @@ def test_no_prosody_alignment_warning_anymore(prefs_tmp):
     """The old prosody-needs-alignment warning is gone — the planner resolves
     the dependency automatically. Verify no such warning is emitted even when
     the acoustic toggles are off and prosody is on."""
-    from utils.preferences import save_preferences
-    from gui.preflight import compute_warnings
+    from sensi.utils.preferences import save_preferences
+    from sensi.gui.preflight import compute_warnings
     save_preferences({
         "output": {"level_word": True},
         "features": {
@@ -176,8 +176,8 @@ def test_no_prosody_alignment_warning_anymore(prefs_tmp):
 def test_prosody_warns_when_parselmouth_missing(prefs_tmp, monkeypatch):
     import sys
     monkeypatch.setitem(sys.modules, "parselmouth", None)
-    from utils.preferences import save_preferences
-    from gui.preflight import compute_warnings
+    from sensi.utils.preferences import save_preferences
+    from sensi.gui.preflight import compute_warnings
     # Need a prosody stage in plan: word_level_csv + prosody toggle on.
     save_preferences({
         "output": {"level_word": True},
@@ -191,8 +191,8 @@ def test_prosody_warns_when_parselmouth_missing(prefs_tmp, monkeypatch):
 def test_no_subword_alignment_warning_anymore(prefs_tmp):
     """The old sub-word-needs-alignment warning is gone — the planner resolves
     the dependency automatically. Verify no such warning is emitted."""
-    from utils.preferences import save_preferences
-    from gui.preflight import compute_warnings
+    from sensi.utils.preferences import save_preferences
+    from sensi.gui.preflight import compute_warnings
     save_preferences({
         "output": {"level_subword": True},
         "features": {
@@ -214,10 +214,10 @@ def test_warns_when_g2p_oov_on_but_model_missing(prefs_tmp, monkeypatch):
     MFA G2P model silently degrades every OOV word to a single spn phone
     (extractors/aligner._run_mfa) with only a run-time stderr line. This is
     the preflight-time equivalent of the existing MFA-on-PATH check."""
-    import extractors.aligner as al
+    import sensi.extractors.aligner as al
     monkeypatch.setattr(al, "g2p_model_available", lambda: False)
-    from utils.preferences import save_preferences
-    from gui.preflight import compute_warnings
+    from sensi.utils.preferences import save_preferences
+    from sensi.gui.preflight import compute_warnings
     save_preferences({
         "output": {"level_word": True},
         "features": {"feat_acoustic_onset": True},
@@ -229,10 +229,10 @@ def test_warns_when_g2p_oov_on_but_model_missing(prefs_tmp, monkeypatch):
 
 
 def test_no_g2p_warning_when_model_present(prefs_tmp, monkeypatch):
-    import extractors.aligner as al
+    import sensi.extractors.aligner as al
     monkeypatch.setattr(al, "g2p_model_available", lambda: True)
-    from utils.preferences import save_preferences
-    from gui.preflight import compute_warnings
+    from sensi.utils.preferences import save_preferences
+    from sensi.gui.preflight import compute_warnings
     save_preferences({
         "output": {"level_word": True},
         "features": {"feat_acoustic_onset": True},
@@ -243,10 +243,10 @@ def test_no_g2p_warning_when_model_present(prefs_tmp, monkeypatch):
 
 
 def test_no_g2p_warning_when_toggle_off(prefs_tmp, monkeypatch):
-    import extractors.aligner as al
+    import sensi.extractors.aligner as al
     monkeypatch.setattr(al, "g2p_model_available", lambda: False)
-    from utils.preferences import save_preferences
-    from gui.preflight import compute_warnings
+    from sensi.utils.preferences import save_preferences
+    from sensi.gui.preflight import compute_warnings
     save_preferences({
         "output": {"level_word": True},
         "features": {"feat_acoustic_onset": True},
@@ -259,8 +259,8 @@ def test_no_g2p_warning_when_toggle_off(prefs_tmp, monkeypatch):
 def test_warns_when_pyphen_missing_and_syllable_label_on(prefs_tmp, monkeypatch):
     import sys
     monkeypatch.setitem(sys.modules, "pyphen", None)
-    from utils.preferences import save_preferences
-    from gui.preflight import compute_warnings
+    from sensi.utils.preferences import save_preferences
+    from sensi.gui.preflight import compute_warnings
     # Need syllabify_pairs in plan: syllables_csv + syllable label toggle on.
     save_preferences({
         "output": {"level_subword": True},
@@ -274,10 +274,10 @@ def test_warns_when_pyphen_missing_and_syllable_label_on(prefs_tmp, monkeypatch)
 def test_gated_warning_for_doc_predictability_means_only(prefs_tmp, monkeypatch):
     """Word level off, document predictability means on: the model still
     runs (doc path), so the gated-model warning must fire."""
-    import extractors.predictability as m
+    import sensi.extractors.predictability as m
     monkeypatch.setattr(m, 'has_hf_token', lambda: False)
-    from utils.preferences import save_preferences
-    from gui.preflight import compute_warnings
+    from sensi.utils.preferences import save_preferences
+    from sensi.gui.preflight import compute_warnings
     save_preferences({
         "output": {"level_word": False, "level_document": True,
                    "doc_agg_predictability": True},
@@ -291,10 +291,10 @@ def test_gated_warning_for_doc_predictability_means_only(prefs_tmp, monkeypatch)
 def test_no_predictability_warnings_when_section_off(prefs_tmp, monkeypatch):
     """Word level on but the Predictability section off and no doc means:
     nothing loads a model, so no token or mismatch warning."""
-    import extractors.predictability as m
+    import sensi.extractors.predictability as m
     monkeypatch.setattr(m, 'has_hf_token', lambda: False)
-    from utils.preferences import save_preferences
-    from gui.preflight import compute_warnings
+    from sensi.utils.preferences import save_preferences
+    from sensi.gui.preflight import compute_warnings
     save_preferences({
         "output": {"level_word": True},
         "features": {"master_predictability": False},
@@ -310,8 +310,8 @@ def test_no_predictability_warnings_when_section_off(prefs_tmp, monkeypatch):
 def test_mismatch_warning_for_doc_predictability_means_only(prefs_tmp):
     """Doc means on (Word level off) with a model but no metric: the doc
     means would be empty, so the mismatch warning fires."""
-    from utils.preferences import save_preferences
-    from gui.preflight import compute_warnings
+    from sensi.utils.preferences import save_preferences
+    from sensi.gui.preflight import compute_warnings
     save_preferences({
         "output": {"level_word": False, "level_document": True,
                    "doc_agg_predictability": True},

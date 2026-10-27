@@ -1,7 +1,7 @@
 """Shape checks for the measured Run-tab estimate constants."""
-from extractors.predictability_models import all_specs
-from utils import estimate_constants as K
-from utils.timing_history import STEP_NAMES
+from sensi.extractors.predictability_models import all_specs
+from sensi.utils import estimate_constants as K
+from sensi.utils.timing_history import STEP_NAMES
 
 
 def test_every_roster_model_has_ram_entries():

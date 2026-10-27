@@ -9,8 +9,8 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtGui import QStandardItemModel, QStandardItem
 
-from gui.widgets import SectionHeader, FolderRow
-from utils.preferences import load_preferences, save_preferences
+from sensi.gui.widgets import SectionHeader, FolderRow
+from sensi.utils.preferences import load_preferences, save_preferences
 
 
 TRANSCRIPT_EXTS = {".txt", ".tsv", ".md"}

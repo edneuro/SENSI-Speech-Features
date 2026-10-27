@@ -1,7 +1,7 @@
 from dataclasses import FrozenInstanceError
 import pytest
 
-from gui.planner.stages import Stage, FeatureCluster, Plan
+from sensi.gui.planner.stages import Stage, FeatureCluster, Plan
 
 
 def test_stage_is_frozen_dataclass():

@@ -3,8 +3,8 @@
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QGridLayout, QHBoxLayout, QLabel, QDoubleSpinBox
 
-from gui.widgets import Card, ClusterCard, ToggleRow
-from utils.preferences import load_preferences, save_preferences
+from sensi.gui.widgets import Card, ClusterCard, ToggleRow
+from sensi.utils.preferences import load_preferences, save_preferences
 
 
 class SubwordFeaturesSection(QWidget):

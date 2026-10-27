@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from extractors.align_merge import merge_alignment
+from sensi.extractors.align_merge import merge_alignment
 
 
 def _tok_df(tokens, upos=None):

@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import scipy.io
-from extractors import phoneme_surprisal as ps
+from sensi.extractors import phoneme_surprisal as ps
 
 
 def test_mat_roundtrip_has_four_trains(tmp_path, monkeypatch):

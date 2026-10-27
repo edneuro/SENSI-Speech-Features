@@ -2,7 +2,7 @@
 
 
 def test_word_columns_to_drop_returns_empty_when_all_on():
-    from main import _word_columns_to_drop
+    from sensi.pipeline import _word_columns_to_drop
     all_on = {
         "feat_struct_doc_id": True, "feat_struct_paragraph_id": True,
         "feat_struct_sentence_id": True, "feat_struct_sentence_text": True,
@@ -15,7 +15,7 @@ def test_word_columns_to_drop_returns_empty_when_all_on():
 
 
 def test_word_columns_to_drop_includes_disabled_structural():
-    from main import _word_columns_to_drop
+    from sensi.pipeline import _word_columns_to_drop
     drop = _word_columns_to_drop({
         "feat_struct_doc_id": False,
         "feat_struct_paragraph_id": False,
@@ -27,7 +27,7 @@ def test_word_columns_to_drop_includes_disabled_structural():
 
 
 def test_word_columns_to_drop_includes_disabled_acoustic():
-    from main import _word_columns_to_drop
+    from sensi.pipeline import _word_columns_to_drop
     drop = _word_columns_to_drop({
         "feat_acoustic_onset": False,
         "feat_acoustic_end": True,
@@ -43,7 +43,7 @@ def test_word_columns_to_drop_includes_disabled_acoustic():
 def test_word_columns_to_drop_treats_missing_keys_as_on():
     """Backward compat — when an old args object has no `features` dict,
     or features dict is missing some keys, every column is retained."""
-    from main import _word_columns_to_drop
+    from sensi.pipeline import _word_columns_to_drop
     assert _word_columns_to_drop({}) == set()
 
 
@@ -51,7 +51,7 @@ def test_word_columns_to_drop_keeps_token_id_when_dep_parse_on():
     """head_token_id references the head by global token_id, so token_id is its
     anchor. Dropping token_id while the dependency parse is emitted would leave
     head_token_id dangling — the guard must retain token_id in that case."""
-    from main import _word_columns_to_drop
+    from sensi.pipeline import _word_columns_to_drop
     drop = _word_columns_to_drop({
         "feat_struct_token_id": False,  # user tried to drop the anchor
         "lexling_dep": True,            # but dependency parse is emitted
@@ -62,7 +62,7 @@ def test_word_columns_to_drop_keeps_token_id_when_dep_parse_on():
 def test_word_columns_to_drop_drops_token_id_when_dep_parse_off():
     """With no dependency columns emitted, token_id is a plain structural column
     and honours its own toggle."""
-    from main import _word_columns_to_drop
+    from sensi.pipeline import _word_columns_to_drop
     drop = _word_columns_to_drop({
         "feat_struct_token_id": False,
         "lexling_dep": False,
@@ -73,7 +73,7 @@ def test_word_columns_to_drop_drops_token_id_when_dep_parse_off():
 def test_word_columns_to_drop_drops_lexling_columns_when_off():
     """The lexling per-column toggles must actually remove their columns from
     features.csv (previously a no-op — the toggles were ignored)."""
-    from main import _word_columns_to_drop
+    from sensi.pipeline import _word_columns_to_drop
     drop = _word_columns_to_drop({
         "lexling_tokens": False, "lexling_pos": False,
         "lexling_morph": False, "lexling_dep": False,
@@ -83,7 +83,7 @@ def test_word_columns_to_drop_drops_lexling_columns_when_off():
 
 
 def test_word_columns_to_drop_keeps_lexling_columns_when_on():
-    from main import _word_columns_to_drop
+    from sensi.pipeline import _word_columns_to_drop
     drop = _word_columns_to_drop({
         "lexling_tokens": True, "lexling_pos": True,
         "lexling_morph": True, "lexling_dep": True,
@@ -93,7 +93,7 @@ def test_word_columns_to_drop_keeps_lexling_columns_when_on():
 
 
 def test_word_columns_to_drop_lexling_groups_are_independent():
-    from main import _word_columns_to_drop
+    from sensi.pipeline import _word_columns_to_drop
     drop = _word_columns_to_drop({
         "lexling_tokens": True, "lexling_pos": False,
         "lexling_morph": True, "lexling_dep": True,
@@ -105,7 +105,7 @@ def test_word_columns_to_drop_lexling_groups_are_independent():
 
 
 def test_doc_columns_to_drop_filters_counts():
-    from main import _doc_columns_to_drop
+    from sensi.pipeline import _doc_columns_to_drop
     drop = _doc_columns_to_drop(
         output={"out_count_tokens": False, "out_count_sentences": False,
                 "out_count_content_tokens": True, "out_count_paragraphs": True},
@@ -119,7 +119,7 @@ def test_doc_columns_to_drop_filters_counts():
 
 
 def test_doc_columns_to_drop_filters_psych():
-    from main import _doc_columns_to_drop
+    from sensi.pipeline import _doc_columns_to_drop
     drop = _doc_columns_to_drop(
         output={"out_count_tokens": True, "out_count_content_tokens": True,
                 "out_count_sentences": True, "out_count_paragraphs": True},
@@ -133,7 +133,7 @@ def test_doc_columns_to_drop_filters_psych():
 
 
 def test_doc_columns_to_drop_empty_when_all_on():
-    from main import _doc_columns_to_drop
+    from sensi.pipeline import _doc_columns_to_drop
     all_on_output = {
         "out_count_tokens": True, "out_count_content_tokens": True,
         "out_count_sentences": True, "out_count_paragraphs": True,

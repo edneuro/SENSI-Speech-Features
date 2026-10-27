@@ -14,21 +14,21 @@ instructs the user to enable a toggle.
 from dataclasses import dataclass
 from pathlib import Path
 
-from utils.preferences import load_preferences
-from gui.planner import plan_from_prefs
-from gui.planner.plan import (
+from sensi.utils.preferences import load_preferences
+from sensi.gui.planner import plan_from_prefs
+from sensi.gui.planner.plan import (
     DOC_AGG_PREDICTABILITY_CLUSTER_NAME, _active_clusters, _active_output_csvs,
 )
 # Imported as a module (not `from ... import has_hf_token`) so that tests can
 # monkeypatch `extractors.predictability.has_hf_token` and have it take
 # effect here — a direct-name import would bind a stale reference at
 # module-load time.
-from extractors import predictability
-from extractors.predictability_models import is_gated, all_specs
+from sensi.extractors import predictability
+from sensi.extractors.predictability_models import is_gated, all_specs
 # Imported as a module (see the `predictability` note above) so tests can
 # monkeypatch `extractors.aligner.g2p_model_available` and have it take
 # effect here.
-from extractors import aligner
+from sensi.extractors import aligner
 
 
 @dataclass(frozen=True)

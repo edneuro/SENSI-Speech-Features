@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from utils.doc_summary import build_doc_summary, DOC_FEATURE_KEYS
+from sensi.utils.doc_summary import build_doc_summary, DOC_FEATURE_KEYS
 
 
 def _all_off() -> dict:
@@ -169,7 +169,7 @@ def test_independence_doc_mean_zipf_when_word_freq_disabled(tmp_path):
     word-level Zipf columns.  run_doc_level_batch should internally enable the
     freq extractor regardless of the word-level toggle."""
     from pathlib import Path
-    from main import run_doc_level_batch, build_parser
+    from sensi.pipeline import run_doc_level_batch, build_parser
     import csv
 
     FIXTURES = Path(__file__).parent.parent / 'fixtures'
@@ -267,7 +267,7 @@ def test_independence_doc_mean_predictability_when_word_predictability_disabled(
     the run actually configured; run_doc_level_batch wires doc_agg_predictability
     -> the single 'predictability_means' toggle end to end."""
     from pathlib import Path
-    from main import run_doc_level_batch, build_parser
+    from sensi.pipeline import run_doc_level_batch, build_parser
     import csv
 
     FIXTURES = Path(__file__).parent.parent / 'fixtures'
@@ -318,9 +318,9 @@ def test_independence_doc_mean_predictability_when_word_predictability_disabled(
 
 def test_build_doc_summary_includes_prosody_when_contours_supplied():
     import numpy as np, pandas as pd
-    from utils.doc_summary import build_doc_summary
-    from extractors.audio_features import Contours
-    from extractors.prosody import add_word_prosody
+    from sensi.utils.doc_summary import build_doc_summary
+    from sensi.extractors.audio_features import Contours
+    from sensi.extractors.prosody import add_word_prosody
 
     times = np.arange(100) / 100.0
     contours = Contours(
@@ -354,7 +354,7 @@ def test_build_doc_summary_includes_prosody_when_contours_supplied():
 
 def test_build_doc_summary_no_contours_no_prosody_keys():
     import pandas as pd
-    from utils.doc_summary import build_doc_summary
+    from sensi.utils.doc_summary import build_doc_summary
     df = pd.DataFrame([{'token': 'x', 'upos': 'NOUN'}])
     summary = build_doc_summary(
         df, stimulus_id='s1', dictionary_used='Empath', text='x',

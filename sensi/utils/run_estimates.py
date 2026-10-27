@@ -12,9 +12,9 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 
-from gui.planner.plan import LEVEL_ARTIFACTS, _active_clusters, _active_output_csvs
-from gui.planner.stages import Plan
-from utils import estimate_constants as K
+from sensi.gui.planner.plan import LEVEL_ARTIFACTS, _active_clusters, _active_output_csvs
+from sensi.gui.planner.stages import Plan
+from sensi.utils import estimate_constants as K
 
 MAT_HEADER_BYTES = 1024          # fixed .mat header/metadata allowance per file
 _F32, _F64 = 4, 8
@@ -97,7 +97,7 @@ def _alignment_fresh(output_folder: str, transcript: Path, audio: Path,
                      g2p: bool) -> bool:
     """aligner.is_alignment_fresh, cached by (path, size, mtime) of the
     transcript, the audio, the saved TextGrid and its sidecar (+ g2p)."""
-    from extractors import aligner
+    from sensi.extractors import aligner
     tg, side = aligner.saved_alignment_files(output_folder, str(audio))
     if not tg.exists() or not side.exists():
         return False                  # cheap miss: no hashing, no reading
@@ -117,7 +117,7 @@ def _alignment_fresh(output_folder: str, transcript: Path, audio: Path,
 def _count_words(path: Path) -> int:
     """Same unit main.py records text-step samples in (count_words on the raw
     transcript), so learned seconds-per-word apply unchanged."""
-    from utils.timing_history import count_words
+    from sensi.utils.timing_history import count_words
     with open(path, encoding="utf-8", errors="replace") as f:
         return count_words(f.read())
 
@@ -158,7 +158,7 @@ def scan_inputs(transcripts_folder: str, audio_folder: str,
             return None
         return InputStats(0, 0, 0, 0, 0.0, n_audio, all_secs)
 
-    from utils.file_pairing import find_pairs
+    from sensi.utils.file_pairing import find_pairs
     pairs = find_pairs(Path(transcripts_folder), Path(audio_folder or ""),
                        text_exts, audio_exts)
     items = [(p.transcript_path, p.audio_path) for p in pairs.pairs]
@@ -196,7 +196,7 @@ def _n_categories(prefs: dict) -> int:
 
 def _csv_columns(plan: Plan, prefs: dict) -> dict[str, int]:
     """Active column count per CSV artifact (see _FIXED_COLUMNS / dynamic)."""
-    from main import (_doc_columns_to_drop, _phoneme_columns_to_drop,
+    from sensi.pipeline import (_doc_columns_to_drop, _phoneme_columns_to_drop,
                       _sentence_columns_to_drop, _syllable_columns_to_drop,
                       _word_columns_to_drop)
     feats = prefs.get("features", {}) or {}
@@ -335,8 +335,8 @@ def estimate_ram(plan: Plan, prefs: dict, system: dict) -> RamEstimate:
     """Baseline + the SUM of the heavy items that will run (they stay cached
     for the whole process). A model the extractor would put on the GPU counts
     its "<slug>@cuda" value against VRAM instead of RAM."""
-    from extractors.predictability_models import spec_for
-    from utils.timing_history import model_device
+    from sensi.extractors.predictability_models import spec_for
+    from sensi.utils.timing_history import model_device
 
     gpu = system.get("gpu") or {}
     machine = float(system.get("system_ram_gb") or 0.0)
@@ -438,9 +438,9 @@ def estimate_time(plan: Plan, prefs: dict, stats: InputStats, history: dict,
     the word pass; doc_summary only in the doc pass; acoustic_ts only in the
     acoustic pass, over every audio file.
     """
-    from extractors.predictability import SCORE_CACHE_MAX
-    from gui.planner.emit import WORD_BATCH_ARTIFACTS, level_stages
-    from utils.timing_history import (AUDIO_STEPS, MAX_FIT_EXTRAPOLATION,
+    from sensi.extractors.predictability import SCORE_CACHE_MAX
+    from sensi.gui.planner.emit import WORD_BATCH_ARTIFACTS, level_stages
+    from sensi.utils.timing_history import (AUDIO_STEPS, MAX_FIT_EXTRAPOLATION,
                                       fit_overhead_slope, max_units,
                                       load_key, model_device, rate)
 

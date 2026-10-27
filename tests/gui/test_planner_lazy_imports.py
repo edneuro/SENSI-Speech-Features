@@ -14,17 +14,17 @@ def test_importing_planner_does_not_load_heavy_ml(monkeypatch):
     # later tests (which may legitimately rely on torch/spaCy) with a hole.
     for name in ("torch", "transformers", "spacy"):
         monkeypatch.delitem(sys.modules, name, raising=False)
-    for name in [m for m in sys.modules if m.startswith("gui.planner")]:
+    for name in [m for m in sys.modules if m.startswith("sensi.gui.planner")]:
         monkeypatch.delitem(sys.modules, name, raising=False)
 
-    importlib.import_module("gui.planner")
+    importlib.import_module("sensi.gui.planner")
 
     for mod in ("torch", "transformers", "spacy"):
         assert mod not in sys.modules, f"{mod} was imported at planner import time"
 
 
 def test_stages_metadata_available_without_running():
-    from gui.planner.registry import STAGES
+    from sensi.gui.planner.registry import STAGES
     assert len(STAGES) > 0
     # Every stage exposes its metadata and a callable run, but calling it is
     # what would trigger the import — we never call it here.

@@ -1,6 +1,6 @@
 import numpy as np
 
-from extractors import acoustic_ts
+from sensi.extractors import acoustic_ts
 
 
 def _tone(sr=16000, dur=1.0, f=200.0, amp=0.5):

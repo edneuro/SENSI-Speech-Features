@@ -15,9 +15,9 @@ from PySide6.QtWidgets import (
     QComboBox, QDoubleSpinBox, QSpinBox,
 )
 
-from gui.widgets import ClusterCard, ToggleRow
-from utils.preferences import load_preferences, save_preferences
-from extractors.acoustic_ts import MTRF_COMP
+from sensi.gui.widgets import ClusterCard, ToggleRow
+from sensi.utils.preferences import load_preferences, save_preferences
+from sensi.extractors.acoustic_ts import MTRF_COMP
 
 
 def _indent(inner: QWidget, left: int = 28) -> QWidget:

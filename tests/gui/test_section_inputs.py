@@ -1,5 +1,5 @@
 def test_empty_analyzer_shows_error(qtbot):
-    from gui.section_inputs import InputsSection
+    from sensi.gui.section_inputs import InputsSection
     w = InputsSection()
     qtbot.addWidget(w)
     w.analyzer_line.setText("")
@@ -7,7 +7,7 @@ def test_empty_analyzer_shows_error(qtbot):
 
 
 def test_filled_analyzer_clears_error(qtbot):
-    from gui.section_inputs import InputsSection
+    from sensi.gui.section_inputs import InputsSection
     w = InputsSection()
     qtbot.addWidget(w)
     w.analyzer_line.setText("Amilcar")
@@ -15,7 +15,7 @@ def test_filled_analyzer_clears_error(qtbot):
 
 
 def test_nonexistent_folder_shows_error(qtbot, tmp_path):
-    from gui.section_inputs import InputsSection
+    from sensi.gui.section_inputs import InputsSection
     w = InputsSection()
     qtbot.addWidget(w)
     w.transcripts_row.set_path("/does/not/exist")
@@ -23,7 +23,7 @@ def test_nonexistent_folder_shows_error(qtbot, tmp_path):
 
 
 def test_valid_folder_shows_file_count(qtbot, tmp_path):
-    from gui.section_inputs import InputsSection
+    from sensi.gui.section_inputs import InputsSection
     (tmp_path / "a.txt").write_text("hello", encoding="utf-8")
     (tmp_path / "b.txt").write_text("world", encoding="utf-8")
     w = InputsSection()

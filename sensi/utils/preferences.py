@@ -56,7 +56,7 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
-from utils.config_yaml import (FEATURES_YAML, RUN_YAML, read_yaml,
+from sensi.utils.config_yaml import (FEATURES_YAML, RUN_YAML, read_yaml,
                                split_prefs, join_yaml_pair,
                                write_features_yaml, write_run_yaml)
 
@@ -1268,7 +1268,7 @@ def _merged_from_user(user: dict[str, Any]) -> tuple[dict[str, Any], bool]:
         if surp_on is not None or llm_on is not None:
             out["doc_agg_predictability"] = bool(surp_on) or bool(llm_on)
     if isinstance(version, int) and version < SCHEMA_VERSION_V18:
-        from extractors.predictability_models import slug_for_hf_id
+        from sensi.extractors.predictability_models import slug_for_hf_id
         f = merged.get("features", {})
         pred = merged.setdefault("predictability", {})
         models = list(pred.get("models") or [])

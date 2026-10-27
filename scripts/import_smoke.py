@@ -21,7 +21,7 @@ sys.path.insert(0, str(ROOT))
 # imports them, so they're outside the import surface this smoke test covers.
 # (download_models guards its work under __main__, so importing it is now
 # side-effect-free — it stays here only because import-testing it adds nothing.)
-SKIP = {"utils.download_models"}
+SKIP = {"sensi.utils.download_models"}
 
 targets = ["main", "run", "PySide6.QtWidgets"]
 for pkg in ("extractors", "utils", "gui", "gui/planner"):

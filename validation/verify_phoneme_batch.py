@@ -100,9 +100,9 @@ def _check_pcenter_code_isolation(stem: str) -> None:
     if not tg_path.exists():
         check(False, f"{stem}: baseline TextGrid missing at {tg_path}")
         return
-    from utils.textgrid_parser import parse_phones
-    from extractors.syllabify import syllabify_pairs
-    from extractors.pcenter import add_pcenter
+    from sensi.utils.textgrid_parser import parse_phones
+    from sensi.extractors.syllabify import syllabify_pairs
+    from sensi.extractors.pcenter import add_pcenter
 
     phone_df = parse_phones(str(tg_path)).rename(
         columns={"phone": "phone", "onset": "onset", "offset": "offset"})

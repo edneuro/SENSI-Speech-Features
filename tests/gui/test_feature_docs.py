@@ -1,7 +1,7 @@
 """Tests for gui.feature_docs loader and the info-icon wiring."""
 from __future__ import annotations
 
-from gui import feature_docs
+from sensi.gui import feature_docs
 
 
 def test_has_feature_doc_finds_shallow_example():
@@ -40,8 +40,8 @@ def test_load_shallow_doc_has_stub_depth():
 
 
 def test_toggle_row_renders_info_icon_when_doc_exists(qtbot):
-    from gui.widgets import ToggleRow
-    from gui.info_popup import InfoIcon
+    from sensi.gui.widgets import ToggleRow
+    from sensi.gui.info_popup import InfoIcon
     row = ToggleRow(label="Sentence ID", info_key="feat_struct_sentence_id")
     qtbot.addWidget(row)
     icons = row.findChildren(InfoIcon)
@@ -49,8 +49,8 @@ def test_toggle_row_renders_info_icon_when_doc_exists(qtbot):
 
 
 def test_toggle_row_no_info_icon_when_doc_missing(qtbot):
-    from gui.widgets import ToggleRow
-    from gui.info_popup import InfoIcon
+    from sensi.gui.widgets import ToggleRow
+    from sensi.gui.info_popup import InfoIcon
     row = ToggleRow(label="Bogus", info_key="definitely_not_a_real_toggle_key")
     qtbot.addWidget(row)
     icons = row.findChildren(InfoIcon)
@@ -60,8 +60,8 @@ def test_toggle_row_no_info_icon_when_doc_missing(qtbot):
 def test_toggle_row_no_info_icon_when_info_key_none(qtbot):
     """Cluster master toggles pass info_key=None and must not render an icon
     even if a doc happens to exist for some unrelated key."""
-    from gui.widgets import ToggleRow
-    from gui.info_popup import InfoIcon
+    from sensi.gui.widgets import ToggleRow
+    from sensi.gui.info_popup import InfoIcon
     row = ToggleRow(label="Enable all structural columns")
     qtbot.addWidget(row)
     icons = row.findChildren(InfoIcon)
@@ -69,7 +69,7 @@ def test_toggle_row_no_info_icon_when_info_key_none(qtbot):
 
 
 def test_feature_info_dialog_renders_doc_for_known_key(qtbot):
-    from gui.info_popup import FeatureInfoDialog
+    from sensi.gui.info_popup import FeatureInfoDialog
     dlg = FeatureInfoDialog("master_bert_word")
     qtbot.addWidget(dlg)
     text = dlg.browser.toMarkdown()
@@ -79,7 +79,7 @@ def test_feature_info_dialog_renders_doc_for_known_key(qtbot):
 
 
 def test_feature_info_dialog_handles_missing_doc(qtbot):
-    from gui.info_popup import FeatureInfoDialog
+    from sensi.gui.info_popup import FeatureInfoDialog
     dlg = FeatureInfoDialog("definitely_not_a_real_toggle_key")
     qtbot.addWidget(dlg)
     # Falls back to the raw key in the title and an explanatory message
@@ -132,7 +132,7 @@ def test_resolve_doc_link_variants():
 
 
 def test_dialog_md_link_navigates_in_place(qtbot):
-    from gui.info_popup import FeatureInfoDialog
+    from sensi.gui.info_popup import FeatureInfoDialog
     from PySide6.QtCore import QUrl
     dlg = FeatureInfoDialog("feat_prosody_pitch_mean")   # → prosody_pitch.md
     qtbot.addWidget(dlg)
@@ -149,7 +149,7 @@ def test_dialog_md_link_navigates_in_place(qtbot):
 
 
 def test_dialog_external_link_opens_in_system_browser(qtbot, monkeypatch):
-    from gui.info_popup import FeatureInfoDialog
+    from sensi.gui.info_popup import FeatureInfoDialog
     from PySide6.QtCore import QUrl
     from PySide6.QtGui import QDesktopServices
     dlg = FeatureInfoDialog("feat_prosody_pitch_mean")
@@ -165,7 +165,7 @@ def test_dialog_external_link_opens_in_system_browser(qtbot, monkeypatch):
 
 
 def test_dialog_unresolvable_link_does_not_blank(qtbot):
-    from gui.info_popup import FeatureInfoDialog
+    from sensi.gui.info_popup import FeatureInfoDialog
     from PySide6.QtCore import QUrl
     dlg = FeatureInfoDialog("feat_prosody_pitch_mean")
     qtbot.addWidget(dlg)
@@ -175,7 +175,7 @@ def test_dialog_unresolvable_link_does_not_blank(qtbot):
 
 
 def test_info_icon_opens_dialog_on_click(qtbot, monkeypatch):
-    from gui.info_popup import InfoIcon, FeatureInfoDialog
+    from sensi.gui.info_popup import InfoIcon, FeatureInfoDialog
     icon = InfoIcon("master_bert_word")
     qtbot.addWidget(icon)
     opened = []
@@ -190,7 +190,7 @@ def test_info_icon_opens_dialog_on_click(qtbot, monkeypatch):
 
 
 def test_acoustic_ts_toggles_route_to_docs():
-    from gui.feature_docs import _doc_path
+    from sensi.gui.feature_docs import _doc_path
     assert _doc_path("feat_acoustic_ts_envelope").name == "acoustic_envelope.md"
     assert _doc_path("feat_acoustic_ts_onset_env").name == "acoustic_onset_envelope.md"
     assert _doc_path("feat_acoustic_ts_logmel").name == "acoustic_logmel.md"
@@ -200,7 +200,7 @@ def test_acoustic_ts_toggles_route_to_docs():
 def test_every_new_toggle_has_a_doc():
     """Phoneme-label split / IPA / G2P batch: every new toggle key must resolve
     to a real docs/features/*.md, or the GUI silently drops its ⓘ icon."""
-    from gui.feature_docs import has_feature_doc, load_feature_doc
+    from sensi.gui.feature_docs import has_feature_doc, load_feature_doc
     for key in ("feat_phoneme_arpabet", "feat_phoneme_stress",
                 "feat_phoneme_ipa", "feat_phoneme_pron_source",
                 "feat_syllable_ipa", "g2p_oov"):
@@ -211,12 +211,12 @@ def test_every_new_toggle_has_a_doc():
 def test_retired_toggle_is_gone():
     """`feat_phoneme_label` was removed by the prefs v20 removal-migration; a
     stale routing entry would advertise a toggle that no longer exists."""
-    from gui.feature_docs import _SHARED_DOC_MAP
+    from sensi.gui.feature_docs import _SHARED_DOC_MAP
     assert "feat_phoneme_label" not in _SHARED_DOC_MAP
 
 
 def test_new_phoneme_toggles_route_to_expected_files():
-    from gui.feature_docs import _doc_path
+    from sensi.gui.feature_docs import _doc_path
     assert _doc_path("feat_phoneme_arpabet").name == "phoneme.md"
     assert _doc_path("feat_phoneme_stress").name == "phoneme.md"
     assert _doc_path("feat_phoneme_pron_source").name == "phoneme.md"
@@ -231,7 +231,7 @@ def test_predictability_toggles_route_to_merged_docs():
     pred_surprisal.md (replacing the old per-model pred_surprisal_gpt2.md /
     pred_surprisal_llm.md docs); "pred_cloze"/"pred_topmatch" resolve via the
     default f"{toggle_key}.md" fallback to their existing docs."""
-    from gui.feature_docs import _doc_path
+    from sensi.gui.feature_docs import _doc_path
     assert _doc_path("pred_surprisal").name == "pred_surprisal.md"
     assert _doc_path("pred_cloze").name == "pred_cloze.md"
     assert _doc_path("pred_topmatch").name == "pred_topmatch.md"

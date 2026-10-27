@@ -3,7 +3,7 @@ import os
 
 import pytest
 
-from utils.preferences import (
+from sensi.utils.preferences import (
     DEFAULT_PREFS,
     load_preferences,
     save_preferences,
@@ -16,7 +16,7 @@ def _yaml_on_disk(json_path):
     """The store the migrated prefs actually landed in (YAML pair next to the
     legacy json path)."""
     from pathlib import Path
-    from utils.config_yaml import read_yaml, join_yaml_pair, FEATURES_YAML, RUN_YAML
+    from sensi.utils.config_yaml import read_yaml, join_yaml_pair, FEATURES_YAML, RUN_YAML
     d = Path(json_path).parent
     return join_yaml_pair(read_yaml(d / FEATURES_YAML), read_yaml(d / RUN_YAML))
 
@@ -193,13 +193,13 @@ def v2_prefs_file(tmp_path, monkeypatch):
 
 def test_v2_file_loads_as_v4(v2_prefs_file):
     """v2 file chains through v3 → v4 → v5 → v6 → v7 → v8 → v9 on load."""
-    from utils.preferences import load_preferences, SCHEMA_VERSION
+    from sensi.utils.preferences import load_preferences, SCHEMA_VERSION
     prefs = load_preferences()
     assert prefs["schema_version"] == SCHEMA_VERSION
 
 
 def test_v2_migration_carries_shared_fields(v2_prefs_file):
-    from utils.preferences import load_preferences
+    from sensi.utils.preferences import load_preferences
     prefs = load_preferences()
     assert prefs["shared"]["analyzer_name"] == "Amilcar"
     assert prefs["shared"]["last_transcripts_folder"] == "/tmp/t"
@@ -207,7 +207,7 @@ def test_v2_migration_carries_shared_fields(v2_prefs_file):
 
 def test_v2_migration_splits_spacy_parse_through_to_v4(v2_prefs_file):
     """v2.spacy_parse=True → v3.structural=True → v4 8 feat_struct_* all True."""
-    from utils.preferences import load_preferences
+    from sensi.utils.preferences import load_preferences
     prefs = load_preferences()
     f = prefs["features"]
     for k in ("feat_struct_doc_id", "feat_struct_paragraph_id",
@@ -222,7 +222,7 @@ def test_v2_migration_splits_spacy_parse_through_to_v4(v2_prefs_file):
 
 
 def test_v2_migration_splits_edu_freq_into_five_bands(v2_prefs_file):
-    from utils.preferences import load_preferences
+    from sensi.utils.preferences import load_preferences
     prefs = load_preferences()
     f = prefs["features"]
     for band in ("freq_ewfg_k2", "freq_ewfg_3to5", "freq_ewfg_6to8",
@@ -235,7 +235,7 @@ def test_v2_migration_llm_cloze_becomes_llama3_8b_model_and_metrics(v2_prefs_fil
     pred_surprisal_llm/pred_cloze/pred_topmatch=True intermediate shape, then
     the v18 finalize maps that + the stored llm_model onto predictability.
     models/metrics (gpt2 stays off since gpt2_surprisal was False)."""
-    from utils.preferences import load_preferences
+    from sensi.utils.preferences import load_preferences
     prefs = load_preferences()
     assert prefs["predictability"]["models"] == ["llama3_8b"]
     metrics = prefs["predictability"]["metrics"]
@@ -247,7 +247,7 @@ def test_v2_migration_llm_cloze_becomes_llama3_8b_model_and_metrics(v2_prefs_fil
 
 def test_v2_migration_maps_doc_toggles_through_to_v4(v2_prefs_file):
     """v2 counts=True → v3 doc_counts=True → v4 4 out_count_* all True."""
-    from utils.preferences import load_preferences
+    from sensi.utils.preferences import load_preferences
     prefs = load_preferences()
     o = prefs["output"]
     for k in ("out_count_tokens", "out_count_content_tokens",
@@ -265,7 +265,7 @@ def test_v2_migration_maps_doc_toggles_through_to_v4(v2_prefs_file):
 
 def test_v2_migration_maps_liwc_to_psych_through_to_v4(v2_prefs_file):
     """v2 liwc_* (any True) → v3 sem_composite_psych=True → v4 4 feat_psych_* all True."""
-    from utils.preferences import load_preferences
+    from sensi.utils.preferences import load_preferences
     prefs = load_preferences()
     f = prefs["features"]
     for k in ("feat_psych_authentic", "feat_psych_analytic",
@@ -277,7 +277,7 @@ def test_v2_migration_categories_unified_in_v7(v2_prefs_file):
     """v2 dictionary_backend=liwc with semantic_categories=['social','cognition']
     chains to v3 categories_liwc=[...] → v4 word/doc split → v7 unified
     categories_liwc=['social','cognition'] (lossless union, same in both)."""
-    from utils.preferences import load_preferences
+    from sensi.utils.preferences import load_preferences
     prefs = load_preferences()
     s = prefs["semantic"]
     assert set(s["categories_liwc"]) == {"social", "cognition"}
@@ -289,7 +289,7 @@ def test_v2_migration_llm_model_maps_to_model_slug(v2_prefs_file):
     """The v2 file's stored llm_model no longer survives as
     predictability.llm_model (v18 removes that field) — since a pred_*
     toggle was on (llm_cloze=True), its slug lands in predictability.models."""
-    from utils.preferences import load_preferences
+    from sensi.utils.preferences import load_preferences
     prefs = load_preferences()
     assert prefs["predictability"]["models"] == ["llama3_8b"]
     assert "llm_model" not in prefs["predictability"]
@@ -298,13 +298,13 @@ def test_v2_migration_llm_model_maps_to_model_slug(v2_prefs_file):
 def test_v2_migration_coerces_disabled_liwc_backend_to_empath(v2_prefs_file):
     # v2 stored dictionary_backend="liwc"; LIWC is now disabled under its
     # EULA, so the v11 finalize coerces it to "empath".
-    from utils.preferences import load_preferences
+    from sensi.utils.preferences import load_preferences
     prefs = load_preferences()
     assert prefs["semantic"]["backend"] == "empath"
 
 
 def test_v2_migration_rewrites_file_as_v4(v2_prefs_file):
-    from utils.preferences import load_preferences, SCHEMA_VERSION
+    from sensi.utils.preferences import load_preferences, SCHEMA_VERSION
     load_preferences()
     on_disk = _yaml_on_disk(v2_prefs_file)
     assert on_disk["schema_version"] == SCHEMA_VERSION
@@ -458,7 +458,7 @@ def test_v3_migration_rewrites_file_as_v4(v3_prefs_file):
 # ---------------------------------------------------------------------------
 
 def test_v4_to_v5_adds_prosody_defaults(tmp_path, monkeypatch):
-    from utils import preferences as prefs_mod
+    from sensi.utils import preferences as prefs_mod
     # Write a v4-shape file
     v4 = {
         "schema_version": 4,
@@ -508,7 +508,7 @@ def test_v4_to_v5_adds_prosody_defaults(tmp_path, monkeypatch):
 
 
 def test_v5_round_trip_preserves_user_edits(tmp_path, monkeypatch):
-    from utils import preferences as prefs_mod
+    from sensi.utils import preferences as prefs_mod
     path = tmp_path / "preferences.json"
     monkeypatch.setenv("SENSI_PREFS_PATH", str(path))
     # First load creates a v6 file
@@ -533,7 +533,7 @@ def test_v5_round_trip_preserves_user_edits(tmp_path, monkeypatch):
 
 def test_v5_to_v6_adds_subword_defaults(tmp_path, monkeypatch):
     import json
-    from utils.preferences import load_preferences
+    from sensi.utils.preferences import load_preferences
     path = tmp_path / "preferences.json"
     path.write_text(json.dumps({
         "schema_version": 5,
@@ -561,7 +561,7 @@ def test_v5_to_v6_adds_subword_defaults(tmp_path, monkeypatch):
 
 def test_v4_to_v6_chain_carries_keys_through(tmp_path, monkeypatch):
     import json
-    from utils.preferences import load_preferences
+    from sensi.utils.preferences import load_preferences
     path = tmp_path / "preferences.json"
     path.write_text(json.dumps({
         "schema_version": 4,
@@ -580,7 +580,7 @@ def test_v4_to_v6_chain_carries_keys_through(tmp_path, monkeypatch):
 # ---------------------------------------------------------------------------
 
 def test_v6_to_v7_unions_categories_lossless(tmp_path, monkeypatch):
-    from utils.preferences import (
+    from sensi.utils.preferences import (
         load_preferences, get_preferences_path,
         SCHEMA_VERSION_V7, _migrate_v6_into_v7, DEFAULT_PREFS_V7,
     )
@@ -609,7 +609,7 @@ def test_v6_to_v7_unions_categories_lossless(tmp_path, monkeypatch):
 
 def test_v6_to_v7_sets_master_defaults_true():
     import copy
-    from utils.preferences import _migrate_v6_into_v7, DEFAULT_PREFS_V7
+    from sensi.utils.preferences import _migrate_v6_into_v7, DEFAULT_PREFS_V7
     target = copy.deepcopy(DEFAULT_PREFS_V7)
     _migrate_v6_into_v7(target, {"schema_version": 6, "features": {},
                                   "output": {}, "semantic": {}})
@@ -624,7 +624,7 @@ def test_v6_to_v7_sets_master_defaults_true():
 def test_v6_to_v7_preserves_user_feature_toggles():
     """User v6 settings are preserved through the migration."""
     import copy
-    from utils.preferences import _migrate_v6_into_v7, DEFAULT_PREFS_V7
+    from sensi.utils.preferences import _migrate_v6_into_v7, DEFAULT_PREFS_V7
     target = copy.deepcopy(DEFAULT_PREFS_V7)
     _migrate_v6_into_v7(target, {
         "schema_version": 6,
@@ -640,7 +640,7 @@ def test_v6_to_v7_preserves_user_feature_toggles():
 
 
 def test_v7_default_prefs_contain_all_master_keys():
-    from utils.preferences import DEFAULT_PREFS_V7
+    from sensi.utils.preferences import DEFAULT_PREFS_V7
     for k in ("master_word_prosody", "master_psych_composite",
              "master_syllable_intervals", "master_syllable_labels",
              "master_syllable_prosody", "master_phoneme_intervals"):
@@ -654,7 +654,7 @@ def test_v6_to_v7_union_includes_preexisting_unified_value():
     key (e.g. from a forward-compat sniff or a hand-edit), the migration
     must include those values in the union rather than overwriting them."""
     import copy
-    from utils.preferences import _migrate_v6_into_v7, DEFAULT_PREFS_V7
+    from sensi.utils.preferences import _migrate_v6_into_v7, DEFAULT_PREFS_V7
     target = copy.deepcopy(DEFAULT_PREFS_V7)
     _migrate_v6_into_v7(target, {
         "schema_version": 6,
@@ -680,7 +680,7 @@ def test_v6_to_v7_union_includes_preexisting_unified_value():
 def test_v7_into_v8_adds_pcenter_defaults():
     """v7 prefs migrate to v8 with pcenter_k=0.3 and new toggles True."""
     from copy import deepcopy
-    from utils.preferences import (
+    from sensi.utils.preferences import (
         DEFAULT_PREFS_V7,
         DEFAULT_PREFS_V8,
         _migrate_v7_into_v8,
@@ -695,7 +695,7 @@ def test_v7_into_v8_adds_pcenter_defaults():
 def test_v7_into_v8_preserves_user_pcenter_k():
     """If user set pcenter_k in a v7 file (forward-compat), migration preserves it."""
     from copy import deepcopy
-    from utils.preferences import (
+    from sensi.utils.preferences import (
         DEFAULT_PREFS_V7,
         DEFAULT_PREFS_V8,
         _migrate_v7_into_v8,
@@ -710,7 +710,7 @@ def test_v7_into_v8_preserves_user_pcenter_k():
 def test_load_v7_prefs_file_migrates_to_current(tmp_path, monkeypatch):
     """load_preferences() on a v7 file auto-migrates to current version."""
     import json
-    from utils.preferences import DEFAULT_PREFS_V7, load_preferences, SCHEMA_VERSION
+    from sensi.utils.preferences import DEFAULT_PREFS_V7, load_preferences, SCHEMA_VERSION
     prefs_path = tmp_path / 'p.json'
     prefs_path.write_text(json.dumps(DEFAULT_PREFS_V7))
     monkeypatch.setenv('SENSI_PREFS_PATH', str(prefs_path))
@@ -728,7 +728,7 @@ def test_load_v7_prefs_file_migrates_to_current(tmp_path, monkeypatch):
 def test_v8_into_v9_adds_sentence_defaults():
     """v8 prefs migrate to v9 with all sentence-level feature toggles True."""
     from copy import deepcopy
-    from utils.preferences import (
+    from sensi.utils.preferences import (
         DEFAULT_PREFS_V8,
         DEFAULT_PREFS_V9,
         _migrate_v8_into_v9,
@@ -745,7 +745,7 @@ def test_v8_into_v9_adds_sentence_defaults():
 def test_v8_into_v9_preserves_existing_features():
     """v8 user feature values survive migration to v9."""
     from copy import deepcopy
-    from utils.preferences import DEFAULT_PREFS_V8, DEFAULT_PREFS_V9, _migrate_v8_into_v9
+    from sensi.utils.preferences import DEFAULT_PREFS_V8, DEFAULT_PREFS_V9, _migrate_v8_into_v9
 
     v8 = deepcopy(DEFAULT_PREFS_V8)
     v8['features']['feat_syllable_pcenter'] = False  # a v8 key the user turned off
@@ -757,7 +757,7 @@ def test_v8_into_v9_preserves_existing_features():
 def test_load_v8_prefs_file_migrates_to_current(tmp_path, monkeypatch):
     """load_preferences() on a v8 file auto-migrates to current version."""
     import json
-    from utils.preferences import DEFAULT_PREFS_V8, load_preferences, SCHEMA_VERSION
+    from sensi.utils.preferences import DEFAULT_PREFS_V8, load_preferences, SCHEMA_VERSION
 
     prefs_path = tmp_path / 'p.json'
     prefs_path.write_text(json.dumps(DEFAULT_PREFS_V8))
@@ -777,7 +777,7 @@ def test_load_v8_prefs_file_migrates_to_current(tmp_path, monkeypatch):
 def test_v9_into_v10_adds_embedding_defaults():
     """v9 prefs migrate to v10 with all embedding output and feature toggles True."""
     from copy import deepcopy
-    from utils.preferences import (
+    from sensi.utils.preferences import (
         DEFAULT_PREFS_V9,
         DEFAULT_PREFS_V10,
         _migrate_v9_into_v10,
@@ -795,7 +795,7 @@ def test_v9_into_v10_adds_embedding_defaults():
 def test_v9_into_v10_preserves_existing_features():
     """v9 user feature values survive migration to v10."""
     from copy import deepcopy
-    from utils.preferences import DEFAULT_PREFS_V9, DEFAULT_PREFS_V10, _migrate_v9_into_v10
+    from sensi.utils.preferences import DEFAULT_PREFS_V9, DEFAULT_PREFS_V10, _migrate_v9_into_v10
 
     v9 = deepcopy(DEFAULT_PREFS_V9)
     v9['features']['feat_sentence_pitch_mean'] = False
@@ -808,7 +808,7 @@ def test_load_v9_prefs_file_migrates_to_current(tmp_path, monkeypatch):
     """load_preferences() on a v9 file auto-migrates through to the current
     schema (adds the v10 embedding keys along the way)."""
     import json
-    from utils.preferences import DEFAULT_PREFS_V9, load_preferences, SCHEMA_VERSION
+    from sensi.utils.preferences import DEFAULT_PREFS_V9, load_preferences, SCHEMA_VERSION
 
     prefs_path = tmp_path / 'p.json'
     prefs_path.write_text(json.dumps(DEFAULT_PREFS_V9))
@@ -829,7 +829,7 @@ def test_v10_to_v11_coerces_liwc_backend_and_bumps_version(tmp_path, monkeypatch
     upgrade is persisted to disk."""
     import json
     from copy import deepcopy
-    from utils.preferences import (
+    from sensi.utils.preferences import (
         DEFAULT_PREFS_V10, load_preferences,
         SCHEMA_VERSION, SCHEMA_VERSION_V11,
     )
@@ -852,7 +852,7 @@ def test_v10_to_v11_coerces_liwc_backend_and_bumps_version(tmp_path, monkeypatch
 
 
 def test_v11_default_backend_is_empath():
-    from utils.preferences import DEFAULT_PREFS
+    from sensi.utils.preferences import DEFAULT_PREFS
     assert DEFAULT_PREFS['semantic']['backend'] == 'empath'
 
 
@@ -862,7 +862,7 @@ def test_v11_default_backend_is_empath():
 
 def test_v12_prefs_migrate_to_v13_additively(tmp_path, monkeypatch):
     import json
-    from utils import preferences
+    from sensi.utils import preferences
     p = tmp_path / "preferences.json"
     v12 = {"schema_version": 12, "features": {}, "output": {}}
     p.write_text(json.dumps(v12), encoding="utf-8")
@@ -892,7 +892,7 @@ def test_v13_to_v14_renames_struct_token_keys_without_collision(tmp_path, monkey
     OFF value lands on the new global key (feat_struct_token_id) and the ON
     value on the within-sentence key (feat_struct_token_in_sentence_id) — not
     collide onto the same key."""
-    from utils.preferences import load_preferences, SCHEMA_VERSION
+    from sensi.utils.preferences import load_preferences, SCHEMA_VERSION
     path = tmp_path / "preferences.json"
     path.write_text(json.dumps({
         "schema_version": 13,
@@ -913,7 +913,7 @@ def test_v13_to_v14_renames_struct_token_keys_without_collision(tmp_path, monkey
 
 
 def test_v14_defaults_have_renamed_struct_keys():
-    from utils.preferences import DEFAULT_PREFS
+    from sensi.utils.preferences import DEFAULT_PREFS
     f = DEFAULT_PREFS["features"]
     assert "feat_struct_term_id" not in f
     assert f["feat_struct_token_id"] is True
@@ -926,7 +926,7 @@ def test_v14_defaults_have_renamed_struct_keys():
 
 def test_v15_prefs_migrate_to_v16_additively(tmp_path, monkeypatch):
     import json
-    from utils import preferences as P
+    from sensi.utils import preferences as P
     p = tmp_path / "prefs.json"
     # A minimal v15 file: additive migration must fill the new v16 keys.
     p.write_text(json.dumps({"schema_version": 15, "features": {}, "output": {}}),
@@ -951,7 +951,7 @@ def test_default_env_comp_is_exact_mtrf_constant():
     """The extractor docstring requires comp == log10(2) for the claimed
     bit-for-bit mTRFenvelope.m replication; the prefs default (0.3) silently
     broke that for every GUI run. Guard both the value and cross-module drift."""
-    from extractors.acoustic_ts import MTRF_COMP
+    from sensi.extractors.acoustic_ts import MTRF_COMP
     import math
     assert DEFAULT_PREFS["acoustic_ts"]["env_comp"] == MTRF_COMP
     assert MTRF_COMP == pytest.approx(math.log10(2), abs=0)
@@ -959,8 +959,8 @@ def test_default_env_comp_is_exact_mtrf_constant():
 
 def test_v16_env_comp_030_coerced_to_mtrf(tmp_path, monkeypatch):
     import json
-    from utils import preferences as P
-    from extractors.acoustic_ts import MTRF_COMP
+    from sensi.utils import preferences as P
+    from sensi.extractors.acoustic_ts import MTRF_COMP
     p = tmp_path / "prefs.json"
     p.write_text(json.dumps({"schema_version": 16,
                              "acoustic_ts": {"env_comp": 0.3}}),
@@ -975,7 +975,7 @@ def test_v16_custom_env_comp_preserved(tmp_path, monkeypatch):
     """Only the old DEFAULT (exactly 0.3) is upgraded; a deliberately chosen
     exponent is the user's to keep."""
     import json
-    from utils import preferences as P
+    from sensi.utils import preferences as P
     p = tmp_path / "prefs.json"
     p.write_text(json.dumps({"schema_version": 16,
                              "acoustic_ts": {"env_comp": 0.45}}),
@@ -989,7 +989,7 @@ def test_v17_deliberate_030_not_coerced(tmp_path, monkeypatch):
     """Post-v17, a user who intentionally sets 0.3 keeps it — the coercion
     fires only when migrating from pre-v17 files."""
     import json
-    from utils import preferences as P
+    from sensi.utils import preferences as P
     p = tmp_path / "prefs.json"
     p.write_text(json.dumps({"schema_version": P.SCHEMA_VERSION_V17,
                              "acoustic_ts": {"env_comp": 0.3}}),
@@ -1006,7 +1006,7 @@ def test_v16_stored_openai_llm_model_dropped_by_v18_migration(tmp_path, monkeypa
     enabled in this source file, the stored (now-defunct OpenAI) selection
     is simply discarded rather than mapped onto a model slug."""
     import json
-    from utils import preferences as P
+    from sensi.utils import preferences as P
     p = tmp_path / "prefs.json"
     p.write_text(json.dumps({"schema_version": 16,
                              "predictability": {"llm_model": "gpt-4o-mini"}}),
@@ -1023,7 +1023,7 @@ def test_v16_stored_local_llm_model_dropped_when_no_predictability_toggle_on(tmp
     now tied to which toggles/metrics were on, not merely to whether
     llm_model was ever set."""
     import json
-    from utils import preferences as P
+    from sensi.utils import preferences as P
     p = tmp_path / "prefs.json"
     p.write_text(json.dumps({"schema_version": 16,
                              "predictability": {"llm_model": "meta-llama/Meta-Llama-3-8B"}}),
@@ -1041,7 +1041,7 @@ def test_v16_stored_local_llm_model_dropped_when_no_predictability_toggle_on(tmp
 
 def test_v17_gpt2_surprisal_toggle_becomes_gpt2_model(tmp_path, monkeypatch):
     import json
-    from utils import preferences as P
+    from sensi.utils import preferences as P
     p = tmp_path / "prefs.json"
     p.write_text(json.dumps({"schema_version": 17,
         "features": {"pred_surprisal_gpt2": True},
@@ -1058,7 +1058,7 @@ def test_v17_gpt2_surprisal_toggle_becomes_gpt2_model(tmp_path, monkeypatch):
 
 def test_v17_llm_toggles_become_stored_model_and_metrics(tmp_path, monkeypatch):
     import json
-    from utils import preferences as P
+    from sensi.utils import preferences as P
     p = tmp_path / "prefs.json"
     p.write_text(json.dumps({"schema_version": 17,
         "features": {"pred_surprisal_llm": True, "pred_cloze": True,
@@ -1076,7 +1076,7 @@ def test_v17_llm_toggles_become_stored_model_and_metrics(tmp_path, monkeypatch):
 
 def test_v17_llm_toggle_unknown_model_defaults_llama32_3b(tmp_path, monkeypatch):
     import json
-    from utils import preferences as P
+    from sensi.utils import preferences as P
     p = tmp_path / "prefs.json"
     p.write_text(json.dumps({"schema_version": 17,
         "features": {"pred_cloze": True},
@@ -1092,7 +1092,7 @@ def test_v17_llm_toggle_unknown_model_defaults_llama32_3b(tmp_path, monkeypatch)
 
 
 def test_v18_fresh_default_predictability_off(tmp_path, monkeypatch):
-    from utils import preferences as P
+    from sensi.utils import preferences as P
     monkeypatch.setenv("SENSI_PREFS_PATH", str(tmp_path / "none.json"))
     prefs = P.load_preferences()
     # Fully off on a fresh install: no models AND no metric pre-checked, so no
@@ -1107,7 +1107,7 @@ def test_v17_doc_agg_surprisal_or_llm_unifies_to_doc_agg_predictability(tmp_path
     doc_agg_llm output keys (shipped v7-v17). Migration ORs them into the
     single doc_agg_predictability toggle and drops both old keys."""
     import json
-    from utils import preferences as P
+    from sensi.utils import preferences as P
     p = tmp_path / "prefs.json"
     p.write_text(json.dumps({"schema_version": 17,
         "output": {"doc_agg_surprisal": False, "doc_agg_llm": True}}),
@@ -1123,7 +1123,7 @@ def test_v17_doc_agg_both_off_stays_off(tmp_path, monkeypatch):
     """Both old toggles off must migrate to doc_agg_predictability=False, not
     fall back to whatever the v18 default happens to be."""
     import json
-    from utils import preferences as P
+    from sensi.utils import preferences as P
     p = tmp_path / "prefs.json"
     p.write_text(json.dumps({"schema_version": 17,
         "output": {"doc_agg_surprisal": False, "doc_agg_llm": False}}),
@@ -1134,7 +1134,7 @@ def test_v17_doc_agg_both_off_stays_off(tmp_path, monkeypatch):
 
 
 def test_v19_fresh_default_has_empty_context_map(tmp_path, monkeypatch):
-    from utils import preferences as P
+    from sensi.utils import preferences as P
     monkeypatch.setenv("SENSI_PREFS_PATH", str(tmp_path / "none.json"))
     prefs = P.load_preferences()
     assert prefs["schema_version"] == P.SCHEMA_VERSION
@@ -1145,7 +1145,7 @@ def test_v18_file_gains_empty_context_map(tmp_path, monkeypatch):
     """Additive v18→v19: a v18 file (no context key) loads with context={},
     its models/metrics untouched."""
     import json
-    from utils import preferences as P
+    from sensi.utils import preferences as P
     p = tmp_path / "prefs.json"
     p.write_text(json.dumps({"schema_version": 18,
         "predictability": {"models": ["gpt2"],
@@ -1160,7 +1160,7 @@ def test_v18_file_gains_empty_context_map(tmp_path, monkeypatch):
 
 def test_v18_file_preserves_existing_context_values(tmp_path, monkeypatch):
     import json
-    from utils import preferences as P
+    from sensi.utils import preferences as P
     p = tmp_path / "prefs.json"
     p.write_text(json.dumps({"schema_version": 18,
         "predictability": {"models": ["llama3_8b"],
@@ -1252,7 +1252,7 @@ def test_alignment_section_merges_by_inner_key_not_wholesale():
     section is wholesale-replaced, so saving one alignment.* toggle would
     silently erase any sibling key the instant a second one exists — this
     pins the merge behavior itself, not just that g2p_oov is present."""
-    from utils.preferences import _deep_merge_current
+    from sensi.utils.preferences import _deep_merge_current
     cur = {"alignment": {"g2p_oov": False, "future_key": True}}
     usr = {"alignment": {"g2p_oov": True}}
     _deep_merge_current(cur, usr)

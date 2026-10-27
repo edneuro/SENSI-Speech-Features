@@ -2,7 +2,7 @@ import csv
 import json
 from pathlib import Path
 
-from utils.run_logger import RunLogger
+from sensi.utils.run_logger import RunLogger
 
 
 def test_run_logger_creates_three_artifacts(tmp_path):

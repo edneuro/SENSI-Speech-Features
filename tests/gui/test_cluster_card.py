@@ -1,7 +1,7 @@
 """Widget tests for ClusterCard."""
 import pytest
-from utils.preferences import save_preferences
-from gui.widgets import ClusterCard, ToggleRow
+from sensi.utils.preferences import save_preferences
+from sensi.gui.widgets import ClusterCard, ToggleRow
 
 
 def test_cluster_card_disables_children_when_master_off(qtbot, prefs_tmp):
@@ -31,7 +31,7 @@ def test_cluster_card_master_toggle_persists(qtbot, prefs_tmp):
     qtbot.addWidget(card)
     card.master_toggle().set_checked(False)
     # set_checked emits toggled; the slot calls save_preferences
-    from utils.preferences import load_preferences
+    from sensi.utils.preferences import load_preferences
     assert load_preferences()["features"]["master_word_prosody"] is False
 
 
@@ -55,5 +55,5 @@ def test_cluster_card_output_section_persists_correctly(qtbot, prefs_tmp):
                        master_section="output")
     qtbot.addWidget(card)
     card.master_toggle().set_checked(False)
-    from utils.preferences import load_preferences
+    from sensi.utils.preferences import load_preferences
     assert load_preferences()["output"]["master_doc_prosody"] is False

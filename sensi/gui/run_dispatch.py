@@ -11,8 +11,8 @@ import datetime as _dt
 import threading
 from typing import Callable
 
-from gui import planner
-from utils.preferences import load_preferences
+from sensi.gui import planner
+from sensi.utils.preferences import load_preferences
 
 
 def build_args_word_level() -> argparse.Namespace:
@@ -75,7 +75,7 @@ def run(progress_cb: Callable[[int, int, str], None],
         if session_hf_token:
             os.environ["HF_TOKEN"] = session_hf_token
         prefs = load_preferences()
-        from utils.credentials import export_hf_token
+        from sensi.utils.credentials import export_hf_token
         exported_file_token = export_hf_token(prefs.get("shared", {}))
         plan = planner.plan_from_prefs(prefs)
         run_ts = _dt.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
@@ -87,7 +87,7 @@ def run(progress_cb: Callable[[int, int, str], None],
         try:
             word_outputs = planner.WORD_BATCH_ARTIFACTS & plan.output_csvs
             if word_outputs:
-                from main import run_word_level_batch
+                from sensi.pipeline import run_word_level_batch
                 ns = _prepare_runtime_args(planner.to_namespace(plan, prefs, level="word"))
                 ns.run_ts = run_ts
                 ns.skip_no_match = False
@@ -98,7 +98,7 @@ def run(progress_cb: Callable[[int, int, str], None],
                 done_cb("cancelled")
                 return
             if "documents_summary" in plan.output_csvs:
-                from main import run_doc_level_batch
+                from sensi.pipeline import run_doc_level_batch
                 ns = _prepare_runtime_args(planner.to_namespace(plan, prefs, level="doc"))
                 ns.run_ts = run_ts
                 ns.skip_no_match = bool(word_outputs)
@@ -109,7 +109,7 @@ def run(progress_cb: Callable[[int, int, str], None],
                 done_cb("cancelled")
                 return
             if "acoustic" in plan.output_csvs:
-                from main import run_acoustic_level_batch
+                from sensi.pipeline import run_acoustic_level_batch
                 ns = planner.to_acoustic_namespace(prefs)
                 ns.run_ts = run_ts
                 run_acoustic_level_batch(ns, on_pair_done=progress_cb,

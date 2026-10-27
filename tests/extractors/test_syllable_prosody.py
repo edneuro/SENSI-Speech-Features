@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from extractors.syllable_prosody import add_syllable_prosody
+from sensi.extractors.syllable_prosody import add_syllable_prosody
 
 
 class _FakeContours:

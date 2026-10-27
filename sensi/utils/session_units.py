@@ -7,7 +7,7 @@ downstream readers know units without parsing the run manifest JSON.
 """
 from __future__ import annotations
 
-from gui.planner.stages import Plan
+from sensi.gui.planner.stages import Plan
 
 
 _ZIPF = "Zipf (log10 frequency per billion words)"

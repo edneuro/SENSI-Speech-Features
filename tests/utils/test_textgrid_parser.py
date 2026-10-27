@@ -1,7 +1,7 @@
 """TextGrid parsing (utils/textgrid_parser.py)."""
 import textwrap
 
-from utils.textgrid_parser import parse_phones, parse_words
+from sensi.utils.textgrid_parser import parse_phones, parse_words
 
 
 def _write_textgrid(tmp_path, intervals_words, intervals_phones):

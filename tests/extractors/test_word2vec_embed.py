@@ -23,9 +23,9 @@ def _make_mock_kv(vocab: dict[str, np.ndarray]):
     return kv
 
 
-@patch("extractors.word2vec_embed._load_model")
+@patch("sensi.extractors.word2vec_embed._load_model")
 def test_known_word_returns_its_vector(mock_load):
-    from extractors.word2vec_embed import embed_word2vec
+    from sensi.extractors.word2vec_embed import embed_word2vec
 
     vec = np.ones(300, dtype=np.float32)
     mock_load.return_value = _make_mock_kv({"cat": vec})
@@ -37,9 +37,9 @@ def test_known_word_returns_its_vector(mock_load):
     assert is_valid.tolist() == [True]
 
 
-@patch("extractors.word2vec_embed._load_model")
+@patch("sensi.extractors.word2vec_embed._load_model")
 def test_oov_word_returns_zero_vector(mock_load):
-    from extractors.word2vec_embed import embed_word2vec
+    from sensi.extractors.word2vec_embed import embed_word2vec
 
     mock_load.return_value = _make_mock_kv({})  # empty vocab
     df = make_word_df(["xyzzy"])
@@ -49,9 +49,9 @@ def test_oov_word_returns_zero_vector(mock_load):
     assert is_valid.tolist() == [False]
 
 
-@patch("extractors.word2vec_embed._load_model")
+@patch("sensi.extractors.word2vec_embed._load_model")
 def test_lowercase_fallback(mock_load):
-    from extractors.word2vec_embed import embed_word2vec
+    from sensi.extractors.word2vec_embed import embed_word2vec
 
     vec = np.full(300, 2.0, dtype=np.float32)
     mock_load.return_value = _make_mock_kv({"dog": vec})  # lowercase only
@@ -62,9 +62,9 @@ def test_lowercase_fallback(mock_load):
     assert is_valid.tolist() == [True]
 
 
-@patch("extractors.word2vec_embed._load_model")
+@patch("sensi.extractors.word2vec_embed._load_model")
 def test_output_shape_multi_word(mock_load):
-    from extractors.word2vec_embed import embed_word2vec
+    from sensi.extractors.word2vec_embed import embed_word2vec
 
     vec = np.eye(300, dtype=np.float32)[0]
     mock_load.return_value = _make_mock_kv({"the": vec, "cat": vec})
@@ -75,7 +75,7 @@ def test_output_shape_multi_word(mock_load):
 
 
 def test_raises_word2vec_unavailable_when_gensim_missing(tmp_path):
-    from extractors.word2vec_embed import embed_word2vec, Word2VecUnavailable
+    from sensi.extractors.word2vec_embed import embed_word2vec, Word2VecUnavailable
     import sys
 
     df = make_word_df(["hello"])
@@ -88,7 +88,7 @@ def test_raises_word2vec_unavailable_when_gensim_missing(tmp_path):
 
 
 def test_raises_word2vec_unavailable_when_download_fails(tmp_path):
-    from extractors.word2vec_embed import embed_word2vec, Word2VecUnavailable
+    from sensi.extractors.word2vec_embed import embed_word2vec, Word2VecUnavailable
     import sys
 
     fake_kv = MagicMock()
@@ -110,9 +110,9 @@ def test_raises_word2vec_unavailable_when_download_fails(tmp_path):
             embed_word2vec(df, model_path=str(tmp_path / "nonexistent.bin"))
 
 
-@patch("extractors.word2vec_embed._load_model")
+@patch("sensi.extractors.word2vec_embed._load_model")
 def test_punct_is_zeroed_and_invalid_even_if_in_vocab(mock_load):
-    from extractors.word2vec_embed import embed_word2vec
+    from sensi.extractors.word2vec_embed import embed_word2vec
 
     vec = np.ones(300, dtype=np.float32)
     # "," IS in vocab, but upos marks it PUNCT — it must be forced to zero.
@@ -125,9 +125,9 @@ def test_punct_is_zeroed_and_invalid_even_if_in_vocab(mock_load):
     assert is_valid.tolist() == [True, False]
 
 
-@patch("extractors.word2vec_embed._load_model")
+@patch("sensi.extractors.word2vec_embed._load_model")
 def test_oov_content_word_is_invalid(mock_load):
-    from extractors.word2vec_embed import embed_word2vec
+    from sensi.extractors.word2vec_embed import embed_word2vec
 
     vec = np.ones(300, dtype=np.float32)
     mock_load.return_value = _make_mock_kv({"the": vec})
@@ -138,9 +138,9 @@ def test_oov_content_word_is_invalid(mock_load):
     np.testing.assert_array_equal(mat[1], np.zeros(300))
 
 
-@patch("extractors.word2vec_embed._load_model")
+@patch("sensi.extractors.word2vec_embed._load_model")
 def test_is_valid_dtype_and_shape(mock_load):
-    from extractors.word2vec_embed import embed_word2vec
+    from sensi.extractors.word2vec_embed import embed_word2vec
 
     mock_load.return_value = _make_mock_kv({"a": np.ones(300, dtype=np.float32)})
     df = make_word_df(["a", "b", "c"])  # no upos column -> all treated non-PUNCT
@@ -151,7 +151,7 @@ def test_is_valid_dtype_and_shape(mock_load):
 
 def test_model_loads_once_per_process(monkeypatch):
     """The 1.7 GB model is loaded once and reused for every stimulus."""
-    from extractors import word2vec_embed as w
+    from sensi.extractors import word2vec_embed as w
     calls = []
     monkeypatch.setattr(w, "_MODEL_CACHE", {})
     monkeypatch.setattr(w, "_load_model_uncached",

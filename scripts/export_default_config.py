@@ -17,8 +17,8 @@ _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
-from utils.preferences import DEFAULT_PREFS  # noqa: E402
-from utils.config_yaml import (  # noqa: E402
+from sensi.utils.preferences import DEFAULT_PREFS  # noqa: E402
+from sensi.utils.config_yaml import (  # noqa: E402
     split_prefs, write_features_yaml, write_run_yaml,
 )
 

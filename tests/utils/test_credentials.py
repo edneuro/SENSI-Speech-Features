@@ -1,10 +1,10 @@
 import os
 from pathlib import Path
 
-from utils.credentials import (
+from sensi.utils.credentials import (
     resolve_hf_token_path, read_hf_token, export_hf_token, save_hf_token,
 )
-from utils.preferences import DEFAULT_PREFS, load_preferences
+from sensi.utils.preferences import DEFAULT_PREFS, load_preferences
 
 
 def test_default_hf_token_file_is_relative_conventional_name():
@@ -72,7 +72,7 @@ def test_save_hf_token_writes_file_and_points_pref_at_it(tmp_path, monkeypatch):
 def test_has_hf_token_sees_configured_file(tmp_path, monkeypatch):
     # has_hf_token() must treat a readable, non-empty configured token file
     # as "token present" (in addition to env / `hf auth login`).
-    import extractors.predictability as m
+    import sensi.extractors.predictability as m
     monkeypatch.setenv("SENSI_CONFIG_DIR", str(tmp_path))
     monkeypatch.delenv("HF_TOKEN", raising=False)
     monkeypatch.setattr("huggingface_hub.get_token", lambda: None)

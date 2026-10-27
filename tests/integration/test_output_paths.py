@@ -11,8 +11,8 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-import main
-from main import build_parser, run_word_level_batch, run_doc_level_batch
+from sensi import pipeline
+from sensi.pipeline import build_parser, run_word_level_batch, run_doc_level_batch
 
 FIXTURES = Path(__file__).parent.parent / 'fixtures'
 
@@ -85,7 +85,7 @@ def test_sidecars_land_in_subfolders(tmp_path, monkeypatch):
         args._contours = None
         return fake_word_df.copy()
 
-    monkeypatch.setattr(main, 'run', _fake_run)
+    monkeypatch.setattr(pipeline, 'run', _fake_run)
 
     txt_dir = tmp_path / 'txt'
     txt_dir.mkdir()
@@ -160,7 +160,7 @@ def test_session_units_not_at_doc_output_root(tmp_path):
 
 def test_sentence_csv_lands_in_sentence_subfolder(tmp_path, monkeypatch):
     """Sentence CSV lands in sentence/ subfolder when add_sentence_prosody succeeds."""
-    import extractors.sentence_prosody as sp_module
+    import sensi.extractors.sentence_prosody as sp_module
 
     def _fake_sentence_prosody(word_df, contours=None, *, pitch_units="semitones"):
         doc_ids = word_df["doc_id"].unique() if "doc_id" in word_df.columns else ["doc1"]
@@ -218,7 +218,7 @@ def _fake_bert(word_df, **kwargs):
 
 
 def test_word2vec_mat_lands_in_word_subfolder(tmp_path, monkeypatch):
-    import extractors.word2vec_embed as w2v_module
+    import sensi.extractors.word2vec_embed as w2v_module
     monkeypatch.setattr(w2v_module, 'embed_word2vec', _fake_w2v)
 
     args = _word_args(tmp_path)
@@ -238,7 +238,7 @@ def test_word2vec_disabled_mat_not_created(tmp_path):
 
 
 def test_bert_word_mat_lands_in_word_subfolder(tmp_path, monkeypatch):
-    import extractors.bert_embed as bert_module
+    import sensi.extractors.bert_embed as bert_module
     monkeypatch.setattr(bert_module, 'embed_bert_words_and_sentences', _fake_bert)
 
     args = _word_args(tmp_path)
@@ -251,7 +251,7 @@ def test_bert_word_mat_lands_in_word_subfolder(tmp_path, monkeypatch):
 
 
 def test_bert_sentence_mat_lands_in_sentence_subfolder(tmp_path, monkeypatch):
-    import extractors.bert_embed as bert_module
+    import sensi.extractors.bert_embed as bert_module
     monkeypatch.setattr(bert_module, 'embed_bert_words_and_sentences', _fake_bert)
 
     args = _word_args(tmp_path)

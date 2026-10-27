@@ -6,12 +6,12 @@ import yaml
 from copy import deepcopy
 from pathlib import Path
 
-from utils.preferences import (
+from sensi.utils.preferences import (
     DEFAULT_PREFS, SCHEMA_VERSION, get_config_dir,
     get_features_yaml_path, get_run_yaml_path,
     load_preferences, save_preferences,
 )
-from utils.config_yaml import (
+from sensi.utils.config_yaml import (
     FEATURES_YAML, RUN_YAML, read_yaml, split_prefs,
     write_features_yaml, write_run_yaml,
 )
@@ -33,7 +33,7 @@ def test_config_dir_env_precedence(tmp_path, monkeypatch):
 def test_legacy_json_path_follows_config_dir(tmp_path, monkeypatch):
     # Hermeticity: with only SENSI_CONFIG_DIR set, the legacy json is looked
     # up INSIDE that dir — never at the repo's real config/preferences.json.
-    from utils.preferences import get_preferences_path
+    from sensi.utils.preferences import get_preferences_path
     monkeypatch.delenv("SENSI_PREFS_PATH", raising=False)
     monkeypatch.setenv("SENSI_CONFIG_DIR", str(tmp_path))
     assert get_preferences_path() == tmp_path / "preferences.json"
@@ -278,7 +278,7 @@ def test_corrupted_legacy_json_returns_defaults_without_bak(tmp_path, monkeypatc
 
 
 def test_reset_rewrites_features_yaml_only(tmp_path, monkeypatch):
-    from utils.preferences import reset_to_defaults
+    from sensi.utils.preferences import reset_to_defaults
     monkeypatch.setenv("SENSI_CONFIG_DIR", str(tmp_path))
     save_preferences({"features": {"master_structural": False},
                       "shared": {"analyzer_name": "Keep Me"}})
@@ -292,7 +292,7 @@ def test_reset_rewrites_features_yaml_only(tmp_path, monkeypatch):
 
 
 def test_reset_full_wipe_resets_run_yaml_too(tmp_path, monkeypatch):
-    from utils.preferences import reset_to_defaults
+    from sensi.utils.preferences import reset_to_defaults
     monkeypatch.setenv("SENSI_CONFIG_DIR", str(tmp_path))
     save_preferences({"shared": {"analyzer_name": "Wipe Me"}})
     fresh = reset_to_defaults(keep_shared=False)
@@ -376,7 +376,7 @@ def test_readonly_config_dir_does_not_crash_first_launch(tmp_path, monkeypatch):
     # for the session (from the legacy json), persistence just doesn't
     # happen, and the json is NOT renamed to .bak (it's the only surviving
     # store — destroying it would lose the user's settings).
-    import utils.preferences as prefs_mod
+    import sensi.utils.preferences as prefs_mod
     monkeypatch.delenv("SENSI_CONFIG_DIR", raising=False)
     p = tmp_path / "preferences.json"
     monkeypatch.setenv("SENSI_PREFS_PATH", str(p))

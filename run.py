@@ -21,7 +21,7 @@ if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
 # Keep all model/cache downloads inside the project folder.
-from utils.local_caches import use_project_caches  # noqa: E402
+from sensi.utils.local_caches import use_project_caches  # noqa: E402
 use_project_caches()
 
 
@@ -34,7 +34,7 @@ def _prepare(ns):
 
 def dispatch(prefs: dict) -> None:
     """Run the enabled levels from a prefs dict (mirrors gui.run_dispatch.run)."""
-    from gui import planner
+    from sensi.gui import planner
     plan = planner.plan_from_prefs(prefs)
     run_ts = _dt.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     outputs = plan.output_csvs
@@ -42,21 +42,21 @@ def dispatch(prefs: dict) -> None:
 
     word_outputs = planner.WORD_BATCH_ARTIFACTS & outputs
     if word_outputs:
-        from main import run_word_level_batch
+        from sensi.pipeline import run_word_level_batch
         ns = _prepare(planner.to_namespace(plan, prefs, level="word"))
         ns.run_ts = run_ts
         ns.skip_no_match = False
         ns._align_cache = align_cache
         run_word_level_batch(ns)
     if "documents_summary" in outputs:
-        from main import run_doc_level_batch
+        from sensi.pipeline import run_doc_level_batch
         ns = _prepare(planner.to_namespace(plan, prefs, level="doc"))
         ns.run_ts = run_ts
         ns.skip_no_match = bool(word_outputs)
         ns._align_cache = align_cache
         run_doc_level_batch(ns)
     if "acoustic" in outputs:
-        from main import run_acoustic_level_batch
+        from sensi.pipeline import run_acoustic_level_batch
         ns = planner.to_acoustic_namespace(prefs)
         ns.run_ts = run_ts
         run_acoustic_level_batch(ns)
@@ -72,9 +72,9 @@ def main() -> None:
         os.environ["SENSI_CONFIG_DIR"] = args.config_dir
 
     import yaml as _yaml
-    from utils.preferences import (load_preferences, get_features_yaml_path,
+    from sensi.utils.preferences import (load_preferences, get_features_yaml_path,
                                    get_run_yaml_path)
-    from utils.config_yaml import (validate_features_yaml, validate_run_yaml,
+    from sensi.utils.config_yaml import (validate_features_yaml, validate_run_yaml,
                                    retired_keys_present)
 
     # Parse each file's raw content directly rather than via read_yaml: that
@@ -151,9 +151,9 @@ def main() -> None:
               file=sys.stderr)
         sys.exit(1)
 
-    from utils.credentials import export_hf_token
+    from sensi.utils.credentials import export_hf_token
     export_hf_token(shared)
-    from main import InputFolderError
+    from sensi.pipeline import InputFolderError
     try:
         dispatch(prefs)
     except InputFolderError as exc:

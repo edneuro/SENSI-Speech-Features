@@ -3,7 +3,7 @@ import math
 import pandas as pd
 import pytest
 
-from extractors.timing import add_timing_columns
+from sensi.extractors.timing import add_timing_columns
 
 
 def test_word_duration_basic():

@@ -11,7 +11,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from extractors.audio_features import Contours
+from sensi.extractors.audio_features import Contours
 
 
 def _semitones_from_hz(hz_array: np.ndarray, ref_hz: float) -> np.ndarray:

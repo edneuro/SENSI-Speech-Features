@@ -17,7 +17,7 @@ See docs/feature_dependencies.md for the inventory this operationalizes.
 """
 from __future__ import annotations
 
-from gui.planner.stages import Stage, FeatureCluster
+from sensi.gui.planner.stages import Stage, FeatureCluster
 
 # Extractor callables are bound lazily: planning reads only Stage metadata
 # (name/consumes/produces), so importing this module must NOT drag in the
@@ -48,24 +48,24 @@ def _lazy(module_path: str, attr: str):
     return call
 
 
-_spacy_parse           = _lazy("extractors.text_parser", "parse")
-_mfa_align             = _lazy("extractors.aligner", "align_with_phones")
-_praat_extract         = _lazy("extractors.audio_features", "extract")
-add_word_freq          = _lazy("extractors.word_freq", "add_word_freq")
-add_edu_freq           = _lazy("extractors.educator_freq", "add_edu_freq")
-add_predictability     = _lazy("extractors.predictability", "add_predictability")
-add_semantic_domain    = _lazy("extractors.semantic_domain", "add_semantic_domain")
-_add_lexical_norms     = _lazy("extractors.lexical_norms", "add_lexical_norms")
-add_word_prosody       = _lazy("extractors.prosody", "add_word_prosody")
-add_timing_columns     = _lazy("extractors.timing", "add_timing_columns")
-syllabify_pairs        = _lazy("extractors.syllabify", "syllabify_pairs")
-add_syllable_prosody   = _lazy("extractors.syllable_prosody", "add_syllable_prosody")
-_add_pcenter           = _lazy("extractors.pcenter", "add_pcenter")
-_add_sentence_prosody  = _lazy("extractors.sentence_prosody", "add_sentence_prosody")
-_embed_word2vec        = _lazy("extractors.word2vec_embed", "embed_word2vec")
-_embed_bert            = _lazy("extractors.bert_embed", "embed_bert_words_and_sentences")
-_extract_acoustic      = _lazy("extractors.acoustic_ts", "extract_acoustic")
-_add_phoneme_surprisal = _lazy("extractors.phoneme_surprisal", "add_phoneme_surprisal")
+_spacy_parse           = _lazy("sensi.extractors.text_parser", "parse")
+_mfa_align             = _lazy("sensi.extractors.aligner", "align_with_phones")
+_praat_extract         = _lazy("sensi.extractors.audio_features", "extract")
+add_word_freq          = _lazy("sensi.extractors.word_freq", "add_word_freq")
+add_edu_freq           = _lazy("sensi.extractors.educator_freq", "add_edu_freq")
+add_predictability     = _lazy("sensi.extractors.predictability", "add_predictability")
+add_semantic_domain    = _lazy("sensi.extractors.semantic_domain", "add_semantic_domain")
+_add_lexical_norms     = _lazy("sensi.extractors.lexical_norms", "add_lexical_norms")
+add_word_prosody       = _lazy("sensi.extractors.prosody", "add_word_prosody")
+add_timing_columns     = _lazy("sensi.extractors.timing", "add_timing_columns")
+syllabify_pairs        = _lazy("sensi.extractors.syllabify", "syllabify_pairs")
+add_syllable_prosody   = _lazy("sensi.extractors.syllable_prosody", "add_syllable_prosody")
+_add_pcenter           = _lazy("sensi.extractors.pcenter", "add_pcenter")
+_add_sentence_prosody  = _lazy("sensi.extractors.sentence_prosody", "add_sentence_prosody")
+_embed_word2vec        = _lazy("sensi.extractors.word2vec_embed", "embed_word2vec")
+_embed_bert            = _lazy("sensi.extractors.bert_embed", "embed_bert_words_and_sentences")
+_extract_acoustic      = _lazy("sensi.extractors.acoustic_ts", "extract_acoustic")
+_add_phoneme_surprisal = _lazy("sensi.extractors.phoneme_surprisal", "add_phoneme_surprisal")
 
 STAGES: list[Stage] = [
     # --- §0 Shared stages ---

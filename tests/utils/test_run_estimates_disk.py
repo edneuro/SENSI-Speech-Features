@@ -6,11 +6,11 @@ import numpy as np
 import pytest
 import soundfile as sf
 
-from gui.planner.plan import LEVEL_ARTIFACTS, plan_from_prefs
-from utils import estimate_constants as K
-from utils import run_estimates as RE
-from utils.preferences import DEFAULT_PREFS
-from utils.run_estimates import (InputStats, estimate_disk, format_bytes,
+from sensi.gui.planner.plan import LEVEL_ARTIFACTS, plan_from_prefs
+from sensi.utils import estimate_constants as K
+from sensi.utils import run_estimates as RE
+from sensi.utils.preferences import DEFAULT_PREFS
+from sensi.utils.run_estimates import (InputStats, estimate_disk, format_bytes,
                                  level_bytes, scan_inputs)
 
 
@@ -154,7 +154,7 @@ def test_scan_words_match_recorded_units(tmp_path):
     # (utils.timing_history.count_words on the raw transcript), so learned
     # seconds-per-word apply to the same unit. Number spelling would make
     # "1,500" four words; the recorder sees one.
-    from utils.timing_history import count_words
+    from sensi.utils.timing_history import count_words
     tdir = tmp_path / "t"
     tdir.mkdir()
     text = "He won 1,500 points in 2024.\n"

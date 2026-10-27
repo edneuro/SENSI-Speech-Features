@@ -12,8 +12,8 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from extractors.audio_features import Contours
-from extractors.prosody import _agg, _slice, _semitones_from_hz
+from sensi.extractors.audio_features import Contours
+from sensi.extractors.prosody import _agg, _slice, _semitones_from_hz
 
 _COLUMN_ORDER = [
     "doc_id", "sentence_id", "sentence", "Onset", "End",

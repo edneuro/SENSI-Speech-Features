@@ -6,11 +6,11 @@ from PySide6.QtWidgets import (
     QLineEdit, QLabel, QCheckBox, QScrollArea, QFrame,
 )
 
-from utils.preferences import (
+from sensi.utils.preferences import (
     load_preferences, save_preferences,
     _SOP_CATEGORIES_LIWC, _SOP_CATEGORIES_EMPATH,
 )
-from extractors.semantic_domain import detect_backend
+from sensi.extractors.semantic_domain import detect_backend
 
 
 def _list_backend_categories(backend: str) -> tuple[list[str], str | None]:

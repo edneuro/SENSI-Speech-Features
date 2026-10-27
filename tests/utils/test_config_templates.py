@@ -2,8 +2,8 @@
 DEFAULT_PREFS. If this fails, rerun: python scripts/export_default_config.py"""
 from pathlib import Path
 
-from utils.preferences import DEFAULT_PREFS
-from utils.config_yaml import read_yaml, split_prefs
+from sensi.utils.preferences import DEFAULT_PREFS
+from sensi.utils.config_yaml import read_yaml, split_prefs
 
 _CONFIG = Path(__file__).resolve().parents[2] / "config"
 _REGEN = "templates out of sync with DEFAULT_PREFS — rerun: python scripts/export_default_config.py"

@@ -24,7 +24,7 @@ def resolve_hf_token_path(shared: dict[str, Any]) -> Path | None:
     expanded = os.path.expanduser(os.path.expandvars(str(raw)))
     path = Path(expanded)
     if not path.is_absolute():
-        from utils.preferences import get_config_dir
+        from sensi.utils.preferences import get_config_dir
         path = get_config_dir() / path
     return path
 
@@ -55,7 +55,7 @@ def export_hf_token(shared: dict[str, Any]) -> bool:
 
 def save_hf_token(token: str) -> Path:
     """Persist a token to <config_dir>/hf_token.txt and point the pref at it."""
-    from utils.preferences import get_config_dir, save_preferences
+    from sensi.utils.preferences import get_config_dir, save_preferences
     path = get_config_dir() / HF_TOKEN_BASENAME
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(token.strip() + "\n", encoding="utf-8")

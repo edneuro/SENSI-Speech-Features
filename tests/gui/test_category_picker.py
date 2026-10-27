@@ -1,12 +1,12 @@
 def test_picker_lists_all_backend_categories(qtbot):
-    from gui.category_picker import CategoryPicker
+    from sensi.gui.category_picker import CategoryPicker
     w = CategoryPicker(backend="empath")
     qtbot.addWidget(w)
     assert w.total_count() > 100   # Empath ships ~200 categories
 
 
 def test_picker_shows_selected_count(qtbot):
-    from gui.category_picker import CategoryPicker
+    from sensi.gui.category_picker import CategoryPicker
     w = CategoryPicker(backend="empath")
     qtbot.addWidget(w)
     w.set_selection(["friends", "philosophy"])
@@ -14,7 +14,7 @@ def test_picker_shows_selected_count(qtbot):
 
 
 def test_picker_search_filters_categories(qtbot):
-    from gui.category_picker import CategoryPicker
+    from sensi.gui.category_picker import CategoryPicker
     w = CategoryPicker(backend="empath")
     qtbot.addWidget(w)
     w.search_field.setText("emoti")
@@ -24,8 +24,8 @@ def test_picker_search_filters_categories(qtbot):
 
 def test_picker_sop_default_button_resets_selection(qtbot, tmp_path, monkeypatch):
     monkeypatch.setenv("SENSI_PREFS_PATH", str(tmp_path / "prefs.json"))
-    from gui.category_picker import CategoryPicker
-    from utils.preferences import _SOP_CATEGORIES_EMPATH
+    from sensi.gui.category_picker import CategoryPicker
+    from sensi.utils.preferences import _SOP_CATEGORIES_EMPATH
     w = CategoryPicker(backend="empath")
     qtbot.addWidget(w)
     w.set_selection([])
@@ -35,8 +35,8 @@ def test_picker_sop_default_button_resets_selection(qtbot, tmp_path, monkeypatch
 
 def test_picker_auto_saves_on_toggle(qtbot, tmp_path, monkeypatch):
     monkeypatch.setenv("SENSI_PREFS_PATH", str(tmp_path / "prefs.json"))
-    from gui.category_picker import CategoryPicker
-    from utils.preferences import load_preferences
+    from sensi.gui.category_picker import CategoryPicker
+    from sensi.utils.preferences import load_preferences
     w = CategoryPicker(backend="empath")
     qtbot.addWidget(w)
     w.set_selection([])
@@ -49,8 +49,8 @@ def test_picker_auto_saves_on_toggle(qtbot, tmp_path, monkeypatch):
 def test_picker_uses_unified_categories_key(qtbot, tmp_path, monkeypatch):
     """v7: the picker saves to categories_<backend> (unified key, no level split)."""
     monkeypatch.setenv("SENSI_PREFS_PATH", str(tmp_path / "p.json"))
-    from gui.category_picker import CategoryPicker
-    from utils.preferences import load_preferences
+    from sensi.gui.category_picker import CategoryPicker
+    from sensi.utils.preferences import load_preferences
     w = CategoryPicker(backend="empath")
     qtbot.addWidget(w)
     w.set_selection(["money"])
@@ -67,8 +67,8 @@ def test_picker_writes_to_unified_not_split_key(qtbot, tmp_path, monkeypatch):
     Verify by toggling a non-SOP category so the assertion isn't a false
     positive on the default selection."""
     monkeypatch.setenv("SENSI_PREFS_PATH", str(tmp_path / "p.json"))
-    from gui.category_picker import CategoryPicker
-    from utils.preferences import load_preferences, _SOP_CATEGORIES_EMPATH
+    from sensi.gui.category_picker import CategoryPicker
+    from sensi.utils.preferences import load_preferences, _SOP_CATEGORIES_EMPATH
 
     non_sop = "violence"  # in empath but not in SOP defaults
     assert non_sop not in _SOP_CATEGORIES_EMPATH
@@ -101,7 +101,7 @@ def test_load_preferences_migrates_document_key_into_unified_key(tmp_path, monke
         },
     }))
 
-    from utils.preferences import load_preferences
+    from sensi.utils.preferences import load_preferences
     prefs = load_preferences()
     # After repair (document→doc) and v7 union migration, selections land
     # in the unified key.

@@ -94,8 +94,8 @@ def model_device(step: str, model: str | None, cuda_available: bool) -> str:
     """
     if step != "predictability" or not cuda_available or not model:
         return "cpu"
-    from extractors.predictability import _is_full_precision_cpu
-    from extractors.predictability_models import spec_for
+    from sensi.extractors.predictability import _is_full_precision_cpu
+    from sensi.extractors.predictability_models import spec_for
     try:
         hf_id = spec_for(model).hf_id
     except KeyError:
@@ -104,7 +104,7 @@ def model_device(step: str, model: str | None, cuda_available: bool) -> str:
 
 
 def _default_path() -> Path:
-    from utils.preferences import get_config_dir
+    from sensi.utils.preferences import get_config_dir
     return get_config_dir() / HISTORY_FILENAME
 
 
@@ -148,7 +148,7 @@ def append_samples(samples: list[Sample], path: Path | None = None, *,
                    load_seconds: dict[str, float] | None = None) -> None:
     """Append samples (and latest model-load times), keeping the most recent
     MAX_SAMPLES_PER_KEY per (step, model, device); atomic write."""
-    from utils.config_yaml import _write_text
+    from sensi.utils.config_yaml import _write_text
     p = Path(path) if path is not None else _default_path()
     hist = load_history(p) or {"version": _FORMAT_VERSION, "samples": [],
                                "load_seconds": {}}

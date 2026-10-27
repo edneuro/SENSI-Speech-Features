@@ -8,7 +8,7 @@ import re
 
 import pytest
 
-from utils.transcript_prep import (
+from sensi.utils.transcript_prep import (
     normalize_whitespace,
     prepare_for_aligner,
     spell_out_numbers,

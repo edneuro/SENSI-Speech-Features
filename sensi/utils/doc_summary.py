@@ -21,8 +21,8 @@ from pathlib import Path
 
 import pandas as pd
 
-from extractors.lexical_diversity import compute_ttr, compute_mtld
-from extractors.readability import compute_readability
+from sensi.extractors.lexical_diversity import compute_ttr, compute_mtld
+from sensi.extractors.readability import compute_readability
 
 CONTENT_POS = {'NOUN', 'VERB', 'ADJ', 'ADV', 'PROPN'}
 
@@ -162,7 +162,7 @@ def build_doc_summary(
         # VADER valence, independent of the semantic-domain backend. The
         # `liwc_dictionary_path` / `dictionary_used` args are no longer
         # consulted here (kept in the signature for call-site compatibility).
-        from extractors.psych_composite import compute_psych_composite
+        from sensi.extractors.psych_composite import compute_psych_composite
         scores = compute_psych_composite(df)
         for short_key in ('authentic', 'analytic', 'tone', 'clout'):
             full_key = f'psych_{short_key}'
@@ -175,7 +175,7 @@ def build_doc_summary(
     # Prosody — single master toggle. Emits all 16 cols; per-column dropping
     # happens later in main.py's CSV writer via _doc_columns_to_drop.
     if contours is not None and toggles.get('doc_prosody'):
-        from extractors.prosody import compute_doc_prosody
+        from sensi.extractors.prosody import compute_doc_prosody
         prosody = compute_doc_prosody(
             token_df, contours,
             text=text, pause_threshold_s=pause_threshold_s,

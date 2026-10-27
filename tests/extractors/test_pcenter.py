@@ -2,7 +2,7 @@
 import math
 import pandas as pd
 
-from extractors.pcenter import add_pcenter
+from sensi.extractors.pcenter import add_pcenter
 
 
 def _split_label(label):

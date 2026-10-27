@@ -1,8 +1,8 @@
 import pytest
 import yaml
 from copy import deepcopy
-from utils.preferences import DEFAULT_PREFS
-from utils.config_yaml import (
+from sensi.utils.preferences import DEFAULT_PREFS
+from sensi.utils.config_yaml import (
     FEATURES_YAML, RUN_YAML, split_prefs, join_yaml_pair, read_yaml,
     write_features_yaml, write_run_yaml,
     validate_features_yaml, validate_run_yaml,

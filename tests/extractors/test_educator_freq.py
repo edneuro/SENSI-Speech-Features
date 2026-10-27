@@ -3,7 +3,7 @@ import math
 import pandas as pd
 import pytest
 
-from extractors.educator_freq import add_edu_freq, EXPECTED_COLUMNS
+from sensi.extractors.educator_freq import add_edu_freq, EXPECTED_COLUMNS
 
 
 def _write_lookup(tmp_path):

@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import scipy.io
 
-from main import _word_embedding_vars, _sentence_embedding_vars
+from sensi.pipeline import _word_embedding_vars, _sentence_embedding_vars
 
 
 def _word_df():

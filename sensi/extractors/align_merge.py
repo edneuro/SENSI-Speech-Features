@@ -37,7 +37,7 @@ import sys
 import numpy as np
 import pandas as pd
 
-from utils.transcript_prep import spell_out_numbers
+from sensi.utils.transcript_prep import spell_out_numbers
 
 # Fraction of words that must merge before we stop warning the user.
 _WARN_BELOW = 0.95

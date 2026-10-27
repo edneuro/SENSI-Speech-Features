@@ -5,7 +5,7 @@ import pytest
 
 def test_build_args_word_only_includes_correct_flags(monkeypatch, tmp_path):
     monkeypatch.setenv("SENSI_PREFS_PATH", str(tmp_path / "prefs.json"))
-    from gui.run_dispatch import build_args_word_level
+    from sensi.gui.run_dispatch import build_args_word_level
     args = build_args_word_level()
     # Should always include transcripts/audio/output folders and analyzer
     assert hasattr(args, "transcripts_folder")
@@ -16,13 +16,13 @@ def test_build_args_word_only_includes_correct_flags(monkeypatch, tmp_path):
 
 def test_build_args_word_filters_ewfg_bands(monkeypatch, tmp_path):
     monkeypatch.setenv("SENSI_PREFS_PATH", str(tmp_path / "prefs.json"))
-    from utils.preferences import save_preferences
+    from sensi.utils.preferences import save_preferences
     save_preferences({"features": {
         "freq_ewfg_k2": True, "freq_ewfg_3to5": False,
         "freq_ewfg_6to8": False, "freq_ewfg_9to12": False,
         "freq_ewfg_overall": True,
     }})
-    from gui.run_dispatch import build_args_word_level
+    from sensi.gui.run_dispatch import build_args_word_level
     args = build_args_word_level()
     assert set(args.edu_bands.split(",")) == {"k2", "overall"}
 
@@ -32,12 +32,12 @@ def test_build_args_word_propagates_feature_toggles_dict(monkeypatch, tmp_path):
     main.py's CSV writer can drop per-column toggled-off columns. Named
     `feature_toggles` (not `features`) to avoid collision with CLI args."""
     monkeypatch.setenv("SENSI_PREFS_PATH", str(tmp_path / "prefs.json"))
-    from utils.preferences import save_preferences
+    from sensi.utils.preferences import save_preferences
     save_preferences({"features": {
         "feat_struct_doc_id": False,
         "feat_acoustic_onset": False,
     }})
-    from gui.run_dispatch import build_args_word_level
+    from sensi.gui.run_dispatch import build_args_word_level
     args = build_args_word_level()
     assert hasattr(args, "feature_toggles")
     assert args.feature_toggles["feat_struct_doc_id"] is False
@@ -46,12 +46,12 @@ def test_build_args_word_propagates_feature_toggles_dict(monkeypatch, tmp_path):
 
 def test_build_args_doc_propagates_feature_and_output_toggles(monkeypatch, tmp_path):
     monkeypatch.setenv("SENSI_PREFS_PATH", str(tmp_path / "prefs.json"))
-    from utils.preferences import save_preferences
+    from sensi.utils.preferences import save_preferences
     save_preferences({
         "output": {"out_count_tokens": False},
         "features": {"feat_psych_tone": False},
     })
-    from gui.run_dispatch import build_args_doc_level
+    from sensi.gui.run_dispatch import build_args_doc_level
     args = build_args_doc_level()
     assert hasattr(args, "feature_toggles")
     assert hasattr(args, "output_toggles")
@@ -61,7 +61,7 @@ def test_build_args_doc_propagates_feature_and_output_toggles(monkeypatch, tmp_p
 
 def test_dispatcher_runs_both_when_both_outputs_checked(monkeypatch, tmp_path):
     monkeypatch.setenv("SENSI_PREFS_PATH", str(tmp_path / "prefs.json"))
-    from utils.preferences import save_preferences
+    from sensi.utils.preferences import save_preferences
     # document_summary needs at least one active doc cluster to actually run
     # (opt-in defaults leave doc features off), so enable doc token counts.
     save_preferences({"output": {"level_word": True, "level_document": True,
@@ -71,10 +71,10 @@ def test_dispatcher_runs_both_when_both_outputs_checked(monkeypatch, tmp_path):
     def fake_word(args, **kwargs): called.append("word")
     def fake_doc(args, **kwargs): called.append("doc")
 
-    monkeypatch.setattr("main.run_word_level_batch", fake_word, raising=False)
-    monkeypatch.setattr("main.run_doc_level_batch", fake_doc, raising=False)
+    monkeypatch.setattr("sensi.pipeline.run_word_level_batch", fake_word, raising=False)
+    monkeypatch.setattr("sensi.pipeline.run_doc_level_batch", fake_doc, raising=False)
 
-    from gui.run_dispatch import run
+    from sensi.gui.run_dispatch import run
     run(progress_cb=lambda *a: None, done_cb=lambda *a: None,
         session_api_key="", in_thread=False)
     assert "word" in called and "doc" in called
@@ -84,7 +84,7 @@ def test_dispatcher_shares_one_alignment_cache_across_passes(monkeypatch, tmp_pa
     """Word and doc passes must receive the SAME _align_cache dict so MFA is
     computed once per document and reused (not re-run) in the second pass."""
     monkeypatch.setenv("SENSI_PREFS_PATH", str(tmp_path / "prefs.json"))
-    from utils.preferences import save_preferences
+    from sensi.utils.preferences import save_preferences
     # Enable a doc feature so the doc batch actually runs (opt-in defaults).
     save_preferences({"output": {"level_word": True, "level_document": True,
                                  "out_count_tokens": True}})
@@ -92,10 +92,10 @@ def test_dispatcher_shares_one_alignment_cache_across_passes(monkeypatch, tmp_pa
     seen = {}
     def fake_word(args, **kwargs): seen["word"] = getattr(args, "_align_cache", None)
     def fake_doc(args, **kwargs): seen["doc"] = getattr(args, "_align_cache", None)
-    monkeypatch.setattr("main.run_word_level_batch", fake_word, raising=False)
-    monkeypatch.setattr("main.run_doc_level_batch", fake_doc, raising=False)
+    monkeypatch.setattr("sensi.pipeline.run_word_level_batch", fake_word, raising=False)
+    monkeypatch.setattr("sensi.pipeline.run_doc_level_batch", fake_doc, raising=False)
 
-    from gui.run_dispatch import run
+    from sensi.gui.run_dispatch import run
     run(progress_cb=lambda *a: None, done_cb=lambda *a: None,
         session_api_key="", in_thread=False)
     assert isinstance(seen["word"], dict)
@@ -103,8 +103,8 @@ def test_dispatcher_shares_one_alignment_cache_across_passes(monkeypatch, tmp_pa
 
 
 def test_word_args_includes_prosody_config(prefs_tmp):
-    from utils.preferences import save_preferences
-    from gui.run_dispatch import build_args_word_level
+    from sensi.utils.preferences import save_preferences
+    from sensi.gui.run_dispatch import build_args_word_level
     save_preferences({
         "prosody": {"pitch_units": "hz", "pitch_floor_hz": 60,
                     "pitch_ceiling_hz": 600, "pause_threshold_s": 0.4},
@@ -119,8 +119,8 @@ def test_word_args_includes_prosody_config(prefs_tmp):
 
 
 def test_word_args_no_prosody_when_all_word_toggles_off(prefs_tmp):
-    from utils.preferences import save_preferences
-    from gui.run_dispatch import build_args_word_level
+    from sensi.utils.preferences import save_preferences
+    from sensi.gui.run_dispatch import build_args_word_level
     save_preferences({"features": {
         **{f"feat_prosody_{k}": False for k in (
             "pitch_mean", "pitch_min", "pitch_max", "pitch_std", "pitch_delta",
@@ -137,8 +137,8 @@ def test_word_args_no_prosody_when_all_word_toggles_off(prefs_tmp):
 
 
 def test_doc_args_forces_alignment_when_doc_prosody_on(prefs_tmp):
-    from utils.preferences import save_preferences
-    from gui.run_dispatch import build_args_doc_level
+    from sensi.utils.preferences import save_preferences
+    from sensi.gui.run_dispatch import build_args_doc_level
     save_preferences({
         "output": {"level_document": True},
         "features": {
@@ -152,8 +152,8 @@ def test_doc_args_forces_alignment_when_doc_prosody_on(prefs_tmp):
 
 
 def test_doc_args_no_prosody_when_all_doc_toggles_off(prefs_tmp):
-    from utils.preferences import save_preferences
-    from gui.run_dispatch import build_args_doc_level
+    from sensi.utils.preferences import save_preferences
+    from sensi.gui.run_dispatch import build_args_doc_level
     save_preferences({"features": {
         f"feat_doc_prosody_{k}": False for k in (
             "pitch_mean", "pitch_min", "pitch_max", "pitch_std",
@@ -182,8 +182,8 @@ def test_doc_args_predictability_dict_mirrors_prefs_regardless_of_level(prefs_tm
     (the underlying concern — no accidental paid-extractor invocation — now
     expressed via the empty-models-list case below).
     """
-    from utils.preferences import save_preferences
-    from gui.run_dispatch import build_args_doc_level
+    from sensi.utils.preferences import save_preferences
+    from sensi.gui.run_dispatch import build_args_doc_level
     save_preferences({
         "output": {"level_document": True, "doc_agg_predictability": True},
         "predictability": {"models": [],
@@ -194,7 +194,7 @@ def test_doc_args_predictability_dict_mirrors_prefs_regardless_of_level(prefs_tm
         "models": [], "metrics": {"surprisal": False, "cloze": False, "topmatch": False},
         "context": {}}
     # The aggregate is still requested (doc_agg_predictability=True); it's
-    # main.run_doc_level_batch's job (not the GUI namespace) to no-op
+    # pipeline.run_doc_level_batch's job (not the GUI namespace) to no-op
     # gracefully when no predictability columns exist to aggregate.
     assert args.no_doc_predictability is False
 
@@ -205,8 +205,8 @@ def test_doc_args_no_doc_predictability_off_when_aggregate_toggle_off(prefs_tmp)
     selected. With the
     aggregate off the doc pass is not on the predictability doc path, so it
     gets no models and every metric off (no language model is loaded)."""
-    from utils.preferences import save_preferences
-    from gui.run_dispatch import build_args_doc_level
+    from sensi.utils.preferences import save_preferences
+    from sensi.gui.run_dispatch import build_args_doc_level
     save_preferences({
         "output": {"level_document": True, "doc_agg_predictability": False},
         "predictability": {"models": ["gpt2"],
@@ -224,8 +224,8 @@ def test_doc_args_predictability_driven_by_doc_aggregate_not_models(prefs_tmp):
     flag is controlled by the doc-means cluster (doc_agg_predictability), not
     by which models/metrics happen to be selected; with a model and a metric
     configured the doc pass also receives the roster."""
-    from utils.preferences import save_preferences
-    from gui.run_dispatch import build_args_doc_level
+    from sensi.utils.preferences import save_preferences
+    from sensi.gui.run_dispatch import build_args_doc_level
     save_preferences({
         "output": {"level_document": True, "doc_agg_predictability": True},
         "predictability": {"models": ["llama32_3b"],
@@ -241,8 +241,8 @@ def test_doc_args_passes_categories_from_unified_key(prefs_tmp):
     The dispatcher must pass the selection via ns.sem_categories so
     add_semantic_domain receives it — otherwise count_<cat>/prop_<cat>
     columns are missing from the doc summary."""
-    from utils.preferences import save_preferences
-    from gui.run_dispatch import build_args_doc_level
+    from sensi.utils.preferences import save_preferences
+    from sensi.gui.run_dispatch import build_args_doc_level
     save_preferences({
         "semantic": {
             "backend": "empath",
@@ -257,8 +257,8 @@ def test_doc_args_passes_categories_from_unified_key(prefs_tmp):
 
 def test_word_args_passes_categories_from_unified_key(prefs_tmp):
     """v7 unified: word-level args reads from the shared categories_<backend> key."""
-    from utils.preferences import save_preferences
-    from gui.run_dispatch import build_args_word_level
+    from sensi.utils.preferences import save_preferences
+    from sensi.gui.run_dispatch import build_args_word_level
     save_preferences({
         "semantic": {
             "backend": "empath",
@@ -277,8 +277,8 @@ def test_word_args_runs_parse_when_only_sem_indicators_on(prefs_tmp):
     None → every downstream extractor silently no-ops → RuntimeError
     'all extractors disabled'. The user reported this as 'I have a few
     word-level categories enabled but the word CSV never appears'."""
-    from utils.preferences import save_preferences
-    from gui.run_dispatch import build_args_word_level
+    from sensi.utils.preferences import save_preferences
+    from sensi.gui.run_dispatch import build_args_word_level
     # Turn everything off except sem_indicators
     all_off = {k: False for k in (
         "lexling_tokens", "lexling_pos", "lexling_morph", "lexling_dep",
@@ -305,8 +305,8 @@ def test_word_args_runs_parse_when_only_sem_indicators_on(prefs_tmp):
 
 def test_word_args_runs_parse_when_only_freq_on(prefs_tmp):
     """Same regression as sem_indicators, for the freq toggles."""
-    from utils.preferences import save_preferences
-    from gui.run_dispatch import build_args_word_level
+    from sensi.utils.preferences import save_preferences
+    from sensi.gui.run_dispatch import build_args_word_level
     save_preferences({"features": {
         "lexling_tokens": False, "lexling_pos": False,
         "lexling_morph": False, "lexling_dep": False,
@@ -327,8 +327,8 @@ def test_doc_args_skip_freq_when_word_freq_off_and_no_aggregate(prefs_tmp):
     user has freq_subtlex off AND no doc aggregate needs Zipf, freq should
     not run. (main.py's per-pair force-on re-enables it only when
     mean_zipf_freq is actually wanted.)"""
-    from utils.preferences import save_preferences
-    from gui.run_dispatch import build_args_doc_level
+    from sensi.utils.preferences import save_preferences
+    from sensi.gui.run_dispatch import build_args_doc_level
     save_preferences({
         "features": {
             "freq_subtlex": False,
@@ -345,8 +345,8 @@ def test_doc_args_skip_freq_when_word_freq_off_and_no_aggregate(prefs_tmp):
 
 
 def test_word_args_propagates_subword_master_toggles(prefs_tmp):
-    from utils.preferences import save_preferences
-    from gui.run_dispatch import build_args_word_level
+    from sensi.utils.preferences import save_preferences
+    from sensi.gui.run_dispatch import build_args_word_level
     save_preferences({"output": {"level_subword": True},
                       "features": {"feat_phoneme_arpabet": True}})  # activate phoneme cluster
     args = build_args_word_level()
@@ -355,8 +355,8 @@ def test_word_args_propagates_subword_master_toggles(prefs_tmp):
 
 
 def test_word_args_forces_alignment_on_for_any_subword_feature(prefs_tmp):
-    from utils.preferences import save_preferences
-    from gui.run_dispatch import build_args_word_level
+    from sensi.utils.preferences import save_preferences
+    from sensi.gui.run_dispatch import build_args_word_level
     save_preferences({
         "output": {"level_subword": True},
         "features": {
@@ -375,8 +375,8 @@ def test_word_args_forces_parse_when_only_subword_on(prefs_tmp):
     structural, no lex-ling, no freq, no semantic, no word-prosody),
     no_parse was True. Parse skipped → word_df lacked doc_id/sentence_id/
     token_in_sentence_id → syllabify_pairs crashed reading those columns."""
-    from utils.preferences import save_preferences
-    from gui.run_dispatch import build_args_word_level
+    from sensi.utils.preferences import save_preferences
+    from sensi.gui.run_dispatch import build_args_word_level
     save_preferences({
         "output": {"level_subword": True},
         "features": {
@@ -419,8 +419,8 @@ def test_word_args_forces_prosody_when_only_syllable_prosody_on(prefs_tmp):
     prosody on (so contours are computed) AND alignment on (so Onset/End
     exist). The word-level prosody-forcing block only checked feat_prosody_*
     keys; the 4 feat_syllable_*_mean/_delta keys were silently ignored."""
-    from utils.preferences import save_preferences
-    from gui.run_dispatch import build_args_word_level
+    from sensi.utils.preferences import save_preferences
+    from sensi.gui.run_dispatch import build_args_word_level
     save_preferences({
         "output": {"level_subword": True},
         "features": {
@@ -450,7 +450,7 @@ def test_word_args_no_word_csv_propagates_through_runtime_args(prefs_tmp):
     """no_word_csv is set in _go(), not build_args_word_level. The runtime-prep
     helper must round-trip arbitrary new attributes unchanged."""
     import argparse
-    from gui.run_dispatch import _prepare_runtime_args
+    from sensi.gui.run_dispatch import _prepare_runtime_args
     ns = argparse.Namespace()
     ns.edu_bands = None
     ns.no_word_csv = True
@@ -463,7 +463,7 @@ def test_dispatcher_runs_word_batch_for_sidecars_only(prefs_tmp):
     syllables_csv=True (or phonemes_csv=True), the word batch must still
     fire — sidecars are emitted INSIDE run_word_level_batch. Pass
     no_word_csv=True so main.py knows to skip the features.csv write."""
-    from utils.preferences import save_preferences
+    from sensi.utils.preferences import save_preferences
     save_preferences({
         "output": {
             "level_word": False, "level_subword": True, "level_document": False},
@@ -477,12 +477,12 @@ def test_dispatcher_runs_word_batch_for_sidecars_only(prefs_tmp):
     def fake_doc(args, **kwargs):
         captured["doc_called"] = True
 
-    import main as _main
+    from sensi import pipeline as _main
     orig_word, orig_doc = _main.run_word_level_batch, _main.run_doc_level_batch
     _main.run_word_level_batch = fake_word
     _main.run_doc_level_batch = fake_doc
     try:
-        from gui.run_dispatch import run
+        from sensi.gui.run_dispatch import run
         run(progress_cb=lambda *a: None, done_cb=lambda *a: None,
             session_api_key="", in_thread=False)
     finally:
@@ -501,7 +501,7 @@ def test_dispatcher_runs_word_batch_for_sidecars_only(prefs_tmp):
 def test_dispatcher_passes_no_word_csv_false_when_word_csv_on(prefs_tmp):
     """Symmetric check: when word_level_csv is on, no_word_csv must be False
     so the features.csv write happens as usual."""
-    from utils.preferences import save_preferences
+    from sensi.utils.preferences import save_preferences
     save_preferences({"output": {
         "level_word": True, "level_subword": True, "level_document": False}})
 
@@ -511,12 +511,12 @@ def test_dispatcher_passes_no_word_csv_false_when_word_csv_on(prefs_tmp):
     def fake_doc(args, **kwargs):
         pass
 
-    import main as _main
+    from sensi import pipeline as _main
     orig_word, orig_doc = _main.run_word_level_batch, _main.run_doc_level_batch
     _main.run_word_level_batch = fake_word
     _main.run_doc_level_batch = fake_doc
     try:
-        from gui.run_dispatch import run
+        from sensi.gui.run_dispatch import run
         run(progress_cb=lambda *a: None, done_cb=lambda *a: None,
             session_api_key="", in_thread=False)
     finally:
@@ -527,8 +527,8 @@ def test_dispatcher_passes_no_word_csv_false_when_word_csv_on(prefs_tmp):
 
 
 def test_word_args_no_subword_no_align_force(prefs_tmp):
-    from utils.preferences import save_preferences
-    from gui.run_dispatch import build_args_word_level
+    from sensi.utils.preferences import save_preferences
+    from sensi.gui.run_dispatch import build_args_word_level
     save_preferences({
         "output": {"level_subword": False, "level_sentence": False},
         "features": {
@@ -553,15 +553,15 @@ def test_word_args_no_subword_no_align_force(prefs_tmp):
 def test_dispatcher_sets_and_pops_hf_token(monkeypatch, tmp_path):
     monkeypatch.setenv("SENSI_PREFS_PATH", str(tmp_path / "prefs.json"))
     import os
-    from utils.preferences import save_preferences
+    from sensi.utils.preferences import save_preferences
     save_preferences({"output": {"level_word": True}})
     monkeypatch.delenv("HF_TOKEN", raising=False)
 
     seen = {}
     def fake_word(args, **kwargs): seen["during"] = os.environ.get("HF_TOKEN")
-    monkeypatch.setattr("main.run_word_level_batch", fake_word, raising=False)
+    monkeypatch.setattr("sensi.pipeline.run_word_level_batch", fake_word, raising=False)
 
-    from gui.run_dispatch import run
+    from sensi.gui.run_dispatch import run
     run(progress_cb=lambda *a: None, done_cb=lambda *a: None,
         session_api_key="", session_hf_token="hf_test123", in_thread=False)
 
@@ -571,14 +571,14 @@ def test_dispatcher_sets_and_pops_hf_token(monkeypatch, tmp_path):
 
 def test_dispatcher_exports_file_token_when_no_session_token(monkeypatch, tmp_path):
     import os
-    import gui.run_dispatch as rd
+    import sensi.gui.run_dispatch as rd
     monkeypatch.setenv("SENSI_CONFIG_DIR", str(tmp_path))
     monkeypatch.setenv("SENSI_PREFS_PATH", str(tmp_path / "prefs.json"))
     monkeypatch.delenv("HF_TOKEN", raising=False)
     (tmp_path / "hf_token.txt").write_text("hf_from_file\n", encoding="utf-8")
     seen = {}
     def fake_word(args, **kwargs): seen["during"] = os.environ.get("HF_TOKEN")
-    monkeypatch.setattr("main.run_word_level_batch", fake_word, raising=False)
+    monkeypatch.setattr("sensi.pipeline.run_word_level_batch", fake_word, raising=False)
     rd.run(progress_cb=lambda *a: None, done_cb=lambda s: None,
            session_api_key="", session_hf_token="", in_thread=False)
     assert seen["during"] == "hf_from_file"          # exported for the run
@@ -586,7 +586,7 @@ def test_dispatcher_exports_file_token_when_no_session_token(monkeypatch, tmp_pa
 
 
 def test_acoustic_namespace_carries_config():
-    from gui.planner.emit import to_acoustic_namespace
+    from sensi.gui.planner.emit import to_acoustic_namespace
     prefs = {
         "shared": {"last_audio_folder": "/aud", "last_output_folder": "/out",
                    "analyzer_name": "me"},
@@ -607,9 +607,9 @@ def test_dispatch_passes_cancel_and_stops_between_passes(monkeypatch, tmp_path):
     """should_cancel reaches the word batch, and a cancel during it skips the
     doc pass and reports 'cancelled'."""
     monkeypatch.setenv("SENSI_PREFS_PATH", str(tmp_path / "prefs.json"))
-    import main
-    from gui import run_dispatch
-    from utils.preferences import save_preferences
+    from sensi import pipeline
+    from sensi.gui import run_dispatch
+    from sensi.utils.preferences import save_preferences
     save_preferences({"output": {"level_word": True, "level_document": True}})
     seen = {}
 
@@ -621,8 +621,8 @@ def test_dispatch_passes_cancel_and_stops_between_passes(monkeypatch, tmp_path):
         seen["doc"] = True
 
     flag = {"on": False}
-    monkeypatch.setattr(main, "run_word_level_batch", fake_word)
-    monkeypatch.setattr(main, "run_doc_level_batch", fake_doc)
+    monkeypatch.setattr(pipeline, "run_word_level_batch", fake_word)
+    monkeypatch.setattr(pipeline, "run_doc_level_batch", fake_doc)
     statuses = []
     run_dispatch.run(progress_cb=lambda *a: None, done_cb=statuses.append,
                      session_api_key="", in_thread=False,
@@ -632,7 +632,7 @@ def test_dispatch_passes_cancel_and_stops_between_passes(monkeypatch, tmp_path):
     assert statuses == ["cancelled"]
 
 
-# Sidecar-only levels: every artifact main.run_word_level_batch writes (not
+# Sidecar-only levels: every artifact pipeline.run_word_level_batch writes (not
 # just features/syllables/phonemes) must start the word batch. Shared with
 # tests/test_run_py.py, which runs the same scenarios through run.dispatch.
 SIDECAR_ONLY_SCENARIOS = {
@@ -658,8 +658,8 @@ SIDECAR_ONLY_SCENARIOS = {
 @pytest.mark.parametrize("name", sorted(SIDECAR_ONLY_SCENARIOS))
 def test_dispatcher_runs_word_batch_for_sidecar_only_levels(prefs_tmp, monkeypatch, name):
     prefs_over, artifact, flag = SIDECAR_ONLY_SCENARIOS[name]
-    from utils.preferences import load_preferences, save_preferences
-    from gui.planner import plan_from_prefs
+    from sensi.utils.preferences import load_preferences, save_preferences
+    from sensi.gui.planner import plan_from_prefs
     save_preferences(prefs_over)
     plan = plan_from_prefs(load_preferences())
     assert plan.output_csvs == {artifact}  # the scenario is sidecar-only
@@ -667,10 +667,10 @@ def test_dispatcher_runs_word_batch_for_sidecar_only_levels(prefs_tmp, monkeypat
     captured = {}
     def fake_word(args, **kwargs):
         captured["word"] = args
-    monkeypatch.setattr("main.run_word_level_batch", fake_word)
-    monkeypatch.setattr("main.run_doc_level_batch",
+    monkeypatch.setattr("sensi.pipeline.run_word_level_batch", fake_word)
+    monkeypatch.setattr("sensi.pipeline.run_doc_level_batch",
                         lambda *a, **k: captured.setdefault("doc", True))
-    from gui.run_dispatch import run
+    from sensi.gui.run_dispatch import run
     run(progress_cb=lambda *a: None, done_cb=lambda *a: None,
         session_api_key="", in_thread=False)
     assert "word" in captured, "word batch must run for a sidecar-only level"

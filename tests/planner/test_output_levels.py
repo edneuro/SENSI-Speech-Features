@@ -6,9 +6,9 @@ from pathlib import Path
 
 import pytest
 
-from gui.planner.emit import to_namespace
-from gui.planner.plan import plan_from_prefs
-from utils.preferences import DEFAULT_PREFS, DEFAULT_PREFS_V20, _merged_from_user
+from sensi.gui.planner.emit import to_namespace
+from sensi.gui.planner.plan import plan_from_prefs
+from sensi.utils.preferences import DEFAULT_PREFS, DEFAULT_PREFS_V20, _merged_from_user
 
 _CASES = json.loads(
     (Path(__file__).resolve().parents[1] / "fixtures" / "output_switch_snapshots"

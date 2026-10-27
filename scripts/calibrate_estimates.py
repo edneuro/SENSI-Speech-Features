@@ -104,7 +104,7 @@ def build_config(config_dir: Path, transcripts: Path, audio: Path, output: Path,
     old = os.environ.get("SENSI_CONFIG_DIR")
     os.environ["SENSI_CONFIG_DIR"] = str(config_dir)
     try:
-        from utils import preferences as P
+        from sensi.utils import preferences as P
         assert P.get_config_dir().resolve() == config_dir, "config dir override failed"
         prefs = P.load_preferences()
         for section in _TOGGLE_SECTIONS:
@@ -204,7 +204,7 @@ def measure_outputs(output: Path, transcripts: Path) -> dict:
 
 
 def measure_rates(history_path: Path) -> dict:
-    from utils.timing_history import load_history
+    from sensi.utils.timing_history import load_history
     hist = load_history(history_path)
     groups: dict[tuple, list[dict]] = {}
     for d in hist.get("samples", []):

@@ -3,9 +3,9 @@ resulting Namespace has the expected no_* flags and pass-through fields."""
 import argparse
 import copy
 
-from gui.planner.plan import plan_from_prefs
-from gui.planner.emit import to_namespace
-from utils.preferences import DEFAULT_PREFS
+from sensi.gui.planner.plan import plan_from_prefs
+from sensi.gui.planner.emit import to_namespace
+from sensi.utils.preferences import DEFAULT_PREFS
 
 
 # v7 master toggle defaults (all True) — included in every test prefs dict

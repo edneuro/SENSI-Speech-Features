@@ -1,8 +1,8 @@
 """Schema-drift guard. Every prefs key that controls feature behavior
 must be referenced by some FeatureCluster's toggle_keys — otherwise
 the planner silently ignores it."""
-from gui.planner.registry import CLUSTERS
-from utils.preferences import DEFAULT_PREFS
+from sensi.gui.planner.registry import CLUSTERS
+from sensi.utils.preferences import DEFAULT_PREFS
 
 # Track the *active* prefs schema (not a pinned version) so new batches that
 # add keys are validated against the registry automatically.
@@ -120,7 +120,7 @@ def test_every_master_toggle_key_exists_in_v10_prefs_schema():
 def test_level_artifacts_cover_every_level_key():
     """LEVEL_ARTIFACTS keys are exactly the output level_* keys, and every
     artifact id belongs to exactly one level."""
-    from gui.planner.plan import LEVEL_ARTIFACTS
+    from sensi.gui.planner.plan import LEVEL_ARTIFACTS
     level_keys = {k for k in _OUTPUT_DEFAULT_V10 if k.startswith("level_")}
     assert set(LEVEL_ARTIFACTS) == level_keys
     arts = [a for v in LEVEL_ARTIFACTS.values() for a in v]
@@ -132,8 +132,8 @@ def test_acoustic_level_routed_when_output_on():
     # The acoustic level is gated by the level_acoustic output key (Run-tab
     # level switch) plus a feature toggle. Under opt-in defaults the features are off,
     # so enable envelope explicitly.
-    from gui.planner.plan import plan_from_prefs
-    from utils.preferences import DEFAULT_PREFS
+    from sensi.gui.planner.plan import plan_from_prefs
+    from sensi.utils.preferences import DEFAULT_PREFS
     import copy
     prefs = copy.deepcopy(DEFAULT_PREFS)
     prefs["output"]["level_acoustic"] = True
@@ -144,16 +144,16 @@ def test_acoustic_level_routed_when_output_on():
 
 
 def test_acoustic_level_off_by_default():
-    from gui.planner.plan import plan_from_prefs
-    from utils.preferences import DEFAULT_PREFS
+    from sensi.gui.planner.plan import plan_from_prefs
+    from sensi.utils.preferences import DEFAULT_PREFS
     plan = plan_from_prefs(DEFAULT_PREFS)
     assert "acoustic" not in plan.output_csvs   # level_acoustic defaults OFF
 
 
 def test_acoustic_level_off_when_all_features_off():
     # Output key on but every acoustic feature off -> cluster inactive -> no file.
-    from gui.planner.plan import plan_from_prefs
-    from utils.preferences import DEFAULT_PREFS
+    from sensi.gui.planner.plan import plan_from_prefs
+    from sensi.utils.preferences import DEFAULT_PREFS
     import copy
     prefs = copy.deepcopy(DEFAULT_PREFS)
     prefs["output"]["level_acoustic"] = True

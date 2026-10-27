@@ -2,7 +2,7 @@ import math
 
 import pytest
 
-from extractors.lexical_diversity import compute_ttr, compute_mtld
+from sensi.extractors.lexical_diversity import compute_ttr, compute_mtld
 
 
 def test_ttr_basic():

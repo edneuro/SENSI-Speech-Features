@@ -6,8 +6,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from extractors.prosody import add_word_prosody, compute_doc_prosody
-from extractors.audio_features import Contours
+from sensi.extractors.prosody import add_word_prosody, compute_doc_prosody
+from sensi.extractors.audio_features import Contours
 
 
 def make_contours(pitch_hz, intensity_db, frame_rate=100, hnr=15.0):
@@ -251,7 +251,7 @@ def test_articulation_counts_syllables_from_mfa_phones():
     doc = compute_doc_prosody(df, contours, text="", pause_threshold_s=0.25,
                               pitch_units="hz", phones_df=phones)
     # "wasn't" = 2 vowel phones; Zorblax via pyphen = 2 -> 4 syllables / 1.0 s.
-    from extractors.prosody import _count_syllables
+    from sensi.extractors.prosody import _count_syllables
     assert _count_syllables("Zorblax") == 2
     assert doc["doc_articulation_rate"] == pytest.approx(4.0)
 

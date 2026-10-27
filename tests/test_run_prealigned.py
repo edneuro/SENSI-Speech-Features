@@ -10,8 +10,8 @@ import types
 import pandas as pd
 import pytest
 
-import main
-from extractors import aligner
+from sensi import pipeline
+from sensi.extractors import aligner
 
 
 def test_run_reads_disk_and_never_calls_mfa(tmp_path, monkeypatch):
@@ -44,7 +44,7 @@ def test_run_reads_disk_and_never_calls_mfa(tmp_path, monkeypatch):
         no_align=False, no_prosody=True, sem_categories="",
         save_prefs=False,
     )
-    df = main.run(args)
+    df = pipeline.run(args)
     assert "Onset" in df.columns
     assert list(df["Onset"]) == [0.0, 0.5]
 
@@ -71,7 +71,7 @@ def test_prealign_batch_fallback_on_mfa_failure(tmp_path, monkeypatch):
     monkeypatch.setattr(aligner, "ensure_alignments", _boom)
 
     ns = types.SimpleNamespace(no_align=False)
-    main._prealign_batch(ns, pairs, tmp_path / "out")
+    pipeline._prealign_batch(ns, pairs, tmp_path / "out")
 
     assert getattr(ns, "_batch_prealigned", False) is False
 
@@ -108,7 +108,7 @@ def test_prealign_batch_skips_unreadable_transcript(tmp_path, monkeypatch):
     monkeypatch.setattr(aligner, "ensure_alignments", _capture)
 
     ns = types.SimpleNamespace(no_align=False)
-    main._prealign_batch(ns, pairs, tmp_path / "out")  # must not raise
+    pipeline._prealign_batch(ns, pairs, tmp_path / "out")  # must not raise
 
     audios = [a for a, _ in captured["items"]]
     assert audios == [str(good_wav)], "only the readable stimulus is staged"
@@ -156,7 +156,7 @@ def test_run_cache_hit_log_matches_the_real_align_with_phones_key(
     monkeypatch.setattr(aligner, "_align_uncached", _counted)
 
     align_cache: dict = {}
-    main.run(_run_args(transcript, audio, g2p_oov=g2p_oov, align_cache=align_cache))
+    pipeline.run(_run_args(transcript, audio, g2p_oov=g2p_oov, align_cache=align_cache))
     first_out = capsys.readouterr().out
     assert "[mfa] Loading alignment" in first_out
     assert calls["n"] == 1
@@ -164,7 +164,7 @@ def test_run_cache_hit_log_matches_the_real_align_with_phones_key(
     # Second call: same audio/transcript/g2p, sharing the same cache dict —
     # align_with_phones actually serves this from its memo (assert via the
     # call count), so the log line reporting it must also fire.
-    main.run(_run_args(transcript, audio, g2p_oov=g2p_oov, align_cache=align_cache))
+    pipeline.run(_run_args(transcript, audio, g2p_oov=g2p_oov, align_cache=align_cache))
     second_out = capsys.readouterr().out
     assert calls["n"] == 1, "MFA must run at most once per document"
     assert "[mfa] Reusing cached alignment" in second_out
@@ -190,9 +190,9 @@ def test_run_cache_hit_log_does_not_false_positive_across_different_g2p(
     monkeypatch.setattr(aligner, "_align_uncached", _counted)
 
     align_cache: dict = {}
-    main.run(_run_args(transcript, audio, g2p_oov=False, align_cache=align_cache))
+    pipeline.run(_run_args(transcript, audio, g2p_oov=False, align_cache=align_cache))
     capsys.readouterr()
-    main.run(_run_args(transcript, audio, g2p_oov=True, align_cache=align_cache))
+    pipeline.run(_run_args(transcript, audio, g2p_oov=True, align_cache=align_cache))
     out = capsys.readouterr().out
     assert calls["n"] == 2, "different g2p must not be served from the other's cache entry"
     assert "[mfa] Loading alignment" in out
@@ -200,7 +200,7 @@ def test_run_cache_hit_log_does_not_false_positive_across_different_g2p(
 
 
 def test_run_forwards_g2p_oov_value_to_align_with_phones(tmp_path, monkeypatch):
-    """Final-review Fix 4: main.run()'s call site —
+    """Final-review Fix 4: pipeline.run()'s call site —
     mfa_align(..., g2p=bool(getattr(args, 'g2p_oov', False))) — was unpinned
     by any test (correct by inspection only). Record the value
     _align_uncached actually receives and assert both settings forward."""
@@ -217,10 +217,10 @@ def test_run_forwards_g2p_oov_value_to_align_with_phones(tmp_path, monkeypatch):
 
     monkeypatch.setattr(aligner, "_align_uncached", _capture)
 
-    main.run(_run_args(transcript, audio, g2p_oov=True, align_cache={}))
+    pipeline.run(_run_args(transcript, audio, g2p_oov=True, align_cache={}))
     assert received["g2p"] is True
 
-    main.run(_run_args(transcript, audio, g2p_oov=False, align_cache={}))
+    pipeline.run(_run_args(transcript, audio, g2p_oov=False, align_cache={}))
     assert received["g2p"] is False
 
 
@@ -248,7 +248,7 @@ def test_prealign_batch_threads_g2p_oov_true(tmp_path, monkeypatch):
     monkeypatch.setattr(aligner, "ensure_alignments", _capture)
 
     ns = types.SimpleNamespace(no_align=False, g2p_oov=True)
-    main._prealign_batch(ns, pairs, tmp_path / "out")
+    pipeline._prealign_batch(ns, pairs, tmp_path / "out")
 
     assert captured["g2p"] is True
 
@@ -282,7 +282,7 @@ def test_prealign_failure_is_recorded_in_manifest(tmp_path, monkeypatch):
     monkeypatch.setattr(aligner, "ensure_alignments", _boom)
     ns = types.SimpleNamespace(no_align=False)
     log = _Logger()
-    main._prealign_batch(ns, [_one_pair(tmp_path)], tmp_path / "out", log)
+    pipeline._prealign_batch(ns, [_one_pair(tmp_path)], tmp_path / "out", log)
     assert ns._batch_prealigned is False
     assert log.warnings == [
         "MFA batch pre-alignment failed (MFA alignment failed.); fell back to "
@@ -295,7 +295,7 @@ def test_prealign_per_stimulus_miss_is_recorded(tmp_path, monkeypatch):
         lambda items, persist_dir, g2p=False:
             {"cached": [], "aligned": [], "failed": ["stim"]})
     log = _Logger()
-    main._prealign_batch(types.SimpleNamespace(no_align=False),
+    pipeline._prealign_batch(types.SimpleNamespace(no_align=False),
                          [_one_pair(tmp_path)], tmp_path / "out", log)
     assert log.warnings == ["MFA produced no alignment for stim"]
 
@@ -309,4 +309,4 @@ def test_prealign_skips_documents_already_aligned_this_dispatch(tmp_path, monkey
         aligner, "ensure_alignments",
         lambda *a, **kw: pytest.fail("already-aligned docs must not re-run MFA"))
     ns = types.SimpleNamespace(no_align=False, _align_cache=cache)
-    main._prealign_batch(ns, [pair], tmp_path / "out", _Logger())
+    pipeline._prealign_batch(ns, [pair], tmp_path / "out", _Logger())

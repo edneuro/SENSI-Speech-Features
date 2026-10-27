@@ -1,8 +1,8 @@
 from copy import deepcopy
 import pytest
 
-from utils.preferences import DEFAULT_PREFS
-from utils.config_yaml import (FEATURES_YAML, RUN_YAML, split_prefs,
+from sensi.utils.preferences import DEFAULT_PREFS
+from sensi.utils.config_yaml import (FEATURES_YAML, RUN_YAML, split_prefs,
                                write_features_yaml, write_run_yaml)
 
 
@@ -30,8 +30,8 @@ def test_dispatch_runs_word_level_from_output_toggle(tmp_path, monkeypatch):
     calls = {}
     def fake_word(ns, **kw):
         calls["word"] = (ns.transcripts_folder, ns.analyzer)
-    monkeypatch.setattr("main.run_word_level_batch", fake_word, raising=False)
-    monkeypatch.setattr("main.run_doc_level_batch",
+    monkeypatch.setattr("sensi.pipeline.run_word_level_batch", fake_word, raising=False)
+    monkeypatch.setattr("sensi.pipeline.run_doc_level_batch",
                         lambda *a, **k: calls.setdefault("doc", True), raising=False)
     prefs = _write_pair(tmp_path, monkeypatch, features_overrides={
         "output": {"word_level_csv": True, "document_summary": False}})
@@ -83,9 +83,9 @@ def test_main_warns_when_features_yaml_missing(tmp_path, monkeypatch, capsys):
     import run
     _write_pair(tmp_path, monkeypatch)
     (tmp_path / FEATURES_YAML).unlink()
-    monkeypatch.setattr("main.run_word_level_batch",
+    monkeypatch.setattr("sensi.pipeline.run_word_level_batch",
                         lambda *a, **k: None, raising=False)
-    monkeypatch.setattr("main.run_doc_level_batch",
+    monkeypatch.setattr("sensi.pipeline.run_doc_level_batch",
                         lambda *a, **k: None, raising=False)
     monkeypatch.setattr("sys.argv", ["run.py"])
     run.main()
@@ -108,10 +108,10 @@ def test_main_migrates_v19_features_yaml_with_retired_phoneme_label(
         encoding="utf-8")
     calls = {}
     monkeypatch.setattr(
-        "main.run_word_level_batch",
+        "sensi.pipeline.run_word_level_batch",
         lambda *a, **k: calls.setdefault("word", True), raising=False)
     monkeypatch.setattr(
-        "main.run_doc_level_batch",
+        "sensi.pipeline.run_doc_level_batch",
         lambda *a, **k: calls.setdefault("doc", True), raising=False)
     monkeypatch.setattr("sys.argv", ["run.py"])
     run.main()  # must NOT raise SystemExit
@@ -128,13 +128,13 @@ def test_main_migrates_features_yaml_with_missing_schema_version(
     _write_pair(tmp_path, monkeypatch)
     (tmp_path / FEATURES_YAML).write_text(
         "features:\n  feat_phoneme_label: true\n", encoding="utf-8")
-    monkeypatch.setattr("main.run_word_level_batch",
+    monkeypatch.setattr("sensi.pipeline.run_word_level_batch",
                         lambda *a, **k: None, raising=False)
-    monkeypatch.setattr("main.run_doc_level_batch",
+    monkeypatch.setattr("sensi.pipeline.run_doc_level_batch",
                         lambda *a, **k: None, raising=False)
     monkeypatch.setattr("sys.argv", ["run.py"])
     run.main()  # must NOT raise SystemExit
-    from utils.preferences import load_preferences
+    from sensi.utils.preferences import load_preferences
     prefs = load_preferences()
     assert "feat_phoneme_label" not in prefs["features"]
     assert prefs["features"]["feat_phoneme_arpabet"] is True
@@ -150,13 +150,13 @@ def test_main_migrates_features_yaml_with_quoted_schema_version(
     (tmp_path / FEATURES_YAML).write_text(
         "schema_version: '19'\nfeatures:\n  feat_phoneme_label: true\n",
         encoding="utf-8")
-    monkeypatch.setattr("main.run_word_level_batch",
+    monkeypatch.setattr("sensi.pipeline.run_word_level_batch",
                         lambda *a, **k: None, raising=False)
-    monkeypatch.setattr("main.run_doc_level_batch",
+    monkeypatch.setattr("sensi.pipeline.run_doc_level_batch",
                         lambda *a, **k: None, raising=False)
     monkeypatch.setattr("sys.argv", ["run.py"])
     run.main()  # must NOT raise SystemExit
-    from utils.preferences import load_preferences
+    from sensi.utils.preferences import load_preferences
     prefs = load_preferences()
     assert "feat_phoneme_label" not in prefs["features"]
     assert prefs["features"]["feat_phoneme_arpabet"] is True
@@ -186,9 +186,9 @@ def test_dispatch_runs_word_batch_for_sidecar_only_levels(tmp_path, monkeypatch,
     from tests.gui.test_run_dispatch import SIDECAR_ONLY_SCENARIOS
     prefs_over, artifact, flag = SIDECAR_ONLY_SCENARIOS[name]
     calls = {}
-    monkeypatch.setattr("main.run_word_level_batch",
+    monkeypatch.setattr("sensi.pipeline.run_word_level_batch",
                         lambda ns, **kw: calls.setdefault("word", ns))
-    monkeypatch.setattr("main.run_doc_level_batch",
+    monkeypatch.setattr("sensi.pipeline.run_doc_level_batch",
                         lambda *a, **k: calls.setdefault("doc", True))
     prefs = _write_pair(tmp_path, monkeypatch, features_overrides=prefs_over)
     run.dispatch(prefs)

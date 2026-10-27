@@ -1,6 +1,6 @@
 """Sanity / drift tests over STAGES. CLUSTERS-specific tests in test_cluster_registry
 (Task 3); full algorithm tests in test_plan.py (Task 4)."""
-from gui.planner.registry import STAGES, CLUSTERS
+from sensi.gui.planner.registry import STAGES, CLUSTERS
 
 
 def test_stage_names_are_unique():

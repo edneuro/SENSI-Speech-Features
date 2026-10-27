@@ -41,7 +41,7 @@ def _num(v) -> bool:
 
 def value_errors(data: dict) -> list[str]:
     """Plain-language errors for out-of-range or inconsistent settings; [] = ok."""
-    from utils.preferences import DEFAULT_PREFS as defaults
+    from sensi.utils.preferences import DEFAULT_PREFS as defaults
     if not isinstance(data, dict):
         return []
     errors: list[str] = []
@@ -107,7 +107,7 @@ def value_errors(data: dict) -> list[str]:
                 errors.append(f"lexical_norms.paths.{name} must be a file path (text)")
 
     # --- predictability -------------------------------------------------
-    from extractors.predictability_models import all_specs
+    from sensi.extractors.predictability_models import all_specs
     slugs = {s.slug for s in all_specs()}
     pred = section("predictability")
     models = pred.get("models")

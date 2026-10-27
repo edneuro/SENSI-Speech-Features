@@ -3,7 +3,7 @@ import math
 
 import pandas as pd
 
-from extractors.word_freq import add_word_freq
+from sensi.extractors.word_freq import add_word_freq
 
 
 def _df(lemmas, upos=None):

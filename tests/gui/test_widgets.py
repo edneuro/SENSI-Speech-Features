@@ -1,5 +1,5 @@
 def test_section_header_renders_text(qtbot):
-    from gui.widgets import SectionHeader
+    from sensi.gui.widgets import SectionHeader
     w = SectionHeader("Frequency", subtitle="Lexical-corpus frequency lookups.")
     qtbot.addWidget(w)
     assert w.title_label.text() == "Frequency"
@@ -7,7 +7,7 @@ def test_section_header_renders_text(qtbot):
 
 
 def test_folder_row_emits_signal_on_text_change(qtbot):
-    from gui.widgets import FolderRow
+    from sensi.gui.widgets import FolderRow
     w = FolderRow(label="Transcripts")
     qtbot.addWidget(w)
     captured = []
@@ -17,7 +17,7 @@ def test_folder_row_emits_signal_on_text_change(qtbot):
 
 
 def test_toggle_row_emits_signal_on_toggle(qtbot):
-    from gui.widgets import ToggleRow
+    from sensi.gui.widgets import ToggleRow
     w = ToggleRow(label="Surprisal from GPT-2")
     qtbot.addWidget(w)
     captured = []
@@ -27,14 +27,14 @@ def test_toggle_row_emits_signal_on_toggle(qtbot):
 
 
 def test_amber_dot_indicator_shows_tooltip(qtbot):
-    from gui.widgets import AmberDotIndicator
+    from sensi.gui.widgets import AmberDotIndicator
     w = AmberDotIndicator("EWFG parquet not found")
     qtbot.addWidget(w)
     assert w.toolTip() == "EWFG parquet not found"
 
 
 def test_card_holds_child_widgets(qtbot):
-    from gui.widgets import Card
+    from sensi.gui.widgets import Card
     from PySide6.QtWidgets import QLabel
     c = Card(title="Frequency", subtitle="Lexical-corpus frequency.")
     qtbot.addWidget(c)
@@ -45,7 +45,7 @@ def test_card_holds_child_widgets(qtbot):
 
 
 def test_card_has_section_header(qtbot):
-    from gui.widgets import Card, SectionHeader
+    from sensi.gui.widgets import Card, SectionHeader
     c = Card(title="Acoustic", subtitle="MFA.")
     qtbot.addWidget(c)
     assert any(isinstance(child, SectionHeader)

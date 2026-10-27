@@ -21,8 +21,8 @@ from PySide6.QtWidgets import (
     QPlainTextEdit, QPushButton, QVBoxLayout, QWidget,
 )
 
-from gui.widgets import SectionHeader
-from utils.preferences import load_preferences
+from sensi.gui.widgets import SectionHeader
+from sensi.utils.preferences import load_preferences
 
 
 # Matches the timestamp embedded in log filenames, e.g.

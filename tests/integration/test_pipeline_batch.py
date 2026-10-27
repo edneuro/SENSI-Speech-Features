@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from main import (
+from sensi.pipeline import (
     run_word_level_batch, build_parser,
     _phoneme_columns_to_drop, _syllable_columns_to_drop,
 )
@@ -130,11 +130,11 @@ def test_sidecars_emit_when_struct_and_acoustic_per_column_toggles_off(
     sidecar emission and stripped doc_id/sentence_id/token_in_sentence_id/Onset/End from
     df, so syllabify_pairs silently produced empty DataFrames.
 
-    Monkeypatches main.run so this test doesn't need MFA — we synthesize the
+    Monkeypatches pipeline.run so this test doesn't need MFA — we synthesize the
     word_df + phone_df that a real MFA pass would have produced.
     """
     import pandas as pd
-    import main
+    from sensi import pipeline
 
     audio_dir = tmp_path / "audio"
     audio_dir.mkdir()
@@ -161,7 +161,7 @@ def test_sidecars_emit_when_struct_and_acoustic_per_column_toggles_off(
         args._contours = None
         return fake_word_df.copy()
 
-    monkeypatch.setattr(main, "run", fake_run)
+    monkeypatch.setattr(pipeline, "run", fake_run)
 
     # All struct + acoustic toggles OFF (their columns will be in _word_columns_to_drop)
     # All syllable + phoneme toggles ON (so the per-column drops inside the
@@ -219,7 +219,7 @@ def test_phoneme_surprisal_mat_write_survives_savemat(tmp_path, monkeypatch):
 
     scipy.io.savemat raises `TypeError: Could not convert None to array` if
     the nested 'config' dict passed to phoneme_surprisal_mat_vars contains a
-    bare Python None. main.run_word_level_batch's config dict was originally
+    bare Python None. pipeline.run_word_level_batch's config dict was originally
     fixed to use 'cap': float('nan') as a placeholder instead of 'cap': None,
     but no committed test drove that exact code path — tests only called
     phoneme_surprisal_mat_vars directly with a config dict that never had a
@@ -238,8 +238,8 @@ def test_phoneme_surprisal_mat_write_survives_savemat(tmp_path, monkeypatch):
     import pandas as pd
     import scipy.io
     import soundfile as sf
-    import main
-    from extractors import phoneme_surprisal as ps
+    from sensi import pipeline
+    from sensi.extractors import phoneme_surprisal as ps
 
     audio_dir = tmp_path / "audio"
     audio_dir.mkdir()
@@ -270,7 +270,7 @@ def test_phoneme_surprisal_mat_write_survives_savemat(tmp_path, monkeypatch):
         args._contours = None
         return fake_word_df.copy()
 
-    monkeypatch.setattr(main, "run", fake_run)
+    monkeypatch.setattr(pipeline, "run", fake_run)
 
     # Synthetic cohort trie so add_phoneme_surprisal doesn't need the real
     # ~200k-entry MFA lexicon.

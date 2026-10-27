@@ -62,7 +62,7 @@ import numpy as np
 import pandas as pd
 
 # Keep all model/cache downloads inside the project folder
-from utils.local_caches import use_project_caches
+from sensi.utils.local_caches import use_project_caches
 use_project_caches()
 
 
@@ -154,7 +154,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument('--analysis-rate', type=float, default=128.0,
                    help='Acoustic level: output sample rate in Hz (match your EEG).')
     p.add_argument('--env-method', choices=['rms', 'hilbert'], default='rms')
-    from extractors.acoustic_ts import MTRF_COMP
+    from sensi.extractors.acoustic_ts import MTRF_COMP
     p.add_argument('--env-comp', type=float, default=MTRF_COMP,
                    help='Envelope power-law compression exponent '
                         '(default: log10(2) ~ 0.30103, exactly matching '
@@ -315,10 +315,10 @@ def _timed_predictability(args, df, text, models, metrics, context):
     load_seconds; a stimulus whose scores are already cached (the doc pass
     reusing the word pass's scores) records no sample.
     """
-    from extractors import predictability as _pred
-    from extractors.predictability import add_predictability
-    from extractors.predictability_models import effective_context, spec_for
-    from utils.timing_history import load_key, model_device
+    from sensi.extractors import predictability as _pred
+    from sensi.extractors.predictability import add_predictability
+    from sensi.extractors.predictability_models import effective_context, spec_for
+    from sensi.utils.timing_history import load_key, model_device
     if not [m for m in metrics if m in _pred._METRIC_COLS]:
         return add_predictability(df, text, models=models, metrics=metrics,
                                   context=context)
@@ -348,7 +348,7 @@ def _timed_predictability(args, df, text, models, metrics, context):
 def count_words(text) -> int:
     """Words of a raw transcript — the unit for text steps, shared with the
     Run-tab estimator (utils.timing_history.count_words)."""
-    from utils.timing_history import count_words as _count
+    from sensi.utils.timing_history import count_words as _count
     return _count(text)
 
 
@@ -374,7 +374,7 @@ def _record_pair_timings(args) -> None:
     if not samples and not timer.load_seconds:
         return
     try:
-        from utils.timing_history import append_samples
+        from sensi.utils.timing_history import append_samples
         append_samples(samples, load_seconds=dict(timer.load_seconds))
         timer.load_seconds.clear()
     except Exception as exc:   # noqa: BLE001
@@ -382,7 +382,7 @@ def _record_pair_timings(args) -> None:
 
 
 def _new_stage_timer():
-    from utils.timing_history import StageTimer
+    from sensi.utils.timing_history import StageTimer
     return StageTimer()
 
 
@@ -391,7 +391,7 @@ def _new_stage_timer():
 # ---------------------------------------------------------------------------
 
 def run(args) -> pd.DataFrame:
-    from utils.preferences import load_preferences
+    from sensi.utils.preferences import load_preferences
 
     prefs = load_preferences()
     if args.sem_categories:
@@ -412,18 +412,18 @@ def run(args) -> pd.DataFrame:
     df = None
 
     if not args.no_parse:
-        from extractors.text_parser import parse as spacy_parse
+        from sensi.extractors.text_parser import parse as spacy_parse
         print('[spacy] Running spaCy annotation…')
         with _stage(args, 'spacy_parse', lambda: count_words(text)):
             df = spacy_parse(text, doc_id=int(getattr(args, 'doc_id', 1) or 1))
 
     if not args.no_freq and df is not None:
-        from extractors.word_freq import add_word_freq
+        from sensi.extractors.word_freq import add_word_freq
         print('[freq] Computing SUBTLEX Zipf…')
         df = add_word_freq(df)
 
     if not args.no_edu_freq and df is not None:
-        from extractors.educator_freq import add_edu_freq
+        from sensi.extractors.educator_freq import add_edu_freq
         print('[edu] Computing EWFG grade-band frequencies…')
         edu_bands = (
             [b.strip() for b in args.edu_bands.split(',') if b.strip()]
@@ -433,13 +433,13 @@ def run(args) -> pd.DataFrame:
         df = add_edu_freq(df, lookup_path=args.edu_freq_lookup, bands=edu_bands)
 
     if not getattr(args, 'no_lexical_norms', True) and df is not None:
-        from extractors.lexical_norms import add_lexical_norms
+        from sensi.extractors.lexical_norms import add_lexical_norms
         print('[norms] Computing lexical norms (AoA / concreteness / imageability '
               '/ familiarity / valence-arousal-dominance)…')
         df = add_lexical_norms(df, paths=getattr(args, 'lexical_norms_paths', None))
 
     if not args.no_sem_domain and df is not None:
-        from extractors.semantic_domain import add_semantic_domain
+        from sensi.extractors.semantic_domain import add_semantic_domain
         backend, dict_path = _resolve_sem_backend(args.sem_dict)
         print(f'[sem] Computing semantic-domain ({backend})…')
         df = add_semantic_domain(df, backend=backend, categories=sem_categories,
@@ -457,7 +457,7 @@ def run(args) -> pd.DataFrame:
     pred_models = list(pconf.get('models') or [])
     pred_metrics = [m for m, on in (pconf.get('metrics') or {}).items() if on]
     if pred_models and pred_metrics and df is not None:
-        from extractors.predictability import add_predictability
+        from sensi.extractors.predictability import add_predictability
         print(f'[predict] {len(pred_models)} model(s) x {len(pred_metrics)} metric(s)…')
         if getattr(args, '_stage_timer', None) is None:
             df = add_predictability(df, text, models=pred_models, metrics=pred_metrics,
@@ -468,7 +468,7 @@ def run(args) -> pd.DataFrame:
 
     args._phones_df = None  # reset each run; populated below when alignment runs
     if not args.no_align and args.audio:
-        from extractors.aligner import (
+        from sensi.extractors.aligner import (
             align_with_phones as mfa_align, alignment_dir, cache_key,
         )
         # Reuse a per-document alignment across passes (word + doc batches in
@@ -498,7 +498,7 @@ def run(args) -> pd.DataFrame:
             g2p=g2p_oov)
         args._phones_df = phones_df
         if df is not None:
-            from extractors.align_merge import merge_alignment
+            from sensi.extractors.align_merge import merge_alignment
             df = merge_alignment(df, align_df)
         else:
             df = align_df
@@ -508,8 +508,8 @@ def run(args) -> pd.DataFrame:
     if (not getattr(args, 'no_prosody', False) and df is not None
             and 'Onset' in df.columns and args.audio):
         try:
-            from extractors.audio_features import extract as extract_contours
-            from extractors.prosody import add_word_prosody
+            from sensi.extractors.audio_features import extract as extract_contours
+            from sensi.extractors.prosody import add_word_prosody
             print('[prosody] Extracting pitch/intensity contours…')
             with _stage(args, 'prosody_contours',
                         lambda: _audio_duration(args.audio)):
@@ -528,7 +528,7 @@ def run(args) -> pd.DataFrame:
             # Columns remain absent; downstream _reorder is tolerant.
 
     if df is not None:
-        from extractors.timing import add_timing_columns
+        from sensi.extractors.timing import add_timing_columns
         df = add_timing_columns(df)
         df = _reorder(df)
 
@@ -543,7 +543,7 @@ def run(args) -> pd.DataFrame:
         raise RuntimeError('All extractors are disabled — nothing to extract.')
 
     if args.save_prefs and args.sem_categories:
-        from utils.preferences import save_preferences
+        from sensi.utils.preferences import save_preferences
         # v7 unified: a single categories_<backend> key per backend. Write to
         # both backends so the saved selection survives a later backend switch.
         # --save-prefs at CLI is rare; the GUI saves via
@@ -558,7 +558,7 @@ def run(args) -> pd.DataFrame:
 
 import time
 
-from utils.file_pairing import find_pairs, Pair
+from sensi.utils.file_pairing import find_pairs, Pair
 
 
 class InputFolderError(FileNotFoundError):
@@ -609,8 +609,8 @@ def _batch_work_items(pairing) -> list:
         for p in pairing.unmatched_text
     )
     return items
-from utils.run_logger import RunLogger
-from utils.doc_summary import build_doc_summary
+from sensi.utils.run_logger import RunLogger
+from sensi.utils.doc_summary import build_doc_summary
 
 
 # Per-column toggle → CSV column name mappings (schema v4).
@@ -878,7 +878,7 @@ def _prealign_batch(run_args, work_items, output_dir, logger=None) -> None:
     run_args._batch_prealigned = False
     if getattr(run_args, 'no_align', False):
         return
-    from extractors.aligner import alignment_dir, cache_key, ensure_alignments
+    from sensi.extractors.aligner import alignment_dir, cache_key, ensure_alignments
     g2p = bool(getattr(run_args, 'g2p_oov', False))
     align_cache = getattr(run_args, '_align_cache', None) or {}
     items = []
@@ -937,8 +937,8 @@ def _record_mfa_timing(run_args, items, result, seconds) -> None:
     if not aligned or result.get('failed'):
         return
     try:
-        from extractors.aligner import _stem
-        from utils.timing_history import Sample, append_samples
+        from sensi.extractors.aligner import _stem
+        from sensi.utils.timing_history import Sample, append_samples
         audio_s = sum(_audio_duration(a) for a, _ in items if _stem(a) in aligned)
         append_samples([Sample('mfa_align', None, 'cpu', audio_s, seconds)])
     except Exception as exc:   # noqa: BLE001 — timing must never fail a run
@@ -1027,15 +1027,15 @@ def run_word_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None
                 or not getattr(args, 'no_phonemes', False)
                 or _want_psr
             ):
-                from extractors.syllabify import syllabify_pairs
-                from extractors.syllable_prosody import add_syllable_prosody
+                from sensi.extractors.syllabify import syllabify_pairs
+                from sensi.extractors.syllable_prosody import add_syllable_prosody
 
                 with _stage(args, 'syllabify',
                             lambda: _transcript_words(pair.transcript_path)):
                     syll_df, phon_df = syllabify_pairs(df, phones_df)
 
                 if _want_psr and len(phon_df) > 0:
-                    from extractors.phoneme_surprisal import (
+                    from sensi.extractors.phoneme_surprisal import (
                         add_phoneme_surprisal, get_cohort_trie, phoneme_surprisal_mat_vars)
                     _pcfg = getattr(args, 'phoneme_surprisal', {}) or {}
                     _strip_stress = _pcfg.get('strip_stress', True)
@@ -1083,7 +1083,7 @@ def run_word_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None
                         pitch_units=getattr(args, 'pitch_units', 'semitones'),
                     )
                     if len(phon_df) > 0:
-                        from extractors.pcenter import add_pcenter
+                        from sensi.extractors.pcenter import add_pcenter
                         syll_df = add_pcenter(
                             syll_df, phon_df,
                             k=getattr(args, 'pcenter_k', 0.3),
@@ -1106,7 +1106,7 @@ def run_word_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None
             # Sentence-level sidecar — emits sentence/ subfolder CSV.
             if not getattr(args, 'no_sentences', False):
                 try:
-                    from extractors.sentence_prosody import add_sentence_prosody
+                    from sensi.extractors.sentence_prosody import add_sentence_prosody
                     with _stage(args, 'sentence_prosody',
                                 lambda: _transcript_words(pair.transcript_path)):
                         sent_df = add_sentence_prosody(
@@ -1134,10 +1134,10 @@ def run_word_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None
             if not getattr(args, 'no_word2vec', True):
                 # Import OUTSIDE the try: `except Word2VecUnavailable` must not
                 # evaluate an unbound name if this import itself fails.
-                from extractors.word2vec_embed import embed_word2vec, Word2VecUnavailable
+                from sensi.extractors.word2vec_embed import embed_word2vec, Word2VecUnavailable
                 try:
                     import scipy.io
-                    from extractors import word2vec_embed as _w2v
+                    from sensi.extractors import word2vec_embed as _w2v
                     _preload_timed(args, 'word2vec', _w2v._MODEL_CACHE,
                                    str(Path(_w2v._DEFAULT_MODEL_PATH)),
                                    lambda: _w2v._load_model(_w2v._DEFAULT_MODEL_PATH))
@@ -1160,8 +1160,8 @@ def run_word_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None
             if run_bert_word or run_bert_sent:
                 try:
                     import scipy.io
-                    from extractors.bert_embed import embed_bert_words_and_sentences
-                    from extractors import bert_embed as _bert
+                    from sensi.extractors.bert_embed import embed_bert_words_and_sentences
+                    from sensi.extractors import bert_embed as _bert
                     _preload_timed(args, 'bert', _bert._BERT_CACHE,
                                    _bert._DEFAULT_MODEL_NAME,
                                    lambda: _bert._load_bert(_bert._DEFAULT_MODEL_NAME))
@@ -1225,9 +1225,9 @@ def run_word_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None
     # Rebuilt from current prefs; if you ever mutate prefs mid-batch, capture
     # this at batch start instead.
     try:
-        from gui.planner import plan_from_prefs
-        from utils.preferences import load_preferences
-        from utils.session_units import build_session_units
+        from sensi.gui.planner import plan_from_prefs
+        from sensi.utils.preferences import load_preferences
+        from sensi.utils.session_units import build_session_units
         _plan = plan_from_prefs(load_preferences())
         _rows = build_session_units(_plan)
         if _rows:
@@ -1239,7 +1239,7 @@ def run_word_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None
 
 def run_doc_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None:
     """Process all matched pairs and emit a master documents_summary CSV."""
-    from utils.doc_summary import build_doc_summary
+    from sensi.utils.doc_summary import build_doc_summary
 
     transcripts_dir = Path(args.transcripts_folder)
     output_dir = Path(args.output_folder)
@@ -1429,9 +1429,9 @@ def run_doc_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None:
     # Rebuilt from current prefs; if you ever mutate prefs mid-batch, capture
     # this at batch start instead.
     try:
-        from gui.planner import plan_from_prefs
-        from utils.preferences import load_preferences
-        from utils.session_units import build_session_units
+        from sensi.gui.planner import plan_from_prefs
+        from sensi.utils.preferences import load_preferences
+        from sensi.utils.session_units import build_session_units
         _plan = plan_from_prefs(load_preferences())
         _rows = build_session_units(_plan)
         if _rows:
@@ -1445,7 +1445,7 @@ def run_acoustic_level_batch(args, *, on_pair_done=None, should_cancel=None) -> 
     """Process every audio file in args.audio_folder independently of any
     transcript, writing acoustic/<stim>_acoustic.mat per file."""
     import scipy.io
-    from extractors.acoustic_ts import extract_acoustic
+    from sensi.extractors.acoustic_ts import extract_acoustic
 
     audio_dir = Path(args.audio_folder or '')
     if not args.audio_folder or not audio_dir.is_dir():
@@ -1524,7 +1524,7 @@ def run_acoustic_level_batch(args, *, on_pair_done=None, should_cancel=None) -> 
 
 
 def _resolve_sem_backend(sem_dict_arg: str) -> tuple[str, 'Path | None']:
-    from extractors.semantic_domain import detect_backend
+    from sensi.extractors.semantic_domain import detect_backend
     if sem_dict_arg == 'auto':
         return detect_backend()
     if sem_dict_arg == 'empath':

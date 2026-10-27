@@ -10,7 +10,7 @@ from typing import cast
 
 import pandas as pd
 
-from extractors.arpabet_ipa import syllable_to_ipa, to_ipa
+from sensi.extractors.arpabet_ipa import syllable_to_ipa, to_ipa
 
 
 @dataclass(frozen=True)
@@ -183,7 +183,7 @@ def _lexicon_words() -> set[str]:
     """
     global _LEXICON_CACHE, _LEXICON_EMPTY_WARNED
     if _LEXICON_CACHE is None:
-        from extractors.phoneme_surprisal import DEFAULT_DICT_PATH
+        from sensi.extractors.phoneme_surprisal import DEFAULT_DICT_PATH
         words: set[str] = set()
         try:
             with open(DEFAULT_DICT_PATH, "r", encoding="utf-8") as fh:

@@ -12,7 +12,7 @@ import math
 import pandas as pd
 import pytest
 
-from extractors.psych_composite import compute_psych_composite, EXPECTED_KEYS
+from sensi.extractors.psych_composite import compute_psych_composite, EXPECTED_KEYS
 
 
 # A tiny valence lexicon for deterministic Tone tests.

@@ -8,11 +8,11 @@ paid backend could be wired back in without rebuilding the UI; these tests
 lock in that it stays hidden regardless of predictability configuration.
 """
 
-from utils.preferences import save_preferences
+from sensi.utils.preferences import save_preferences
 
 
 def test_cost_panel_hidden_by_default(qtbot, prefs_tmp):
-    from gui.section_run import RunSection
+    from sensi.gui.section_run import RunSection
     section = RunSection(get_session_api_key=lambda: "", status_strip=None)
     qtbot.addWidget(section)
     section.refresh()
@@ -30,7 +30,7 @@ def test_cost_panel_stays_hidden_with_models_and_metrics_selected(qtbot, prefs_t
             "metrics": {"surprisal": True, "cloze": True, "topmatch": True},
         },
     })
-    from gui.section_run import RunSection
+    from sensi.gui.section_run import RunSection
     section = RunSection(get_session_api_key=lambda: "", status_strip=None)
     qtbot.addWidget(section)
     section.refresh()

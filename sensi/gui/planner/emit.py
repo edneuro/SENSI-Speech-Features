@@ -9,8 +9,8 @@ from __future__ import annotations
 
 import argparse
 
-from gui.planner.stages import Plan
-from extractors.acoustic_ts import MTRF_COMP
+from sensi.gui.planner.stages import Plan
+from sensi.extractors.acoustic_ts import MTRF_COMP
 
 # Artifacts written by main.run_word_level_batch (the word CSV plus every
 # sub-word / sentence / embedding sidecar). The dispatchers (gui/run_dispatch,
@@ -57,7 +57,7 @@ def _word_only_stages(plan: Plan, prefs: dict) -> frozenset[str]:
     ran an extractor the user had switched off. `plan` is accepted for call
     compatibility; activation reads straight from prefs.
     """
-    from gui.planner.plan import _active_clusters, _active_output_csvs
+    from sensi.gui.planner.plan import _active_clusters, _active_output_csvs
 
     active_csvs = _active_output_csvs(prefs)
     required: set[str] = set()
@@ -89,7 +89,7 @@ def _doc_only_stages(prefs: dict) -> frozenset[str]:
     forces them on from the doc toggles. Predictability is carried on
     ns.predictability (plan.predictability_doc), not via a stage flag.
     """
-    from gui.planner.plan import (
+    from sensi.gui.planner.plan import (
         _active_clusters, _active_output_csvs, _close_under_consumes,
     )
 
@@ -281,7 +281,7 @@ def to_namespace(plan: Plan, prefs: dict, level: str) -> argparse.Namespace:
         # extractor does not re-run — it aggregates whatever columns word_df
         # already has. Read cluster activation from the planner so the
         # section switch gates these like every other doc section.
-        from gui.planner.plan import _active_clusters, _active_output_csvs
+        from sensi.gui.planner.plan import _active_clusters, _active_output_csvs
         doc_active = {
             c.name for c in _active_clusters(prefs, _active_output_csvs(prefs))
             if c.output_csv in _DOC_LEVEL_CSVS

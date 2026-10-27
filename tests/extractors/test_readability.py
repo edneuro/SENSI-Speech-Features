@@ -1,4 +1,4 @@
-from extractors.readability import compute_readability
+from sensi.extractors.readability import compute_readability
 
 
 def test_readability_returns_expected_keys():

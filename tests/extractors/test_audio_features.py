@@ -7,7 +7,7 @@ import numpy as np
 import pytest
 
 parselmouth = pytest.importorskip("parselmouth")
-from extractors.audio_features import extract, Contours, ProsodyUnavailable
+from sensi.extractors.audio_features import extract, Contours, ProsodyUnavailable
 
 
 def _write_sine_wav(path, freq_hz=200.0, duration_s=2.0, sr=16000, amplitude=0.5):
