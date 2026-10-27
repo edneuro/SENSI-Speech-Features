@@ -46,11 +46,11 @@ the wrong yardstick.
   encountered it in print. Words with high K2 frequency but low
   9to12 frequency (function words, common nouns) behave differently
   from words with low K2 but high 9to12 frequency (acquired-late
-  vocabulary). ⚠️ The K2-vs-9to12 contrast is used here as an
-  empirical proxy for age of acquisition (AoA); the AoA construct
-  itself is established by [Kuperman 2012]'s 30,000-word ratings, but
-  the specific mapping from EWFG grade bands to AoA is a
-  project-internal inference, not a result from a cited paper.
+  vocabulary). The guide's overall frequency does track age of
+  acquisition (AoA): r = −.281 across the 72 target words of
+  [Juhasz 2003]. But no paper we know of tests the K2-vs-9to12
+  *contrast* as an AoA measure, so treat that use as exploratory; for
+  AoA itself, use the rated norms of [Kuperman 2012].
 - Age of acquisition independently predicts **eye fixation durations**
   in naturalistic reading ([Juhasz 2003], [Dirix 2017]) and **N400
   amplitude** in single-word ERP studies ([Yum 2019]), with effects
@@ -90,10 +90,9 @@ Source: `extractors/educator_freq.py:add_edu_freq`.
   frequency columns are comparable lexeme-for-lexeme.
 - *Parquet over CSV* — vectorised pandas lookup is fast and the file
   format compresses well for a ~5-column-by-N-row table.
-- *Schema preserved when lookup is missing* — ⚠️ the design intent is
-  that downstream code (planner, GUI preflight warnings, doc-level
-  aggregates) can rely on the column existing; better to surface
-  `NaN`-everywhere than to break the column contract.
+- *Schema preserved when lookup is missing* — the columns are still
+  written, filled with `NaN`, so downstream code (planner, GUI preflight
+  warnings, doc-level aggregates) can rely on them existing.
 
 ## Data acquisition
 **No digital source exists.** *The Educator's Word Frequency Guide*

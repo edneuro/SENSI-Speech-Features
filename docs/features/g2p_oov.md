@@ -200,7 +200,7 @@ Sources: `extractors/aligner.py` (the flag, the sidecar, the model path),
   `run.py` reads the same pref. The option is **not** a per-column toggle
   and drops no columns — it changes the aligner's behaviour, so it sits in
   its own `alignment` prefs section rather than under `features`.
-  ⚠️ It nonetheless lives in `features.yaml` rather than `run.yaml`
+  It nonetheless lives in `features.yaml` rather than `run.yaml`
   (`utils/config_yaml.py` routes only `shared` to `run.yaml`). That is the
   right home: it is a "what to extract" decision, and it means the GUI's
   **Reset settings** turns it back off — the correct behaviour for an

@@ -199,11 +199,9 @@ Three robustness choices, each there to prevent a silent wrong value:
   stress, so `to_ipa("AH0", None)` correctly returns `ə`. This matters
   because some callers still hold MFA's raw label.
 - **A stress-dependent vowel with `stress=None` returns the stressed
-  form**, never `""`. ⚠️ This is a deliberate choice of the less-wrong
-  default rather than a phonetically motivated one: `AH` with unknown
-  stress is more often `ʌ` than `ə` in a *stressed-position* lookup, and
-  in the pipeline the case never arises (`Stress` is always known when
-  `IPA` is computed), so it is defensive only.
+  form**, never `""`. This is only a safety default for direct callers
+  of `to_ipa`: in the pipeline the case never arises, because `Stress` is
+  always known when `IPA` is computed.
 - **Unknown codes return `""`.** No fallback, no approximation.
 
 `syllable_to_ipa` **drops** unmappable segments rather than emitting

@@ -58,12 +58,17 @@ surprisal:
   sub-lexical/phoneme-level predictive processing (what this feature
   captures) and sentence-level predictive processing (what GPT-2
   `Surprisal` captures) are separable neural computations, not the
-  same signal measured twice. ⚠️ This is the primary empirical
-  grounding we lean on for treating `phoneme_surprisal` as
-  complementary to, rather than redundant with, the existing GPT-2
-  `Surprisal` column; the design intent (decorrelating the two
-  features) is our inference from that literature, not a claim made
-  verbatim in any one paper.
+  same signal measured twice.
+
+Together these are why `phoneme_surprisal` is offered alongside GPT-2
+`Surprisal` rather than instead of it. [Brodbeck 2022] found that a model
+using "the phonemes in the current word alone" (the same kind of
+word-internal cohort model as this feature) "uniquely predict[s] some
+part of early neural responses" alongside a model that uses sentence
+context. One step is still ours: their sentence-context model predicts
+phonemes, while GPT-2 `Surprisal` is a word-level value, so the two
+SensiExtractor columns are related to, not identical with, the models they
+compared.
 
 ## Math
 
