@@ -245,8 +245,10 @@ bit-for-bit regardless of the machine's GPU availability.
   whose subwords include position 0 is affected (i.e. exactly the
   document-initial word).
 - *PUNCT → `NaN`*: language models do assign probabilities to
-  punctuation, but surprisal regressions in the EEG literature are
-  typically over content words. ⚠️ The mask is applied here so
+  punctuation, but ERP work on predictability is "usually investigated
+  on content words only", and in [Frank 2015] the surprisal effect on the
+  N400 came mostly from content words; punctuation is not a separate item
+  in those analyses. The mask is applied here so
   downstream code doesn't accidentally include punctuation rows;
   remove the mask in `add_predictability` if you specifically want
   punctuation surprisal.

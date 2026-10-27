@@ -80,7 +80,7 @@ Source: `extractors/pcenter.py:add_pcenter`
 - *k = 0.3 default* — the original [Scott 1993] empirically derived
   value for English speech. Configurable for studies that want
   a different weighting.
-- ⚠️ *Vowel-nucleus identification by presence of stress* — the ARPABET
+- *Vowel-nucleus identification by presence of stress* — the ARPABET
   convention is that every vowel carries a stress digit and no consonant
   does ([CMUdict](phoneme.md#cmudict)), so "has a stress value" is a clean
   vowel discriminator. Since the 2026-07-27 column split the pipeline

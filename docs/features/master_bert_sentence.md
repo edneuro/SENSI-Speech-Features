@@ -59,7 +59,7 @@ sent_emb[s_pos] = stacked[content_positions].mean(axis=0)
 ```
 
 where `stacked` is the `(seq_len, n_layers, hidden)` array of BERT
-hidden states. ⚠️ This is *not* the same as averaging the
+hidden states. This is *not* the same as averaging the
 already-pooled per-word vectors from
 [the word-level embeddings](master_bert_word.md): a word with more
 subwords contributes proportionally more terms to this mean, so it
@@ -92,11 +92,16 @@ so `embeddings` stays backward-compatible:
 - *Shipped as `(n_sentences, 12, 768)`* — preserves the per-layer
   structure for downstream layer-sweep analyses, matching the
   word-level shape with `n_sentences` instead of `n_words`.
-- ⚠️ *Mean-pool rather than CLS-token / max-pool* — the standard
-  choice in EEG / brain-prediction work ([Toneva 2019],
-  [Schrimpf 2021]) is mean-pool of content tokens; CLS is fine-tuned
-  for classification objectives and doesn't generalize as well to
-  unsupervised brain alignment.
+- *Mean-pool rather than the CLS token* — raw BERT's CLS vector is a
+  poor unsupervised sentence embedding: on semantic-similarity
+  benchmarks, averaging BERT's token vectors scored 54.8 vs 29.2 for the
+  CLS output [Reimers 2019]. Mean-pooling is SensiExtractor's choice,
+  not a convention of the brain-encoding papers: [Toneva 2019] and
+  [Schrimpf 2021] instead use the hidden state at the *last* word after
+  feeding the preceding context. If you want that representation, take
+  the sentence's final word from the
+  [word-level embeddings](master_bert_word.md), which are computed with
+  left context.
 
 ## Library
 Same setup as the word-level extractor — see
@@ -110,7 +115,15 @@ Schrimpf 2021, Goldstein 2022) plus the sentence-level-specific:
 
 - <a name="caucheteux-2022"></a>**[Caucheteux 2022]** Caucheteux & King. *Brains and algorithms partially converge in natural language processing.* Communications Biology. [doi:10.1038/s42003-022-03036-1](https://doi.org/10.1038/s42003-022-03036-1) — sentence-level LM representations and brain prediction.
 
+- <a name="reimers-2019"></a>**[Reimers 2019]** Reimers & Gurevych. *Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks.* EMNLP-IJCNLP 2019. [arXiv:1908.10084](https://arxiv.org/abs/1908.10084) — §4.1: averaged BERT embeddings 54.81 vs CLS 29.19 mean correlation on STS tasks.
+- <a name="toneva-2019-sent"></a>**[Toneva 2019]** Toneva & Wehbe. *Interpreting and improving natural-language processing (in machines) with natural language-processing (in the brain).* NeurIPS 2019. [arXiv:1905.11833](https://arxiv.org/abs/1905.11833) — each word's feature is the layer's hidden state for that word after "passing the most recent k words" through the network.
+- <a name="schrimpf-2021-sent"></a>**[Schrimpf 2021]** Schrimpf, Blank, Tuckute, Kauf, Hosseini, Kanwisher, Tenenbaum, Fedorenko. *The neural architecture of language: Integrative modeling converges on predictive processing.* PNAS 118(45), e2105646118. [doi:10.1073/pnas.2105646118](https://doi.org/10.1073/pnas.2105646118) — Methods (bioRxiv v3): for transformers, "we used the representation of the last word"; the mean only for static embeddings.
+
 [Caucheteux 2022]: #caucheteux-2022
+[Reimers 2019]: #reimers-2019
+[Toneva 2019]: #toneva-2019-sent
+[Schrimpf 2021]: #schrimpf-2021-sent
+[Goldstein 2022]: master_bert_word.md#goldstein-2022
 
 ## Datasets
 <!-- auto-populated from docs/datasets/*.md once the dataset registry exists -->

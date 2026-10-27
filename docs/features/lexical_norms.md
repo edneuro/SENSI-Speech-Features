@@ -41,7 +41,8 @@ means "no norm available", and downstream code decides how to handle it).
 
 MRC's rated subset is small (~4,900 words), so imageability/familiarity will be
 `NaN` for many tokens — the document-level `*_coverage` stats report the match
-rate per stimulus. Concreteness (~40k words) correlates ≈0.8 with imageability
+rate per stimulus. Concreteness (~40k words) correlates ≈0.9 with imageability
+(r = .91 across 5,553 words in the Glasgow Norms [Scott 2019])
 and covers far more vocabulary, so it is usually the better choice when
 coverage matters.
 
@@ -124,8 +125,10 @@ to **match or control stimuli** (e.g. checking that two conditions don't differ
 in average word difficulty) and to relate passage-level neural measures to
 passage-level language properties.
 
-> ⚠️ **Modeling caution.** Frequency, AoA, word length and concreteness are
-> strongly intercorrelated, and **concreteness ↔ imageability correlate ≈0.8**.
+> ⚠️ **Modeling caution.** AoA, frequency, familiarity, concreteness and
+> imageability are substantially intercorrelated: AoA "correlated strongly with
+> word frequency" [Kuperman 2012], AoA–familiarity r = −.67 and
+> **concreteness ↔ imageability r = .91** [Scott 2019].
 > Don't enter collinear norms in one model without checking VIF or
 > residualizing/PCA first. The length-like norms are best treated as control
 > regressors, not effects of interest.
@@ -202,6 +205,7 @@ df = add_lexical_norms(df, paths={
 - <a name="yum-2019"></a>**[Yum 2019]** Yum & Law. *Interactions of age of acquisition and lexical frequency effects… An ERP study.* Psychophysiology 56(10), e13433. [doi:10.1111/psyp.13433](https://doi.org/10.1111/psyp.13433)
 - <a name="citron-2012"></a>**[Citron 2012]** Citron. *Neural correlates of written emotion word processing: a review…* Brain & Language 122(3), 211–226. [doi:10.1016/j.bandl.2011.12.007](https://doi.org/10.1016/j.bandl.2011.12.007)
 - <a name="recio-2014"></a>**[Recio 2014]** Recio, Conrad, Hansen, Jacobs. *On pleasure and thrill: the interplay between arousal and valence…* Brain & Language 134, 34–43. [doi:10.1016/j.bandl.2014.03.009](https://doi.org/10.1016/j.bandl.2014.03.009)
+- <a name="scott-2019"></a>**[Scott 2019]** Scott, Keitel, Becirspahic, Yao, Sereno. *The Glasgow Norms: Ratings of 5,500 words on nine scales.* Behavior Research Methods 51, 1258–1270. [doi:10.3758/s13428-018-1099-3](https://doi.org/10.3758/s13428-018-1099-3) — inter-scale correlations (Table 5, Spearman): concreteness–imageability .91, AoA–familiarity −.67.
 
 [Kuperman 2012]: #kuperman-2012
 [Brysbaert 2014]: #brysbaert-2014
@@ -213,6 +217,7 @@ df = add_lexical_norms(df, paths={
 [Yum 2019]: #yum-2019
 [Citron 2012]: #citron-2012
 [Recio 2014]: #recio-2014
+[Scott 2019]: #scott-2019
 
 ## Datasets
 <!-- auto-populated from docs/datasets/*.md once the dataset registry exists -->

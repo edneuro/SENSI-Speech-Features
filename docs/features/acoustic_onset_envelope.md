@@ -49,13 +49,17 @@ neural responses [Oganian 2019]. Including an onset predictor alongside the
 plain envelope in a TRF often improves fit and yields a sharper, earlier
 response component than the envelope alone [Crosse 2016].
 
-⚠️ *Relationship to peakRate:* the SensiExtractor feature is the **continuous
+*Relationship to peakRate:* the SensiExtractor feature is the **continuous
 half-wave-rectified derivative** of the envelope, i.e. the positive rate of
 change at every grid point. The *peakRate* landmark of [Oganian 2019] is the
-set of **local maxima** of exactly this signal. So this column is the dense
-signal from which peakRate events are the peaks — useful both as a continuous
-TRF regressor and as the input for a peak-picking step if you want discrete
-onset events.
+set of **local maxima** of the envelope's derivative. The two use different
+envelopes, though: Oganian & Chang derive theirs from an auditory filterbank
+(per-band loudness, band-passed 1–10 Hz), while this column differentiates
+the envelope chosen in [`envelope`](acoustic_envelope.md). So this column is
+the same *kind* of signal peakRate is picked from, not an exact
+reproduction: useful as a continuous TRF regressor and as input to a
+peak-picking step, but expect event times close to, not identical with, the
+published peakRate.
 
 ## How to set the analysis rate to match your EEG
 The onset envelope inherits the [envelope](acoustic_envelope.md)'s grid, so

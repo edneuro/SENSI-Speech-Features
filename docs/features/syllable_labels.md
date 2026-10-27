@@ -97,9 +97,13 @@ MFA alignment.
   the word's surface form and splitting on the inserted hyphens — but
   only when pyphen's fragment count matches the phone-derived syllable
   count for that word.
-  ⚠️ Pyphen is orthographic-syllable hyphenation — it doesn't always
-  align perfectly with phonological syllable boundaries; the `ARPABET`
-  column is the better source when phonological boundaries matter.
+  Pyphen hyphenates text with Hunspell hyphenation dictionaries
+  ([Pyphen]), i.e. it finds places a word may be *broken across a line*.
+  Hyphenation rules are deliberately stricter than syllable division,
+  avoiding breaks "that might cause the reader to pronounce a word
+  incorrectly" ([Liang 1983], ch. 5), so its fragments don't always match
+  phonological syllables; the `ARPABET` column is the better source when
+  phonological boundaries matter.
 - `ARPABET` is built by joining all phones in the syllable with `-`,
   preserving the stress digit suffix on each vowel phone.
 - `IPA` is built by mapping each phone through `arpabet_ipa.to_ipa` and
@@ -138,6 +142,19 @@ Both are described in full in [`phoneme`](phoneme.md).
 - The ARPABET inventory and its stress-digit convention, and the
   ARPABET↔IPA correspondence used by the `IPA` column, are cited in
   [`feat_phoneme_ipa`](feat_phoneme_ipa.md#papers).
+
+- <a name="pyphen"></a>**[Pyphen]** Kozea. *Pyphen — pure Python
+  hyphenation using Hunspell hyphenation dictionaries.*
+  [github.com/Kozea/Pyphen](https://github.com/Kozea/Pyphen) — the
+  dictionaries come from LibreOffice's repository.
+- <a name="liang-1983"></a>**[Liang 1983]** Liang. *Word Hy-phen-a-tion by
+  Com-put-er.* PhD thesis, Stanford University (STAN-CS-83-977).
+  [tug.org/docs/liang/liang-thesis.pdf](https://tug.org/docs/liang/liang-thesis.pdf)
+  — hyphenation for typesetting: allowable line-break points, not a
+  syllabifier.
+
+[Pyphen]: #pyphen
+[Liang 1983]: #liang-1983
 
 ## Datasets
 <!-- auto-populated from docs/datasets/*.md once the dataset registry exists -->

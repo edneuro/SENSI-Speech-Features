@@ -110,7 +110,7 @@ so `embeddings` stays backward-compatible:
 | Fixed-stride sliding window (e.g. 256 stride / 512 window) | Heavy overlap, ~2× compute, harder to attribute a vector to a specific word position. |
 | Sentence-by-sentence with no prior context | Loses cross-sentence semantic continuity, which is a large part of why contextual embeddings predict EEG/MEG well in the first place ([Toneva 2019]). |
 | Pool layers in-extractor (e.g. mean of layers 9–12) | Smaller file but discards per-layer signal the downstream analyst may want. |
-| Bidirectional (left + right) context | ⚠️ Would let the embedding "see" future tokens; problematic for causal EEG analyses. |
+| Bidirectional (left + right) context | Each word's vector would depend on words the listener has not heard yet, so it would mix information from after the word into a predictor of the brain's response at that word. |
 
 ## Library
 ```python

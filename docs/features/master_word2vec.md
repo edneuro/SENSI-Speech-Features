@@ -89,10 +89,12 @@ should account for that.
 - *Google News 300d* is a well widely cited static-embedding baseline
   in the literature, so emitting it gives downstream analysts a feature
   that's directly comparable across studies.
-- ⚠️ *Lowercase fallback before zero-fill* — Google News vectors are case-sensitive, so
-  capitalized sentence-initial words and proper nouns would otherwise
-  miss frequent common forms. The fallback recovers them without
-  silently lowercasing all rows.
+- *Lowercase fallback before zero-fill* — the Google News vocabulary keeps
+  capitalised and lowercase forms as separate entries (checked against the
+  model file: `apple`/`Apple`, `the`/`The`, `paris`/`Paris` are all present
+  as distinct words), so a capitalised token with no entry of its own would
+  otherwise get a zero vector even when its common lowercase form exists.
+  The fallback recovers those without silently lowercasing all rows.
 - *OOV (Out of Vocabulary) → zero vector* 
 
 **Alternatives that were *not* chosen** (for reader context):

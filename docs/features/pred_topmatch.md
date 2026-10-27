@@ -41,9 +41,13 @@ flag. It's useful when:
 - You're comparing against psycholinguistic experiments that operate
   on "predictable" vs "unpredictable" rather than continuous cloze.
 
-⚠️ For ERP-amplitude regressions, the graded
-[`<slug>_Surprisal`](pred_surprisal.md) carries more information per
-row and is the better default — `<slug>_TopMatch` is binary by design.
+For ERP-amplitude regressions, the graded
+[`<slug>_Surprisal`](pred_surprisal.md) is the better default.
+`<slug>_TopMatch` is binary by design, so it discards everything below the
+top guess: every word the model did not rank first scores the same, yet N400
+facilitation is graded even among unpredictable words [Szewczyk 2022]. No
+paper we know of tests top-match against surprisal directly; this is a
+recommendation, not a measured result.
 
 ## Implementation in SensiExtractor
 Source: `extractors/predictability.py:add_predictability` (the
@@ -83,7 +87,10 @@ responses during natural listening:
 
 - <a name="goldstein-2022"></a>**[Goldstein 2022]** Goldstein et al. *Shared computational principles for language processing in humans and deep language models.* Nature Neuroscience 25(3), 369–380. [doi:10.1038/s41593-022-01026-4](https://doi.org/10.1038/s41593-022-01026-4) — ECoG study showing that humans and autoregressive transformer models share next-word prediction as a computational principle during natural language processing.
 
+- <a name="szewczyk-2022-tm"></a>**[Szewczyk 2022]** Szewczyk & Federmeier. *Context-based facilitation of semantic access follows both logarithmic and linear functions of stimulus probability.* Journal of Memory and Language 123, 104311. [doi:10.1016/j.jml.2021.104311](https://doi.org/10.1016/j.jml.2021.104311) — N400 facilitation "combines linear and logarithmic functions"; graded even among unpredictable words.
+
 [Goldstein 2022]: #goldstein-2022
+[Szewczyk 2022]: #szewczyk-2022-tm
 
 ## Datasets
 <!-- auto-populated from docs/datasets/*.md once the dataset registry exists -->

@@ -56,9 +56,12 @@ object used by the other prosody columns. Per-frame HNR
 values come from Praat's `To Harmonicity (cc)` call; the mean
 excludes Praat's unvoiced sentinel (−200 dB).
 
-⚠️ Without the sentinel exclusion, a stimulus with even a few
-unvoiced frames would have `doc_hnr` pulled down toward −200 — the
-fix ensures the value reflects voiced speech only.
+Why the exclusion matters follows from the arithmetic of a mean: with
+`n` voiced frames averaging `h` dB and `k` unvoiced frames at −200 dB, the
+mean is `(n·h − 200·k) / (n + k)`. For typical speech HNR (≈ 10–20 dB),
+just 10 % unvoiced frames (`k = n/9`) drags the mean down by about 20 dB, so
+including the sentinel would make `doc_hnr` mostly a measure of how much
+silence the recording has. Excluding it keeps the value about voiced speech.
 
 ## Library
 ```python

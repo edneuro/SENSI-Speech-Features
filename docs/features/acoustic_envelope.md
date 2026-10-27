@@ -58,12 +58,14 @@ buffer, working along the time axis):
    which quietly broke that replication; v17 migrates a stored `0.3` back to
    the exact constant.) This is not arbitrary: Stevens' loudness
    law found that the perceived loudness of a tone grows as a power function
-   of intensity with exponent `log₁₀(2)` [Stevens 1955], so the compression
-   pulls the raw acoustic envelope toward a *perceptual* loudness contour.
-   ⚠️ *Note the base of the exponent: mTRFenvelope (and SensiExtractor) raise
-   the RMS amplitude to `log₁₀(2)`, whereas Stevens' exponent is stated on
-   intensity; the toolbox adopts this value as a practical compressive
-   default rather than a strict re-derivation of the intensity law.*
+   of intensity with exponent `log₁₀(2)` [Stevens 1955], and `mTRFenvelope.m`
+   cites that law for its default ("to model human auditory perception").
+   Note the base of the exponent: the toolbox (and SensiExtractor) raise the
+   **RMS amplitude** to `log₁₀(2)`, while Stevens' exponent is on
+   **intensity**. Intensity is proportional to amplitude squared, so
+   `amplitude^0.301 = intensity^0.151`: half the loudness-law exponent. The
+   step is a compression *motivated by* the loudness law, not a
+   re-derivation of it.
 
 **`hilbert` — analytic-signal envelope.** Takes the magnitude of the
 analytic signal `|hilbert(y)|` (the instantaneous amplitude), then
