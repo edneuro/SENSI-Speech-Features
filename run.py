@@ -20,6 +20,10 @@ _REPO_ROOT = os.path.dirname(os.path.abspath(__file__))
 if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
+# Keep all model/cache downloads inside the project folder.
+from utils.local_caches import use_project_caches  # noqa: E402
+use_project_caches()
+
 
 def _prepare(ns):
     # Mirror run_dispatch._prepare_runtime_args: edu_bands list -> comma string.

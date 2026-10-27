@@ -8,9 +8,9 @@ import sys
 from pathlib import Path
 
 _HERE = Path(__file__).parent.resolve()
-os.environ.setdefault("HF_HOME",      str(_HERE / "hf_cache"))
-os.environ.setdefault("MFA_ROOT_DIR", str(_HERE / "mfa_data"))
-os.environ.setdefault("HF_HUB_DISABLE_IMPLICIT_TOKEN", "1")
+# Keep all model/cache downloads inside the project folder.
+from utils.local_caches import use_project_caches
+use_project_caches()
 # MKL on AMD CPUs (Windows/Ryzen) raises a fatal exception (0xc06d007f) during
 # BLAS matmul (e.g. librosa's mel-filterbank einsum in the acoustic level) under
 # the default Intel threading layer. Force sequential threading before any

@@ -53,7 +53,7 @@ one file per feature.
 - **A supported platform:** Windows 11+, Linux, or Apple-Silicon macOS (M1/M2/M3/M4).
   - **Intel Macs are not supported** — PyTorch dropped Intel-macOS builds after 2.2.2, which is incompatible with this project's NumPy 2.x. 
 - **Miniconda** (a minimal conda installer). The whole environment is conda-based: forced alignment needs native Kaldi libraries, and the compiled scientific stack (NumPy, pandas, SciPy, librosa, …) comes from conda-forge. A plain pip `virtualenv` will **not** work.
-- **~10 GB free disk**: the environment (~6 GB — full ML stack: PyTorch, transformers, spaCy, gensim, plus Kaldi/MFA and the PySide6 GUI) plus bundled models (~1.5 GB, already in the repo) plus the one-time Word2Vec download (~1.7 GB, on first use of the Word2Vec embedding feature).
+- **~10 GB free disk**: the environment (~6 GB — full ML stack: PyTorch, transformers, spaCy, gensim, plus Kaldi/MFA and the PySide6 GUI) plus bundled models (~1.5 GB, already in the repo) plus the one-time Word2Vec download (~1.7 GB, on first use of the Word2Vec embedding feature). All models stay inside the project folder (`hf_cache/`, `mfa_data/`, `gensim_data/`), not in your home directory; a cache location you already set (`HF_HOME`, `MFA_ROOT_DIR`, `GENSIM_DATA_DIR`) takes precedence.
 
 ---
 
@@ -297,6 +297,7 @@ SensiExtractor/
 ├── dictionaries/              # lexical-norm lookup tables
 ├── mfa_data/                  # bundled MFA models (do not edit)
 ├── hf_cache/                  # bundled GPT-2/BERT weights (do not edit)
+├── gensim_data/              # Word2Vec, downloaded here on first use (git-ignored)
 ├── sherlock/                  # HPC container + run workflow (see sherlock/RUNBOOK.md)
 └── docs/
     ├── reproducibility.md     # dependency/lock model + archival policy

@@ -2,7 +2,8 @@
 
 If the model binary is not found at the default path, it is downloaded
 automatically from the gensim model repository on first use (~1.7 GB,
-cached by gensim in ~/gensim-data/ for subsequent runs).
+cached in the project's gensim_data/ folder for subsequent runs; see
+utils/local_caches.py).
 
 Optional local override: place GoogleNews-vectors-negative300.bin at
 hf_cache/word2vec/GoogleNews-vectors-negative300.bin to skip the download.
@@ -51,7 +52,7 @@ def _load_model_uncached(model_path: str | Path) -> Any:
     p = Path(model_path)
     if p.exists():
         return KeyedVectors.load_word2vec_format(str(p), binary=True)
-    # Auto-download on first use; gensim caches in ~/gensim-data/.
+    # Auto-download on first use into GENSIM_DATA_DIR (project gensim_data/).
     cached = Path(gensim_dl.base_dir, "word2vec-google-news-300").exists()
     print(
         "[word2vec] Loading Google News 300d from gensim's cache…" if cached
