@@ -1,0 +1,55 @@
+/* SensiExtractor User Manual — THEME.
+ *
+ * Every colour, font and radius the manual uses is defined here, and only here.
+ * layout.css uses these variables; swap this one file to restyle the manual.
+ * Palette from the app (sensi/gui/theme.py): SENSI cyan + the app's greys.
+ * Style: documentation/paper for reading (white page, serif body) with the
+ * app's look for hands-on elements (cards, controls, code).
+ */
+:root {
+  /* brand */
+  --accent: #00B2D0;          /* SENSI cyan (assets/icon.svg) */
+  --accent-strong: #0093AB;   /* links, current place (AA contrast on white) */
+  --accent-soft: #E0F4F8;     /* selected outline item, highlights */
+  --accent-faint: #F2FAFC;
+
+  /* surfaces */
+  --bg-page: #FFFFFF;
+  --bg-panel: #FAFBFC;        /* left / right panels */
+  --bg-card: #FFFFFF;
+  --bg-code: #F4F6F8;         /* app's page grey */
+  --bg-table-head: #F4F6F8;
+  --bg-highlight: #FFF6D6;    /* the feature's own columns in an excerpt */
+
+  /* lines */
+  --border: #E2E6EA;
+  --border-strong: #C9CED4;
+
+  /* text */
+  --text: #1F2328;
+  --text-body: #2B2F35;
+  --text-secondary: #5B6370;
+  --text-muted: #8A8F98;
+  --warn: #8A5A00;
+  --warn-bg: #FFF4E0;
+  --note-bg: #F2FAFC;
+
+  /* type */
+  --font-body: "Source Serif 4", "Source Serif Pro", Georgia, Cambria, "Times New Roman", serif;
+  --font-ui: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --font-code: Consolas, "Cascadia Mono", "SFMono-Regular", Menlo, monospace;
+  --size-body: 17px;
+  --size-ui: 14px;
+  --size-small: 13px;
+  --line-body: 1.65;
+
+  /* shape */
+  --radius: 8px;
+  --radius-small: 5px;
+  --shadow-card: 0 1px 2px rgba(31, 35, 40, .06);
+
+  /* layout */
+  --left-width: 290px;
+  --right-width: 230px;
+  --content-max: 780px;
+}

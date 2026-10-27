@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ title }} · SensiExtractor User Manual</title>
+<link rel="icon" href="{{ root }}assets/icon.svg">
+<link rel="stylesheet" href="{{ root }}assets/theme.css">
+<link rel="stylesheet" href="{{ root }}assets/layout.css">
+<link rel="stylesheet" href="{{ root }}assets/code.css">
+</head>
+<body data-root="{{ root }}">
+<button class="menu-btn" type="button" aria-label="Open the outline">☰ Contents</button>
+<div class="shell">
+  <nav class="left" aria-label="Manual outline">
+    <a class="brand" href="{{ root }}index.html"><img src="{{ root }}assets/icon.svg" alt="">SensiExtractor <span>User Manual</span></a>
+    <div class="search">
+      <input type="search" placeholder="Search features, columns…  ( / )" aria-label="Search the manual">
+      <div class="search-results" role="listbox"></div>
+    </div>
+    <div class="outline">{{ outline_html | safe }}</div>
+  </nav>
+  <main>
+    <div class="content">
+      {% if crumbs %}<div class="crumbs">{% for c in crumbs %}{% if c.url %}<a href="{{ root }}{{ c.url }}">{{ c.title }}</a>{% else %}{{ c.title }}{% endif %}{% if not loop.last %} › {% endif %}{% endfor %}</div>{% endif %}
+      {{ body | safe }}
+      <nav class="pager">
+        {% if prev %}<a class="prev" href="{{ root }}{{ prev.url }}"><small>Previous</small>{{ prev.title }}</a>{% else %}<span></span>{% endif %}
+        {% if next %}<a class="next" href="{{ root }}{{ next.url }}"><small>Next</small>{{ next.title }}</a>{% endif %}
+      </nav>
+      <footer>SensiExtractor User Manual · built {{ build.date }} from commit {{ build.commit }} · source: <a href="https://github.com/edneuro/SENSI-Speech-Features">edneuro/SENSI-Speech-Features</a></footer>
+    </div>
+  </main>
+  <aside class="right" aria-label="On this page">
+    {% if toc %}<div class="label">On this page</div>
+    <ul>{% for t in toc %}<li><a href="#{{ t.id }}">{{ t.title }}</a></li>{% endfor %}</ul>{% endif %}
+    {% if meta %}<div class="meta">{% for m in meta %}<div>{{ m | safe }}</div>{% endfor %}</div>{% endif %}
+  </aside>
+</div>
+<script src="{{ root }}assets/search-index.js"></script>
+<script src="{{ root }}assets/manual.js"></script>
+</body>
+</html>

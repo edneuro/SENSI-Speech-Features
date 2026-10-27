@@ -83,3 +83,6 @@ sherlock/*.sif
 sherlock/build-temp-*/
 sherlock/*_sandbox/
 SensiExtractor.app/
+
+# User Manual: the real SensiExtractor outputs the manual is built from (scripts/build_manual.py)
+!dev/manual/example_outputs/**/*.csv

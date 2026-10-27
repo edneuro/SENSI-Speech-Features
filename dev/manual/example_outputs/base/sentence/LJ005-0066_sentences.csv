@@ -1,0 +1,2 @@
+doc_id,sentence_id,sentence,Onset,End,Pitch_Mean,Pitch_Min,Pitch_Max,Pitch_Std,Pitch_Delta,Volume_Mean,Volume_Min,Volume_Max,Volume_Std,Volume_Delta,HNR
+4,1,"The new jails, as Howard says, having pompous fronts appear like palaces to the lower class of people, and many persons are against them on this account.",0.0,10.02,-1.0562874997155445,-16.71475441802642,5.955013656219393,5.796398451678454,,62.35643192217642,33.974311902693394,75.60080187728751,12.315025678452947,,12.404335439888191

@@ -1,0 +1,310 @@
+# User Manual outline + per-feature additions (spec item 11/12).
+# Narrative text comes from docs/features/<key>.md; this file only says where a
+# feature sits (mirroring the GUI pages and their section cards, in GUI order),
+# which example output to show, and how to draw it.
+#
+#   example:  stem of a file in dev/manual/example_outputs/<variant>/
+#   output:   output file(s), {stem} replaced by the example stem
+#   show:     columns (CSV) or variables (.mat) the page shows and checks
+#   figure:   kind drawn by scripts/manual/figures.py (see that module)
+#   variants: other example_outputs/ folders to switch between (scripts/manual/examples.py VARIANTS)
+#   not_computed: reason the manual cannot show real output (then no figure)
+#
+# Defaults: example LJ002-0321, variant base.
+
+gui_pages:
+  word: Word-level features
+  document: Document-level features
+  subword: Sub-word features
+  sentence: Sentence features
+  acoustic: Acoustic features
+
+chapter_docs:
+  llm_credentials: usage
+
+levels:
+  - id: word
+    title: Word level
+    blurb: One row per word (and punctuation token) in word/<stim>_features.csv, plus the word-embedding .mat files.
+    sections:
+      - title: Structural
+        features:
+          - key: structural_ids
+            output: "word/{stem}_features.csv"
+            show: [doc_id, paragraph_id, sentence_id, token_id, token_in_sentence_id, token]
+            figure: table
+          - key: structural_offsets
+            output: "word/{stem}_features.csv"
+            show: [sentence_id, token, start, end]
+            figure: char_offsets
+          - key: feat_struct_sentence_text
+            output: "word/{stem}_features.csv"
+            show: [sentence_id, token, sentence]
+            figure: table
+      - title: Linguistic annotations
+        features:
+          - key: lexling_tokens
+            output: "word/{stem}_features.csv"
+            show: [token, lemma]
+            figure: table
+          - key: lexling_pos
+            output: "word/{stem}_features.csv"
+            show: [token, upos, xpos]
+            figure: tags
+          - key: lexling_morph
+            output: "word/{stem}_features.csv"
+            show: [token, upos, feats]
+            figure: table
+          - key: lexling_dep
+            output: "word/{stem}_features.csv"
+            show: [token_in_sentence_id, token, dep_rel, head_token_id]
+            figure: dependency
+      - title: Frequency
+        features:
+          - key: freq_subtlex
+            output: "word/{stem}_features.csv"
+            show: [token, Zipf_Freq]
+            figure: word_bars
+            y: Zipf_Freq
+          - key: edu_zipf
+            not_computed: "The Educator's Word Frequency Guide exists only in print, so there is no lookup table; these columns are never written (the planner leaves them out unless you supply data/dictionaries/edu_zipf.parquet)."
+            show: [Edu_Zipf_K2, Edu_Zipf_3to5, Edu_Zipf_6to8, Edu_Zipf_9to12, Edu_Zipf_Overall]
+      - title: Predictability
+        features:
+          - key: pred_surprisal
+            example: [predictable, surprising]
+            output: "word/{stem}_features.csv"
+            show: [token, gpt2_Surprisal]
+            figure: predict_compare
+            y: gpt2_Surprisal
+          - key: pred_cloze
+            example: [predictable, surprising]
+            output: "word/{stem}_features.csv"
+            show: [token, gpt2_Cloze]
+            figure: predict_compare
+            y: gpt2_Cloze
+          - key: pred_topmatch
+            example: [predictable, surprising]
+            output: "word/{stem}_features.csv"
+            show: [token, gpt2_TopMatch]
+            figure: predict_compare
+            y: gpt2_TopMatch
+      - title: Semantic indicators
+        features:
+          - key: sem_indicators
+            example: LJ003-0007
+            output: "word/{stem}_features.csv"
+            show: [token, Sem_Categories, Sem_Empath_family, Sem_Empath_communication]
+            figure: categories
+      - title: Semantic similarity
+        features:
+          - key: master_word2vec
+            output: "word/{stem}_word2vec.mat"
+            show: [embeddings, tokens, word_id, sentence_id, is_valid]
+            figure: embedding
+          - key: master_bert_word
+            output: "word/{stem}_bert_word.mat"
+            show: [embeddings, tokens, word_id, sentence_id, is_valid]
+            figure: embedding_layers
+      - title: Lexical norms
+        features:
+          - key: lexical_norms
+            output: "word/{stem}_features.csv"
+            show: [token, AoA_Mean, AoA_SD, Concreteness, Imageability, Familiarity, Valence, Arousal, Dominance]
+            figure: norms
+      - title: Acoustic (word timing)
+        features:
+          - key: acoustic_boundaries
+            output: "word/{stem}_features.csv"
+            show: [token, Transcript, Onset, End]
+            figure: word_timeline
+          - key: acoustic_durations
+            output: "word/{stem}_features.csv"
+            show: [token, Onset, End, Word_Duration, Word_Gap]
+            figure: word_timeline
+      - title: Prosody
+        features:
+          - key: prosody_pitch
+            output: "word/{stem}_features.csv"
+            show: [token, Pitch_Mean, Pitch_Min, Pitch_Max, Pitch_Std, Pitch_Delta]
+            figure: word_prosody
+            y: Pitch
+            variants: [pitch_hz]
+          - key: prosody_volume
+            output: "word/{stem}_features.csv"
+            show: [token, Volume_Mean, Volume_Min, Volume_Max, Volume_Std, Volume_Delta]
+            figure: word_prosody
+            y: Volume
+
+  - id: document
+    title: Document level
+    blurb: One row per stimulus in document/documents_summary_<timestamp>.csv.
+    sections:
+      - title: Counts
+        features:
+          - key: doc_counts
+            output: document/documents_summary.csv
+            show: [stimulus_id, n_tokens, n_content_tokens, n_sentences, n_paragraphs]
+            figure: doc_bars
+      - title: Aggregates
+        features:
+          - key: doc_aggregates
+            output: document/documents_summary.csv
+            show: [stimulus_id, mean_zipf_freq, mean_gpt2_surprisal, mean_gpt2_cloze, mean_gpt2_topmatch]
+            figure: doc_bars
+      - title: Lexical diversity
+        features:
+          - key: output_doc_lex_diversity
+            output: document/documents_summary.csv
+            show: [stimulus_id, ttr, mtld]
+            figure: doc_bars
+      - title: Readability
+        features:
+          - key: output_doc_readability
+            output: document/documents_summary.csv
+            show: [stimulus_id, flesch_reading_ease, flesch_kincaid_grade]
+            figure: doc_bars
+      - title: Category proportions
+        features:
+          - key: output_doc_category_proportions
+            output: document/documents_summary.csv
+            show: [stimulus_id, count_family, prop_family, count_communication, prop_communication]
+            figure: doc_bars
+      - title: Composite psychological scores
+        features:
+          - key: doc_psych_composite
+            output: document/documents_summary.csv
+            show: [stimulus_id, psych_authentic, psych_analytic, psych_tone, psych_clout]
+            figure: doc_bars
+      - title: Document prosody
+        features:
+          - key: doc_prosody_pitch
+            output: document/documents_summary.csv
+            show: [stimulus_id, doc_pitch_mean, doc_pitch_min, doc_pitch_max, doc_pitch_std, doc_pitch_delta_mean]
+            figure: doc_bars
+          - key: doc_prosody_volume
+            output: document/documents_summary.csv
+            show: [stimulus_id, doc_volume_mean, doc_volume_min, doc_volume_max, doc_volume_std, doc_volume_delta_mean]
+            figure: doc_bars
+          - key: doc_prosody_pauses
+            output: document/documents_summary.csv
+            show: [stimulus_id, doc_pause_count, doc_pause_mean_duration, doc_pause_total_duration, doc_pause_pct_silence]
+            figure: doc_bars
+          - key: feat_doc_prosody_articulation_rate
+            output: document/documents_summary.csv
+            show: [stimulus_id, doc_articulation_rate]
+            figure: doc_bars
+          - key: feat_doc_prosody_hnr
+            output: document/documents_summary.csv
+            show: [stimulus_id, doc_hnr]
+            figure: doc_bars
+
+  - id: subword
+    title: Sub-word level
+    blurb: One row per syllable in syllable/<stim>_syllables.csv and per phoneme in phoneme/<stim>_phonemes.csv, plus phoneme/<stim>_phoneme_surprisal.mat.
+    sections:
+      - title: Syllable timing
+        features:
+          - key: syllable_timing
+            output: "syllable/{stem}_syllables.csv"
+            show: [token, syllable_id, Label, Onset, End, Duration]
+            figure: syllable_timeline
+      - title: Syllable labels
+        features:
+          - key: syllable_labels
+            output: "syllable/{stem}_syllables.csv"
+            show: [token, syllable_id, Label, ARPABET, IPA]
+            figure: table
+      - title: Syllable prosody
+        features:
+          - key: syllable_prosody
+            output: "syllable/{stem}_syllables.csv"
+            show: [token, Label, Pitch_Mean, Volume_Mean, Pitch_Delta, Volume_Delta]
+            figure: syllable_prosody
+      - title: P-center
+        features:
+          - key: feat_syllable_pcenter
+            output: "syllable/{stem}_syllables.csv"
+            show: [token, Label, Onset, End, P_Center]
+            figure: syllable_timeline
+      - title: Phonemes
+        features:
+          - key: phoneme
+            output: "phoneme/{stem}_phonemes.csv"
+            show: [token, phoneme_id, ARPABET, Stress, IPA, Pron_Source, Onset, End, Duration]
+            figure: phoneme_timeline
+          - key: feat_phoneme_ipa
+            output: "phoneme/{stem}_phonemes.csv"
+            show: [token, ARPABET, Stress, IPA]
+            figure: table
+          - key: g2p_oov
+            not_computed: "Needs a spoken word that is missing from the pronunciation dictionary; every word in the manual's public-domain recordings is in it, and we do not fabricate audio. With the option on, such a word gets Pron_Source = g2p and modeled phones instead of a single spn."
+            show: [ARPABET, Stress, IPA, Pron_Source]
+      - title: Phoneme surprisal
+        features:
+          - key: phoneme_surprisal
+            output: ["phoneme/{stem}_phonemes.csv", "phoneme/{stem}_phoneme_surprisal.mat"]
+            show: [token, ARPABET, phoneme_surprisal, cohort_entropy]
+            mat_show: [phoneme_surprisal, cohort_entropy, phoneme_onset, word_onset, t, fs]
+            figure: phoneme_surprisal
+
+  - id: sentence
+    title: Sentence level
+    blurb: One row per sentence in sentence/<stim>_sentences.csv, plus sentence/<stim>_bert_sentence.mat.
+    sections:
+      - title: Sentence timing
+        features:
+          - key: sentence_timing
+            output: "sentence/{stem}_sentences.csv"
+            show: [sentence_id, sentence, Onset, End]
+            figure: table
+      - title: Sentence prosody
+        features:
+          - key: sentence_prosody_pitch
+            output: "sentence/{stem}_sentences.csv"
+            show: [sentence_id, Pitch_Mean, Pitch_Min, Pitch_Max, Pitch_Std, Pitch_Delta]
+            figure: table
+          - key: sentence_prosody_volume
+            output: "sentence/{stem}_sentences.csv"
+            show: [sentence_id, Volume_Mean, Volume_Min, Volume_Max, Volume_Std, Volume_Delta]
+            figure: table
+          - key: feat_sentence_hnr
+            output: "sentence/{stem}_sentences.csv"
+            show: [sentence_id, sentence, HNR]
+            figure: table
+      - title: Sentence similarity
+        features:
+          - key: master_bert_sentence
+            example: LJ003-0007
+            output: "sentence/{stem}_bert_sentence.mat"
+            show: [embeddings, sentence_id, sentence, is_valid]
+            figure: sentence_similarity
+
+  - id: acoustic
+    title: Acoustic level
+    blurb: Audio-only time series in acoustic/<stim>_acoustic.mat, on one shared time grid set by the analysis rate.
+    sections:
+      - title: Time series
+        features:
+          - key: acoustic_envelope
+            output: "acoustic/{stem}_acoustic.mat"
+            show: [envelope, t, fs]
+            figure: timeseries
+            y: envelope
+            variants: [env_hilbert]
+          - key: acoustic_onset_envelope
+            output: "acoustic/{stem}_acoustic.mat"
+            show: [onset_envelope, t, fs]
+            figure: timeseries
+            y: onset_envelope
+          - key: acoustic_logmel
+            output: "acoustic/{stem}_acoustic.mat"
+            show: [logmel, mel_center_freqs, t, fs]
+            figure: image
+            y: logmel
+            variants: [mel_music]
+          - key: acoustic_mfcc
+            output: "acoustic/{stem}_acoustic.mat"
+            show: [mfcc, t, fs]
+            figure: image
+            y: mfcc

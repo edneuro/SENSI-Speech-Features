@@ -1,0 +1,2 @@
+doc_id,sentence_id,sentence,Onset,End,Pitch_Mean,Pitch_Min,Pitch_Max,Pitch_Std,Pitch_Delta,Volume_Mean,Volume_Min,Volume_Max,Volume_Std,Volume_Delta,HNR
+3,1,"It was thought that this would guarantee constant supervision and inspection, but it did nothing of the kind and only the presence of warders on duty.",0.35,10.07,0.23245250837364673,-5.858106908785914,8.919999521822104,5.040419839270231,,62.23850547390381,38.62954810449771,76.27042485252834,11.298286685892862,,11.44480432990836
