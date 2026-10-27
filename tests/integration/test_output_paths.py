@@ -12,7 +12,8 @@ import pandas as pd
 import pytest
 
 from sensi import pipeline
-from sensi.pipeline import build_parser, run_word_level_batch, run_doc_level_batch
+from sensi.pipeline import run_word_level_batch, run_doc_level_batch
+from tests.batch_args import build_parser
 
 FIXTURES = Path(__file__).parent.parent / 'fixtures'
 

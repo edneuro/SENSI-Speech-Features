@@ -50,37 +50,51 @@ def test_acoustic_batch_writes_mat_without_transcript(tmp_path):
     assert data["logmel"].shape[0] == n
 
 
-def test_acoustic_cli_runs_in_fresh_process_without_mkl_env(tmp_path):
-    """Regression: a real `python main.py --level acoustic` invocation must NOT
-    crash in a fresh process.
+def test_acoustic_run_py_in_fresh_process_without_mkl_env(tmp_path, monkeypatch):
+    """Regression: a real headless run of the acoustic level must NOT crash in a
+    fresh process.
 
-    The acoustic level's mel-filterbank matmul (librosa einsum → numpy/MKL) hard-
+    The acoustic level's mel-filterbank matmul (librosa einsum -> numpy/MKL) hard-
     crashes on AMD CPUs (Windows fatal exception 0xc06d007f) under the default
     Intel MKL threading layer. tests/conftest.py sets MKL_THREADING_LAYER for the
-    test process, but production entry points (main.py / gui.py) must set it
-    themselves — otherwise the CLI and GUI crash for end users. This test launches
-    a *fresh* subprocess with MKL_THREADING_LAYER explicitly removed to prove
-    main.py applies the workaround on its own. (On Intel CPUs the default layer is
-    fine, so this also serves as a plain end-to-end CLI smoke test there.)
+    test process, but the launchers (run.py / gui.py) must set it themselves --
+    otherwise real runs crash for end users. This test launches `run.py` in a
+    *fresh* subprocess with MKL_THREADING_LAYER explicitly removed to prove the
+    launcher applies the workaround on its own. (On Intel CPUs the default layer
+    is fine, so this is also a plain end-to-end smoke test of run.py there.)
     """
+    from sensi.utils.preferences import save_preferences
+
     audio = tmp_path / "audio"
     out = tmp_path / "out"
+    cfg = tmp_path / "cfg"
     _make_audio(audio, "stimCLI.wav")
+    (tmp_path / "transcripts").mkdir()
+    monkeypatch.setenv("SENSI_CONFIG_DIR", str(cfg))
+    save_preferences({
+        "output": {"level_word": False, "level_acoustic": True},
+        "features": {"master_acoustic_ts": True, "feat_acoustic_ts_envelope": True,
+                     "feat_acoustic_ts_onset_env": True, "feat_acoustic_ts_logmel": True,
+                     "feat_acoustic_ts_mfcc": False},
+        "acoustic_ts": {"analysis_rate": 128},
+        "shared": {"analyzer_name": "t",
+                   "last_transcripts_folder": str(tmp_path / "transcripts"),
+                   "last_audio_folder": str(audio),
+                   "last_output_folder": str(out)},
+    })
 
     env = dict(os.environ)
     env.pop("MKL_THREADING_LAYER", None)   # do NOT inherit the conftest workaround
 
     proc = subprocess.run(
-        [sys.executable, "main.py", "--level", "acoustic",
-         "--audio-folder", str(audio), "--output-folder", str(out),
-         "--analysis-rate", "128"],
+        [sys.executable, "run.py", "--config-dir", str(cfg)],
         cwd=str(_PROJECT_ROOT), env=env,
         capture_output=True, text=True, timeout=300,
     )
 
     mat_path = out / "acoustic" / "stimCLI_acoustic.mat"
     assert proc.returncode == 0, (
-        f"CLI exited {proc.returncode} (native crash if non-zero with no traceback).\n"
+        f"run.py exited {proc.returncode} (native crash if non-zero with no traceback).\n"
         f"STDOUT:\n{proc.stdout}\nSTDERR:\n{proc.stderr}")
     assert mat_path.is_file(), f"no .mat produced; stderr:\n{proc.stderr}"
     data = scipy.io.loadmat(str(mat_path))

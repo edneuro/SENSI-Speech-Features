@@ -169,7 +169,8 @@ def test_independence_doc_mean_zipf_when_word_freq_disabled(tmp_path):
     word-level Zipf columns.  run_doc_level_batch should internally enable the
     freq extractor regardless of the word-level toggle."""
     from pathlib import Path
-    from sensi.pipeline import run_doc_level_batch, build_parser
+    from sensi.pipeline import run_doc_level_batch
+    from tests.batch_args import build_parser
     import csv
 
     FIXTURES = Path(__file__).parent.parent / 'fixtures'
@@ -267,7 +268,8 @@ def test_independence_doc_mean_predictability_when_word_predictability_disabled(
     the run actually configured; run_doc_level_batch wires doc_agg_predictability
     -> the single 'predictability_means' toggle end to end."""
     from pathlib import Path
-    from sensi.pipeline import run_doc_level_batch, build_parser
+    from sensi.pipeline import run_doc_level_batch
+    from tests.batch_args import build_parser
     import csv
 
     FIXTURES = Path(__file__).parent.parent / 'fixtures'

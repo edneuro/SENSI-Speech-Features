@@ -1,21 +1,17 @@
 """
 SensiExtractor — stimulus feature extraction pipeline.
 
-Usage:
-    python main.py --audio path/to/audio.wav --transcript path/to/text.txt
-    python main.py --audio audio.wav --transcript text.txt --output features.csv
-    python main.py --audio audio.wav --transcript text.txt \\
-                   --no-align --no-freq
+Called by the two launchers, never run directly: gui.py (Run tab, via
+sensi/gui/run_dispatch.py) and run.py (headless, from config/features.yaml
++ run.yaml). Both build the argument namespace with the planner
+(sensi/gui/planner: plan_from_prefs -> to_namespace) and call the three
+batch runners below. The old `python main.py --flags` command line was
+retired on 2026-10-27.
 
-Feature flags (all enabled by default):
-    --no-align       Skip MFA forced alignment (Onset / End columns)
-    --no-parse       Skip spaCy linguistic annotation
-    --no-freq        Skip word frequency (Zipf_Freq)
-
-Predictability (surprisal / cloze / top-match) is no longer a CLI flag: it
-is configured via config/features.yaml's "predictability" section (roster of
-models x metrics) or, for GUI-driven runs, via ns.predictability set by
-gui/planner/emit.py. See extractors/predictability.py.
+Predictability (surprisal / cloze / top-match) is configured via
+config/features.yaml's "predictability" section (roster of models x
+metrics), passed in as ns.predictability by the planner. See
+sensi/extractors/predictability.py.
 
 Output:
     One CSV file with one row per word token. Punctuation tokens are
@@ -43,7 +39,6 @@ Merge strategy (alignment + parse):
     timing of a same-form word elsewhere in the document.
 """
 
-import argparse
 import contextlib
 import os
 import re
@@ -54,7 +49,7 @@ from pathlib import Path
 # MKL on AMD CPUs (Windows/Ryzen) raises a fatal exception (0xc06d007f) during
 # BLAS matmul — notably librosa's mel-filterbank einsum in the acoustic level —
 # under the default Intel threading layer. Force sequential threading BEFORE
-# numpy imports and initialises MKL. Mirrors tests/conftest.py so real CLI/GUI
+# numpy imports and initialises MKL. Mirrors tests/conftest.py so real GUI/run.py
 # runs behave like the (passing) test environment instead of hard-crashing.
 os.environ.setdefault("MKL_THREADING_LAYER", "sequential")
 
@@ -64,157 +59,6 @@ import pandas as pd
 # Keep all model/cache downloads inside the project folder
 from sensi.utils.local_caches import use_project_caches
 use_project_caches()
-
-
-# ---------------------------------------------------------------------------
-# CLI
-# ---------------------------------------------------------------------------
-
-def build_parser() -> argparse.ArgumentParser:
-    p = argparse.ArgumentParser(
-        description='Extract word-level stimulus features from audio + transcript.'
-    )
-    p.add_argument('--audio', required=False,
-                   help='Path to .wav audio file. Required unless --no-align.')
-    p.add_argument('--transcript', required=False, default='',
-                   help='Path to plain-text transcript file.')
-    p.add_argument('--output', default='features.csv',
-                   help='Output CSV path (default: features.csv).')
-    p.add_argument('--doc-id', type=int, default=1,
-                   help='1-indexed document identifier written to the doc_id '
-                        'column (default: 1). Batch mode overrides this with '
-                        'the document\'s position in the run.')
-
-    p.add_argument('--no-align',     action='store_true', help='Skip MFA alignment.')
-    p.add_argument('--no-parse',     action='store_true', help='Skip spaCy annotation.')
-    p.add_argument('--no-freq',      action='store_true', help='Skip word frequency.')
-
-    # New batch 1 feature flags
-    # EWFG is opt-in: its source (Zeno et al. 1995) is print-only / not
-    # digitized, so it is off by default. --no-edu-freq is kept (now redundant
-    # with the default) for backward compatibility.
-    p.add_argument('--edu-freq', dest='no_edu_freq', action='store_false',
-                   help='Enable EWFG grade-band frequencies (off by default; '
-                        'requires a user-supplied dictionaries/edu_zipf.parquet).')
-    p.add_argument('--no-edu-freq', dest='no_edu_freq', action='store_true',
-                   help='(default) Skip EWFG grade-band frequencies.')
-    p.set_defaults(no_edu_freq=True)
-    p.add_argument('--edu-freq-lookup', default=None, help='Override path to EWFG lookup parquet.')
-    p.add_argument('--edu-bands',       default=None,
-                   help='Comma-separated EWFG bands to emit: k2,3to5,6to8,9to12,overall. '
-                        'Default (omit flag) = all five bands.')
-
-    # Lexical norms are opt-in (no data ships; user supplies parquet files).
-    p.add_argument('--lexical-norms', dest='no_lexical_norms', action='store_false',
-                   default=True,
-                   help='Compute lexical-norm columns (AoA / concreteness / '
-                        'imageability / familiarity / valence-arousal-dominance) '
-                        'from user-supplied parquets in dictionaries/.')
-    p.add_argument('--doc-lexical-norms', dest='no_doc_lexical_norms',
-                   action='store_false', default=True,
-                   help='Emit document-level lexical-norm aggregates (means, '
-                        'AoA spread, prop_late_acquired, coverage).')
-    p.add_argument('--late-acquired-threshold', type=float, default=10.0,
-                   help='AoA (years) above which a word counts as late-acquired '
-                        'for prop_late_acquired (default 10).')
-
-    p.add_argument('--no-sem-domain',   action='store_true', help='Skip semantic-domain columns and doc summary.')
-    p.add_argument('--sem-dict',        default='auto',
-                   help='Semantic dictionary backend: liwc | empath | auto | <path-to-.dic>.')
-    p.add_argument('--sem-categories',  default=None,
-                   help='Comma-separated category names. Default = SOP 15-category set.')
-    p.add_argument('--save-prefs',      action='store_true',
-                   help='Persist current --sem-categories selection to config/features.yaml.')
-
-    # Prosody (Task 5) — group-level CLI flags only.
-    # Per-column granularity is GUI-only and flows through args.feature_toggles
-    # (matching the existing pattern for feat_acoustic_* / feat_psych_*).
-    p.add_argument('--no-prosody',     action='store_true',
-                   help='Skip all 10 word-level prosody columns.')
-    p.add_argument('--no-doc-prosody', action='store_true',
-                   help='Skip all 16 doc-level prosody + pause columns.')
-    # Configuration
-    p.add_argument('--pitch-units', choices=['hz', 'semitones'], default='semitones')
-    p.add_argument('--pause-threshold', type=float, default=0.25)
-    p.add_argument('--pitch-floor', type=float, default=75.0)
-    p.add_argument('--pitch-ceiling', type=float, default=500.0)
-
-    # Batch-mode flags
-    p.add_argument('--transcripts-folder', default=None, help='Batch mode: transcripts folder.')
-    p.add_argument('--audio-folder',       default=None, help='Batch mode: audio folder.')
-    p.add_argument('--output-folder',      default=None, help='Batch mode: output folder.')
-    p.add_argument('--analyzer',           default=None, help='Required for batch mode; recorded in manifest.')
-    p.add_argument('--text-extensions',    default='txt,tsv,md', help='Comma-separated text extensions.')
-    p.add_argument('--audio-extensions',   default='wav,flac,mp3', help='Comma-separated audio extensions.')
-
-    p.add_argument('--level', choices=['word', 'document', 'acoustic'], default='word',
-                   help='Batch mode: which level to run. Default: word.')
-
-    # Acoustic-level (time-series) flags — audio-only, no transcript needed.
-    p.add_argument('--analysis-rate', type=float, default=128.0,
-                   help='Acoustic level: output sample rate in Hz (match your EEG).')
-    p.add_argument('--env-method', choices=['rms', 'hilbert'], default='rms')
-    from sensi.extractors.acoustic_ts import MTRF_COMP
-    p.add_argument('--env-comp', type=float, default=MTRF_COMP,
-                   help='Envelope power-law compression exponent '
-                        '(default: log10(2) ~ 0.30103, exactly matching '
-                        'mTRFenvelope.m — a rounded 0.3 breaks the '
-                        'bit-for-bit mTRF replication).')
-    p.add_argument('--env-window', type=float, default=1.0,
-                   help='Envelope averaging window (mTRF window; >1 overlaps frames for smoothing).')
-    p.add_argument('--n-mels', type=int, default=16)
-    p.add_argument('--n-mfcc', type=int, default=13)
-    p.add_argument('--mel-preset', choices=['speech', 'music', 'general'], default='speech')
-    p.add_argument('--no-envelope',  action='store_true')
-    p.add_argument('--no-onset-env', action='store_true')
-    p.add_argument('--no-logmel',    action='store_true')
-    p.add_argument('--mfcc', action='store_true', help='Acoustic level: also emit MFCCs (off by default).')
-
-    # Doc-level feature toggles (default = on)
-    p.add_argument('--no-doc-counts',                action='store_true')
-    p.add_argument('--no-doc-mean-zipf',             action='store_true')
-    p.add_argument('--no-doc-mean-edu-zipf',         action='store_true')
-    p.add_argument('--no-doc-predictability',        action='store_true',
-                   help='Skip mean_<slug>_<metric> doc-level predictability aggregates.')
-    p.add_argument('--no-doc-ttr',                   action='store_true')
-    p.add_argument('--no-doc-mtld',                  action='store_true')
-    p.add_argument('--no-doc-flesch-ease',           action='store_true')
-    p.add_argument('--no-doc-fk-grade',              action='store_true')
-    p.add_argument('--no-doc-category-proportions',  action='store_true')
-    p.add_argument('--no-doc-psych-authentic',       action='store_true')
-    p.add_argument('--no-doc-psych-analytic',        action='store_true')
-    p.add_argument('--no-doc-psych-tone',            action='store_true')
-    p.add_argument('--no-doc-psych-clout',           action='store_true')
-
-    # Sub-word sidecar master toggles
-    p.add_argument('--no-syllables', action='store_true',
-                   help='Skip <stim>_syllables.csv emission.')
-    p.add_argument('--no-phonemes',  action='store_true',
-                   help='Skip <stim>_phonemes.csv emission.')
-
-    # Alignment options
-    p.add_argument('--g2p-oov', action='store_true',
-                   help='Use the MFA G2P model to generate pronunciations for '
-                        'out-of-dictionary words instead of aligning them to a '
-                        'single spn phone. Off by default: the pronunciation is '
-                        'modeled, not observed.')
-
-    # Per-column sub-word / sentence choices live in config/features.yaml
-    # (feat_syllable_* / feat_phoneme_* / feat_sentence_*), read via the
-    # planner; the CLI only carries the master skips above and below.
-    p.add_argument('--pcenter-k', type=float, default=0.3,
-                   help='Scott 1993 P-center coefficient (default 0.3).')
-
-    # Sentence-level sidecar master toggle
-    p.add_argument('--no-sentences', action='store_true',
-                   help='Skip <stim>_sentences.csv emission.')
-
-    # Note: embedding .mat output (word2vec, bert_word, bert_sentence) is
-    # controlled by ns.no_word2vec / ns.no_bert_word / ns.no_bert_sentence
-    # set by gui/planner/emit.py. CLI does not expose these flags because the
-    # models require large downloads; use the GUI to enable embeddings.
-
-    return p
 
 
 # ---------------------------------------------------------------------------
@@ -268,7 +112,7 @@ def _reorder(df: pd.DataFrame) -> pd.DataFrame:
 # Per-step timing (Run-tab estimates; utils/timing_history.py)
 # ---------------------------------------------------------------------------
 # The batch runners attach a StageTimer as args._stage_timer; every helper
-# below is a no-op without one (CLI single runs, direct run() callers), so
+# below is a no-op without one (direct run() callers, e.g. tests), so
 # timing never touches what a stage computes or writes.
 
 def _stage(args, step, units, model=None, device='cpu'):
@@ -398,9 +242,9 @@ def run(args) -> pd.DataFrame:
         sem_categories = args.sem_categories.split(',')
     else:
         # v7 prefs schema unifies categories across levels into a single
-        # `categories_<backend>` key. This fallback is reached for CLI
-        # runs; batch callers (GUI dispatch) always pass --sem-categories
-        # explicitly via ns.sem_categories.
+        # `categories_<backend>` key. This fallback is reached by direct
+        # run() callers; the planner (GUI / run.py) always sets
+        # ns.sem_categories explicitly.
         backend_hint = prefs.get('semantic', {}).get('backend', 'auto')
         suffix = 'liwc' if backend_hint == 'liwc' else 'empath'
         sem_categories = prefs.get('semantic', {}).get(
@@ -448,8 +292,8 @@ def run(args) -> pd.DataFrame:
     # Predictability (surprisal / cloze / top-match) — unified, roster-driven
     # extractor (replaces the old separate add_surprisal / add_llm_cloze
     # blocks). Config comes from ns.predictability when a caller (GUI batch
-    # dispatch) set it explicitly; the CLI leaves args.predictability unset,
-    # so a plain `python main.py` run falls back to the config store (mirrors
+    # dispatch) set it explicitly; a direct run() caller that leaves
+    # args.predictability unset falls back to the config store (mirrors
     # how sem_categories falls back to prefs above).
     pconf = getattr(args, 'predictability', None)
     if pconf is None:
@@ -477,7 +321,7 @@ def run(args) -> pd.DataFrame:
         # In batch mode the pre-pass (run_*_level_batch) has already aligned
         # every stimulus to <output_folder>/Montreal Forced Alignment/, so run()
         # reads TextGrids from disk and must NOT spawn MFA (run_if_missing=False).
-        # CLI single-run has no output_folder: persist_dir=None, MFA runs once.
+        # A direct run() call with no output_folder: persist_dir=None, MFA runs once.
         persist_dir = (alignment_dir(args.output_folder)
                        if getattr(args, 'output_folder', None) else None)
         run_if_missing = not getattr(args, '_batch_prealigned', False)
@@ -538,15 +382,14 @@ def run(args) -> pd.DataFrame:
         # it, kill the worker thread, and leave the GUI's Run button stuck
         # in "running" state (done_cb never fires). Raise a regular
         # RuntimeError instead so the batch handler records it as a pair
-        # error and the run completes cleanly; main() below converts it to
-        # an exit-1 for CLI users.
+        # error and the run completes cleanly.
         raise RuntimeError('All extractors are disabled — nothing to extract.')
 
     if args.save_prefs and args.sem_categories:
         from sensi.utils.preferences import save_preferences
         # v7 unified: a single categories_<backend> key per backend. Write to
         # both backends so the saved selection survives a later backend switch.
-        # --save-prefs at CLI is rare; the GUI saves via
+        # Only direct callers set save_prefs; the GUI saves via
         # category_picker._on_toggle which already writes the right key.
         save_preferences({'semantic': {
             'categories_empath': sem_categories,
@@ -616,8 +459,8 @@ from sensi.utils.doc_summary import build_doc_summary
 # Per-column toggle → CSV column name mappings (schema v4).
 # Used by run_word_level_batch and run_doc_level_batch to drop unselected
 # columns before writing the CSV. The toggles are passed via args.features
-# (and args.output for doc-level toggles) when invoked from the GUI; the CLI
-# leaves them unset which causes all columns to be retained.
+# (and args.output for doc-level toggles) by the planner; a direct caller
+# that leaves them unset keeps all columns.
 
 _WORD_FEATURE_COLUMN_MAP = {
     # Structural
@@ -1323,7 +1166,7 @@ def run_doc_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None:
     # is no no_surprisal=False-style flag to force on — predictability is a
     # models x metrics roster carried verbatim on extract_args.predictability
     # (copied from args above: either ns.predictability set by the GUI or,
-    # for CLI runs, resolved from config/features.yaml inside run()). When
+    # for direct run() callers, resolved from config/features.yaml inside run()). When
     # doc_toggles['predictability_means'] is on, build_doc_summary scans
     # whatever '<slug>_<Metric>' columns that roster actually produced and
     # means them (utils/doc_summary.py's predictability_means branch) — if
@@ -1342,8 +1185,8 @@ def run_doc_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None:
     # Pitch_Delta / Volume_Delta which compute_doc_prosody reads, and it
     # populates args._contours which compute_doc_prosody also needs.
     # Prosody requires MFA Onset/End; the run() prosody block silently
-    # no-ops when alignment didn't run, so we don't force --no-align here
-    # (an explicit user --no-align should win, and the GUI path
+    # no-ops when alignment didn't run, so we don't force no_align here
+    # (an explicit no_align should win, and the GUI path
     # separately ensures alignment is on when doc-prosody is wanted —
     # see gui/run_dispatch.py).
     if doc_toggles.get('doc_prosody'):
@@ -1412,8 +1255,8 @@ def run_doc_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None:
     if summary_rows:
         summary_df = pd.DataFrame(summary_rows)
         # Drop per-column toggled-off doc-level columns (schema v4).
-        # Note: args.output is the CLI --output PATH; the v4 OUTPUT TOGGLE
-        # dict lives at args.output_toggles to avoid the name collision.
+        # Note: the v4 OUTPUT TOGGLE dict lives at args.output_toggles (named so
+        # when the retired CLI used args.output for its --output path).
         drop_cols = _doc_columns_to_drop(
             getattr(args, 'output_toggles', {}) or {},
             getattr(args, 'feature_toggles', {}) or {},
@@ -1532,67 +1375,9 @@ def _resolve_sem_backend(sem_dict_arg: str) -> tuple[str, 'Path | None']:
     if sem_dict_arg == 'liwc':
         backend, path = detect_backend()
         if backend != 'liwc':
-            raise SystemExit('--sem-dict liwc but no .dic file found in dictionaries/')
+            raise SystemExit('Semantic backend "liwc" selected but no .dic file found in data/dictionaries/')
         return 'liwc', path
     p = Path(sem_dict_arg)
     if p.suffix.lower() == '.dic' and p.exists():
         return 'liwc', p
-    raise SystemExit(f'--sem-dict: unrecognized value "{sem_dict_arg}"')
-
-
-def main():
-    parser = build_parser()
-    args = parser.parse_args()
-
-    if args.level == 'acoustic':
-        if not (args.audio_folder and args.output_folder):
-            raise SystemExit('Acoustic level requires --audio-folder and --output-folder')
-        args.acoustic_ts = {
-            'envelope': not args.no_envelope, 'onset_env': not args.no_onset_env,
-            'logmel': not args.no_logmel, 'mfcc': args.mfcc,
-            'env_method': args.env_method, 'env_comp': args.env_comp,
-            'env_window': args.env_window,
-            'n_mels': args.n_mels, 'n_mfcc': args.n_mfcc,
-            'mel_preset': args.mel_preset, 'analysis_rate': args.analysis_rate,
-        }
-        run_acoustic_level_batch(args)
-        return
-
-    is_batch = bool(args.transcripts_folder or args.audio_folder or args.output_folder)
-    if is_batch:
-        # --audio-folder is optional: a text-only batch (transcripts + output)
-        # runs every transcript for its non-audio features. When omitted, no
-        # audio is paired (alignment / prosody / sub-word simply no-op).
-        if not (args.transcripts_folder and args.output_folder):
-            raise SystemExit(
-                'Batch mode requires --transcripts-folder and --output-folder '
-                '(and --audio-folder for any audio-based features).'
-            )
-        if args.level == 'document':
-            run_doc_level_batch(args)
-        else:
-            run_word_level_batch(args)
-        return
-
-    # Single-run mode: a transcript is the text source and is required. Guard
-    # here so a missing --transcript gives a clear message instead of an
-    # opaque FileNotFoundError on the empty default path.
-    if not args.transcript:
-        raise SystemExit(
-            'No input given. Provide --transcript path/to/text.txt (with '
-            '--audio path/to/audio.wav for alignment), or run a batch with '
-            '--transcripts-folder / --output-folder.'
-        )
-    if not args.no_align and not args.audio:
-        print('Warning: --audio not provided; alignment will be skipped.')
-    try:
-        df = run(args)
-    except RuntimeError as exc:
-        print(f'Error: {exc}', file=sys.stderr)
-        sys.exit(1)
-    df.to_csv(args.output, index=False)
-    print(f'\nDone. {len(df)} rows written to {args.output}')
-
-
-if __name__ == '__main__':
-    main()
+    raise SystemExit(f'Semantic backend: unrecognized value "{sem_dict_arg}"')

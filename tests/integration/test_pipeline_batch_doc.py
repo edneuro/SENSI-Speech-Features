@@ -2,7 +2,8 @@ import csv
 import json
 from pathlib import Path
 
-from sensi.pipeline import run_doc_level_batch, build_parser
+from sensi.pipeline import run_doc_level_batch
+from tests.batch_args import build_parser
 
 FIXTURES = Path(__file__).parent.parent / 'fixtures'
 

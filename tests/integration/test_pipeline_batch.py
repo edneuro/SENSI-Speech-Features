@@ -5,9 +5,10 @@ from pathlib import Path
 import pytest
 
 from sensi.pipeline import (
-    run_word_level_batch, build_parser,
+    run_word_level_batch,
     _phoneme_columns_to_drop, _syllable_columns_to_drop,
 )
+from tests.batch_args import build_parser
 
 FIXTURES = Path(__file__).parent.parent / 'fixtures'
 
@@ -386,8 +387,13 @@ def test_syllable_drop_map_covers_ipa():
     assert _syllable_columns_to_drop({"feat_syllable_ipa": False}) == {"IPA"}
 
 
-def test_cli_exposes_g2p_oov_defaulting_off():
-    args = build_parser().parse_args(["--transcript", "x.txt"])
-    assert args.g2p_oov is False
-    args = build_parser().parse_args(["--transcript", "x.txt", "--g2p-oov"])
-    assert args.g2p_oov is True
+def test_planner_passes_g2p_oov_defaulting_off():
+    # alignment.g2p_oov (features.yaml) -> ns.g2p_oov, which the batch
+    # runners hand to the aligner. Replaces the retired --g2p-oov CLI flag test.
+    import copy
+    from sensi.gui.planner import plan_from_prefs, to_namespace
+    from sensi.utils.preferences import DEFAULT_PREFS
+    prefs = copy.deepcopy(DEFAULT_PREFS)
+    assert to_namespace(plan_from_prefs(prefs), prefs, level="word").g2p_oov is False
+    prefs["alignment"]["g2p_oov"] = True
+    assert to_namespace(plan_from_prefs(prefs), prefs, level="word").g2p_oov is True

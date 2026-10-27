@@ -2,6 +2,7 @@
 import pytest
 
 from sensi import pipeline
+from tests.batch_args import build_parser
 from sensi.utils import timing_history as th
 
 _TEXT = "The cat sat on the mat. It was very happy today."
@@ -11,7 +12,7 @@ def _batch_args(tmp_path):
     tdir = tmp_path / "transcripts"
     tdir.mkdir()
     (tdir / "stim.txt").write_text(_TEXT, encoding="utf-8")
-    return pipeline.build_parser().parse_args([
+    return build_parser().parse_args([
         "--transcripts-folder", str(tdir),
         "--output-folder", str(tmp_path / "out"),
         "--analyzer", "t", "--no-align", "--no-freq", "--no-sem-domain",
