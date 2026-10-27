@@ -36,7 +36,7 @@ When spaCy returns an empty morphology bag the field is left **empty**
   finer-grained morphological controls are needed beyond [POS](lexling_pos.md).
 
 ## Implementation in SensiExtractor
-Source: `extractors/text_parser.py:parse`. Emitted from spaCy's
+Source: `sensi/extractors/text_parser.py:parse`. Emitted from spaCy's
 `token.morph` via `str(token.morph)`, which is already the empty string
 when the morph bag is empty; no `"NA"` sentinel is written, because it
 would collide with pandas' default `na_values` on read. No parsing — the value is a raw

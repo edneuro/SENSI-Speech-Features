@@ -64,7 +64,7 @@ the scale to start near zero for rare words and avoids negative numbers
 in normal use.
 
 ## Implementation in SensiExtractor
-Source: `extractors/word_freq.py:add_word_freq`.
+Source: `sensi/extractors/word_freq.py:add_word_freq`.
 
 **What the code does:**
 

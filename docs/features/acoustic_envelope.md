@@ -117,7 +117,7 @@ before fitting. The `config` struct in the `.mat` records `analysis_rate`,
 `env_method`, `env_comp`, `env_window`, and `source_sr` for provenance.
 
 ## Implementation in SensiExtractor
-Source: `extractors/acoustic_ts.py` → `amplitude_envelope(y, sr, rate, *,
+Source: `sensi/extractors/acoustic_ts.py` → `amplitude_envelope(y, sr, rate, *,
 method, comp, window)`. The `rms` branch is a line-for-line port of
 `mTRFenvelope.m` + `mTRFresample.m`: for each output frame it averages `y²`
 over the centered window `[round(sr·(t−h)), round(sr·(t+h))]` (with `t = i/rate`

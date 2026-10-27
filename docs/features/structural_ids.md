@@ -15,7 +15,7 @@ hierarchy. All are **1-indexed integers**.
 
 | Column | What it indexes |
 |---|---|
-| `doc_id` | Document. `1` for a single-document run; in batch mode each document gets its sequential 1-indexed position in the batch (1, 2, 3, …). Set explicitly via the CLI `--doc-id N` flag for one-off runs. |
+| `doc_id` | Document. `1` for a single-document run; in batch mode each document gets its sequential 1-indexed position in the batch (1, 2, 3, …). |
 | `paragraph_id` | Paragraph within the document. Paragraphs are detected as runs of text separated by one or more blank lines (`\n\n`) in the transcript. A transcript with no blank lines is a single paragraph (`paragraph_id == 1` throughout). |
 | `sentence_id` | Sentence within the document, in spaCy reading order. First sentence is `1`. |
 | `token_id` | Global token index across the entire document. First token is `1`. Counts **emitted tokens only** — see below. |
@@ -77,12 +77,11 @@ pipeline; `token_id` and `token_in_sentence_id` are assigned by the
 extractor as 1-based counters during the sentence walk.
 
 ## Implementation in SensiExtractor
-Source: `extractors/text_parser.py:parse`.
+Source: `sensi/extractors/text_parser.py:parse`.
 
-`doc_id` is a parameter on `parse(text, doc_id=1)` — the CLI/GUI batch
-loops in `main.py` set it to each pair's 1-indexed position in the batch
-(`args.doc_id = i + 1`), and one-off CLI runs can override the default
-via `--doc-id N`.
+`doc_id` is a parameter on `parse(text, doc_id=1)` — the batch loops in
+`sensi/pipeline.py` set it to each pair's 1-indexed position in the batch
+(`args.doc_id = i + 1`).
 
 `paragraph_id` is computed from blank-line boundaries in the raw
 transcript: `_paragraph_spans` collects `(start_char, end_char)` for

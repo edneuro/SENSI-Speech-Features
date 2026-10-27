@@ -37,7 +37,7 @@ content-word masks for downstream extractors:
 [BERT embedding](master_bert_word.md) input.
 
 ## Implementation in SensiExtractor
-Source: `extractors/text_parser.py:parse`. Tags are read directly from
+Source: `sensi/extractors/text_parser.py:parse`. Tags are read directly from
 spaCy's tagger output (`token.pos_` for `upos`, `token.tag_` for
 `xpos`) — no post-processing. Tagger model is `en_core_web_sm`'s
 default, a transition-based tagger trained on OntoNotes 5.

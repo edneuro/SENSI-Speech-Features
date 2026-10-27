@@ -37,7 +37,7 @@ constant `doc_hnr`. Useful for:
   ([Banse 1996]).
 
 ## Implementation in SensiExtractor
-Source: `extractors/sentence_prosody.py`. Same Praat harmonicity
+Source: `sensi/extractors/sentence_prosody.py`. Same Praat harmonicity
 contour as the document-level extractor (the same
 `To Harmonicity (cc)` call) — sliced per sentence and averaged with
 the unvoiced sentinel (−200 dB) masked out, identical to the

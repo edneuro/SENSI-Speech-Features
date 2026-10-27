@@ -30,7 +30,7 @@ to one model.
 
 ## Models
 Surprisal is available for every model in the roster
-(`extractors/predictability_models.py`): **GPT-2** (`gpt2`, free, no
+(`sensi/extractors/predictability_models.py`): **GPT-2** (`gpt2`, free, no
 token, CPU-capable baseline) and three gated **Llama-3** variants
 (`llama32_3b`, `llama3_8b`, `llama3_70b`) that need a HuggingFace token
 + accepted license — see **[LLM access & credentials](llm_credentials.md)**.
@@ -94,9 +94,9 @@ subwords of the same spaCy token). This holds identically whether the
 backend is GPT-2 or a Llama-3 variant.
 
 ## Implementation in SensiExtractor
-Source: `extractors/predictability.py:add_predictability` (the unified,
+Source: `sensi/extractors/predictability.py:add_predictability` (the unified,
 roster-driven extractor — replaces the old per-model
-`extractors/surprisal.py`/`extractors/llm_cloze.py`, both now thin
+`sensi/extractors/surprisal.py`/`sensi/extractors/llm_cloze.py`, both now thin
 compatibility shims over this module); long-text handling is in
 `_chunk_slices` / `_HuggingFaceBackend.score`.
 
@@ -128,7 +128,7 @@ surprisal — those rows are dropped or skipped in regressions).
 Every model has a hard architectural context limit
 (`model.config.max_position_embeddings`) — GPT-2's is 1024 subwords;
 the Llama-3.2-3B/8B/70B variants are 131072/8192/8192 (see
-`extractors/predictability_models.py`'s `native_ctx`). When the
+`sensi/extractors/predictability_models.py`'s `native_ctx`). When the
 transcript tokenises to at or under that limit for the model in use,
 the whole document fits in one forward pass and every word's surprisal
 is conditioned on its complete natural preceding text. **No

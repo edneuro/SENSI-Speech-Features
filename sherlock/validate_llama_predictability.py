@@ -67,7 +67,7 @@ import sys
 from pathlib import Path
 
 # Same guard every entry point in this repo sets before numpy does BLAS work
-# (main.py, gui.py, run.py) -- a no-op on platforms where it doesn't apply.
+# (gui.py, run.py, sensi/pipeline.py) -- a no-op on platforms where it doesn't apply.
 os.environ.setdefault("MKL_THREADING_LAYER", "sequential")
 
 _REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -182,7 +182,7 @@ def main() -> int:
                                   formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--model-slug", default="llama32_3b",
                      choices=["llama32_3b", "llama3_8b", "gpt2"],
-                     help="Roster slug from extractors/predictability_models.py. "
+                     help="Roster slug from sensi/extractors/predictability_models.py. "
                           "llama32_3b and llama3_8b are the two gated models in "
                           "scope; gpt2 is included only for local dry-run smoke "
                           "testing (no gating, no Sherlock/GPU needed). "

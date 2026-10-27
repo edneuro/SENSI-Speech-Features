@@ -76,13 +76,13 @@ From: condaforge/miniforge3:latest
     export PATH=/opt/sensienv/bin:$PATH
     # MFA reads its baked-in models from here.
     export MFA_ROOT_DIR=/opt/mfa_data
-    # Matches main.py's guard against the AMD/Windows MKL crash; harmless on
+    # Matches the launchers' guard against the AMD/Windows MKL crash; harmless on
     # Sherlock's Intel nodes.
     export MKL_THREADING_LAYER=sequential
 
 %runscript
     # `apptainer run sensiextractor.sif <args>` execs whatever you pass, inside the env.
-    # run_container.sbatch instead uses `apptainer exec ... python <repo>/main.py`.
+    # run_container.sbatch instead uses `apptainer exec ... python <repo>/run.py`.
     exec "$@"
 
 %labels

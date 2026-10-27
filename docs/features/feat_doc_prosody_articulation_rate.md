@@ -63,8 +63,8 @@ rather than the spelling, and counts a contraction that MFA
 aligns as one stretch ("wasn't") once.
 
 ## Implementation in SensiExtractor
-Source: `extractors/prosody.py:compute_doc_prosody` — see the
-document-batch finishing step in `main.py` which calls it.
+Source: `sensi/extractors/prosody.py:compute_doc_prosody` — see the
+document-batch finishing step in `sensi/pipeline.py` which calls it.
 
 **What the code does:**
 

@@ -48,8 +48,8 @@ linguistic features ([Broderick 2018], [Heilbron 2022]).
 ([`Word_Duration`](acoustic_durations.md)) is `End − Onset`.
 
 ## Implementation in SensiExtractor
-Source: `extractors/aligner.py:align_with_phones`. TextGrid parsing:
-`utils/textgrid_parser.py:parse_words`.
+Source: `sensi/extractors/aligner.py:align_with_phones`. TextGrid parsing:
+`sensi/utils/textgrid_parser.py:parse_words`.
 
 **What the code does:**
 
@@ -69,19 +69,18 @@ Source: `extractors/aligner.py:align_with_phones`. TextGrid parsing:
    `Transcript / Onset / End`.
 5. The temp directory is cleaned up after the run.
 
-In batch mode (a folder of stimuli, via the GUI or `--transcripts-folder`
-CLI runs), alignments are **persisted and reused** rather than
-recomputed: `extractors/aligner.py:ensure_alignments` writes each
+In a run (a folder of stimuli, via the GUI or `run.py`), alignments are **persisted and reused** rather than
+recomputed: `sensi/extractors/aligner.py:ensure_alignments` writes each
 stimulus's `.TextGrid` + a content-hash freshness sidecar to
 `<output_folder>/Montreal Forced Alignment/`, and a later run against
 unchanged transcript+audio content re-reads the cached TextGrid instead
 of re-invoking the MFA subprocess. This also means the whole batch's
 alignment runs in **one** MFA subprocess (one Kaldi model load) rather
-than once per document. A single-file CLI run (no `--output-folder`)
-has no persistence directory and always aligns fresh.
+than once per document. Only a direct `run()` call with no output folder
+(as in some tests) has no persistence directory and aligns fresh.
 
 Each stimulus is staged in its **own speaker folder** inside that one MFA
-run (`extractors/aligner.py:_stage`). MFA names the speaker after the
+run (`sensi/extractors/aligner.py:_stage`). MFA names the speaker after the
 folder and computes feature normalization (CMVN) and its speaker-adaptation
 transform (fMLLR, a second alignment pass) per speaker. With one folder per
 stimulus, every recording is normalized and adapted from its own audio

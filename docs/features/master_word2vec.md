@@ -42,17 +42,17 @@ The semantic-similarity metric typically used downstream is cosine:
     sim(w₁, w₂) = (v(w₁) · v(w₂)) / (‖v(w₁)‖ · ‖v(w₂)‖)
 
 ## Implementation in SensiExtractor
-Source: `extractors/word2vec_embed.py`. 
+Source: `sensi/extractors/word2vec_embed.py`. 
 
 **What the code does** (verified against the source):
 
 1. Loads the pretrained Google News 300d vectors via gensim's
    `KeyedVectors.load_word2vec_format(..., binary=True)`.
 2. Default lookup path:
-   `hf_cache/word2vec/GoogleNews-vectors-negative300.bin`.
+   `data/hf_cache/word2vec/GoogleNews-vectors-negative300.bin`.
 3. If the local file is missing, the model is auto-downloaded via
    `gensim.downloader.load("word2vec-google-news-300")` (~1.7 GB, one
-   time, cached in the project's `gensim_data/` folder; an existing
+   time, cached in the project's `data/gensim_data/` folder; an existing
    `GENSIM_DATA_DIR` environment variable takes precedence).
 4. Iterates over the word-level token column and, for each token:
    a. Returns the vector if the exact token is in vocabulary.
@@ -115,7 +115,7 @@ sim    = model.similarity("bank", "river")            # cosine, in [-1, 1]
 ```
 
 For an offline / pinned setup, drop the `.bin` at
-`hf_cache/word2vec/GoogleNews-vectors-negative300.bin` and the
+`data/hf_cache/word2vec/GoogleNews-vectors-negative300.bin` and the
 extractor uses it directly without contacting the network.
 
 ## Example
@@ -124,7 +124,7 @@ from gensim.models import KeyedVectors
 import numpy as np
 
 model = KeyedVectors.load_word2vec_format(
-    "hf_cache/word2vec/GoogleNews-vectors-negative300.bin", binary=True
+    "data/hf_cache/word2vec/GoogleNews-vectors-negative300.bin", binary=True
 )
 
 words = ["The", "cat", "sat"]

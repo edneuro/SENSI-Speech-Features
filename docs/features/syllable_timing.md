@@ -40,7 +40,7 @@ alternative to word-locked analyses:
   alignment, `P_Center` for perceptual-rhythm alignment.
 
 ## Implementation in SensiExtractor
-Source: `extractors/syllabify.py:syllabify_word` (downstream of
+Source: `sensi/extractors/syllabify.py:syllabify_word` (downstream of
 [`acoustic_boundaries`](acoustic_boundaries.md)). Syllabification is
 performed on **MFA's phones tier** via the **Maximum Onset Principle**
 (MOP): vowels (phones with a stress digit) are nuclei, and all

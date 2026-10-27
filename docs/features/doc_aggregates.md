@@ -43,13 +43,13 @@ nailed exactly — a single-number "predictability score" for the
 document, per model.
 
 ## Implementation in SensiExtractor
-Computed in `utils/doc_summary.py:build_doc_summary`. The
+Computed in `sensi/utils/doc_summary.py:build_doc_summary`. The
 `mean_zipf_freq` / `mean_edu_zipf_*` columns are each
 `np.nanmean(word_df[<fixed source column>])`. The predictability
 family is dynamic: `_PREDICTABILITY_COL_RE` (`^(?P<slug>[a-z0-9_]+)_
 (?P<metric>Surprisal|Cloze|TopMatch)$`) matches every `<slug>_<Metric>`
 column actually present in the word-level frame, and each match is
 aggregated to `mean_<slug>_<metric-lowercased>`. The doc-level
-preflight in `gui/section_doc_features.py:_refresh_agg_warnings`
+preflight in `sensi/gui/section_doc_features.py:_refresh_agg_warnings`
 checks the planner's `stages_to_run` and warns when an aggregate is
 enabled but its source stage (`predictability`) is absent.

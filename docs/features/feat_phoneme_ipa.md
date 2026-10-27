@@ -44,7 +44,7 @@ claims about two acoustically distinct sounds, and both follow directly
 from how the CMU dictionary encodes stress. ARPABET has **no separate
 symbol for schwa** — a reduced vowel is written `AH0`. This is checkable
 in the dictionary this pipeline ships and aligns against
-(`mfa_data/pretrained_models/dictionary/english_us_arpa.dict`):
+(`data/mfa_data/pretrained_models/dictionary/english_us_arpa.dict`):
 
 ```
 about    AH0 B AW1 T        # AH0 = /ə/,  AW1 = /aʊ/
@@ -77,7 +77,7 @@ If you need conventional IPA output, reassemble it yourself from
 
 ## The full table
 
-39 phones, reproduced from `extractors/arpabet_ipa.py`, which is the
+39 phones, reproduced from `sensi/extractors/arpabet_ipa.py`, which is the
 single source of truth. Example words are given with the **dominant**
 (highest pronunciation-probability) entry the shipped MFA dictionary
 lists for them, so every row is independently checkable. `english_us_arpa.dict`
@@ -176,7 +176,7 @@ to approximate. `spn` rows therefore have empty `IPA`, empty `Stress`,
 and `Pron_Source = 'oov_unresolved'`; see [`phoneme`](phoneme.md).
 
 ## Implementation in SensiExtractor
-Source: `extractors/arpabet_ipa.py` — pure lookup, no I/O, no pandas, no
+Source: `sensi/extractors/arpabet_ipa.py` — pure lookup, no I/O, no pandas, no
 third-party dependency.
 
 ```python
@@ -207,7 +207,7 @@ Three robustness choices, each there to prevent a silent wrong value:
 `syllable_to_ipa` **drops** unmappable segments rather than emitting
 empty fields, so a syllable containing noise yields `d-i`, not `d--i`.
 
-`extractors/syllabify.py:syllabify_pairs` is the only production caller.
+`sensi/extractors/syllabify.py:syllabify_pairs` is the only production caller.
 It splits MFA's label once per phone with `_split_label` and passes the
 `(code, stress)` pair to `to_ipa` for the phoneme row and to
 `syllable_to_ipa` for the syllable row — so the two CSVs can never
@@ -233,7 +233,7 @@ No research paper underpins a notation table; the sources below are the
 reference documentation the table was built and checked against.
 
 - <a name="cmudict"></a>**[CMUdict]** *The CMU Pronouncing Dictionary.* Carnegie Mellon University Speech Group. [speech.cs.cmu.edu/cgi-bin/cmudict](http://www.speech.cs.cmu.edu/cgi-bin/cmudict) · [`cmudict.phones`](https://github.com/cmusphinx/cmudict/blob/master/cmudict.phones) (the 39-phone inventory with vowel/consonant classes) · [`cmudict.symbols`](https://github.com/cmusphinx/cmudict/blob/master/cmudict.symbols) (the same inventory with `0`/`1`/`2` appearing on **vowels only**). Source of the ARPABET side of the table and of the stress-digit convention. ⚠️ CMU's own documentation gives example words, not IPA — the IPA column here is the standard correspondence for those example words, cross-checked row by row against [ARPABET] and against the dictionary entries quoted above.
-- <a name="arpabet"></a>**[ARPABET]** *ARPABET.* Wikipedia. [en.wikipedia.org/wiki/ARPABET](https://en.wikipedia.org/wiki/ARPABET) — secondary source carrying the ARPABET↔IPA table in the form used here; verified to agree with `extractors/arpabet_ipa.py` on all 39 phones, including `R`→`ɹ` and `G`→`ɡ`, and on the `0`/`1`/`2` stress convention.
+- <a name="arpabet"></a>**[ARPABET]** *ARPABET.* Wikipedia. [en.wikipedia.org/wiki/ARPABET](https://en.wikipedia.org/wiki/ARPABET) — secondary source carrying the ARPABET↔IPA table in the form used here; verified to agree with `sensi/extractors/arpabet_ipa.py` on all 39 phones, including `R`→`ɹ` and `G`→`ɡ`, and on the `0`/`1`/`2` stress convention.
 - <a name="r-coloured-vowel"></a>**[R-coloured vowel]** *R-colored vowel.* Wikipedia. [en.wikipedia.org/wiki/R-colored_vowel](https://en.wikipedia.org/wiki/R-colored_vowel) — source of the quoted ⟨ɝ⟩/⟨ɚ⟩ stressed-vs-unstressed convention.
 
 [CMUdict]: #cmudict

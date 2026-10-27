@@ -1,7 +1,7 @@
 """Post-change validation against the pre-v20 baseline.
 
-Run AFTER re-running the pipeline over validation/data/. Compares the new
-validation/output/ against validation/output_baseline_pre_v20/ and asserts the
+Run AFTER re-running the pipeline over dev/validation/data/. Compares the new
+dev/validation/output/ against dev/validation/output_baseline_pre_v20/ and asserts the
 spec's expected deltas -- and, crucially, that nothing else moved.
 
 P_Center gets two checks, not one, because a naive bit-identical comparison
@@ -19,11 +19,11 @@ docs in the two check functions below):
       jitter (SIDECAR_VERSION bump forces exactly one full re-align, and MFA
       is not bit-reproducible at frame granularity -- 10ms frame shift).
 
-Usage:  python validation/verify_phoneme_batch.py
+Usage:  python dev/validation/verify_phoneme_batch.py
 Exit 0 = all checks passed.
 
-Requires validation/output_baseline_pre_v20/ (git-ignored — a one-time copy
-of validation/output/ taken before the v20 phoneme-split/IPA/G2P batch ran;
+Requires dev/validation/output_baseline_pre_v20/ (git-ignored — a one-time copy
+of dev/validation/output/ taken before the v20 phoneme-split/IPA/G2P batch ran;
 see the batch's Task 12) to exist as the comparison target. This script does
 not regenerate it.
 """
@@ -35,7 +35,7 @@ from pathlib import Path
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parent
-_REPO_ROOT = ROOT.parent
+_REPO_ROOT = ROOT.parent.parent
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 

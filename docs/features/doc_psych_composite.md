@@ -88,7 +88,7 @@ discourse-level effects:
   exploratory covariates.
 
 ## Math / linguistics
-Implemented in `extractors/psych_composite.py:compute_psych_composite`.
+Implemented in `sensi/extractors/psych_composite.py:compute_psych_composite`.
 Each score is a linear combination of the **percentage** of word tokens
 in each category:
 
@@ -126,7 +126,7 @@ why the scores are only meaningful **relative** to each other across your
 own stimuli (see the ⚠️ note under [*Meaning*](#meaning)).
 
 ## Implementation in SensiExtractor
-Source: `extractors/psych_composite.py:compute_psych_composite`. It reads
+Source: `sensi/extractors/psych_composite.py:compute_psych_composite`. It reads
 the spaCy-parsed token DataFrame the pipeline already produces (columns
 `token`, `upos`, `lemma`, `feats`, `dep_rel`) and maps each token to the
 Pennebaker categories:

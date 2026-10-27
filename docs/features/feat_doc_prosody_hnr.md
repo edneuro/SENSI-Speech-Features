@@ -50,8 +50,8 @@ autocorrelation function ([Boersma 1993]). Unvoiced frames return
 are excluded from the mean.
 
 ## Implementation in SensiExtractor
-Computed in `extractors/prosody.py:compute_doc_prosody` (called from
-`main.py`'s document-batch finishing step) from the same `Contours`
+Computed in `sensi/extractors/prosody.py:compute_doc_prosody` (called from
+`sensi/pipeline.py`'s document-batch finishing step) from the same `Contours`
 object used by the other prosody columns. Per-frame HNR
 values come from Praat's `To Harmonicity (cc)` call; the mean
 excludes Praat's unvoiced sentinel (−200 dB).

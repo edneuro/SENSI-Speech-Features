@@ -22,7 +22,7 @@ in `acoustic/<stim>_acoustic.mat`, on the shared grid (`t`, `fs`).
 **Off by default** (toggle `feat_acoustic_ts_mfcc`).
 
 ## What it is / how it's computed
-Source `extractors/acoustic_ts.py` → `mfcc(...)`, via `librosa.feature.mfcc`
+Source `sensi/extractors/acoustic_ts.py` → `mfcc(...)`, via `librosa.feature.mfcc`
 with the same framing as the [log-mel](acoustic_logmel.md): `hop =
 round(sr/rate)` (frame rate = `analysis_rate`), ~25 ms window, `n_fft` = next
 power of two ≥ window, `n_mels` mel bands over `[fmin, fmax]`. librosa then

@@ -46,7 +46,7 @@ methodological rationale — the only difference is the aggregation
 window (sentence vs. word).
 
 ## Implementation in SensiExtractor
-Source: `extractors/sentence_prosody.py`. Uses the same `Contours`
+Source: `sensi/extractors/sentence_prosody.py`. Uses the same `Contours`
 object as the word- and document-level prosody extractors; slices to
 `[Onset, End)` per sentence and computes the same `_agg(slice) =
 (mean, p5, p95, std)` tuple as the word-level extractor. `Pitch_Delta`

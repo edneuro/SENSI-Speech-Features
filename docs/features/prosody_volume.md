@@ -63,7 +63,7 @@ higher-order linguistic effects typically include all three.
   the same value.
 
 ## Implementation in SensiExtractor
-Source: `extractors/prosody.py:add_word_prosody`. Shared
+Source: `sensi/extractors/prosody.py:add_word_prosody`. Shared
 forward-pass implementation as [pitch](prosody_pitch.md) — the same
 loop slices and aggregates both contours per word. `Volume_Delta` is
 `Volume_Mean − Volume_Mean.ffill().shift(1)`, i.e. measured back to the

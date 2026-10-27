@@ -8,8 +8,8 @@ status: implemented
 depth: deep
 ---
 
-> ℹ️ Requires the norm tables in `dictionaries/` — see
-> [`dictionaries/README.md`](../../dictionaries/README.md). The feature is
+> ℹ️ Requires the norm tables in `data/dictionaries/` — see
+> [`data/dictionaries/README.md`](../../data/dictionaries/README.md). The feature is
 > **off by default**; columns are `NaN` until the tables are present.
 
 ## Meaning
@@ -177,22 +177,22 @@ appear closest to the listener's age. (This is why `AoA_SD` ships as its own
 column.)
 
 ## Implementation in SensiExtractor
-Source: `extractors/lexical_norms.py:add_lexical_norms`. For each source it
+Source: `sensi/extractors/lexical_norms.py:add_lexical_norms`. For each source it
 loads a parquet (cached), indexes by `word`, and does a vectorized
 `reindex` lookup on `lemma.lower()`, falling back to `token.lower()` where the
 lemma misses. PUNCT rows are excluded. **MRC gotcha:** a stored `0` in MRC's
 imageability/familiarity fields means "missing" and is converted to `NaN` on
 load. Document-level aggregates live in
-`utils/doc_summary.py:_lexical_norm_aggregates`.
+`sensi/utils/doc_summary.py:_lexical_norm_aggregates`.
 
 ## Library
 ```python
 from extractors.lexical_norms import add_lexical_norms
 df = add_lexical_norms(df, paths={
-    'aoa':          'dictionaries/aoa_kuperman.parquet',
-    'concreteness': 'dictionaries/concreteness_brysbaert.parquet',
-    'mrc':          'dictionaries/mrc.parquet',
-    'warriner':     'dictionaries/warriner_vad.parquet',
+    'aoa':          'data/dictionaries/aoa_kuperman.parquet',
+    'concreteness': 'data/dictionaries/concreteness_brysbaert.parquet',
+    'mrc':          'data/dictionaries/mrc.parquet',
+    'warriner':     'data/dictionaries/warriner_vad.parquet',
 })
 ```
 

@@ -43,8 +43,8 @@ word-to-word movement magnitude** (unsigned) rather than a contour-frame statist
 when the question is about overall prosodic dynamism rather than range.
 
 ## Implementation in SensiExtractor
-Source: `extractors/prosody.py:compute_doc_prosody` — see the
-document-batch finishing step in `main.py` which calls it.
+Source: `sensi/extractors/prosody.py:compute_doc_prosody` — see the
+document-batch finishing step in `sensi/pipeline.py` which calls it.
 
 `doc_pitch_*` (other than the delta) come from a single Praat call
 over the full audio file via the same `Contours` object used by the

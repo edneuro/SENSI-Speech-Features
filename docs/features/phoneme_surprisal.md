@@ -145,12 +145,12 @@ the dictionary, rather than firing on every merely-rare word.
 
 ## Implementation in SensiExtractor
 
-Source: `extractors/phoneme_surprisal.py`.
+Source: `sensi/extractors/phoneme_surprisal.py`.
 
 ### Lexicon and frequency source
 
 `load_mfa_lexicon(dict_path, strip_stress=True, primary_only=True)`
-parses `mfa_data/pretrained_models/dictionary/english_us_arpa.dict` —
+parses `data/mfa_data/pretrained_models/dictionary/english_us_arpa.dict` —
 the exact dictionary MFA aligned against, so the trie's phoneme
 inventory matches the aligned `phones` tier exactly. Each line is
 `word\tPH PH PH …`; MFA bracket tokens (`[bracketed]`, `<unk>`) and
@@ -219,7 +219,7 @@ the fused form is rebuilt as `ARPABET + Stress`, skipping `Stress` where
 it is `NA`. Groups whose phones are silence or `spn` are skipped and left
 `NaN`. It does not touch `_PHON_COLUMNS` in
 `syllabify.py`; the two columns are additive. Per-column drop is wired
-through `_PHONEME_COLUMN_MAP` in `main.py` exactly like the
+through `_PHONEME_COLUMN_MAP` in `sensi/pipeline.py` exactly like the
 `ARPABET`/`Stress`/`IPA`/`Pron_Source`/`Onset`/`End`/`Duration` phoneme
 columns, gated by `feat_phoneme_surprisal` / `feat_phoneme_cohort_entropy`.
 
@@ -291,7 +291,7 @@ mode, since phoneme onsets come from forced alignment.
 
 No new third-party dependency — `wordfreq` is already a project
 dependency (it backs `Zipf_Freq`); the MFA dictionary already ships
-under `mfa_data/`.
+under `data/mfa_data/`.
 
 ```python
 from wordfreq import word_frequency

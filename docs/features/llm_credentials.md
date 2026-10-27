@@ -48,7 +48,7 @@ after you accept Meta's license *and* Meta approves your request.
 5. **Provide the token** to the run in any one of these ways (all auto-detected):
    - Paste it into the **HF token** box in the GUI's Predictability card, then
      click **Save** to persist it to `config/hf_token.txt` (gitignored) and
-     point `shared.hf_token_file` at it — headless/CLI runs (`python run.py`,
+     point `shared.hf_token_file` at it — headless runs (`python run.py`,
      Sherlock) then pick it up automatically without repasting. Leaving it
      unsaved keeps the token session-only, for that GUI run alone. The box is
      shown whenever no token is already detected — you don't need to select a

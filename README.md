@@ -53,7 +53,7 @@ one file per feature.
 - **A supported platform:** Windows 11+, Linux, or Apple-Silicon macOS (M1/M2/M3/M4).
   - **Intel Macs are not supported** — PyTorch dropped Intel-macOS builds after 2.2.2, which is incompatible with this project's NumPy 2.x. 
 - **Miniconda** (a minimal conda installer). The whole environment is conda-based: forced alignment needs native Kaldi libraries, and the compiled scientific stack (NumPy, pandas, SciPy, librosa, …) comes from conda-forge. A plain pip `virtualenv` will **not** work.
-- **~10 GB free disk**: the environment (~6 GB — full ML stack: PyTorch, transformers, spaCy, gensim, plus Kaldi/MFA and the PySide6 GUI) plus bundled models (~1.5 GB, already in the repo) plus the one-time Word2Vec download (~1.7 GB, on first use of the Word2Vec embedding feature). All models stay inside the project folder (`hf_cache/`, `mfa_data/`, `gensim_data/`), not in your home directory; a cache location you already set (`HF_HOME`, `MFA_ROOT_DIR`, `GENSIM_DATA_DIR`) takes precedence.
+- **~10 GB free disk**: the environment (~6 GB — full ML stack: PyTorch, transformers, spaCy, gensim, plus Kaldi/MFA and the PySide6 GUI) plus downloaded models (~1.5 GB: the MFA models during setup, GPT-2/BERT on first use) plus the one-time Word2Vec download (~1.7 GB, on first use of the Word2Vec embedding feature). All models stay inside the project's `data/` folder (`data/hf_cache/`, `data/mfa_data/`, `data/gensim_data/`), not in your home directory; a cache location you already set (`HF_HOME`, `MFA_ROOT_DIR`, `GENSIM_DATA_DIR`) takes precedence.
 
 ---
 
@@ -183,63 +183,13 @@ folder `SENSI_CONFIG_DIR` points to). The file is specific to this computer and
 is not shared through git; delete it to reset the time estimates to first
 estimates.
 
-### Command line
+### Headless (no GUI): `run.py`
 
-Single file:
-```bash
-# Full pipeline (audio + transcript)
-python main.py --audio stimulus.wav --transcript stimulus.txt --output features.csv
-
-# Text features only (no audio, alignment skipped) — conda env still required
-python main.py --transcript stimulus.txt --no-align
-```
-
-Batch (recommended for multiple stimuli — pairs files by shared basename, e.g.
-`story1.txt` ↔ `story1.wav`):
-```bash
-python main.py \
-  --transcripts-folder path/to/transcripts \
-  --audio-folder       path/to/audio \
-  --output-folder      path/to/output \
-  --analyzer "Your Name" \
-  --level word          # word (default) | document | acoustic
-```
-
-`--audio-folder` is optional for `word`/`document` levels: omit it for a
-**text-only** batch (every transcript is processed for its non-audio
-features; alignment, prosody, and sub-word tiers simply no-op). The
-`acoustic` level is audio-only and always needs `--audio-folder`.
-
-Commonly used flags (run `python main.py --help` for the complete list — there
-are many per-feature toggles):
-
-| Flag | Effect |
-|------|--------|
-| `--no-align` | Skip MFA forced alignment (`Onset`/`End`) |
-| `--no-prosody` / `--no-doc-prosody` | Skip word- / document-level prosody |
-| `--pitch-units hz\|semitones` | Pitch unit (default `semitones`) |
-| `--sem-dict liwc\|empath\|auto\|<path>` | Semantic-domain backend (default `auto`) |
-| `--level word\|document\|acoustic` | Batch runner: word CSV, document summary, or audio-only TRF `.mat` |
-| `--analyzer NAME` | **Required for batch mode**; recorded in the run manifest |
-
-Predictability (surprisal / cloze / top-match) is **not** a CLI flag — it's
-configured via `config/features.yaml`'s `predictability` section (a
-`models` list + `metrics` on/off dict) or, for GUI-driven runs, set directly
-by the GUI. Use the GUI's Predictability card, or hand-edit the
-`predictability` block in `config/features.yaml`, to pick models and metrics
-before a CLI run.
-
-If a selected model is a gated Llama-3 variant, it needs a HuggingFace token.
-The GUI's Predictability card has a **Save** button that writes the pasted
-token to `config/hf_token.txt` (gitignored) and points `shared.hf_token_file`
-at it, so future headless/CLI runs pick it up automatically — see
-[`docs/features/llm_credentials.md`](docs/features/llm_credentials.md).
-
-### Headless quickstart (no GUI)
-
-`python run.py` reads `config/features.yaml` + `config/run.yaml`; if you'd
-rather not launch the GUI just to produce them, copy the committed templates
-and edit:
+The other way to run is `python run.py`, which does exactly what the Run button
+does, with the settings saved in `config/features.yaml` (what to extract) and
+`config/run.yaml` (folders, analyzer name). Set things up once in the GUI and
+the files are already there; or, without the GUI, copy the committed templates
+and edit them:
 
 ```bash
 cp config/features_defaults.yaml config/features.yaml
@@ -260,6 +210,17 @@ Both templates are regenerated from the code defaults by
 `python scripts/export_default_config.py` and are pinned by a drift-guard
 test, so they never go stale relative to the shipped defaults.
 
+`python run.py --config-dir DIR` reads the two files from another folder
+(Sherlock does this). Predictability models and metrics are set in the
+`predictability` block of `features.yaml` (or the GUI's Predictability card).
+A gated Llama-3 model needs a HuggingFace token: the card's **Save** button
+writes it to `config/hf_token.txt` (git-ignored) and points
+`shared.hf_token_file` at it, so `run.py` picks it up too — see
+[`docs/features/llm_credentials.md`](docs/features/llm_credentials.md).
+
+(The old `python main.py --flags` command line was retired on 2026-10-27; its
+flags covered only part of the features. Use the GUI or `run.py`.)
+
 ### Outputs
 
 A batch run writes, under your output folder:
@@ -271,19 +232,17 @@ output/
 ├── syllable/   <stim>_syllables.csv
 ├── phoneme/    <stim>_phonemes.csv, <stim>_phoneme_surprisal.mat
 ├── sentence/   <stim>_sentences.csv, <stim>_bert_sentence.mat
-├── document/   documents_summary_<timestamp>.csv   # one row per stimulus (--level document)
-├── acoustic/   <stim>_acoustic.mat                 # audio-only TRF features (--level acoustic)
+├── document/   documents_summary_<timestamp>.csv   # one row per stimulus
+├── acoustic/   <stim>_acoustic.mat                 # audio-only TRF features
 ├── Montreal Forced Alignment/                      # cached MFA alignments, reused across runs
 └── logs/       run_<ts>.log, run_<ts>_manifest.json, ...
 ```
 
-For GUI and `run.py` runs, each folder is written only when its level is
+Each folder is written only when its level is
 switched on in `config/features.yaml`'s `output` block (`level_word`,
 `level_document`, `level_subword`, `level_sentence`, `level_acoustic`; the
 Run page's level switches) and at least one included section ticks something
 for that file.
-
-Single-file mode writes only the one CSV given by `--output`.
 
 ---
 
@@ -314,25 +273,29 @@ policy are in **[`docs/reproducibility.md`](docs/reproducibility.md)**.
 
 ```
 SensiExtractor/
-├── gui.py                     # GUI entry point (recommended)
-├── main.py                    # CLI entry point
+├── gui.py  run.py             # the two ways to start the app (GUI / headless)
+├── setup.bat / setup.sh       # one-time setup (installs ./env from conda-lock.yml)
 ├── environment.yml            # conda deps (source)
 ├── requirements.txt           # pip deps (source)
 ├── conda-lock.yml             # GENERATED exact lock (all platforms) — never hand-edit
-├── setup.bat / setup.sh       # one-time setup (installs ./env from conda-lock.yml)
-├── gui/                       # PySide6 GUI (one module per sidebar page)
-├── extractors/                # feature extractors (spaCy, MFA, GPT-2, prosody, …)
-├── utils/                     # transcript prep, TextGrid parsing, model download
-├── scripts/relock.py          # regenerates conda-lock.yml from the source specs
-├── dictionaries/              # lexical-norm lookup tables
-├── mfa_data/                  # bundled MFA models (do not edit)
-├── hf_cache/                  # bundled GPT-2/BERT weights (do not edit)
-├── gensim_data/              # Word2Vec, downloaded here on first use (git-ignored)
+├── sensi/                     # all application code
+│   ├── pipeline.py            #   the batch runners both launchers call
+│   ├── paths.py               #   where every folder is (one place)
+│   ├── gui/                   #   PySide6 GUI (one module per sidebar page) + planner/
+│   ├── extractors/            #   feature extractors (spaCy, MFA, GPT-2, prosody, …)
+│   └── utils/                 #   preferences, transcript prep, TextGrid parsing, logging
+├── scripts/                   # maintainer + one-time helpers (download_models, relock, …)
+├── config/                    # settings templates (+ your features.yaml / run.yaml)
+├── data/
+│   ├── dictionaries/          #   lexical-norm lookup tables
+│   └── hf_cache/ mfa_data/ gensim_data/   # downloaded models (git-ignored)
+├── assets/                    # app icons
+├── docs/
+│   ├── features/              # per-feature documentation (also shown in the app)
+│   └── reproducibility.md     # dependency/lock model + archival policy
+├── dev/                       # project history: plans, specs, changelog, validation
 ├── sherlock/                  # HPC container + run workflow (see sherlock/RUNBOOK.md)
-└── docs/
-    ├── reproducibility.md     # dependency/lock model + archival policy
-    ├── master_plan.md         # project state & roadmap
-    └── features/              # per-feature documentation
+└── tests/
 ```
 
 ---

@@ -38,7 +38,7 @@ acoustic-temporal structure.
 ## Implementation in SensiExtractor
 These columns are added downstream of
 [`Onset` / `End`](acoustic_boundaries.md) (from MFA). The
-derivation lives in `extractors/timing.py` — both are simple
+derivation lives in `sensi/extractors/timing.py` — both are simple
 arithmetic on the alignment output. `Word_Duration` is NaN-aligned
 with the underlying boundaries (a word that didn't align has NaN
 `Onset`, `End`, and `Word_Duration`).

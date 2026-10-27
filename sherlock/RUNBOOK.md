@@ -113,12 +113,14 @@ on Sherlock is an equivalent way to start this file for any *future* re-run.)
 ## 4 · Upload code, container, data — [linux]
 Use the **literal** `<GROUP_HOME>`/`<SCRATCH>` from step 3 (rsync won't expand them).
 Code first (small; carries `config/features.yaml` — your GUI's live feature choices;
-`*.sif` excluded so the container isn't sent here; `config/run.yaml` and
+`*.sif` excluded so the container isn't sent here; the model folders under `data/`
+and the `dev/` project-history folder stay behind (`data/dictionaries/` is sent);
+`config/run.yaml` and
 `config/preferences.json*` excluded so your local machine's folders/legacy prefs
 never clobber the `run.yaml` you wrote on Sherlock in step 3):
 ```bash
 cd path/to/SensiExtractor
-rsync -avP --exclude env --exclude hf_cache --exclude mfa_data --exclude gensim_data --exclude .git \
+rsync -avP --exclude env --exclude hf_cache --exclude mfa_data --exclude gensim_data --exclude dev --exclude .git \
   --exclude '*.sif' --exclude '__pycache__' \
   --exclude 'config/run.yaml' --exclude 'config/preferences.json*' \
   ./ <sunetid>@login.sherlock.stanford.edu:<GROUP_HOME>/SensiExtractor/
@@ -178,10 +180,10 @@ apptainer exec --bind $SCRATCH:$SCRATCH --env HF_HOME=$HF_HOME \
   bash -c 'hf download gpt2 && hf download meta-llama/Meta-Llama-3-8B'
 ```
    If Word2Vec is ticked, also download it (~1.7 GB, once) into the repo's
-   `gensim_data/`, where the offline job looks for it by default:
+   `data/gensim_data/`, where the offline job looks for it by default:
 ```bash
 apptainer exec --bind $GROUP_HOME/SensiExtractor:$GROUP_HOME/SensiExtractor \
-  --env GENSIM_DATA_DIR=$GROUP_HOME/SensiExtractor/gensim_data \
+  --env GENSIM_DATA_DIR=$GROUP_HOME/SensiExtractor/data/gensim_data \
   $GROUP_HOME/SensiExtractor/sherlock/sensiextractor.sif \
   python -c 'import gensim.downloader as d; print(d.load("word2vec-google-news-300", return_path=True))'
 ```

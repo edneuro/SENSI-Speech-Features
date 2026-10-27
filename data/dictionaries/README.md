@@ -1,6 +1,6 @@
-# `dictionaries/` — lexical-norm lookup tables
+# `data/dictionaries/` — lexical-norm lookup tables
 
-The lexical-norms feature (`extractors/lexical_norms.py`) reads per-word norm
+The lexical-norms feature (`sensi/extractors/lexical_norms.py`) reads per-word norm
 tables from this folder as **parquet** files. If a file is absent, its columns
 are emitted as `NaN` with a warning — the run still completes.
 
@@ -8,7 +8,7 @@ are emitted as `NaN` with a warning — the run still completes.
 From the project root:
 
 ```bash
-python utils/download_lexical_norms.py
+python scripts/download_lexical_norms.py
 ```
 
 This downloads all four published norm sets and writes
@@ -52,5 +52,5 @@ MRC Psycholinguistic Database.
   as-is; the extractor converts a stored `0` in these fields to `NaN` on load.
   (MRC's native integer scale is 100–700; the extractor does not rescale.)
 
-See [`docs/features/lexical_norms.md`](../docs/features/lexical_norms.md) for
+See [`docs/features/lexical_norms.md`](../../docs/features/lexical_norms.md) for
 meaning, EEG rationale, and the full reference list.

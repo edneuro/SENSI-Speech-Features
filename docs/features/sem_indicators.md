@@ -77,7 +77,7 @@ available, but its categories are less curated.
 | **LIWC** | Commercial; licensed `.dic` required | LIWC-2022 (or earlier) | **Disabled** (EULA) |
 
 **Backend selection logic** (from `detect_backend()`): always returns
-**Empath**. A stray `.dic` under `dictionaries/` no longer activates
+**Empath**. A stray `.dic` under `data/dictionaries/` no longer activates
 LIWC.
 
 Categories are selected per-backend on the **Word-level features →
@@ -87,7 +87,7 @@ button) and the same selection is reused at the document level (see
 that doc exists).
 
 ## Implementation in SensiExtractor
-Source: `extractors/semantic_domain.py:add_semantic_domain`. Backend
+Source: `sensi/extractors/semantic_domain.py:add_semantic_domain`. Backend
 classes: `_LiwcScorer` and `_EmpathScorer` in the same file.
 
 **What the code does:**
@@ -114,7 +114,7 @@ classes: `_LiwcScorer` and `_EmpathScorer` in the same file.
 ```python
 # LIWC
 import liwc
-parse, categories = liwc.load_token_parser("dictionaries/liwc-2022.dic")
+parse, categories = liwc.load_token_parser("data/dictionaries/liwc-2022.dic")
 matched = list(parse("happy"))   # → ['Affect', 'PosEmo', 'Tone', ...]
 
 # Empath

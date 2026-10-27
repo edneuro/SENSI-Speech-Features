@@ -3,7 +3,7 @@
 How SensiExtractor's Python environment is pinned, how to change it safely, and
 what to archive alongside a dataset release so the pipeline can be re-run years
 later. Design rationale (why two tiers, why conda-lock, why these platforms) is
-in [`docs/superpowers/specs/2026-07-10-reproducible-cross-platform-install-design.md`](superpowers/specs/2026-07-10-reproducible-cross-platform-install-design.md);
+in [`dev/superpowers/specs/2026-07-10-reproducible-cross-platform-install-design.md`](../dev/superpowers/specs/2026-07-10-reproducible-cross-platform-install-design.md);
 this doc is the day-to-day and archival *runbook*.
 
 ## The two-tier model
@@ -36,7 +36,7 @@ hand-edited** — treat it like a build artifact, not source.
    cannot read a bare `-r requirements.txt` reference), solves all three
    platforms, and overwrites `conda-lock.yml`.
 3. Rebuild your local `./env` from the new lock and run the full test suite
-   before committing — see `docs/superpowers/plans/2026-07-10-reproducible-cross-platform-install.md`
+   before committing — see `dev/superpowers/plans/2026-07-10-reproducible-cross-platform-install.md`
    for the exact verification each platform needs.
 4. Commit `conda-lock.yml` alongside the source-file change in the same
    commit. A lock that doesn't match its sources is worse than no lock.
@@ -144,7 +144,7 @@ Be precise about this — it's the difference between "should work" and
   *expected to work* (the lock installs an identical package set) rather than
   proven. No one on this project has run the full pipeline — MFA forced alignment, GPT-2 surprisal, the
   acoustic/prosody extractors — on real macOS hardware, because CI runners
-  don't carry the vendored `mfa_data/`/`hf_cache/` models and no Mac was
+  don't carry the vendored `data/mfa_data/`/`data/hf_cache/` models and no Mac was
   available. **"MFA produces byte-identical alignment output on macOS" is
   not a verified claim by anyone on this project** — the lock guarantees the
   same *package versions* install, not that every extractor's numeric output

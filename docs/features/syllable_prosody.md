@@ -49,7 +49,7 @@ contrasts can be expressed acoustically**. For naturalistic-EEG:
   studies of intonational phrase structure.
 
 ## Implementation in SensiExtractor
-Source: `extractors/syllable_prosody.py`. Reuses the same `Contours`
+Source: `sensi/extractors/syllable_prosody.py`. Reuses the same `Contours`
 object as the word- and document-level prosody extractors — one Praat
 call per audio file, three different slicing windows.
 

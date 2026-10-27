@@ -26,8 +26,8 @@ Words with no aligned acoustic interval (failed alignment, PUNCT) get
 `NaN` for all five columns.
 
 **Units:** **semitones relative to the speaker's median pitch** by
-default; `Hz` if `--pitch-units hz` is set (or the GUI's pitch-units
-combo is changed). Semitone units are perceptually linear and
+default; `Hz` if `prosody.pitch_units: hz` is set in `config/features.yaml`
+(the GUI's pitch-units combo). Semitone units are perceptually linear and
 speaker-normalized — recommended for cross-speaker analyses.
 
 ## EEG rationale
@@ -75,8 +75,8 @@ Semitone conversion (when `pitch_units == "semitones"`):
 voiced frames.
 
 ## Implementation in SensiExtractor
-Source: `extractors/prosody.py:add_word_prosody`. Underlying contours:
-`extractors/audio_features.py:Contours` (Parselmouth call).
+Source: `sensi/extractors/prosody.py:add_word_prosody`. Underlying contours:
+`sensi/extractors/audio_features.py:Contours` (Parselmouth call).
 
 **What the code does:**
 

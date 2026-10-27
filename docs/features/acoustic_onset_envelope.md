@@ -76,7 +76,7 @@ one study at a fixed rate this is a non-issue. Like the envelope, the column
 is returned raw (not normalized).
 
 ## Implementation in SensiExtractor
-Source: `extractors/acoustic_ts.py` → `onset_envelope(env)`. It takes the
+Source: `sensi/extractors/acoustic_ts.py` → `onset_envelope(env)`. It takes the
 *already-computed* amplitude envelope as input (so the `env_method`/`comp`
 choices flow through automatically) and returns `np.clip(np.diff(env,
 prepend=env[:1]), 0, None)`. In the orchestrator `extract_acoustic`, the

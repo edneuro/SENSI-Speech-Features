@@ -66,7 +66,7 @@ The same threshold applies to all four columns — they're not
 independently tunable.
 
 ## Implementation in SensiExtractor
-Source: `extractors/prosody.py:compute_doc_prosody`. All four columns
+Source: `sensi/extractors/prosody.py:compute_doc_prosody`. All four columns
 come from the MFA-aligned words (rows with an `Onset`/`End`), sorted by
 onset. The gap between consecutive words is the same quantity as the
 word-level [`Word_Gap`](acoustic_durations.md) column:

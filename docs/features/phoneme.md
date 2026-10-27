@@ -148,8 +148,8 @@ available; for naturalistic-EEG / MEG:
   finds that nucleus via `Stress.notna()`.
 
 ## Implementation in SensiExtractor
-Source: `extractors/syllabify.py:syllabify_pairs` (downstream of MFA
-alignment), with the IPA lookup in `extractors/arpabet_ipa.py`.
+Source: `sensi/extractors/syllabify.py:syllabify_pairs` (downstream of MFA
+alignment), with the IPA lookup in `sensi/extractors/arpabet_ipa.py`.
 
 **Phone selection.** `utils.textgrid_parser:parse_phones` parses the
 `phones` tier of MFA's TextGrid; `_phones_for_word` then assigns each
@@ -204,7 +204,7 @@ TextGrid, so provenance is inferred: a word absent from
 
 The form checked is the **MFA words-tier form** — the word frame's
 `Transcript` column — never the spaCy token, and that distinction is
-load-bearing. `utils/transcript_prep.py` spells numbers out before
+load-bearing. `sensi/utils/transcript_prep.py` spells numbers out before
 handing the transcript to MFA, so spaCy's token is `48` while MFA's word
 is `forty eight`. Judging by the token would find `48` absent from the
 dictionary and label every number in the corpus `g2p`; verified against
@@ -221,7 +221,7 @@ already parses, so a run does not read the 200k-line file twice.
 
 **Per-column toggles.** Each of the seven columns can be dropped
 independently from the Sub-word GUI page, wired through
-`_PHONEME_COLUMN_MAP` in `main.py`. Dropping `Stress` does **not** change
+`_PHONEME_COLUMN_MAP` in `sensi/pipeline.py`. Dropping `Stress` does **not** change
 `IPA`: the IPA segment is computed before any column is dropped, so
 `AH0` → `ə` even in a CSV that no longer shows the `0`.
 
@@ -232,7 +232,7 @@ model use; the alignment step writes those labels straight into the
 TextGrid `phones` tier. `spn` ("spoken noise") is MFA's own addition for
 unknown words, not a CMUdict phone. No third-party library is needed
 beyond MFA itself; the IPA lookup is a dependency-free dict in
-`extractors/arpabet_ipa.py`.
+`sensi/extractors/arpabet_ipa.py`.
 
 ## Papers
 - <a name="cmudict"></a>**[CMUdict]** *The CMU Pronouncing Dictionary.* Carnegie Mellon University Speech Group. [speech.cs.cmu.edu/cgi-bin/cmudict](http://www.speech.cs.cmu.edu/cgi-bin/cmudict) · phone set: [`cmudict.phones`](https://github.com/cmusphinx/cmudict/blob/master/cmudict.phones) / [`cmudict.symbols`](https://github.com/cmusphinx/cmudict/blob/master/cmudict.symbols) — the 39-phone ARPABET inventory with its vowel/consonant classes, and the symbol list in which **only** vowels appear suffixed `0`/`1`/`2` (no consonant carries a stress digit).

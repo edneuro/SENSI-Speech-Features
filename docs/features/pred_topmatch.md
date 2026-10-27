@@ -50,8 +50,8 @@ paper we know of tests top-match against surprisal directly; this is a
 recommendation, not a measured result.
 
 ## Implementation in SensiExtractor
-Source: `extractors/predictability.py:add_predictability` (the
-unified, roster-driven extractor — `extractors/llm_cloze.py` is now a
+Source: `sensi/extractors/predictability.py:add_predictability` (the
+unified, roster-driven extractor — `sensi/extractors/llm_cloze.py` is now a
 thin compatibility shim over this module) and
 `_HuggingFaceBackend.score`.
 
@@ -75,7 +75,7 @@ as `int` for `0` / `1` and remains `NaN` (a `Nullable Int64` view in
 pandas) for those rows.
 
 ## Library
-See `extractors/predictability.py:_HuggingFaceBackend.score`. Every
+See `sensi/extractors/predictability.py:_HuggingFaceBackend.score`. Every
 backend — GPT-2 included, via `AutoModelForCausalLM` — emits
 `{"p": ..., "surprisal": ..., "top_match": 0|1}` per spaCy token.
 

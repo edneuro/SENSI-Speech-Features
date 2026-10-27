@@ -37,7 +37,7 @@ available — [`MTLD`](output_doc_lex_diversity.md) and the
 most-cited and most-comparable across studies because everyone has it.
 
 ## Implementation in SensiExtractor
-Computed in `main.py`'s document-batch finishing step using the
+Computed in `sensi/pipeline.py`'s document-batch finishing step using the
 `textstat` package, which implements both formulas as defined in
 [Kincaid 1975] / [Flesch 1948]. Syllable counts use the same
 `pyphen` machinery as the [syllable extractor](syllable_timing.md),

@@ -25,7 +25,7 @@ The two most basic lexical columns:
   `"runs"`, `"running"`, `"ran"`.
 
 ## Implementation in SensiExtractor
-Source: `extractors/text_parser.py:parse`. Tokens come from spaCy's
+Source: `sensi/extractors/text_parser.py:parse`. Tokens come from spaCy's
 default tokenizer (rule-based, splits on whitespace + punctuation
 with a few language-specific exceptions for contractions like
 `"don't" → ["do", "n't"]`). Lemmas come from spaCy's

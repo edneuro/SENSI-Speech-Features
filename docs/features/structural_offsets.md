@@ -19,7 +19,7 @@ depth: stub
 | `end`   | Position of the token's last character within its sentence. Inclusive. |
 
 > ⚠️ Easy to confuse with `Onset` / `End` (capitalized), which are the
-> acoustic word boundaries in **seconds** from `extractors/aligner.py`.
+> acoustic word boundaries in **seconds** from `sensi/extractors/aligner.py`.
 > These character offsets are lowercase `start` / `end` and are in
 > **characters within the sentence**, not seconds.
 
@@ -30,7 +30,7 @@ depth: stub
   sentence-relative character coordinates.
 
 ## Implementation in SensiExtractor
-Source: `extractors/text_parser.py:parse`.
+Source: `sensi/extractors/text_parser.py:parse`.
 
 Computed as `token.idx - sent.start_char + 1` and
 `char_start + len(token.text) - 1` during the spaCy sentence walk. The

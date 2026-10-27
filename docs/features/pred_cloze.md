@@ -59,8 +59,8 @@ specifically need the cloze metric, or enter both if you want to test the
 linear-plus-log shape of [Szewczyk 2022].
 
 ## Implementation in SensiExtractor
-Source: `extractors/predictability.py:add_predictability` (the
-unified, roster-driven extractor — `extractors/llm_cloze.py` is now a
+Source: `sensi/extractors/predictability.py:add_predictability` (the
+unified, roster-driven extractor — `sensi/extractors/llm_cloze.py` is now a
 thin compatibility shim over this module). Backend:
 `_HuggingFaceBackend`, built on `AutoModelForCausalLM` for every
 roster model (GPT-2 included) — local Hugging Face weights only, no

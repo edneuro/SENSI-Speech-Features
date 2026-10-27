@@ -13,7 +13,7 @@ depth: deep
 An **alignment option**, not a feature column: it changes how MFA handles
 a word that is missing from its pronunciation dictionary. It lives at
 `alignment.g2p_oov` in `config/features.yaml`, on the GUI's Sub-word page
-("Out-of-dictionary words"), and as `--g2p-oov` on the CLI.
+("Out-of-dictionary words"); `run.py` reads the same setting.
 
 **Default: off.** Turning it on adds phone identities that were never
 observed, so nothing gains them unasked.
@@ -140,9 +140,9 @@ Both alignment paths honour the setting. The batch pre-alignment pass
 pre-pass failed and fell back) both reuse a TextGrid only when its sidecar
 matches the current inputs, `mfa_g2p` included. Before 2026-10-21 the
 per-document path trusted any existing TextGrid, so flipping this option
-could silently change nothing there. A pure single-document CLI run
-(`--audio` + `--transcript` with no output folder) has no persistence
-directory at all and runs MFA every time.
+could silently change nothing there. Only a direct `run()` call with no
+output folder (as in some tests) has no persistence directory and runs MFA
+every time.
 
 ## Usage
 Turn it **on** when your stimuli contain unusual proper nouns, invented
@@ -169,17 +169,17 @@ warns and proceeds without it rather than failing:
 
 ```
 [mfa] WARNING: g2p requested but no G2P model at …; out-of-dictionary
-words will align to spn. Run: python utils/download_models.py
+words will align to spn. Run: python scripts/download_models.py
 ```
 
 ## Implementation in SensiExtractor
-Sources: `extractors/aligner.py` (the flag, the sidecar, the model path),
-`extractors/syllabify.py` (`Pron_Source`), `utils/download_models.py`
+Sources: `sensi/extractors/aligner.py` (the flag, the sidecar, the model path),
+`sensi/extractors/syllabify.py` (`Pron_Source`), `scripts/download_models.py`
 (fetching the model).
 
 - **The model.** `mfa model download g2p english_us_arpa`, ~11 MB, into
-  the already-vendored, git-ignored `mfa_data/pretrained_models/g2p/`.
-  `utils/download_models.py` fetches it alongside the acoustic model and
+  the already-vendored, git-ignored `data/mfa_data/pretrained_models/g2p/`.
+  `scripts/download_models.py` fetches it alongside the acoustic model and
   dictionary, so a fresh checkout that runs the setup script has it.
   `aligner.g2p_model_available()` is the existence check.
 - **The flag.** `_run_mfa(corpus_dir, output_dir, *, g2p=False)` appends
@@ -194,14 +194,14 @@ Sources: `extractors/aligner.py` (the flag, the sidecar, the model path),
   and `_run_mfa`. Every pre-existing call site passes its arguments
   positionally, so making the parameter positional would have broken all
   of them at once.
-- **Plumbing.** `alignment.g2p_oov` (prefs) → `gui/planner/emit.py` sets
-  `ns.g2p_oov` → `main._prealign_batch` and `main.run` pass it to
-  `ensure_alignments` / `align_with_phones`. The CLI flag is `--g2p-oov`;
-  `run.py` reads the same pref. The option is **not** a per-column toggle
+- **Plumbing.** `alignment.g2p_oov` (prefs) → `sensi/gui/planner/emit.py` sets
+  `ns.g2p_oov` → `sensi.pipeline._prealign_batch` and `sensi.pipeline.run`
+  pass it to `ensure_alignments` / `align_with_phones`. The GUI and `run.py`
+  read the same pref. The option is **not** a per-column toggle
   and drops no columns — it changes the aligner's behaviour, so it sits in
   its own `alignment` prefs section rather than under `features`.
   It nonetheless lives in `features.yaml` rather than `run.yaml`
-  (`utils/config_yaml.py` routes only `shared` to `run.yaml`). That is the
+  (`sensi/utils/config_yaml.py` routes only `shared` to `run.yaml`). That is the
   right home: it is a "what to extract" decision, and it means the GUI's
   **Reset settings** turns it back off — the correct behaviour for an
   opt-in that adds modeled data.

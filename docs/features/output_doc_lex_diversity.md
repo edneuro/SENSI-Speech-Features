@@ -49,10 +49,10 @@ is the right per-stimulus covariate to include in a regression.
   TTR drops to the threshold = the text uses more types per token.
 
 ## Implementation in SensiExtractor
-Computed in `extractors/lexical_diversity.py` (in-house implementation
+Computed in `sensi/extractors/lexical_diversity.py` (in-house implementation
 of the published procedure — equivalent to [McCarthy 2010], not
 verified bit-for-bit against the authors' original tool), called from
-`utils/doc_summary.py`. Both measures run over **content words only**
+`sensi/utils/doc_summary.py`. Both measures run over **content words only**
 (NOUN/VERB/ADJ/ADV/PROPN surface tokens, lowercased); punctuation and
 function words are excluded before the calculation.
 

@@ -62,12 +62,12 @@ the wrong yardstick.
   the SUBTLEX value.
 
 ## Implementation in SensiExtractor
-Source: `extractors/educator_freq.py:add_edu_freq`.
+Source: `sensi/extractors/educator_freq.py:add_edu_freq`.
 
 **What the code does:**
 
 1. Loads a parquet lookup from
-   `dictionaries/edu_zipf.parquet` (or a user-supplied path), indexed
+   `data/dictionaries/edu_zipf.parquet` (or a user-supplied path), indexed
    by `word`, with columns
    `edu_zipf_k2, edu_zipf_3to5, edu_zipf_6to8, edu_zipf_9to12, edu_zipf_overall`.
 2. Lookups are keyed on `lemma.lower()`; `upos == "PUNCT"` rows are
@@ -98,11 +98,11 @@ Source: `extractors/educator_freq.py:add_edu_freq`.
 **No digital source exists.** *The Educator's Word Frequency Guide*
 ([Zeno 1995]) was published as a print reference and, as far as we have
 been able to determine, has never been released in machine-readable
-form. SensiExtractor therefore ships **no** `dictionaries/edu_zipf.parquet`
+form. SensiExtractor therefore ships **no** `data/dictionaries/edu_zipf.parquet`
 with real data, and the extractor's missing-file path (all-`NaN` columns
 + a logged warning) is the permanent state rather than a fallback.
 
-To enable these columns in future, a `dictionaries/edu_zipf.parquet`
+To enable these columns in future, a `data/dictionaries/edu_zipf.parquet`
 would need to be built — indexed by `word`, with columns
 `edu_zipf_k2, edu_zipf_3to5, edu_zipf_6to8, edu_zipf_9to12,
 edu_zipf_overall` — from a digitized copy of the guide (book reference:
@@ -114,7 +114,7 @@ The lookup is a plain pandas-on-pyarrow read:
 
 ```python
 import pandas as pd
-lookup = pd.read_parquet("dictionaries/edu_zipf.parquet").set_index("word")
+lookup = pd.read_parquet("data/dictionaries/edu_zipf.parquet").set_index("word")
 lookup.loc["house"]
 # edu_zipf_k2        4.21
 # edu_zipf_3to5      4.93

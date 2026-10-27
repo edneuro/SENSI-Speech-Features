@@ -25,5 +25,5 @@ separate lookup.
   surface token from its sentence: `sentence[start-1:end]`.
 
 ## Implementation in SensiExtractor
-Source: `extractors/text_parser.py:parse` — emitted directly from
+Source: `sensi/extractors/text_parser.py:parse` — emitted directly from
 `spaCy`'s `sent.text` for each sentence span.

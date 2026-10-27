@@ -37,7 +37,7 @@ sentence-level EEG / fMRI prediction is task- and ROI-dependent
 ([Toneva 2019]).
 
 ## Implementation in SensiExtractor
-Source: `extractors/bert_embed.py:embed_bert_words_and_sentences`
+Source: `sensi/extractors/bert_embed.py:embed_bert_words_and_sentences`
 
 **What the code does** (verified against the source):
 

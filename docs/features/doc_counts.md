@@ -39,8 +39,8 @@ columns. They have no toggle and are always written:
   than raw token count when controlling for function-word density.
 
 ## Implementation in SensiExtractor
-Derived in `utils/doc_summary.py:build_doc_summary` (called from
-`main.py`'s document-batch step) from the word-level DataFrame: simple
+Derived in `sensi/utils/doc_summary.py:build_doc_summary` (called from
+`sensi/pipeline.py`'s document-batch step) from the word-level DataFrame: simple
 counts over the appropriate row filters
 (`upos` in `CONTENT_POS` = `{NOUN, VERB, ADJ, ADV, PROPN}` for content
 tokens, unique `sentence_id` for

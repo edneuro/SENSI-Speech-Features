@@ -25,7 +25,7 @@ Emitted as a 2-D array `logmel` of shape `(N, n_mels)` in
 grid (`t`, `fs`) with the other acoustic features.
 
 ## What it is / how it's computed
-Source `extractors/acoustic_ts.py` → `log_mel_spectrogram(...)`, built on
+Source `sensi/extractors/acoustic_ts.py` → `log_mel_spectrogram(...)`, built on
 `librosa`:
 
 1. **STFT** with a ~25 ms analysis window (`win = max(hop, round(0.025·sr))`)

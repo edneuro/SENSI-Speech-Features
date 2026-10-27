@@ -48,7 +48,7 @@ analyses:
   let you isolate effects that POS alone cannot.
 
 ## Implementation in SensiExtractor
-Source: `extractors/text_parser.py:parse`. `dep_rel` is read directly
+Source: `sensi/extractors/text_parser.py:parse`. `dep_rel` is read directly
 from spaCy's parser (`token.dep_`). `head_token_id` is resolved
 through a `{token.i → token_id}` map (`id_by_doc_index`) built over the
 emitted tokens, giving the head's 1-indexed global

@@ -59,7 +59,7 @@ For EEG specifically:
   syllable" — a different question ([Villing 2011]).
 
 ## Implementation in SensiExtractor
-Source: `extractors/pcenter.py:add_pcenter`
+Source: `sensi/extractors/pcenter.py:add_pcenter`
 
 **What the code does:**
 
@@ -95,7 +95,7 @@ Source: `extractors/pcenter.py:add_pcenter`
 ## Configuration
 The `k` coefficient is configurable on the Sub-word features → P-center
 card (`Sub-word features → P-center → "k coefficient (0–1)"` spinbox)
-and via the CLI `--pcenter-k` flag. Default `0.3` matches the
+and as `prosody.pcenter_k` in `config/features.yaml`. Default `0.3` matches the
 [Scott 1993] original. Higher `k` pulls the P-centre earlier (toward
 the syllable onset); `k=0` collapses `P_Center` to `nucleus_onset`.
 

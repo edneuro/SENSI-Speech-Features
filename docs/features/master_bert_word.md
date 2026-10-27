@@ -51,7 +51,7 @@ feed-forward block, which incorporates information from all other tokens
 in the same input window via attention.
 
 ## Implementation in SensiExtractor
-Source: `extractors/bert_embed.py`. 
+Source: `sensi/extractors/bert_embed.py`. 
 
 **What the code does** (verified against the source):
 
