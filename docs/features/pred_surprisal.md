@@ -95,9 +95,9 @@ backend is GPT-2 or a Llama-3 variant.
 
 ## Implementation in SensiExtractor
 Source: `sensi/extractors/predictability.py:add_predictability` (the unified,
-roster-driven extractor — replaces the old per-model
-`sensi/extractors/surprisal.py`/`sensi/extractors/llm_cloze.py`, both now thin
-compatibility shims over this module); long-text handling is in
+roster-driven extractor; it replaced the old per-model
+`extractors/surprisal.py` / `extractors/llm_cloze.py`, both removed on
+2026-07-11); long-text handling is in
 `_chunk_slices` / `_HuggingFaceBackend.score`.
 
 **This also produces** [`Cloze`](pred_cloze.md) and

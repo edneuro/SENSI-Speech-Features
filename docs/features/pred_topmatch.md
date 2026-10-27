@@ -51,8 +51,8 @@ recommendation, not a measured result.
 
 ## Implementation in SensiExtractor
 Source: `sensi/extractors/predictability.py:add_predictability` (the
-unified, roster-driven extractor — `sensi/extractors/llm_cloze.py` is now a
-thin compatibility shim over this module) and
+unified, roster-driven extractor; it replaced the old `extractors/llm_cloze.py`,
+which was removed on 2026-07-11) and
 `_HuggingFaceBackend.score`.
 
 Computed in the same forward pass as `<slug>_Cloze` and

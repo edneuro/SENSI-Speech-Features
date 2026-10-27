@@ -31,6 +31,11 @@ OUT_DIR = ROOT / "docs" / "user-manual"
 
 
 def main(argv=None) -> int:
+    for s in (sys.stdout, sys.stderr):
+        try:
+            s.reconfigure(encoding="utf-8")
+        except (AttributeError, ValueError):
+            pass
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--refresh-examples", action="store_true")
     ap.add_argument("--examples-only", action="store_true",

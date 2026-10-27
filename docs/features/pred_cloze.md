@@ -60,8 +60,8 @@ linear-plus-log shape of [Szewczyk 2022].
 
 ## Implementation in SensiExtractor
 Source: `sensi/extractors/predictability.py:add_predictability` (the
-unified, roster-driven extractor — `sensi/extractors/llm_cloze.py` is now a
-thin compatibility shim over this module). Backend:
+unified, roster-driven extractor; it replaced the old `extractors/llm_cloze.py`,
+which was removed on 2026-07-11). Backend:
 `_HuggingFaceBackend`, built on `AutoModelForCausalLM` for every
 roster model (GPT-2 included) — local Hugging Face weights only, no
 OpenAI backend; see [LLM access & credentials](llm_credentials.md).

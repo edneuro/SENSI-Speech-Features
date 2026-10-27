@@ -25,7 +25,7 @@ columns. They have no toggle and are always written:
 
 | Column | Meaning |
 |---|---|
-| `stimulus_id`     | The transcript's file stem, original casing (e.g. `1_FB_P` for `1_FB_P.txt`) — the same id every per-level output filename uses, so the document table joins to them directly. |
+| `stimulus_id`     | The transcript's file stem, original casing (e.g. `story1` for `story1.txt`) — the same id every per-level output filename uses, so the document table joins to them directly. |
 | `dictionary_used` | Semantic-category backend: `LIWC` if any `Sem_LIWC_*` column is present, otherwise `Empath` (also when no semantic columns were produced). |
 | `transcript_path` | Path of the transcript file as the batch found it (keeps the full filename, extension included). |
 | `audio_path`      | Path of the paired audio file; empty for text-only items. |
