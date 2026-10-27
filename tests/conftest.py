@@ -31,3 +31,16 @@ def _isolated_config_dir(tmp_path, monkeypatch):
     json and the YAMLs it migrates into share a directory)."""
     monkeypatch.setenv("SENSI_CONFIG_DIR", str(tmp_path))
     yield
+
+
+@pytest.fixture
+def ewfg_parquet(tmp_path, monkeypatch):
+    """Make the planner see an EWFG lookup table. The real one is not
+    bundled (docs/features/edu_zipf.md), so the EWFG clusters only plan when
+    a test asks for this. Only existence is checked at plan time."""
+    from sensi import paths
+    d = tmp_path / "dictionaries"
+    d.mkdir()
+    (d / "edu_zipf.parquet").write_bytes(b"")
+    monkeypatch.setattr(paths, "DICT_DIR", d)
+    return d / "edu_zipf.parquet"

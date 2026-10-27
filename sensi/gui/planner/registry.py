@@ -275,6 +275,10 @@ CLUSTERS: list[FeatureCluster] = [
         emits_columns=("Edu_Zipf_K2", "Edu_Zipf_3to5", "Edu_Zipf_6to8",
                        "Edu_Zipf_9to12", "Edu_Zipf_Overall"),
         master_toggle="master_frequency",
+        # The EWFG book was never digitized, so the parquet ships absent;
+        # without it every Edu_Zipf_* value would be NaN. Runs only for
+        # someone who supplies their own (docs/features/edu_zipf.md).
+        requires_dictionary="edu_zipf.parquet",
     ),
 
     # §1.5/1.6 Predictability (v18) — unified dynamic stage/cluster replacing
@@ -559,6 +563,7 @@ CLUSTERS: list[FeatureCluster] = [
                        "mean_edu_zipf_6to8", "mean_edu_zipf_9to12",
                        "mean_edu_zipf_overall"),
         master_toggle="master_doc_aggregates",
+        requires_dictionary="edu_zipf.parquet",   # same gate as the word cluster
     ),
     # Doc-level predictability aggregates (v18) — single toggle mirroring the
     # word-level Predictability cluster's roster-driven shape. Unlike that

@@ -390,3 +390,52 @@ def test_predictability_inactive_when_master_off(monkeypatch):
     plan = plan_from_prefs(prefs)
     assert "predictability" not in plan.stages_to_run
     assert plan.emitted_columns_for("predictability") == ()
+
+
+# ── EWFG gated on its lookup parquet ──────────────────────────────────────
+# The parquet is not bundled, so a config with the freq_ewfg_* / doc_agg_edu_zipf
+# toggles on (GUI-greyed, but run.py reads features.yaml as written) must not
+# plan five all-NaN Edu_Zipf_* word and mean_edu_zipf_* doc columns.
+
+_EWFG_WORD_COLS = {"Edu_Zipf_K2", "Edu_Zipf_3to5", "Edu_Zipf_6to8",
+                   "Edu_Zipf_9to12", "Edu_Zipf_Overall"}
+_EWFG_DOC_COLS = {"mean_edu_zipf_k2", "mean_edu_zipf_3to5", "mean_edu_zipf_6to8",
+                  "mean_edu_zipf_9to12", "mean_edu_zipf_overall"}
+
+
+def _ewfg_all_on_prefs() -> dict:
+    return _prefs(
+        output={"level_word": True, "level_document": True,
+                "doc_agg_zipf_freq": True, "doc_agg_edu_zipf": True},
+        features={"freq_subtlex": True, "freq_ewfg_k2": True,
+                  "freq_ewfg_3to5": True, "freq_ewfg_6to8": True,
+                  "freq_ewfg_9to12": True, "freq_ewfg_overall": True},
+    )
+
+
+def test_ewfg_not_planned_without_parquet(tmp_path, monkeypatch):
+    from sensi import paths
+    from sensi.gui.planner.emit import to_namespace
+    monkeypatch.setattr(paths, "DICT_DIR", tmp_path)   # no edu_zipf.parquet
+    prefs = _ewfg_all_on_prefs()
+    plan = plan_from_prefs(prefs)
+    assert "ewfg_freq" not in plan.stages_to_run
+    assert _EWFG_WORD_COLS <= plan.column_drops["features"]
+    assert _EWFG_DOC_COLS <= plan.column_drops["documents_summary"]
+    assert to_namespace(plan, prefs, level="word").no_edu_freq is True
+    doc_ns = to_namespace(plan, prefs, level="doc")
+    assert doc_ns.no_edu_freq is True and doc_ns.no_doc_mean_edu_zipf is True
+    # The rest of the frequency section still runs.
+    assert "word_freq" in plan.stages_to_run
+
+
+def test_ewfg_planned_with_parquet(ewfg_parquet):
+    from sensi.gui.planner.emit import to_namespace
+    prefs = _ewfg_all_on_prefs()
+    plan = plan_from_prefs(prefs)
+    assert "ewfg_freq" in plan.stages_to_run
+    assert not (_EWFG_WORD_COLS & plan.column_drops["features"])
+    assert not (_EWFG_DOC_COLS & plan.column_drops["documents_summary"])
+    assert to_namespace(plan, prefs, level="word").no_edu_freq is False
+    doc_ns = to_namespace(plan, prefs, level="doc")
+    assert doc_ns.no_edu_freq is False and doc_ns.no_doc_mean_edu_zipf is False

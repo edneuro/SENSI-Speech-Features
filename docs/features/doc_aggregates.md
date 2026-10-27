@@ -19,6 +19,9 @@ controls a family of `mean_*` columns in the document summary CSV:
 | `output_doc_agg_edu_zipf`  | `mean_edu_zipf_{k2,3to5,6to8,9to12,overall}` | [`Edu_Zipf_*`](edu_zipf.md) |
 | `output_doc_agg_predictability` | one `mean_<slug>_<metric>` column per `<slug>_<Metric>` word-level column currently selected (e.g. `mean_gpt2_surprisal`, `mean_llama3_8b_cloze`) | [`Surprisal`](pred_surprisal.md), [`Cloze`](pred_cloze.md), [`TopMatch`](pred_topmatch.md) |
 
+`mean_edu_zipf_*` is written only when `data/dictionaries/edu_zipf.parquet`
+exists, which it does not by default ([why](edu_zipf.md)).
+
 Unlike the other two rows, `output_doc_agg_predictability` doesn't name
 a fixed column set — it scans the word-level DataFrame for every
 column matching `<slug>_Surprisal` / `<slug>_Cloze` / `<slug>_TopMatch`

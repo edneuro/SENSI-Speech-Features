@@ -1,6 +1,7 @@
 """plan_from_prefs(prefs) -> Plan.
 
-Pure function: deterministic, no I/O.
+Deterministic. The only I/O is an existence check on the lookup tables
+named by FeatureCluster.requires_dictionary (sensi.paths.DICT_DIR).
 
 Algorithm (see spec §6):
   1. Determine active output artifacts from prefs["output"]["level_*"]
@@ -18,6 +19,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from sensi import paths
 from sensi.gui.planner.registry import STAGES, CLUSTERS, PREDICTABILITY_CLUSTER_NAME
 from sensi.gui.planner.stages import Stage
 from sensi.gui.planner.stages import Plan, FeatureCluster
@@ -146,6 +148,11 @@ def _active_clusters(prefs: dict, active_csvs: frozenset[str]) -> list[FeatureCl
             path, expected = c.available_when
             if _get_dotted(prefs, path) != expected:
                 continue
+        # 1b. requires_dictionary: the lookup table must be on disk. Read
+        # paths.DICT_DIR at call time so tests can point it elsewhere.
+        if (c.requires_dictionary is not None
+                and not (paths.DICT_DIR / c.requires_dictionary).exists()):
+            continue
         # 2. master_toggle: user gate
         if c.master_toggle is not None and not _toggle_value(prefs, c.master_toggle):
             continue
@@ -280,7 +287,8 @@ def _stage_configs(prefs: dict, stages_to_run: tuple[str, ...]) -> dict[str, dic
 
 
 def plan_from_prefs(prefs: dict) -> Plan:
-    """Build the Plan from a user-prefs dict. Pure function; deterministic."""
+    """Build the Plan from a user-prefs dict. Deterministic for a given prefs
+    dict and set of files in DICT_DIR."""
     active_csvs = _active_output_csvs(prefs)
     active = _active_clusters(prefs, active_csvs)
     # Restrict output_csvs to only those CSVs that have at least one active

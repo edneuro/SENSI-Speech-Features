@@ -13,9 +13,10 @@ depth: deep
 > frequencies are **not produced**. Their source, *The Educator's Word
 > Frequency Guide* ([Zeno 1995]), exists **only in print and has never
 > been digitized**, so there is no lookup table to query. The toggles are
-> **disabled** in the app and the extractor code (kept for if/when the
-> norms are obtained) would emit all-`NaN` columns. We may add this later
-> if a digital version becomes available.
+> **disabled** in the app, and every run (app or `run.py`) leaves them out
+> while `data/dictionaries/edu_zipf.parquet` is absent, even when
+> `config/features.yaml` switches them on. We may add this later if a
+> digital version becomes available.
 > Book reference:
 > [The Educator's Word Frequency Guide](https://books.google.com/books/about/The_Educator_s_Word_Frequency_Guide.html?id=jsJ1QgAACAAJ).
 
@@ -75,10 +76,14 @@ Source: `sensi/extractors/educator_freq.py:add_edu_freq`.
    `NaN`.
 3. Uses `pandas.DataFrame.reindex` for a vectorized lookup — much
    faster than a per-row apply for long transcripts.
-4. **If the parquet lookup file is missing**, the extractor still
-   returns the right schema: all five columns are emitted as `NaN` and
-   a `logging.warning` is issued. This keeps downstream code stable
-   even when EWFG data acquisition is pending.
+4. **The planner runs it only when the parquet exists.** The word-level
+   EWFG cluster and the document `mean_edu_zipf_*` cluster both declare
+   `requires_dictionary="edu_zipf.parquet"` (`sensi/gui/planner/registry.py`),
+   so without `data/dictionaries/edu_zipf.parquet` neither the extractor nor
+   the document means are planned and no `Edu_Zipf_*` / `mean_edu_zipf_*`
+   column is written, whatever the toggles say. If the extractor is called
+   directly with no lookup file, it still returns the five columns as `NaN`
+   and logs a warning.
 5. The `bands` argument lets the caller emit only a subset of columns —
    the GUI's per-band toggles flow through to this argument so disabled
    bands are simply not added to the output DataFrame.
@@ -90,24 +95,27 @@ Source: `sensi/extractors/educator_freq.py:add_edu_freq`.
   frequency columns are comparable lexeme-for-lexeme.
 - *Parquet over CSV* — vectorised pandas lookup is fast and the file
   format compresses well for a ~5-column-by-N-row table.
-- *Schema preserved when lookup is missing* — the columns are still
-  written, filled with `NaN`, so downstream code (planner, GUI preflight
-  warnings, doc-level aggregates) can rely on them existing.
+- *Gated in the planner, not the GUI* — the GUI greys the toggles out, but
+  `run.py` follows `config/features.yaml` as written. Before the gate, a
+  config with the toggles on made a headless run write five all-`NaN` word
+  columns and five all-`NaN` document columns that a GUI run did not.
 
 ## Data acquisition
 **No digital source exists.** *The Educator's Word Frequency Guide*
 ([Zeno 1995]) was published as a print reference and, as far as we have
 been able to determine, has never been released in machine-readable
-form. SensiExtractor therefore ships **no** `data/dictionaries/edu_zipf.parquet`
-with real data, and the extractor's missing-file path (all-`NaN` columns
-+ a logged warning) is the permanent state rather than a fallback.
+form. SensiExtractor therefore ships **no** `data/dictionaries/edu_zipf.parquet`,
+and without it the planner leaves these columns out of every run.
 
 To enable these columns in future, a `data/dictionaries/edu_zipf.parquet`
 would need to be built — indexed by `word`, with columns
 `edu_zipf_k2, edu_zipf_3to5, edu_zipf_6to8, edu_zipf_9to12,
 edu_zipf_overall` — from a digitized copy of the guide (book reference:
 <https://books.google.com/books/about/The_Educator_s_Word_Frequency_Guide.html?id=jsJ1QgAACAAJ>).
-Until then the toggles remain disabled.
+Once that file is in place, a headless `run.py` with the `freq_ewfg_*`
+(and, for the document means, `doc_agg_edu_zipf`) toggles on in
+`config/features.yaml` produces the columns; the app's toggles stay
+disabled until the GUI is changed to match.
 
 ## Library
 The lookup is a plain pandas-on-pyarrow read:

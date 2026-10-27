@@ -39,7 +39,6 @@ class Warning:
     message: str
 
 
-_EWFG_PARQUET = DICT_DIR / "edu_zipf.parquet"
 _LIWC_DIC_GLOB = "*.dic"
 
 # MFA detection is expensive (shutil.which is cheap, but the subprocess
@@ -93,15 +92,8 @@ def compute_warnings(session_api_key: str = "", session_hf_token: str = "") -> l
                     "page, and tick a feature on that level's page."))
         return out
 
-    # EWFG dictionary
-    if "ewfg_freq" in in_plan and not _EWFG_PARQUET.exists():
-        for band in ("freq_ewfg_k2", "freq_ewfg_3to5", "freq_ewfg_6to8",
-                     "freq_ewfg_9to12", "freq_ewfg_overall"):
-            if prefs["features"].get(band, False):
-                out.append(Warning(
-                    toggle_key=band, severity="amber",
-                    message="EWFG parquet not found at data/dictionaries/edu_zipf.parquet "
-                            "— columns will be NaN. See README for acquisition."))
+    # No EWFG warning: without data/dictionaries/edu_zipf.parquet the planner
+    # leaves the EWFG clusters out (FeatureCluster.requires_dictionary).
 
     # Predictability (v18: models/metrics, not a single llm_model). Local
     # HuggingFace models only — OpenAI is no longer offered, so there is no

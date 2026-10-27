@@ -21,18 +21,17 @@ Group B (deleted — toggle-dep warnings removed):
 """
 
 
-def test_preflight_warns_on_missing_ewfg(prefs_tmp):
+def test_no_ewfg_warning_without_parquet(prefs_tmp):
+    """The old "columns will be NaN" warning is gone: with no EWFG parquet
+    the planner drops the EWFG cluster, so nothing NaN is written."""
     from sensi.utils.preferences import save_preferences
     from sensi.gui.preflight import compute_warnings
-    # Need ewfg_freq in plan: word_level_csv + an EWFG band toggle on.
     save_preferences({
         "output": {"level_word": True},
         "features": {"freq_ewfg_k2": True},
     })
-    warnings = compute_warnings()
-    # EWFG parquet is not bundled by default
-    keys = {w.toggle_key for w in warnings}
-    assert any(k is not None and k.startswith("freq_ewfg_") for k in keys)
+    keys = {w.toggle_key for w in compute_warnings()}
+    assert not any(k is not None and k.startswith("freq_ewfg_") for k in keys)
 
 
 def test_preflight_ignores_unrecognized_model_slug(prefs_tmp):

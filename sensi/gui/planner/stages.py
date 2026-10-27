@@ -31,6 +31,8 @@ class FeatureCluster:
     - `master_toggle` (when present) is True in prefs
     - `output_csv` is among the user's requested outputs
     - any key in `toggle_keys` is True in prefs
+    - `requires_dictionary` (when present) names a file that exists in
+      sensi.paths.DICT_DIR (a lookup table the extractor cannot run without)
     """
     name: str
     toggle_keys: tuple[str, ...]
@@ -39,6 +41,7 @@ class FeatureCluster:
     emits_columns: tuple[str, ...]
     master_toggle: str | None = None
     available_when: tuple[str, str] | None = None
+    requires_dictionary: str | None = None
 
 
 @dataclass(frozen=True)

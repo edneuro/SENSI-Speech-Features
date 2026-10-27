@@ -34,7 +34,9 @@ def _migrated(name: str) -> dict:
 @pytest.mark.parametrize(
     "case", [c for c in _CASES if c["name"] != "doc_only_with_pred_means"],
     ids=lambda c: c["name"])
-def test_migrated_v20_cases_plan_identically(case):
+def test_migrated_v20_cases_plan_identically(case, ewfg_parquet):
+    # The v20 snapshots predate the EWFG parquet gate; supply the parquet so
+    # they still test only the migration.
     plan = plan_from_prefs(_migrated(case["name"]))
     assert sorted(plan.output_csvs) == case["output_csvs"]
     assert list(plan.stages_to_run) == case["stages_to_run"]
@@ -242,7 +244,7 @@ def test_doc_zipf_source_does_not_leak_into_word_csv():
     assert to_namespace(plan, prefs, level="doc").no_freq is False
 
 
-def test_doc_edu_zipf_without_bands_skips_ewfg():
+def test_doc_edu_zipf_without_bands_skips_ewfg(ewfg_parquet):
     prefs = _doc_only(doc_agg_edu_zipf=True)
     plan = plan_from_prefs(prefs)
     assert "ewfg_freq" in plan.stages_to_run
