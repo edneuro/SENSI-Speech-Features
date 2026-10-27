@@ -12,6 +12,7 @@ __pycache__/
 
 # Editor / agent configs (local, not project state)
 .claude/
+.superpowers/
 .vscode/
 .idea
 .mcp.json
@@ -66,10 +67,12 @@ dev/validation/*
 !dev/validation/verify_phoneme_batch.py
 dev/in_app_documentation_needs_fix.md
 CLAUDE.md
-# pre-2026-10-27 locations of the same
+# pre-2026-10-27 locations of the same (+ the old dictionaries/ folder, which may
+# still hold a licensed LIWC .dic / EWFG parquet in an old checkout)
 /unrelated/
 /validation/
 /audit/
+/dictionaries/
 
 # Provo validation cache
 data/provo/

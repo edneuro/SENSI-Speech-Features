@@ -23,7 +23,8 @@ HF_CACHE_DIR = DATA_DIR / "hf_cache"          # GPT-2, BERT, Llama
 MFA_DIR = DATA_DIR / "mfa_data"               # MFA models + config
 GENSIM_DIR = DATA_DIR / "gensim_data"         # Word2Vec Google News
 
-# Top-level model folders from before the data/ layout (2026-10-27).
+# Top-level folders from before the data/ layout (2026-10-27).
+LEGACY_DICT_DIR = PROJECT_ROOT / "dictionaries"
 LEGACY_MODEL_DIRS = {
     HF_CACHE_DIR: PROJECT_ROOT / "hf_cache",
     MFA_DIR: PROJECT_ROOT / "mfa_data",

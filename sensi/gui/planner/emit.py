@@ -12,7 +12,7 @@ import argparse
 from sensi.gui.planner.stages import Plan
 from sensi.extractors.acoustic_ts import MTRF_COMP
 
-# Artifacts written by main.run_word_level_batch (the word CSV plus every
+# Artifacts written by sensi.pipeline.run_word_level_batch (the word CSV plus every
 # sub-word / sentence / embedding sidecar). The dispatchers (sensi/gui/run_dispatch,
 # run.py) start the word batch iff the plan has any of these live; the word
 # namespace also uses them to filter which stages are relevant (so doc-level
@@ -85,7 +85,7 @@ def _doc_only_stages(prefs: dict) -> frozenset[str]:
     The word extractors that feed doc aggregates (word_freq / ewfg_freq /
     lexical_norms / sem_domain) are listed in those doc clusters'
     requires_stages, so they appear here whenever the aggregate is active,
-    independent of the word-level sections; main.run_doc_level_batch also
+    independent of the word-level sections; sensi.pipeline.run_doc_level_batch also
     forces them on from the doc toggles. Predictability is carried on
     ns.predictability (plan.predictability_doc), not via a stage flag.
     """
@@ -137,14 +137,14 @@ def _categories_for_level(prefs: dict, level: str) -> str | None:
     """
     backend = prefs.get("semantic", {}).get("backend", "auto")
     if backend == "auto":
-        # Defer to runtime detection; emit None so main.run() falls back.
+        # Defer to runtime detection; emit None so sensi.pipeline.run() falls back.
         return None
     cats = prefs.get("semantic", {}).get(f"categories_{backend}", [])
     return ",".join(cats) if cats else None
 
 
 def to_acoustic_namespace(prefs: dict) -> argparse.Namespace:
-    """Namespace for main.run_acoustic_level_batch. Audio-only; no transcript
+    """Namespace for sensi.pipeline.run_acoustic_level_batch. Audio-only; no transcript
     or word/doc stage flags."""
     shared = prefs.get("shared", {})
     feats = prefs.get("features", {})
@@ -171,8 +171,8 @@ def to_acoustic_namespace(prefs: dict) -> argparse.Namespace:
 
 
 def to_namespace(plan: Plan, prefs: dict, level: str) -> argparse.Namespace:
-    """Build the argparse.Namespace for main.run_word_level_batch (level='word')
-    or main.run_doc_level_batch (level='doc')."""
+    """Build the argparse.Namespace for sensi.pipeline.run_word_level_batch (level='word')
+    or sensi.pipeline.run_doc_level_batch (level='doc')."""
     features = prefs.get("features", {})
     output = prefs.get("output", {})
     shared = prefs.get("shared", {})
@@ -197,7 +197,7 @@ def to_namespace(plan: Plan, prefs: dict, level: str) -> argparse.Namespace:
     #     flip the doc batch's no_align, or the doc batch runs MFA with no
     #     doc-level feature that needs it.
     # The underlying word extractors that feed doc aggregates are re-enabled
-    # by main.run_doc_level_batch from the doc output toggles, so scoping the
+    # by sensi.pipeline.run_doc_level_batch from the doc output toggles, so scoping the
     # doc flags here is safe.
     in_plan = set(plan.stages_to_run)
     word_stages = level_stages(plan, prefs, level)
@@ -238,7 +238,7 @@ def to_namespace(plan: Plan, prefs: dict, level: str) -> argparse.Namespace:
     ns.sem_categories  = _categories_for_level(prefs, level)
     # Predictability models/metrics go only to the pass whose planner path is
     # active (word pass: word-CSV columns; doc pass: doc means). Otherwise the
-    # pass gets no models and every metric off, so main.run never loads a
+    # pass gets no models and every metric off, so sensi.pipeline.run never loads a
     # language model for a section that is switched off. context is unchanged.
     _p = prefs.get("predictability", {})
     _pred_on = (plan.predictability_word if level == "word"

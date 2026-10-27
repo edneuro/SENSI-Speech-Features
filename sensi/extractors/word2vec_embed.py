@@ -19,8 +19,11 @@ from pathlib import Path
 from typing import Any
 
 from sensi.paths import HF_CACHE_DIR
+from sensi.utils.local_caches import resolve_cache_dir
 
-_DEFAULT_MODEL_PATH = HF_CACHE_DIR / "word2vec" / "GoogleNews-vectors-negative300.bin"
+# data/hf_cache/word2vec/, or the old top-level hf_cache/ until it has been moved.
+_DEFAULT_MODEL_PATH = (resolve_cache_dir(HF_CACHE_DIR) / "word2vec"
+                       / "GoogleNews-vectors-negative300.bin")
 
 
 class Word2VecUnavailable(RuntimeError):

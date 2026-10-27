@@ -27,9 +27,10 @@ if str(_ROOT) not in sys.path:
 
 from sensi.extractors.predictability import add_predictability, select_model
 from sensi.extractors.predictability_models import slug_for_hf_id
+from sensi.paths import DATA_DIR
 
 PROVO_CSV_URL = 'https://osf.io/download/eyfxq/'  # Provo Corpus item-level cloze data
-PROVO_DIR = _ROOT / 'data' / 'provo'
+PROVO_DIR = DATA_DIR / 'provo'
 PROVO_CSV = PROVO_DIR / 'provo_predictability.csv'
 
 EXPECTED_RANGES: dict[str, tuple[float, float]] = {

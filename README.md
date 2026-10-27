@@ -127,6 +127,12 @@ python gui.py
 
 (If `conda activate` errors, see the Step 1 troubleshooting note.)
 
+**Updating a copy from before 2026-10-27?** The folders were reorganized then (code
+in `sensi/`, models and dictionaries in `data/`). After `git pull`, just start the
+app as usual: on its first start it moves your existing `hf_cache/`, `mfa_data/`,
+`gensim_data/` and any private files left in `dictionaries/` (such as a LIWC
+`.dic`) into `data/`, and prints what it moved. Nothing is downloaded again.
+
 ---
 
 ## Usage

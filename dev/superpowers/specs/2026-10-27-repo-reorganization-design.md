@@ -106,6 +106,30 @@ SENSI-Speech-Features/
 4. **History is kept**: every move is a `git mv`, in its own commit,
    separate from the content edits, so `git log --follow` keeps working.
 
+## Changes made during the build (recorded after the fact)
+
+5. **MFA files follow `MFA_ROOT_DIR`.** The aligner's G2P model and the
+   phoneme-surprisal / syllabify pronunciation dictionary were hard-wired to
+   `<repo>/mfa_data/…`; they now come from `sensi.paths.mfa_pretrained()`,
+   which follows `MFA_ROOT_DIR`. Identical on a normal install (both point at
+   `data/mfa_data`). It does change Sherlock outputs: the container sets
+   `MFA_ROOT_DIR=/opt/mfa_data` and never had `<repo>/mfa_data`, so phoneme
+   surprisal and `Pron_Source` now work there instead of failing. (The
+   container still downloads no G2P model, so `g2p_oov` remains a no-op on
+   Sherlock, as before.)
+6. **Tests keep the old parser** instead of building arguments through the
+   planner (call 3 above): `tests/batch_args.py` is the retired CLI parser,
+   test scaffolding only, because the batch-runner tests were written against
+   its every-feature-on namespace and the planner's opt-in defaults would
+   change what they exercise. Checked: the pipeline reads no attribute that
+   only that parser sets.
+7. **Old `dictionaries/` leftovers** (local-only LIWC `.dic`, EWFG parquet,
+   self-built tables in an old checkout) are moved into `data/dictionaries/`
+   file by file by the same launcher step (never overwriting), and the old
+   folder is git-ignored so a licensed file there can't be committed.
+   `tests/conftest.py` runs the move first too, so a test run never moves
+   folders mid-session.
+
 ## Everything that references the old layout (must be updated)
 
 Imports and patch strings (≈760 lines; `gui/run_dispatch.py`, `run.py`,

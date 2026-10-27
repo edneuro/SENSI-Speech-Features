@@ -55,15 +55,19 @@ def _layout(tmp_path, monkeypatch):
     from sensi.utils import local_caches as lc
     new, old = tmp_path / "data" / "hf_cache", tmp_path / "hf_cache"
     monkeypatch.setattr(lc, "LEGACY_MODEL_DIRS", {new: old})
+    monkeypatch.setattr(lc, "LEGACY_DICT_DIR", tmp_path / "dictionaries")
+    monkeypatch.setattr(lc, "DICT_DIR", tmp_path / "data" / "dictionaries")
+    for var in lc.CACHE_DIRS:
+        monkeypatch.delenv(var, raising=False)
     return lc, new, old
 
 
 def test_legacy_folder_used_until_moved(tmp_path, monkeypatch):
     lc, new, old = _layout(tmp_path, monkeypatch)
     old.mkdir()
-    assert lc._resolve(new) == old          # old layout, not moved yet
+    assert lc.resolve_cache_dir(new) == old          # old layout, not moved yet
     new.mkdir(parents=True)
-    assert lc._resolve(new) == new          # data/ copy wins once it exists
+    assert lc.resolve_cache_dir(new) == new          # data/ copy wins once it exists
 
 
 def test_move_legacy_model_dirs_moves_once(tmp_path, monkeypatch, capsys):
@@ -77,9 +81,34 @@ def test_move_legacy_model_dirs_moves_once(tmp_path, monkeypatch, capsys):
     assert (new / "hub" / "w.bin").exists()
 
 
-def test_move_never_overwrites_existing_data_dir(tmp_path, monkeypatch):
+def test_move_never_overwrites_existing_data_dir(tmp_path, monkeypatch, capsys):
     lc, new, old = _layout(tmp_path, monkeypatch)
     old.mkdir(); (old / "old.txt").write_text("old")
     new.mkdir(parents=True); (new / "new.txt").write_text("new")
     lc.move_legacy_model_dirs()
     assert (old / "old.txt").exists() and (new / "new.txt").exists()
+    assert "Both hf_cache/ and data/hf_cache/ exist" in capsys.readouterr().err
+
+
+def test_folder_this_session_points_at_is_not_moved(tmp_path, monkeypatch):
+    lc, new, old = _layout(tmp_path, monkeypatch)
+    old.mkdir()
+    monkeypatch.setenv("HF_HOME", str(old))     # already pinned by this process
+    lc.move_legacy_model_dirs()
+    assert old.exists() and not new.exists()
+
+
+def test_leftover_dictionary_files_move_without_overwriting(tmp_path, monkeypatch):
+    lc, _, _ = _layout(tmp_path, monkeypatch)
+    old_d, new_d = tmp_path / "dictionaries", tmp_path / "data" / "dictionaries"
+    old_d.mkdir(); new_d.mkdir(parents=True)
+    (old_d / "liwc-2022.dic").write_text("local only")
+    (old_d / "mrc.parquet").write_text("old copy")
+    (new_d / "mrc.parquet").write_text("tracked copy")
+    lc.move_legacy_model_dirs()
+    assert (new_d / "liwc-2022.dic").read_text() == "local only"
+    assert (new_d / "mrc.parquet").read_text() == "tracked copy"     # not overwritten
+    assert (old_d / "mrc.parquet").exists()                          # left for the user
+    (old_d / "mrc.parquet").unlink()
+    lc.move_legacy_model_dirs()
+    assert not old_d.exists()                                        # empty -> removed

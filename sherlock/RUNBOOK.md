@@ -120,11 +120,18 @@ and the `dev/` project-history folder stay behind (`data/dictionaries/` is sent)
 never clobber the `run.yaml` you wrote on Sherlock in step 3):
 ```bash
 cd path/to/SensiExtractor
-rsync -avP --exclude env --exclude hf_cache --exclude mfa_data --exclude gensim_data --exclude dev --exclude .git \
+rsync -avP --exclude env --exclude hf_cache --exclude mfa_data --exclude gensim_data --exclude /dev --exclude .git \
   --exclude '*.sif' --exclude '__pycache__' \
   --exclude 'config/run.yaml' --exclude 'config/preferences.json*' \
   ./ <sunetid>@login.sherlock.stanford.edu:<GROUP_HOME>/SensiExtractor/
 ```
+> **Updating a copy uploaded before 2026-10-27** (the repo was reorganized then): rsync
+> adds the new layout but never deletes, so the old top-level `main.py`, `__init__.py`,
+> `extractors/`, `gui/`, `utils/` stay behind. They are unused (`run.py` imports only
+> `sensi/`) and can be removed once: `cd $GROUP_HOME/SensiExtractor && rm -rf main.py
+> __init__.py extractors gui utils`. Leave `dictionaries/` and `gensim_data/` alone: the
+> first `run.py` start moves their files into `data/` itself, and prints what it moved.
+
 Container into the repo's `sherlock/` folder (a few GB):
 ```bash
 rsync -avP sherlock/sensiextractor.sif \

@@ -1,4 +1,4 @@
-"""Background-thread dispatcher to main.run_word_level_batch / run_doc_level_batch.
+"""Background-thread dispatcher to sensi.pipeline.run_word_level_batch / run_doc_level_batch.
 
 The hand-rolled feature→stage gating has been replaced by sensi.gui.planner; this
 file is now a thin shim that loads prefs, runs the planner, and dispatches

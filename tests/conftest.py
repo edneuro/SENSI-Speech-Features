@@ -8,7 +8,11 @@ if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
 # Tests that load models use the project's caches, not the home directory.
-from sensi.utils.local_caches import use_project_caches  # noqa: E402
+# Move an old-layout checkout's model folders first, like the launchers do,
+# so no test that loads gui.py / run.py moves them mid-session.
+from sensi.utils.local_caches import (  # noqa: E402
+    move_legacy_model_dirs, use_project_caches)
+move_legacy_model_dirs()
 use_project_caches()
 
 # MKL on AMD CPUs crashes when using the default Intel-thread layer for

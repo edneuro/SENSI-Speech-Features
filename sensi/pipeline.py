@@ -799,7 +799,7 @@ def run_word_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None
                  else output_dir / '__no_audio__')
 
     if not args.analyzer:
-        raise SystemExit('--analyzer is required for batch mode')
+        raise SystemExit('An analyzer name is required (run.yaml: shared.analyzer_name, or the Inputs page).')
     _check_input_folders(transcripts_dir, args.audio_folder)
 
     text_exts = [e.strip() for e in args.text_extensions.split(',') if e.strip()]
@@ -1092,7 +1092,7 @@ def run_doc_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None:
                  else output_dir / '__no_audio__')
 
     if not args.analyzer:
-        raise SystemExit('--analyzer is required for batch mode')
+        raise SystemExit('An analyzer name is required (run.yaml: shared.analyzer_name, or the Inputs page).')
     _check_input_folders(transcripts_dir, args.audio_folder)
 
     text_exts = [e.strip() for e in args.text_extensions.split(',') if e.strip()]
