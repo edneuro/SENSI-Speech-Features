@@ -156,7 +156,7 @@ def _key_comments() -> dict[tuple[str, str], str]:
         ("acoustic_ts", "n_mfcc"): "whole number, 1 up to n_mels (GUI range 1-60)",
         ("acoustic_ts", "mel_preset"): " | ".join(_MEL_PRESETS),
         ("phoneme_surprisal", "analysis_sr"): "Hz, greater than 0 (GUI range 1-1000)",
-        ("shared", "analyzer_name"): "your name or initials, recorded in the run log",
+        ("shared", "analyzer_name"): "required: your name or initials, recorded in the run log",
         ("shared", "last_transcripts_folder"): "folder of .txt transcripts (run.py needs it)",
         ("shared", "last_audio_folder"): "folder of .wav files; '' = text-only run",
         ("shared", "last_output_folder"): "folder the outputs go to (run.py needs it)",

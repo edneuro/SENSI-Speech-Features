@@ -397,3 +397,21 @@ def test_planner_passes_g2p_oov_defaulting_off():
     assert to_namespace(plan_from_prefs(prefs), prefs, level="word").g2p_oov is False
     prefs["alignment"]["g2p_oov"] = True
     assert to_namespace(plan_from_prefs(prefs), prefs, level="word").g2p_oov is True
+
+
+def test_transcript_byte_order_mark_is_not_part_of_the_first_word(tmp_path):
+    """Windows Notepad saves UTF-8 with a byte-order mark; read raw, it glued
+    U+FEFF onto the first token ("\ufeffIn") and was sent on to MFA."""
+    import pandas as pd
+    txt = tmp_path / 'txt'
+    txt.mkdir()
+    (tmp_path / 'no_audio').mkdir()
+    (txt / 'bom.txt').write_bytes('﻿In the morning he ate.'.encode('utf-8'))
+    args = build_parser().parse_args([
+        '--transcript', 'unused.txt', '--transcripts-folder', str(txt),
+        '--audio-folder', str(tmp_path / 'no_audio'), '--output-folder', str(tmp_path / 'out'),
+        '--analyzer', 'T', '--no-align', '--no-edu-freq'])
+    run_word_level_batch(args)
+    df = pd.read_csv(next((tmp_path / 'out').rglob('bom_features.csv')))
+    assert df.token.iloc[0] == 'In'
+    assert not df.sentence.iloc[0].startswith('﻿')

@@ -198,7 +198,7 @@ def count_words(text) -> int:
 
 def _transcript_words(path) -> int:
     """count_words of a transcript file."""
-    with open(path, 'r', encoding='utf-8') as f:
+    with open(path, 'r', encoding='utf-8-sig') as f:
         return count_words(f.read())
 
 
@@ -250,7 +250,7 @@ def run(args) -> pd.DataFrame:
         sem_categories = prefs.get('semantic', {}).get(
             f'categories_{suffix}', [])
 
-    with open(args.transcript, 'r', encoding='utf-8') as f:
+    with open(args.transcript, 'r', encoding='utf-8-sig') as f:
         text = f.read()
 
     df = None
@@ -733,7 +733,7 @@ def _prealign_batch(run_args, work_items, output_dir, logger=None) -> None:
         # batch loop's per-pair error isolation — it must not abort the whole
         # pre-pass (and thus the whole dispatch).
         try:
-            with open(pair.transcript_path, 'r', encoding='utf-8') as f:
+            with open(pair.transcript_path, 'r', encoding='utf-8-sig') as f:
                 transcript_text = f.read()
         except OSError as exc:
             print(f'[mfa] skipping {pair.stimulus_id} in pre-alignment '
@@ -791,7 +791,7 @@ def _record_mfa_timing(run_args, items, result, seconds) -> None:
 def _event_text(pair) -> str:
     """Normalized transcript text stored in the event .mat files."""
     from sensi.utils.transcript_prep import normalize_whitespace
-    return normalize_whitespace(pair.transcript_path.read_text(encoding='utf-8'))
+    return normalize_whitespace(pair.transcript_path.read_text(encoding='utf-8-sig'))
 
 
 def _make_event_relookup(args):
@@ -1298,7 +1298,7 @@ def run_doc_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None:
 
             df = run(extract_args)
             dict_label = 'LIWC' if any(c.startswith('Sem_LIWC_') for c in df.columns) else 'Empath'
-            with open(pair.transcript_path, 'r', encoding='utf-8') as f:
+            with open(pair.transcript_path, 'r', encoding='utf-8-sig') as f:
                 text = f.read()
             liwc_path = None
             if dict_label == 'LIWC':

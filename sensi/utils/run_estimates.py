@@ -105,7 +105,7 @@ def _alignment_fresh(output_folder: str, transcript: Path, audio: Path,
            _stat_key(side), bool(g2p))
     if key not in _FRESH_CACHE:
         try:
-            with open(transcript, encoding="utf-8") as f:
+            with open(transcript, encoding="utf-8-sig") as f:
                 text = f.read()
             _FRESH_CACHE[key] = aligner.is_alignment_fresh(
                 output_folder, str(audio), text, g2p=g2p)
