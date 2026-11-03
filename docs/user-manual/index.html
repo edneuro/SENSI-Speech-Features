@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Introduction · SensiExtractor User Manual</title>
+<title>Introduction · SENSI SpeechFeatures User Manual</title>
 <link rel="icon" href="assets/icon.svg">
 <link rel="stylesheet" href="assets/theme.css">
 <link rel="stylesheet" href="assets/layout.css">
@@ -13,7 +13,7 @@
 <button class="menu-btn" type="button" aria-label="Open the outline">☰ Contents</button>
 <div class="shell">
   <nav class="left" aria-label="Manual outline">
-    <a class="brand" href="index.html"><img src="assets/icon.svg" alt="">SensiExtractor <span>User Manual</span></a>
+    <a class="brand" href="index.html"><img src="assets/icon.svg" alt="">SENSI SpeechFeatures <span>User Manual</span></a>
     <div class="search">
       <input type="search" placeholder="Search features, columns…  ( / )" aria-label="Search the manual">
       <div class="search-results" role="listbox"></div>
@@ -23,15 +23,13 @@
   <main>
     <div class="content">
       
-      <details class="toc-inline"><summary>On this page</summary><ul><li><a href="#what-sensiextractor-is-for">What SensiExtractor is for</a></li><li><a href="#how-it-works">How it works</a></li><li><a href="#the-five-output-levels">The five output levels</a></li><li><a href="#how-to-use-this-manual">How to use this manual</a></li></ul></details>
-      <h1><span class="num">1</span>Introduction</h1><p class="lede">SensiExtractor turns a spoken stimulus — an audio recording and its transcript — into time-aligned tables of linguistic and acoustic features, ready to relate to EEG.</p><h2 id="what-sensiextractor-is-for"><span class="num">1.1</span>What SensiExtractor is for</h2>
+      <details class="toc-inline"><summary>On this page</summary><ul><li><a href="#what-sensi-speechfeatures-is-for">What SENSI SpeechFeatures is for</a></li><li><a href="#how-it-works">How it works</a></li><li><a href="#the-five-output-levels">The five output levels</a></li><li><a href="#how-to-use-this-manual">How to use this manual</a></li></ul></details>
+      <h1><span class="num">1</span>Introduction</h1><p class="lede">SENSI SpeechFeatures turns a spoken stimulus — an audio recording and its transcript — into time-aligned tables of linguistic and acoustic features, ready to relate to EEG.</p><h2 id="what-sensi-speechfeatures-is-for"><span class="num">1.1</span>What SENSI SpeechFeatures is for</h2>
 <p>Naturalistic EEG studies play people real speech — stories, lectures, conversations — and
 ask how the brain follows it. To analyse that, every stimulus first has to be described in
 numbers: <em>when</em> each word was spoken, how frequent or predictable it is, what part of speech
-it is, how high and loud the voice was, how the sound energy moved over time. SensiExtractor
-is the standardized tool of the SENSI naturalistic-EEG pipeline (ISC Wu Tsai dataset) that
-produces those descriptions the same way for every stimulus, so analyses across studies use
-the same definitions.</p>
+it is, how high and loud the voice was, how the sound energy moved over time. SENSI SpeechFeatures
+computes those descriptions from a recording and its transcript.</p>
 <p>You give it a folder of transcripts (<code>.txt</code>) and, usually, the matching recordings (<code>.wav</code>,
 paired by file name). It writes, for each stimulus, CSV tables and MATLAB <code>.mat</code> files, plus
 one summary table for the whole set. Every time-based value is on the recording's own clock,
@@ -123,10 +121,12 @@ columns, such as the token and its ids, are always written).</li>
 </ul>
 <div class="callout">
 <b>Where the examples come from.</b> Every figure, table and number in this manual is real
-SensiExtractor output, computed when the manual was built. The recordings are from the
+SENSI SpeechFeatures output, computed when the manual was built. The recordings are from the
 <a href="https://keithito.com/LJ-Speech-Dataset/">LJ Speech dataset</a> (public domain, a single
-speaker reading non-fiction); two short invented sentences, run without audio, show the
-predictability features. No study stimuli are included.
+speaker reading non-fiction). Where a feature needs a particular kind of text (a sentence whose
+words range from common to rare, paragraphs in contrasting styles…), short invented texts are run
+without audio; each page shows the text it used. The
+numbers are still the program's real output. No study stimuli are included.
 </div>
 <p>The text of each feature page is the same text the app shows when you click a feature's
 ⓘ icon, so the manual and the app always say the same thing.</p>
@@ -135,12 +135,12 @@ predictability features. No study stimuli are included.
         <span></span>
         <a class="next" href="chapters/requirements.html"><small>Next</small>Requirements</a>
       </nav>
-      <footer>SensiExtractor User Manual · version 0.2.0 · built 2026-10-27 · source: <a href="https://github.com/edneuro/SENSI-Speech-Features">edneuro/SENSI-Speech-Features</a></footer>
+      <footer>SENSI SpeechFeatures User Manual · version 0.2.0 · built 2026-11-03 · source: <a href="https://github.com/edneuro/SENSI-Speech-Features">edneuro/SENSI-Speech-Features</a></footer>
     </div>
   </main>
   <aside class="right" aria-label="On this page">
     <div class="label">On this page</div>
-    <ul><li><a href="#what-sensiextractor-is-for">What SensiExtractor is for</a></li><li><a href="#how-it-works">How it works</a></li><li><a href="#the-five-output-levels">The five output levels</a></li><li><a href="#how-to-use-this-manual">How to use this manual</a></li></ul>
+    <ul><li><a href="#what-sensi-speechfeatures-is-for">What SENSI SpeechFeatures is for</a></li><li><a href="#how-it-works">How it works</a></li><li><a href="#the-five-output-levels">The five output levels</a></li><li><a href="#how-to-use-this-manual">How to use this manual</a></li></ul>
     
   </aside>
 </div>

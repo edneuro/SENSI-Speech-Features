@@ -1,19 +1,17 @@
 ---
 id: introduction
 title: Introduction
-lede: SensiExtractor turns a spoken stimulus — an audio recording and its transcript — into time-aligned tables of linguistic and acoustic features, ready to relate to EEG.
-keywords: overview what is sensiextractor pipeline levels
+lede: SENSI SpeechFeatures turns a spoken stimulus — an audio recording and its transcript — into time-aligned tables of linguistic and acoustic features, ready to relate to EEG.
+keywords: overview what is sensi speechfeatures sensiextractor levels
 ---
 
-## What SensiExtractor is for
+## What SENSI SpeechFeatures is for
 
 Naturalistic EEG studies play people real speech — stories, lectures, conversations — and
 ask how the brain follows it. To analyse that, every stimulus first has to be described in
 numbers: *when* each word was spoken, how frequent or predictable it is, what part of speech
-it is, how high and loud the voice was, how the sound energy moved over time. SensiExtractor
-is the standardized tool of the SENSI naturalistic-EEG pipeline (ISC Wu Tsai dataset) that
-produces those descriptions the same way for every stimulus, so analyses across studies use
-the same definitions.
+it is, how high and loud the voice was, how the sound energy moved over time. SENSI SpeechFeatures
+computes those descriptions from a recording and its transcript.
 
 You give it a folder of transcripts (`.txt`) and, usually, the matching recordings (`.wav`,
 paired by file name). It writes, for each stimulus, CSV tables and MATLAB `.mat` files, plus
@@ -75,10 +73,12 @@ so it lines up with your EEG events.
 
 <div class="callout">
 <b>Where the examples come from.</b> Every figure, table and number in this manual is real
-SensiExtractor output, computed when the manual was built. The recordings are from the
+SENSI SpeechFeatures output, computed when the manual was built. The recordings are from the
 <a href="https://keithito.com/LJ-Speech-Dataset/">LJ Speech dataset</a> (public domain, a single
-speaker reading non-fiction); two short invented sentences, run without audio, show the
-predictability features. No study stimuli are included.
+speaker reading non-fiction). Where a feature needs a particular kind of text (a sentence whose
+words range from common to rare, paragraphs in contrasting styles…), short invented texts are run
+without audio; each page shows the text it used. The
+numbers are still the program's real output. No study stimuli are included.
 </div>
 
 The text of each feature page is the same text the app shows when you click a feature's

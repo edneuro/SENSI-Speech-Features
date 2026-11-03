@@ -21,44 +21,21 @@ hierarchy. All are **1-indexed integers**.
 | `token_id` | Global token index across the entire document. First token is `1`. Counts **emitted tokens only** — see below. |
 | `token_in_sentence_id` | Token index **within the current sentence**. Resets to `1` at each sentence boundary. A true sentence position — see below. |
 
-### Whitespace tokens are not rows (fixed 2026-07-27)
+### Whitespace tokens are not rows
 
 spaCy emits a literal newline in the transcript as its own token
-(`upos == 'SPACE'`, text `"\n"`). Until 2026-07-27 the parser iterated
-every token, so each hard line wrap became an **all-NaN word-CSV row that
-consumed both a `token_id` and a `token_in_sentence_id`**:
-
-```
-token_id=10  token_in_sentence_id=10  token=\n     ← consumed position 10
-token_id=11  token_in_sentence_id=11  token=were
-```
-
-Every word after a line break was therefore off by one in both id columns,
-and `token_in_sentence_id` was **not** a true position within its sentence
-— it was a position within the sentence's token stream *including* line
-wraps. Three of the ten SENSI validation transcripts were affected (the
-hard-wrapped `LJ*` files); the single-line ISC stimuli have no SPACE
-tokens, which is why it went unnoticed.
-
-Whitespace tokens are now skipped entirely. Consequences:
+(`upos == 'SPACE'`, text `"\n"`). The parser skips these tokens
+entirely, so a hard line wrap does not produce a word-CSV row and does
+not consume a `token_id` or a `token_in_sentence_id`. Consequences:
 
 - `token_id` and `token_in_sentence_id` count **emitted tokens only** and
   are contiguous with no gaps.
-- `token_in_sentence_id` **is** now a true position within its sentence —
+- `token_in_sentence_id` **is** a true position within its sentence —
   word *n* of the sentence, as printed.
-- Nothing is lost by dropping the rows. They carried no features (every
-  feature column was NaN), and paragraph membership was never encoded by
-  them: `paragraph_id` is computed from **blank lines**, not single
-  newlines, and has been all along. A hard wrap inside a sentence is not a
-  paragraph break — in one validation stimulus a `\n` falls mid-sentence,
-  and spaCy correctly assigns both halves the same `sentence_id`.
-- `head_token_id` still resolves correctly; see the note in
-  Implementation, because that part was **not** free.
-
-⚠️ If you are comparing against a word CSV generated before 2026-07-27
-from a transcript containing hard line wraps, the id columns will differ
-by the number of preceding newlines. Join on `token`/`Onset` rather than
-on `token_id` when reconciling old and new outputs.
+- `paragraph_id` is computed from **blank lines**, not single newlines, so
+  a hard wrap inside a sentence is not a paragraph break: both halves keep
+  the same `sentence_id` and `paragraph_id`.
+- `head_token_id` resolves correctly; see the note in Implementation.
 
 ## Usage
 - Group by `sentence_id` to compute sentence-level aggregates from the
@@ -76,7 +53,7 @@ Derived from spaCy's `Doc.sents` iteration over the `en_core_web_sm`
 pipeline; `token_id` and `token_in_sentence_id` are assigned by the
 extractor as 1-based counters during the sentence walk.
 
-## Implementation in SensiExtractor
+## Implementation in SENSI SpeechFeatures
 Source: `sensi/extractors/text_parser.py:parse`.
 
 `doc_id` is a parameter on `parse(text, doc_id=1)` — the batch loops in
@@ -98,15 +75,12 @@ as a per-sentence counter over non-whitespace tokens, and `token_id` as a
 global counter that increments across sentences. Tokens for which
 `token.is_space` is true are skipped and never become rows.
 
-⚠️ **The whitespace skip required a second, non-obvious change**, and
-omitting it would have silently corrupted the dependency parse. `parse`
-previously computed `head_token_id = token.head.i + 1`, using spaCy's own
-document index — which counts SPACE tokens. That agreed with `token_id`
-only *by accident*, because `token_id` counted them too. Skipping the rows
-without remapping would have left every `head_token_id` past the first
-newline pointing at the wrong word, with no error raised.
+⚠️ **The whitespace skip requires remapping heads.** spaCy's own
+document index (`token.head.i + 1`) counts SPACE tokens, so using it
+directly would leave every `head_token_id` past the first newline
+pointing at the wrong word.
 
-So `parse` now runs two passes: the first builds
+So `parse` runs two passes: the first builds
 `id_by_doc_index: {token.i → token_id}` over surviving tokens only, and
 the second resolves each head through that map. A root token maps to its
 own `token_id`. Because heads are resolved through the map rather than

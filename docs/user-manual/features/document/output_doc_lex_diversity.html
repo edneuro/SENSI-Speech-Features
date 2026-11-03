@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Lexical diversity (TTR + MTLD) · SensiExtractor User Manual</title>
+<title>Lexical diversity (TTR + MTLD) · SENSI SpeechFeatures User Manual</title>
 <link rel="icon" href="../../assets/icon.svg">
 <link rel="stylesheet" href="../../assets/theme.css">
 <link rel="stylesheet" href="../../assets/layout.css">
@@ -13,7 +13,7 @@
 <button class="menu-btn" type="button" aria-label="Open the outline">☰ Contents</button>
 <div class="shell">
   <nav class="left" aria-label="Manual outline">
-    <a class="brand" href="../../index.html"><img src="../../assets/icon.svg" alt="">SensiExtractor <span>User Manual</span></a>
+    <a class="brand" href="../../index.html"><img src="../../assets/icon.svg" alt="">SENSI SpeechFeatures <span>User Manual</span></a>
     <div class="search">
       <input type="search" placeholder="Search features, columns…  ( / )" aria-label="Search the manual">
       <div class="search-results" role="listbox"></div>
@@ -52,7 +52,7 @@ level:</p>
 </table>
 <p>Both are computed over <strong>content words only</strong> (<code>upos</code> in <code>{NOUN, VERB, ADJ, ADV, PROPN}</code>), so PUNCT and function words are excluded; tokens are
 lowercased before counting types.</p>
-</section><section id="see"><h2><span class="num">6.2.3.2</span>See it</h2><div class="card"><div class="caption">One row per example stimulus: the five LJ Speech clips and the two invented text-only sentences (no audio, so their audio-based columns are empty).</div><div ><figure><img src="../../assets/figures/output_doc_lex_diversity.svg" alt="Lexical diversity (TTR + MTLD) — Default settings"></figure><figcaption>Lexical diversity (TTR + MTLD) — Default settings</figcaption><div class="provenance">Read from <span class='file'>document/documents_summary_<timestamp>.csv</span>, written by SensiExtractor on the example shown here. Nothing on this figure is typed in.</div></div></div></section><section id="output"><h2><span class="num">6.2.3.3</span>In your output</h2><div class="card"><div class="card-title">File <span class="file">document/documents_summary_&lt;timestamp&gt;.csv</span></div><table class="excerpt"><thead><tr><th class="">stimulus_id</th><th class="hl">ttr</th><th class="hl">mtld</th></tr></thead><tbody><tr><td class="">LJ002-0321</td><td class="hl">1</td><td class="hl"></td></tr><tr><td class="">LJ003-0007</td><td class="hl">1</td><td class="hl"></td></tr><tr><td class="">LJ005-0063</td><td class="hl">1</td><td class="hl"></td></tr><tr><td class="">LJ005-0066</td><td class="hl">1</td><td class="hl"></td></tr><tr><td class="">LJ019-0027</td><td class="hl">1</td><td class="hl"></td></tr><tr><td class="">predictable</td><td class="hl">1</td><td class="hl"></td></tr><tr><td class="">surprising</td><td class="hl">1</td><td class="hl"></td></tr></tbody></table><div class="caption">7 rows × 80 columns in the file; showing the feature's columns. An empty cell means no value (e.g. punctuation, or a word the measure doesn’t cover).</div><div class="provenance">Excerpt of the real file for <b>LJ002-0321</b>.</div></div></section><section id="matlab"><h2><span class="num">6.2.3.4</span>MATLAB</h2><div class="card" data-tabs><div class="tabpanel on"><pre data-copy><code>% Load the document-level table (one row per stimulus)
+</section><section id="see"><h2><span class="num">6.2.3.2</span>See it</h2><div class="card"><div class="caption">One row per example text (invented, run without audio):<br><b>essay.txt</b>: “The structure of the atom consists of a nucleus and a cloud of electrons. The nucleus contains protons and neutrons, which account for most of the mass of the atom. The electrons occupy regions of space at different levels of energy.”<br><b>diary.txt</b>: “I was so happy today. I saw my mom and my dad and I hugged them. I love them so much and I told them that I love them. We laughed and I cried a little, but I was happy.”</div><div ><figure><img src="../../assets/figures/output_doc_lex_diversity.svg" alt="Lexical diversity (TTR + MTLD) — Default settings"></figure><figcaption>Lexical diversity (TTR + MTLD) — Default settings</figcaption><div class="provenance">Read from <span class='file'>document/documents_summary_<timestamp>.csv</span>, written by SENSI SpeechFeatures on the example shown here. Nothing on this figure is typed in.</div></div></div></section><section id="output"><h2><span class="num">6.2.3.3</span>In your output</h2><div class="card"><div class="card-title">File <span class="file">document/documents_summary_&lt;timestamp&gt;.csv</span></div><table class="excerpt"><thead><tr><th class="">stimulus_id</th><th class="hl">ttr<br><small>ratio (0-1)</small></th><th class="hl">mtld<br><small>tokens (mean factor length)</small></th></tr></thead><tbody><tr><td class="">essay</td><td class="hl">0.8571</td><td class="hl">41.16</td></tr><tr><td class="">diary</td><td class="hl">0.8125</td><td class="hl">23.89</td></tr></tbody></table><div class="caption">2 rows shown; showing the feature's columns, with the unit the run's units table gives for each. An empty cell means no value (e.g. punctuation, or a word the measure doesn’t cover).</div><div class="provenance">Excerpt of the real file.</div></div></section><section id="matlab"><h2><span class="num">6.2.3.4</span>MATLAB</h2><div class="card" data-tabs><div class="tabpanel on"><pre data-copy><code>% Load the document-level table (one row per stimulus)
 T = readtable(&#x27;document/documents_summary_&lt;timestamp&gt;.csv&#x27;, &#x27;TextType&#x27;, &#x27;string&#x27;);
 T.Properties.VariableNames             % every column in the file
 head(T(:, {&#x27;stimulus_id&#x27;, &#x27;ttr&#x27;, &#x27;mtld&#x27;}), 10)                % this feature&#x27;s columns (first rows)
@@ -72,7 +72,7 @@ proportional partial factor, <code>(1 − TTR_remaining) / (1 − 0.72)</code>.
 pass (<a href="#mccarthy-2010">McCarthy 2010</a>). Higher MTLD = it takes more tokens before
 TTR drops to the threshold = the text uses more types per token.</li>
 </ul>
-</section><section id="code"><a id="implementation-in-sensiextractor"></a><h2><span class="num">6.2.3.6</span>In the code</h2><div class="card"><div class="card-title">Open in GitHub</div><ul><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/extractors/lexical_diversity.py"><code>sensi/extractors/lexical_diversity.py</code></a></li><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/utils/doc_summary.py"><code>sensi/utils/doc_summary.py</code></a></li></ul></div><p>Computed in <code>sensi/extractors/lexical_diversity.py</code> (in-house implementation
+</section><section id="code"><a id="implementation-in-sensi-speechfeatures"></a><h2><span class="num">6.2.3.6</span>In the code</h2><div class="card"><div class="card-title">Open in GitHub</div><ul><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/extractors/lexical_diversity.py"><code>sensi/extractors/lexical_diversity.py</code></a></li><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/utils/doc_summary.py"><code>sensi/utils/doc_summary.py</code></a></li></ul></div><p>Computed in <code>sensi/extractors/lexical_diversity.py</code> (in-house implementation
 of the published procedure — equivalent to <a href="#mccarthy-2010">McCarthy 2010</a>, not
 verified bit-for-bit against the authors' original tool), called from
 <code>sensi/utils/doc_summary.py</code>. Both measures run over <strong>content words only</strong>
@@ -107,7 +107,7 @@ is the right per-stimulus covariate to include in a regression.</p>
         <a class="prev" href="../../features/document/doc_aggregates.html"><small>Previous</small>Word-level feature aggregates</a>
         <a class="next" href="../../features/document/output_doc_readability.html"><small>Next</small>Readability (Flesch Reading Ease + Flesch–Kincaid Grade Level)</a>
       </nav>
-      <footer>SensiExtractor User Manual · version 0.2.0 · built 2026-10-27 · source: <a href="https://github.com/edneuro/SENSI-Speech-Features">edneuro/SENSI-Speech-Features</a></footer>
+      <footer>SENSI SpeechFeatures User Manual · version 0.2.0 · built 2026-11-03 · source: <a href="https://github.com/edneuro/SENSI-Speech-Features">edneuro/SENSI-Speech-Features</a></footer>
     </div>
   </main>
   <aside class="right" aria-label="On this page">

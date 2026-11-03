@@ -33,7 +33,7 @@ narrative (rising during climaxes, falling during calm sections);
 useful as a continuous regressor for engagement-modulated EEG/MEG
 responses.
 
-## Implementation in SensiExtractor
+## Implementation in SENSI SpeechFeatures
 Source: `sensi/extractors/sentence_prosody.py`. Same Praat intensity
 contour as the word- and document-level extractors; sliced to each
 sentence's `[Onset, End)`. The aggregation function

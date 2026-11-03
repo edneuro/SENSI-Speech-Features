@@ -1,0 +1,59 @@
+doc_id,paragraph_id,sentence_id,sentence,start,end,token_id,token_in_sentence_id,token,lemma,upos,xpos,feats,dep_rel,head_token_id,Zipf_Freq,Sem_Empath_anticipation,Sem_Empath_body,Sem_Empath_communication,Sem_Empath_family,Sem_Empath_friends,Sem_Empath_hearing,Sem_Empath_money,Sem_Empath_movement,Sem_Empath_negative_emotion,Sem_Empath_philosophy,Sem_Empath_positive_emotion,Sem_Empath_science,Sem_Empath_work,Sem_Categories,gpt2_Cloze,gpt2_Surprisal,gpt2_TopMatch,Word_Duration,Word_Gap,AoA_Mean,AoA_SD,Concreteness,Imageability,Familiarity,Valence,Arousal,Dominance
+6,1,1,I was so happy today.,1,1,1,1,I,I,PRON,PRP,Case=Nom|Number=Sing|Person=1|PronType=Prs,nsubj,2,7.09,,,,,,,,,,,,,,,,,,,,,,3.93,465.0,628.0,,,
+6,1,1,I was so happy today.,3,5,2,2,was,be,AUX,VBD,Mood=Ind|Number=Sing|Person=3|Tense=Past|VerbForm=Fin,ROOT,2,6.79,,,,,,,,,,,,,,,0.0142546,6.1324,0.0,,,5.11,3.23,1.85,274.0,613.0,6.18,3.43,5.5
+6,1,1,I was so happy today.,7,8,3,3,so,so,ADV,RB,,advmod,4,6.52,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,,0.01931,5.6945,0.0,,,,,1.42,227.0,597.0,,,
+6,1,1,I was so happy today.,10,14,4,4,happy,happy,ADJ,JJ,Degree=Pos,acomp,2,5.35,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,positive_emotion,0.0751645,3.7338,0.0,,,2.72,1.6,2.56,511.0,621.0,8.47,6.05,7.21
+6,1,1,I was so happy today.,16,20,5,5,today,today,NOUN,NN,Number=Sing,npadvmod,2,5.55,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,,0.00106663,9.8727,0.0,,,,,2.57,,,,,
+6,1,1,I was so happy today.,21,21,6,6,.,.,PUNCT,.,PunctType=Peri,punct,2,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+6,1,2,I saw my mom and my dad,1,1,7,1,I,I,PRON,PRP,Case=Nom|Number=Sing|Person=1|PronType=Prs,nsubj,8,7.09,,,,,,,,,,,,,,,0.314931,1.6669,1.0,,,,,3.93,465.0,628.0,,,
+6,1,2,I saw my mom and my dad,3,5,8,2,saw,see,VERB,VBD,Tense=Past|VerbForm=Fin,ROOT,8,6.1,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,,0.00708877,7.1402,0.0,,,3.06,1.43,3.21,379.0,625.0,6.27,3.9,6.0
+6,1,2,I saw my mom and my dad,7,8,9,3,my,my,PRON,PRP$,Number=Sing|Person=1|Poss=Yes|PronType=Prs,poss,10,6.57,,,,,,,,,,,,,,,0.105321,3.2471,0.0,,,,,2.42,298.0,612.0,,,
+6,1,2,I saw my mom and my dad,10,12,10,4,mom,mom,NOUN,NN,Number=Sing,dobj,8,5.12,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,family,0.0705354,3.8255,1.0,,,2.22,1.22,4.4,,,7.64,4.62,6.29
+6,1,2,I saw my mom and my dad,14,16,11,5,and,and,CCONJ,CC,ConjType=Cmp,cc,10,7.41,,,,,,,,,,,,,,,0.178223,2.4882,1.0,,,,,1.52,226.0,620.0,,,
+6,1,2,I saw my mom and my dad,18,19,12,6,my,my,PRON,PRP$,Number=Sing|Person=1|Poss=Yes|PronType=Prs,poss,13,6.57,,,,,,,,,,,,,,,0.183286,2.4478,0.0,,,,,2.42,298.0,612.0,,,
+6,1,2,I saw my mom and my dad,21,23,13,7,dad,dad,NOUN,NN,Number=Sing,conj,10,4.95,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,family,0.160606,2.6384,0.0,,,2.58,1.17,4.29,626.0,646.0,7.14,4.05,6.12
+6,1,3,and I hugged them.,1,3,14,1,and,and,CCONJ,CC,ConjType=Cmp,cc,16,7.41,,,,,,,,,,,,,,,0.145182,2.7841,1.0,,,,,1.52,226.0,620.0,,,
+6,1,3,and I hugged them.,5,5,15,2,I,I,PRON,PRP,Case=Nom|Number=Sing|Person=1|PronType=Prs,nsubj,16,7.09,,,,,,,,,,,,,,,0.188033,2.4109,1.0,,,,,3.93,465.0,628.0,,,
+6,1,3,and I hugged them.,7,12,16,3,hugged,hug,VERB,VBD,Tense=Past|VerbForm=Fin,ROOT,16,4.09,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,,0.00577784,7.4353,0.0,,,2.58,0.96,4.14,,,8.23,4.85,6.8
+6,1,3,and I hugged them.,14,17,17,4,them,they,PRON,PRP,Case=Acc|Number=Plur|Person=3|PronType=Prs,dobj,16,6.5,,,,,,,,,,,,,,,0.192196,2.3794,1.0,,,,,2.93,312.0,607.0,,,
+6,1,3,and I hugged them.,18,18,18,5,.,.,PUNCT,.,PunctType=Peri,punct,16,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+6,1,4,I love them so much,1,1,19,1,I,I,PRON,PRP,Case=Nom|Number=Sing|Person=1|PronType=Prs,nsubj,20,7.09,,,,,,,,,,,,,,,0.319213,1.6474,1.0,,,,,3.93,465.0,628.0,,,
+6,1,4,I love them so much,3,6,20,2,love,love,VERB,VBP,Tense=Pres|VerbForm=Fin,ROOT,20,5.82,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,"friends,positive_emotion",0.0175958,5.8286,0.0,,,5.17,3.54,2.07,569.0,619.0,8.0,5.36,5.92
+6,1,4,I love them so much,8,11,21,3,them,they,PRON,PRP,Case=Acc|Number=Plur|Person=3|PronType=Prs,dobj,20,6.5,,,,,,,,,,,,,,,0.283035,1.8209,1.0,,,,,2.93,312.0,607.0,,,
+6,1,4,I love them so much,13,14,22,4,so,so,ADV,RB,,advmod,23,6.52,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,,0.135092,2.888,0.0,,,,,1.42,227.0,597.0,,,
+6,1,4,I love them so much,16,19,23,5,much,much,ADV,RB,,advmod,20,6.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,,0.907562,0.1399,1.0,,,,,1.69,332.0,584.0,,,
+6,1,5,and I told them that I love them.,1,3,24,1,and,and,CCONJ,CC,ConjType=Cmp,cc,26,7.41,,,,,,,,,,,,,,,0.120377,3.0544,0.0,,,,,1.52,226.0,620.0,,,
+6,1,5,and I told them that I love them.,5,5,25,2,I,I,PRON,PRP,Case=Nom|Number=Sing|Person=1|PronType=Prs,nsubj,26,7.09,,,,,,,,,,,,,,,0.422826,1.2419,1.0,,,,,3.93,465.0,628.0,,,
+6,1,5,and I told them that I love them.,7,10,26,3,told,tell,VERB,VBD,Tense=Past|VerbForm=Fin,ROOT,26,5.53,0.0,0.0,1.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,communication,0.00233531,8.7422,0.0,,,4.26,2.05,2.9,350.0,596.0,5.27,3.86,4.94
+6,1,5,and I told them that I love them.,12,15,27,4,them,they,PRON,PRP,Case=Acc|Number=Plur|Person=3|PronType=Prs,dobj,26,6.5,,,,,,,,,,,,,,,0.738836,0.4367,1.0,,,,,2.93,312.0,607.0,,,
+6,1,5,and I told them that I love them.,17,20,28,5,that,that,SCONJ,IN,,mark,30,7.01,,,,,,,,,,,,,,,0.11895,3.0716,0.0,,,,,1.54,225.0,611.0,,,
+6,1,5,and I told them that I love them.,22,22,29,6,I,I,PRON,PRP,Case=Nom|Number=Sing|Person=1|PronType=Prs,nsubj,30,7.09,,,,,,,,,,,,,,,0.471349,1.0851,1.0,,,,,3.93,465.0,628.0,,,
+6,1,5,and I told them that I love them.,24,27,30,7,love,love,VERB,VBP,Tense=Pres|VerbForm=Fin,ccomp,26,5.82,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,"friends,positive_emotion",0.212723,2.233,1.0,,,5.17,3.54,2.07,569.0,619.0,8.0,5.36,5.92
+6,1,5,and I told them that I love them.,29,32,31,8,them,they,PRON,PRP,Case=Acc|Number=Plur|Person=3|PronType=Prs,dobj,30,6.5,,,,,,,,,,,,,,,0.708892,0.4964,1.0,,,,,2.93,312.0,607.0,,,
+6,1,5,and I told them that I love them.,33,33,32,9,.,.,PUNCT,.,PunctType=Peri,punct,26,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+6,1,6,"We laughed and I cried a little, but I was happy.
+",1,2,33,1,We,we,PRON,PRP,Case=Nom|Number=Plur|Person=1|PronType=Prs,nsubj,34,6.54,,,,,,,,,,,,,,,0.0194932,5.6809,0.0,,,,,3.08,389.0,614.0,,,
+6,1,6,"We laughed and I cried a little, but I was happy.
+",4,10,34,2,laughed,laugh,VERB,VBD,Tense=Past|VerbForm=Fin,ROOT,34,4.66,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,,0.00423856,7.8822,0.0,,,3.79,1.51,4.21,528.0,594.0,7.56,6.62,7.39
+6,1,6,"We laughed and I cried a little, but I was happy.
+",12,14,35,3,and,and,CCONJ,CC,ConjType=Cmp,cc,34,7.41,,,,,,,,,,,,,,,0.309848,1.6904,1.0,,,,,1.52,226.0,620.0,,,
+6,1,6,"We laughed and I cried a little, but I was happy.
+",16,16,36,4,I,I,PRON,PRP,Case=Nom|Number=Sing|Person=1|PronType=Prs,nsubj,37,7.09,,,,,,,,,,,,,,,0.156608,2.6748,1.0,,,,,3.93,465.0,628.0,,,
+6,1,6,"We laughed and I cried a little, but I was happy.
+",18,22,37,5,cried,cry,VERB,VBD,Tense=Past|VerbForm=Fin,conj,34,4.59,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,negative_emotion,0.0382101,4.7099,0.0,,,2.78,1.66,4.0,478.0,566.0,3.22,5.45,2.56
+6,1,6,"We laughed and I cried a little, but I was happy.
+",24,24,38,6,a,a,DET,DT,Definite=Ind|PronType=Art,det,39,7.36,,,,,,,,,,,,,,,0.0386433,4.6936,0.0,,,,,1.46,217.0,632.0,,,
+6,1,6,"We laughed and I cried a little, but I was happy.
+",26,31,39,7,little,little,ADJ,JJ,Degree=Pos,npadvmod,37,5.75,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,,0.184348,2.4395,0.0,,,3.95,1.87,3.67,502.0,594.0,5.91,4.2,5.18
+6,1,6,"We laughed and I cried a little, but I was happy.
+",32,32,40,8,",",",",PUNCT,",",PunctType=Comm,punct,37,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+6,1,6,"We laughed and I cried a little, but I was happy.
+",34,36,41,9,but,but,CCONJ,CC,ConjType=Cmp,cc,37,6.63,,,,,,,,,,,,,,,0.268312,1.898,1.0,,,,,2.04,206.0,603.0,,,
+6,1,6,"We laughed and I cried a little, but I was happy.
+",38,38,42,10,I,I,PRON,PRP,Case=Nom|Number=Sing|Person=1|PronType=Prs,nsubj,43,7.09,,,,,,,,,,,,,,,0.302256,1.7262,1.0,,,,,3.93,465.0,628.0,,,
+6,1,6,"We laughed and I cried a little, but I was happy.
+",40,42,43,11,was,be,AUX,VBD,Mood=Ind|Number=Sing|Person=3|Tense=Past|VerbForm=Fin,conj,37,6.79,,,,,,,,,,,,,,,0.0901241,3.4719,1.0,,,5.11,3.23,1.85,274.0,613.0,6.18,3.43,5.5
+6,1,6,"We laughed and I cried a little, but I was happy.
+",44,48,44,12,happy,happy,ADJ,JJ,Degree=Pos,acomp,43,5.35,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,positive_emotion,0.0841337,3.5712,0.0,,,2.72,1.6,2.56,511.0,621.0,8.47,6.05,7.21
+6,1,6,"We laughed and I cried a little, but I was happy.
+",49,49,45,13,.,.,PUNCT,.,PunctType=Peri,punct,43,,,,,,,,,,,,,,,,,,,,,,,,,,,,

@@ -24,6 +24,6 @@ separate lookup.
 - Combine with [`start` / `end`](structural_offsets.md) to reproduce the
   surface token from its sentence: `sentence[start-1:end]`.
 
-## Implementation in SensiExtractor
+## Implementation in SENSI SpeechFeatures
 Source: `sensi/extractors/text_parser.py:parse` — emitted directly from
 `spaCy`'s `sent.text` for each sentence span.

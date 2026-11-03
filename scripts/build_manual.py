@@ -2,13 +2,13 @@
 """Build the self-contained User Manual into docs/user-manual/.
 
     python scripts/build_manual.py                       # rebuild pages from committed example outputs
-    python scripts/build_manual.py --refresh-examples    # first re-run SensiExtractor on the examples (needs models)
+    python scripts/build_manual.py --refresh-examples    # first re-run SENSI SpeechFeatures on the examples (needs models)
     python scripts/build_manual.py --refresh-screenshots # first re-capture the GUI screenshots (offscreen)
     python scripts/build_manual.py --check-links         # also request every external link and report
 
 Sources: docs/features/*.md (the same files the app's ⓘ pop-ups show),
 dev/manual/ (outline manifest, chapters, templates, theme, example inputs and
-the real outputs SensiExtractor produced on them). See
+the real outputs SENSI SpeechFeatures produced on them). See
 dev/superpowers/specs/2026-10-27-user-manual-design.md.
 """
 from __future__ import annotations

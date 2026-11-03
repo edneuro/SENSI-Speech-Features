@@ -1,23 +1,61 @@
 ---
 id: usage
 title: Using the app
-lede: The app is eight pages in a sidebar — choose your files, tick the features you want, run. The same settings also drive a headless run with run.py.
+lede: The app's main sections, the two ways to run it (the app or the run.py script), the HuggingFace token, then each page in turn.
 keywords: gui usage inputs run logs features.yaml run.yaml headless token reset settings
 ---
 
-## The workflow at a glance
+## The main sections
 
-<ol class="steps">
-<li><b>Inputs</b> — say who is running it, and pick the transcripts, audio and output folders.</li>
-<li><b>Feature pages</b> (Word, Document, Sub-word, Sentence, Acoustic) — switch on the sections you want and tick their columns.</li>
-<li><b>Run</b> — switch on the output levels to write, check the size / memory / time estimates and readiness, press <b>Run extraction</b>.</li>
-<li><b>Logs</b> — watch progress live; reopen past runs.</li>
-</ol>
+The app is one window with eight pages in a sidebar on the left. You go through them top to
+bottom:
 
-Your choices are saved as you make them, in two plain-text files in `config/`:
-`features.yaml` (*what* to extract — the same on every computer, safe to share) and
-`run.yaml` (*where*: folders, your name — specific to this computer). Close the app and
-everything is still there next time.
+| Page | What you do there |
+|---|---|
+| **Inputs** | give your name (recorded with every run) and pick the transcripts, audio and output folders |
+| **Word-level features** | choose the per-word columns: ids, parts of speech, frequency, predictability, embeddings, word prosody… |
+| **Document-level features** | choose the one-row-per-stimulus summary: counts, averages, readability, document prosody… |
+| **Sub-word features** | choose the syllable and phoneme tables |
+| **Sentence features** | choose the per-sentence table |
+| **Acoustic** | choose the audio-only time series (envelope, spectrogram, MFCC) |
+| **Run** | switch on the output levels to write, check the size / memory / time estimates and press **Run extraction** |
+| **Logs** | watch progress live; reopen past runs |
+
+The bar along the bottom of the window shows whether a run is in progress, how far it has
+got (file *n* of *N*) and a **Cancel** button.
+
+## Two ways to run it
+
+<div class="grid-cards">
+<div class="card"><div class="card-title">With the app (GUI)</div>
+<p>Start the app, set things up on its pages, press <b>Run extraction</b>. Best for choosing
+features and for small and medium batches. Described in the rest of this chapter.</p></div>
+<div class="card"><div class="card-title">With a script (headless)</div>
+<p><code>python run.py</code> runs exactly what the Run button would, with no window. Best for
+long batches, servers and <a href="{{root}}chapters/sherlock.html">Sherlock</a>. See
+<a href="#headless-runs-run-py">Headless runs</a>.</p></div>
+</div>
+
+Both read the same two plain-text settings files in `config/`, which the app writes as you
+click:
+
+- **`features.yaml`** — *what* to extract (every switch, tick and setting on the feature
+  pages). The same on every computer, so you can share it with a colleague or copy it to
+  Sherlock.
+- **`run.yaml`** — *where*: your name, the three folders, the token file. Specific to this
+  computer.
+
+So you can set everything up once in the app and then run it headless, or skip the app and
+edit the two files directly. Close the app and everything is still there next time.
+
+## HuggingFace token
+
+You need a token **only** to use the Llama language models for predictability
+(surprisal, cloze, top-match). GPT-2, the default, and every other feature need none. The
+token proves to HuggingFace (where the model files are downloaded from) that Meta has
+approved your request to use Llama; you get it once and the app remembers it.
+
+{{doc:llm_credentials}}
 
 ## Inputs
 
@@ -33,7 +71,7 @@ everything is still there next time.
   sub-word levels need it.
 - **Output folder** — where results go (created if missing).
 - **Pairing preview** — shows which files paired and which didn't, before you run. In the
-  example above, two text-only sentences have no recording and one recording has no
+  example above, the invented text-only examples have no recording and one recording has no
   transcript (it is used only by the audio-only Acoustic level).
 
 ## Feature pages
@@ -145,7 +183,3 @@ predictability:
 `run.py` checks both files before doing any work and stops with a plain message for an
 unknown key, a wrong type, an out-of-range value (such as a pitch floor above the ceiling) or
 a missing folder.
-
-## HuggingFace token
-
-{{doc:llm_credentials}}

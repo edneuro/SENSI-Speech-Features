@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Document-level pause statistics · SensiExtractor User Manual</title>
+<title>Document-level pause statistics · SENSI SpeechFeatures User Manual</title>
 <link rel="icon" href="../../assets/icon.svg">
 <link rel="stylesheet" href="../../assets/theme.css">
 <link rel="stylesheet" href="../../assets/layout.css">
@@ -13,7 +13,7 @@
 <button class="menu-btn" type="button" aria-label="Open the outline">☰ Contents</button>
 <div class="shell">
   <nav class="left" aria-label="Manual outline">
-    <a class="brand" href="../../index.html"><img src="../../assets/icon.svg" alt="">SensiExtractor <span>User Manual</span></a>
+    <a class="brand" href="../../index.html"><img src="../../assets/icon.svg" alt="">SENSI SpeechFeatures <span>User Manual</span></a>
     <div class="search">
       <input type="search" placeholder="Search features, columns…  ( / )" aria-label="Search the manual">
       <div class="search-results" role="listbox"></div>
@@ -62,7 +62,7 @@ Document-level features → Prosody card).</p>
 <p>The speech span deliberately leaves out silence before the first word and
 after the last one: that padding depends on how the recording was cut, not
 on the speaker.</p>
-</section><section id="see"><h2><span class="num">6.2.9.2</span>See it</h2><div class="card"><div class="caption">One row per example stimulus: the five LJ Speech clips and the two invented text-only sentences (no audio, so their audio-based columns are empty).</div><div ><figure><img src="../../assets/figures/doc_prosody_pauses.svg" alt="Document-level pause statistics — Default settings"></figure><figcaption>Document-level pause statistics — Default settings</figcaption><div class="provenance">Read from <span class='file'>document/documents_summary_<timestamp>.csv</span>, written by SensiExtractor on the example shown here. Nothing on this figure is typed in.</div></div></div></section><section id="output"><h2><span class="num">6.2.9.3</span>In your output</h2><div class="card"><div class="card-title">File <span class="file">document/documents_summary_&lt;timestamp&gt;.csv</span></div><table class="excerpt"><thead><tr><th class="">stimulus_id</th><th class="hl">doc_pause_count</th><th class="hl">doc_pause_mean_duration</th><th class="hl">doc_pause_total_duration</th><th class="hl">doc_pause_pct_silence</th></tr></thead><tbody><tr><td class="">LJ002-0321</td><td class="hl">2</td><td class="hl">0.505</td><td class="hl">1.01</td><td class="hl">10.11</td></tr><tr><td class="">LJ003-0007</td><td class="hl">1</td><td class="hl">0.33</td><td class="hl">0.33</td><td class="hl">3.36</td></tr><tr><td class="">LJ005-0063</td><td class="hl">2</td><td class="hl">0.405</td><td class="hl">0.81</td><td class="hl">8.333</td></tr><tr><td class="">LJ005-0066</td><td class="hl">1</td><td class="hl">0.41</td><td class="hl">0.41</td><td class="hl">4.092</td></tr><tr><td class="">LJ019-0027</td><td class="hl">4</td><td class="hl">0.315</td><td class="hl">1.26</td><td class="hl">12.54</td></tr><tr><td class="">predictable</td><td class="hl"></td><td class="hl"></td><td class="hl"></td><td class="hl"></td></tr><tr><td class="">surprising</td><td class="hl"></td><td class="hl"></td><td class="hl"></td><td class="hl"></td></tr></tbody></table><div class="caption">7 rows × 80 columns in the file; showing the feature's columns. An empty cell means no value (e.g. punctuation, or a word the measure doesn’t cover).</div><div class="provenance">Excerpt of the real file for <b>LJ002-0321</b>.</div></div></section><section id="matlab"><h2><span class="num">6.2.9.4</span>MATLAB</h2><div class="card" data-tabs><div class="tabpanel on"><pre data-copy><code>% Load the document-level table (one row per stimulus)
+</section><section id="see"><h2><span class="num">6.2.9.2</span>See it</h2><div class="card"><div class="caption">One row per example stimulus: the 5 LJ Speech recordings with their transcripts.</div><div ><figure><img src="../../assets/figures/doc_prosody_pauses.svg" alt="Document-level pause statistics — Default settings"></figure><figcaption>Document-level pause statistics — Default settings</figcaption><div class="provenance">Read from <span class='file'>document/documents_summary_<timestamp>.csv</span>, written by SENSI SpeechFeatures on the example shown here. Nothing on this figure is typed in.</div></div></div></section><section id="output"><h2><span class="num">6.2.9.3</span>In your output</h2><div class="card"><div class="card-title">File <span class="file">document/documents_summary_&lt;timestamp&gt;.csv</span></div><table class="excerpt"><thead><tr><th class="">stimulus_id</th><th class="hl">doc_pause_count<br><small>count</small></th><th class="hl">doc_pause_mean_duration<br><small>seconds</small></th><th class="hl">doc_pause_total_duration<br><small>seconds</small></th><th class="hl">doc_pause_pct_silence<br><small>percent</small></th></tr></thead><tbody><tr><td class="">LJ002-0321</td><td class="hl">2</td><td class="hl">0.505</td><td class="hl">1.01</td><td class="hl">10.11</td></tr><tr><td class="">LJ003-0007</td><td class="hl">1</td><td class="hl">0.33</td><td class="hl">0.33</td><td class="hl">3.36</td></tr><tr><td class="">LJ005-0063</td><td class="hl">2</td><td class="hl">0.405</td><td class="hl">0.81</td><td class="hl">8.333</td></tr><tr><td class="">LJ005-0066</td><td class="hl">1</td><td class="hl">0.41</td><td class="hl">0.41</td><td class="hl">4.092</td></tr><tr><td class="">LJ019-0027</td><td class="hl">4</td><td class="hl">0.315</td><td class="hl">1.26</td><td class="hl">12.54</td></tr></tbody></table><div class="caption">5 rows shown; showing the feature's columns, with the unit the run's units table gives for each. An empty cell means no value (e.g. punctuation, or a word the measure doesn’t cover).</div><div class="provenance">Excerpt of the real file.</div></div></section><section id="matlab"><h2><span class="num">6.2.9.4</span>MATLAB</h2><div class="card" data-tabs><div class="tabpanel on"><pre data-copy><code>% Load the document-level table (one row per stimulus)
 T = readtable(&#x27;document/documents_summary_&lt;timestamp&gt;.csv&#x27;, &#x27;TextType&#x27;, &#x27;string&#x27;);
 T.Properties.VariableNames             % every column in the file
 head(T(:, {&#x27;stimulus_id&#x27;, &#x27;doc_pause_count&#x27;, &#x27;doc_pause_mean_duration&#x27;, &#x27;doc_pause_total_duration&#x27;, &#x27;doc_pause_pct_silence&#x27;}), 10)                % this feature&#x27;s columns (first rows)
@@ -81,7 +81,7 @@ discourse:</p>
 </ul>
 <p>The same threshold applies to all four columns — they're not
 independently tunable.</p>
-</section><section id="code"><a id="implementation-in-sensiextractor"></a><h2><span class="num">6.2.9.6</span>In the code</h2><div class="card"><div class="card-title">Open in GitHub</div><ul><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/extractors/prosody.py#L148"><code>sensi/extractors/prosody.py → compute_doc_prosody()</code></a></li></ul></div><p>Source: <code>sensi/extractors/prosody.py:compute_doc_prosody</code>. All four columns
+</section><section id="code"><a id="implementation-in-sensi-speechfeatures"></a><h2><span class="num">6.2.9.6</span>In the code</h2><div class="card"><div class="card-title">Open in GitHub</div><ul><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/extractors/prosody.py#L148"><code>sensi/extractors/prosody.py → compute_doc_prosody()</code></a></li></ul></div><p>Source: <code>sensi/extractors/prosody.py:compute_doc_prosody</code>. All four columns
 come from the MFA-aligned words (rows with an <code>Onset</code>/<code>End</code>), sorted by
 onset. The gap between consecutive words is the same quantity as the
 word-level <a href="../../features/word/acoustic_durations.html"><code>Word_Gap</code></a> column:</p>
@@ -95,9 +95,8 @@ doc_pause_pct_silence    = 100.0 * doc_pause_total_duration / span
 </code></pre>
 <p>Words that share one MFA interval (e.g. the two halves of a contraction)
 produce a negative or zero gap, which never counts as a pause.</p>
-<p>Before 2026-10-21, <code>doc_pause_pct_silence</code> was emitted as a fraction
-(0–1) despite its name, and <code>doc_pause_mean_duration</code> was 0 instead of
-blank for a stimulus with no pauses.</p>
+<p><code>doc_pause_pct_silence</code> is a percentage (0–100) of the speech span, and
+<code>doc_pause_mean_duration</code> is blank (not 0) for a stimulus with no pauses.</p>
 <p>These columns need forced alignment; without it the document prosody
 step does not run and they are left out. The doc-level page's preflight
 surfaces a warning in that case.</p>
@@ -134,7 +133,7 @@ end of a file does not inflate it.</p>
         <a class="prev" href="../../features/document/doc_prosody_volume.html"><small>Previous</small>Document-level volume (intensity) summaries</a>
         <a class="next" href="../../features/document/feat_doc_prosody_articulation_rate.html"><small>Next</small>Articulation rate</a>
       </nav>
-      <footer>SensiExtractor User Manual · version 0.2.0 · built 2026-10-27 · source: <a href="https://github.com/edneuro/SENSI-Speech-Features">edneuro/SENSI-Speech-Features</a></footer>
+      <footer>SENSI SpeechFeatures User Manual · version 0.2.0 · built 2026-11-03 · source: <a href="https://github.com/edneuro/SENSI-Speech-Features">edneuro/SENSI-Speech-Features</a></footer>
     </div>
   </main>
   <aside class="right" aria-label="On this page">

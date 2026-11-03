@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>BERT contextual sentence embeddings · SensiExtractor User Manual</title>
+<title>BERT contextual sentence embeddings · SENSI SpeechFeatures User Manual</title>
 <link rel="icon" href="../../assets/icon.svg">
 <link rel="stylesheet" href="../../assets/theme.css">
 <link rel="stylesheet" href="../../assets/layout.css">
@@ -13,7 +13,7 @@
 <button class="menu-btn" type="button" aria-label="Open the outline">☰ Contents</button>
 <div class="shell">
   <nav class="left" aria-label="Manual outline">
-    <a class="brand" href="../../index.html"><img src="../../assets/icon.svg" alt="">SensiExtractor <span>User Manual</span></a>
+    <a class="brand" href="../../index.html"><img src="../../assets/icon.svg" alt="">SENSI SpeechFeatures <span>User Manual</span></a>
     <div class="search">
       <input type="search" placeholder="Search features, columns…  ( / )" aria-label="Search the manual">
       <div class="search-results" role="listbox"></div>
@@ -30,14 +30,14 @@ layers — the sentence-level analogue of the
 <code>(n_sentences, 12, 768)</code>. Each sentence's vector is the <strong>mean of the
 contextual embeddings of its non-PUNCT content words</strong> at the same
 layer.</p>
-</section><section id="see"><h2><span class="num">6.4.5.2</span>See it</h2><div class="card"><div class="caption">Example <b>LJ003-0007</b> (LJ Speech, public domain): “Hundreds of women and children came in every morning to spend the day there. And there was no limitation, whatever, to the numbers of visitors admitted to the debtor&#x27;s side.”</div><audio controls preload="none" src="../../assets/audio/LJ003-0007.wav"></audio><div ><figure><img src="../../assets/figures/master_bert_sentence.svg" alt="BERT contextual sentence embeddings — Default settings"></figure><figcaption>BERT contextual sentence embeddings — Default settings</figcaption><div class="provenance">Read from <span class='file'>sentence/LJ003-0007_bert_sentence.mat</span>, written by SensiExtractor on the example shown here. Nothing on this figure is typed in.</div></div></div></section><section id="output"><h2><span class="num">6.4.5.3</span>In your output</h2><div class="card"><div class="card-title">File <span class="file">sentence/&lt;stim&gt;_bert_sentence.mat</span></div><table class="excerpt vars"><thead><tr><th>variable</th><th>size</th><th>MATLAB class</th></tr></thead><tbody><tr><td><code>embeddings</code></td><td>2 × 12 × 768</td><td>single</td></tr><tr><td><code>sentence_id</code></td><td>1 × 2</td><td>int64</td></tr><tr><td><code>sentence</code></td><td>1 × 2</td><td>cell</td></tr><tr><td><code>is_valid</code></td><td>1 × 2</td><td>uint8</td></tr></tbody></table><div class="provenance">Excerpt of the real file for <b>LJ003-0007</b>.</div></div></section><section id="matlab"><h2><span class="num">6.4.5.4</span>MATLAB</h2><div class="card" data-tabs><div class="tabpanel on"><pre data-copy><code>S = load(&#x27;sentence/LJ003-0007_bert_sentence.mat&#x27;);
+</section><section id="see"><h2><span class="num">6.4.5.2</span>See it</h2><div class="card"><div class="caption">Example <b>LJ003-0007</b> (LJ Speech, public domain): “Hundreds of women and children came in every morning to spend the day there. And there was no limitation, whatever, to the numbers of visitors admitted to the debtor&#x27;s side.”</div><audio controls preload="none" src="../../assets/audio/LJ003-0007.wav"></audio><div ><figure><img src="../../assets/figures/master_bert_sentence.svg" alt="BERT contextual sentence embeddings — Default settings"></figure><figcaption>BERT contextual sentence embeddings — Default settings</figcaption><div class="provenance">Read from <span class='file'>sentence/LJ003-0007_bert_sentence.mat</span>, written by SENSI SpeechFeatures on the example shown here. Nothing on this figure is typed in.</div></div></div></section><section id="output"><h2><span class="num">6.4.5.3</span>In your output</h2><div class="card"><div class="card-title">File <span class="file">sentence/&lt;stim&gt;_bert_sentence.mat</span></div><table class="excerpt vars"><thead><tr><th>variable</th><th>size</th><th>MATLAB class</th></tr></thead><tbody><tr><td><code>embeddings</code></td><td>2 × 12 × 768</td><td>single</td></tr><tr><td><code>sentence_id</code></td><td>1 × 2</td><td>int64</td></tr><tr><td><code>sentence</code></td><td>1 × 2</td><td>cell</td></tr><tr><td><code>is_valid</code></td><td>1 × 2</td><td>uint8</td></tr></tbody></table><div class="provenance">Excerpt of the real file for <b>LJ003-0007</b>.</div></div></section><section id="matlab"><h2><span class="num">6.4.5.4</span>MATLAB</h2><div class="card" data-tabs><div class="tabpanel on"><pre data-copy><code>S = load(&#x27;sentence/LJ003-0007_bert_sentence.mat&#x27;);
 whos(&#x27;-file&#x27;, &#x27;sentence/LJ003-0007_bert_sentence.mat&#x27;)                % variables, sizes, classes
 
 size(S.embeddings)                         % 2 x 12 x 768 (single) = sentences x layers x dims
 a = squeeze(S.embeddings(1, :, :)); b = squeeze(S.embeddings(2, :, :));
 c = sum(a .* b, 2) ./ (vecnorm(a, 2, 2) .* vecnorm(b, 2, 2));
 plot(1:12, c, &#x27;o-&#x27;); xlabel(&#x27;BERT layer&#x27;); ylabel(&#x27;cosine(sentence 1, sentence 2)&#x27;)
-</code></pre></div><div class="caption">Run from the output folder. Variable and column names were checked against the real files when this manual was built; the code itself was not run in MATLAB.</div></div></section><section id="code"><a id="implementation-in-sensiextractor"></a><h2><span class="num">6.4.5.5</span>In the code</h2><div class="card"><div class="card-title">Open in GitHub</div><ul><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/extractors/bert_embed.py#L66"><code>sensi/extractors/bert_embed.py → embed_bert_words_and_sentences()</code></a></li></ul></div><p>Source: <code>sensi/extractors/bert_embed.py:embed_bert_words_and_sentences</code></p>
+</code></pre></div><div class="caption">Run from the output folder. Variable and column names were checked against the real files when this manual was built; the code itself was not run in MATLAB.</div></div></section><section id="code"><a id="implementation-in-sensi-speechfeatures"></a><h2><span class="num">6.4.5.5</span>In the code</h2><div class="card"><div class="card-title">Open in GitHub</div><ul><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/extractors/bert_embed.py#L66"><code>sensi/extractors/bert_embed.py → embed_bert_words_and_sentences()</code></a></li></ul></div><p>Source: <code>sensi/extractors/bert_embed.py:embed_bert_words_and_sentences</code></p>
 <p><strong>What the code does</strong> (verified against the source):</p>
 <p>The sentence embeddings are produced <strong>in the same forward pass</strong> as
 the <a href="../../features/word/master_bert_word.html">word-level embeddings</a> — see that doc's
@@ -113,7 +113,7 @@ word-level shape with <code>n_sentences</code> instead of <code>n_words</code>.<
 <li><em>Mean-pool rather than the CLS token</em> — raw BERT's CLS vector is a
 poor unsupervised sentence embedding: on semantic-similarity
 benchmarks, averaging BERT's token vectors scored 54.8 vs 29.2 for the
-CLS output <a href="#reimers-2019">Reimers 2019</a>. Mean-pooling is SensiExtractor's choice,
+CLS output <a href="#reimers-2019">Reimers 2019</a>. Mean-pooling is SENSI SpeechFeatures's choice,
 not a convention of the brain-encoding papers: <a href="#toneva-2019-sent">Toneva 2019</a> and
 <a href="#schrimpf-2021-sent">Schrimpf 2021</a> instead use the hidden state at the <em>last</em> word after
 feeding the preceding context. If you want that representation, take
@@ -163,7 +163,7 @@ Schrimpf 2021, Goldstein 2022) plus the sentence-level-specific:</p>
         <a class="prev" href="../../features/sentence/feat_sentence_hnr.html"><small>Previous</small>Sentence-level Harmonics-to-Noise Ratio (HNR)</a>
         <a class="next" href="../../features/acoustic/index.html"><small>Next</small>Acoustic level</a>
       </nav>
-      <footer>SensiExtractor User Manual · version 0.2.0 · built 2026-10-27 · source: <a href="https://github.com/edneuro/SENSI-Speech-Features">edneuro/SENSI-Speech-Features</a></footer>
+      <footer>SENSI SpeechFeatures User Manual · version 0.2.0 · built 2026-11-03 · source: <a href="https://github.com/edneuro/SENSI-Speech-Features">edneuro/SENSI-Speech-Features</a></footer>
     </div>
   </main>
   <aside class="right" aria-label="On this page">

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Out-of-dictionary words (MFA G2P) · SensiExtractor User Manual</title>
+<title>Out-of-dictionary words (MFA G2P) · SENSI SpeechFeatures User Manual</title>
 <link rel="icon" href="../../assets/icon.svg">
 <link rel="stylesheet" href="../../assets/theme.css">
 <link rel="stylesheet" href="../../assets/layout.css">
@@ -13,7 +13,7 @@
 <button class="menu-btn" type="button" aria-label="Open the outline">☰ Contents</button>
 <div class="shell">
   <nav class="left" aria-label="Manual outline">
-    <a class="brand" href="../../index.html"><img src="../../assets/icon.svg" alt="">SensiExtractor <span>User Manual</span></a>
+    <a class="brand" href="../../index.html"><img src="../../assets/icon.svg" alt="">SENSI SpeechFeatures <span>User Manual</span></a>
     <div class="search">
       <input type="search" placeholder="Search features, columns…  ( / )" aria-label="Search the manual">
       <div class="search-results" role="listbox"></div>
@@ -47,7 +47,7 @@ spelling↔pronunciation pairs proposes the phone sequence an English
 speaker would most plausibly produce: <code>Z AO1 R B L AE2 K S</code>. MFA ships
 pretrained G2P models per language, and <code>mfa align</code> accepts
 <code>--g2p_model_path</code>, documented as <em>&quot;Path to G2P model to use for OOV
-items&quot;</em> (<a href="#mfa-g2p">MFA G2P</a>). With the option on, SensiExtractor passes the
+items&quot;</em> (<a href="#mfa-g2p">MFA G2P</a>). With the option on, SENSI SpeechFeatures passes the
 vendored <code>english_us_arpa</code> G2P model on that flag, so out-of-dictionary
 words get a generated pronunciation and are aligned with real phone
 boundaries like any other word.</p>
@@ -118,13 +118,9 @@ output (checked: no likelihood/confidence flag, and no
 <h3 id="turning-it-on-or-off-re-runs-alignment--once">Turning it on or off re-runs alignment — once</h3>
 <p>The setting changes MFA's output, so a cached TextGrid produced under the
 other setting is stale. Alignment persistence handles this: the freshness
-sidecar written next to each TextGrid records an <code>mfa_g2p</code> key, and its
-<code>SIDECAR_VERSION</code> was bumped 1 → 2 when the key was added (and to 3 on
-2026-10-21 for the one-speaker-per-stimulus layout). So:</p>
+sidecar written next to each TextGrid records an <code>mfa_g2p</code> key. So:</p>
 <ul>
-<li>The first batch run after upgrading re-aligns every stimulus <strong>once</strong>
-(the sidecar version changed), then caches normally.</li>
-<li>Flipping the toggle thereafter re-aligns <strong>once</strong> and caches again.</li>
+<li>Flipping the toggle re-aligns <strong>once</strong> and caches again.</li>
 <li>MFA still runs at most once per document per dispatch — the option
 changes the <em>arguments</em>, never the number of alignment passes.</li>
 </ul>
@@ -132,9 +128,7 @@ changes the <em>arguments</em>, never the number of alignment passes.</li>
 (<code>aligner.ensure_alignments</code>) and the per-document path
 (<code>aligner.align_with_phones</code> with a <code>persist_dir</code>, used when the batch
 pre-pass failed and fell back) both reuse a TextGrid only when its sidecar
-matches the current inputs, <code>mfa_g2p</code> included. Before 2026-10-21 the
-per-document path trusted any existing TextGrid, so flipping this option
-could silently change nothing there. Only a direct <code>run()</code> call with no
+matches the current inputs, <code>mfa_g2p</code> included. Only a direct <code>run()</code> call with no
 output folder (as in some tests) has no persistence directory and runs MFA
 every time.</p>
 </section><section id="see"><h2><span class="num">6.3.7.2</span>See it</h2><div class="card notcomputed"><div class="card-title">◇ Not computed in this manual</div><p>Needs a spoken word that is missing from the pronunciation dictionary; every word in the manual&#x27;s public-domain recordings is in it, and we do not fabricate audio. With the option on, such a word gets Pron_Source = g2p and modeled phones instead of a single spn.</p><p>Columns this feature writes when it runs: <code>ARPABET</code>, <code>Stress</code>, <code>IPA</code>, <code>Pron_Source</code></p></div></section><section id="output"><h2><span class="num">6.3.7.3</span>In your output</h2><p>When it runs, this feature writes these columns: <code>ARPABET</code>, <code>Stress</code>, <code>IPA</code>, <code>Pron_Source</code>.</p></section><section id="matlab"><h2><span class="num">6.3.7.4</span>MATLAB</h2><p>Nothing to load: this feature is not written in this manual's example outputs.</p></section><section id="x-usage"><a id="usage"></a><h2><span class="num">6.3.7.5</span>Usage</h2><p>Turn it <strong>on</strong> when your stimuli contain unusual proper nouns, invented
@@ -156,7 +150,7 @@ warns and proceeds without it rather than failing:</p>
 <pre><code>[mfa] WARNING: g2p requested but no G2P model at …; out-of-dictionary
 words will align to spn. Run: python scripts/download_models.py
 </code></pre>
-</section><section id="code"><a id="implementation-in-sensiextractor"></a><h2><span class="num">6.3.7.6</span>In the code</h2><div class="card"><div class="card-title">Open in GitHub</div><ul><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/extractors/aligner.py"><code>sensi/extractors/aligner.py</code></a></li><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/extractors/syllabify.py"><code>sensi/extractors/syllabify.py</code></a></li><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/gui/planner/emit.py"><code>sensi/gui/planner/emit.py</code></a></li><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/utils/config_yaml.py"><code>sensi/utils/config_yaml.py</code></a></li></ul></div><p>Sources: <code>sensi/extractors/aligner.py</code> (the flag, the sidecar, the model path),
+</section><section id="code"><a id="implementation-in-sensi-speechfeatures"></a><h2><span class="num">6.3.7.6</span>In the code</h2><div class="card"><div class="card-title">Open in GitHub</div><ul><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/extractors/aligner.py"><code>sensi/extractors/aligner.py</code></a></li><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/extractors/syllabify.py"><code>sensi/extractors/syllabify.py</code></a></li><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/gui/planner/emit.py"><code>sensi/gui/planner/emit.py</code></a></li><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/utils/config_yaml.py"><code>sensi/utils/config_yaml.py</code></a></li></ul></div><p>Sources: <code>sensi/extractors/aligner.py</code> (the flag, the sidecar, the model path),
 <code>sensi/extractors/syllabify.py</code> (<code>Pron_Source</code>), <code>scripts/download_models.py</code>
 (fetching the model).</p>
 <ul>
@@ -189,7 +183,7 @@ right home: it is a &quot;what to extract&quot; decision, and it means the GUI's
 <strong>Reset settings</strong> turns it back off — the correct behaviour for an
 opt-in that adds modeled data.</li>
 <li><strong><code>Pron_Source</code> derivation</strong> is described in
-<a href="../../features/subword/phoneme.html#implementation-in-sensiextractor"><code>phoneme</code></a>. Briefly: MFA
+<a href="../../features/subword/phoneme.html#implementation-in-sensi-speechfeatures"><code>phoneme</code></a>. Briefly: MFA
 does not mark G2P-derived words in the TextGrid, so provenance is
 inferred from whether the <strong>MFA words-tier form</strong> is present in
 <code>english_us_arpa.dict</code>. Consequence worth knowing: <code>Pron_Source</code> reports
@@ -211,7 +205,7 @@ model is a data asset MFA downloads, and <code>--g2p_model_path</code> is part o
         <a class="prev" href="../../features/subword/feat_phoneme_ipa.html"><small>Previous</small>IPA phoneme symbol</a>
         <a class="next" href="../../features/subword/phoneme_surprisal.html"><small>Next</small>Phoneme surprisal + cohort entropy</a>
       </nav>
-      <footer>SensiExtractor User Manual · version 0.2.0 · built 2026-10-27 · source: <a href="https://github.com/edneuro/SENSI-Speech-Features">edneuro/SENSI-Speech-Features</a></footer>
+      <footer>SENSI SpeechFeatures User Manual · version 0.2.0 · built 2026-11-03 · source: <a href="https://github.com/edneuro/SENSI-Speech-Features">edneuro/SENSI-Speech-Features</a></footer>
     </div>
   </main>
   <aside class="right" aria-label="On this page">

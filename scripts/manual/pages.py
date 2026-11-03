@@ -198,14 +198,14 @@ def _features_index(page: Page, ctx: Context):
                      f'<div class="caption">{n} feature pages</div></div>')
     gui = ctx.manifest["gui_pages"]
     body = (f'<h1><span class="num">{page.num}</span>Features</h1>'
-            '<p class="lede">Every feature SensiExtractor produces, grouped the way the app groups them: one '
+            '<p class="lede">Every feature SENSI SpeechFeatures produces, grouped the way the app groups them: one '
             'chapter per output level (the app’s feature pages), one section per card on that page.</p>'
             f'<div class="grid-cards">{"".join(cards)}</div>'
             '<h2 id="how-to-read">How to read a feature page</h2>'
             '<p>Each feature page has the same parts, listed on the right as you read:</p>'
             '<ul><li><b>What it is</b> — the plain meaning, and the exact column or variable names.</li>'
-            '<li><b>See it</b> — a figure drawn from SensiExtractor’s real output on a public-domain example '
-            '(LJ Speech recordings, or two invented sentences run without audio). Where a setting changes the '
+            '<li><b>See it</b> — a figure drawn from SENSI SpeechFeatures’ real output on a public-domain example '
+            '(LJ Speech recordings, or short invented texts run without audio). Where a setting changes the '
             'result, you can switch between real runs that differ only in that setting.</li>'
             '<li><b>In your output</b> — which file it lands in, and an excerpt of that file.</li>'
             '<li><b>MATLAB</b> — how to load it, inspect it and plot it.</li>'
@@ -284,10 +284,12 @@ def _feature(page: Page, ctx: Context):
     for pid in order:
         try:
             if pid == "see":
+                if entry.get("figure") == "none":
+                    continue
                 inner = G.see_it(entry, page.root, ctx.out_dir, OUTPUTS_DIR, EXAMPLES_DIR)
                 title = "See it"
             elif pid == "output":
-                inner, title = G.in_output(entry, OUTPUTS_DIR, meta_fm), "In your output"
+                inner, title = G.in_output(entry, OUTPUTS_DIR, meta_fm, EXAMPLES_DIR), "In your output"
             elif pid == "matlab":
                 inner, title = G.matlab(entry, OUTPUTS_DIR), "MATLAB"
             elif pid == "code":

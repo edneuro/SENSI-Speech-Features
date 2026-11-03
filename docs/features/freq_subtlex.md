@@ -25,7 +25,7 @@ Subtitle corpora track conversational / naturalistic frequency much
 better than book/newspaper corpora, which is why they anchor the blend
 and why wordfreq is a standard reference for psycholinguistic stimuli.
 
-The Zipf scale is `log₁₀(occurrences per million) + 3`, calibrated so:
+The Zipf scale ([van Heuven 2014]) is `log₁₀(occurrences per million) + 3`, calibrated so:
 
 | Zipf | Per million words | Interpretation |
 |---|---|---|
@@ -56,14 +56,15 @@ is less well characterised than for reading time.
 ## Math / linguistics
 `zipf_frequency(word, "en")` returns
 
-    Zipf = log₁₀(occurrences_per_million) + 3
+    Zipf = log₁₀(occurrences_per_million) + 3        [van Heuven 2014]
 
-so a word that occurs 1 time per million words has Zipf = 3, one that
+— equivalently `log₁₀` of the occurrences per **billion** words, which is
+how [wordfreq] states it. So a word that occurs 1 time per million words has Zipf = 3, one that
 occurs 1000 per million has Zipf = 6, and so on. The `+3` shift sets
 the scale to start near zero for rare words and avoids negative numbers
 in normal use.
 
-## Implementation in SensiExtractor
+## Implementation in SENSI SpeechFeatures
 Source: `sensi/extractors/word_freq.py:add_word_freq`.
 
 **What the code does:**
@@ -102,10 +103,14 @@ zipf_frequency("zyzzyva",   "en")  # 0.0 (OOV sentinel → NaN in Zipf_Freq)
 
 ## Papers
 - <a name="brysbaert-2009"></a>**[Brysbaert 2009]** Brysbaert & New. *Moving beyond Kučera and Francis: A critical evaluation of current word frequency norms and the introduction of a new and improved word frequency measure for American English.* Behavior Research Methods 41(4), 977–990. [doi:10.3758/BRM.41.4.977](https://doi.org/10.3758/BRM.41.4.977) — the SUBTLEX-US norms, a major component of `wordfreq`'s combined English list; establishes that the frequency effect on reading and lexical decision time is logarithmic in raw frequency (i.e. linear in Zipf).
+- <a name="vanheuven-2014"></a>**[van Heuven 2014]** van Heuven, Mandera, Keuleers & Brysbaert. *SUBTLEX-UK: A new and improved word frequency database for British English.* Quarterly Journal of Experimental Psychology 67(6), 1176–1190. [doi:10.1080/17470218.2013.850521](https://doi.org/10.1080/17470218.2013.850521) — introduces the Zipf scale.
+- <a name="wordfreq"></a>**[wordfreq]** Speer. *wordfreq* (software). [github.com/rspeer/wordfreq](https://github.com/rspeer/wordfreq) — defines `zipf_frequency` as the base-10 log of occurrences per billion words, crediting the scale to Brysbaert.
 - <a name="vanpetten-1990"></a>**[Van Petten 1990]** Van Petten & Kutas. *Interactions between sentence context and word frequency in event-related brain potentials.* Memory & Cognition 18(4), 380–393. [doi:10.3758/BF03197127](https://doi.org/10.3758/BF03197127) — direct demonstration that less-frequent words elicit larger N400s than more-frequent words (modulated by sentence position).
 - <a name="dambacher-2006"></a>**[Dambacher 2006]** Dambacher, Kliegl, Hofmann, Jacobs. *Frequency and predictability effects on event-related potentials during reading.* Brain Research 1084(1), 89–103. [doi:10.1016/j.brainres.2006.02.010](https://doi.org/10.1016/j.brainres.2006.02.010) — separating frequency and predictability ERP effects.
 
 [Brysbaert 2009]: #brysbaert-2009
+[van Heuven 2014]: #vanheuven-2014
+[wordfreq]: #wordfreq
 [Van Petten 1990]: #vanpetten-1990
 [Dambacher 2006]: #dambacher-2006
 

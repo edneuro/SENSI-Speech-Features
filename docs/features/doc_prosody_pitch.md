@@ -42,7 +42,7 @@ recording sessions or speakers.
 word-to-word movement magnitude** (unsigned) rather than a contour-frame statistic. Useful
 when the question is about overall prosodic dynamism rather than range.
 
-## Implementation in SensiExtractor
+## Implementation in SENSI SpeechFeatures
 Source: `sensi/extractors/prosody.py:compute_doc_prosody` — see the
 document-batch finishing step in `sensi/pipeline.py` which calls it.
 

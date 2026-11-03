@@ -175,7 +175,7 @@ the data silently is worse than a blank, so `arpabet_ipa.to_ipa` refuses
 to approximate. `spn` rows therefore have empty `IPA`, empty `Stress`,
 and `Pron_Source = 'oov_unresolved'`; see [`phoneme`](phoneme.md).
 
-## Implementation in SensiExtractor
+## Implementation in SENSI SpeechFeatures
 Source: `sensi/extractors/arpabet_ipa.py` — pure lookup, no I/O, no pandas, no
 third-party dependency.
 

@@ -35,7 +35,7 @@ For naturalistic-EEG analyses, both columns serve as **nuisance
 regressors** when isolating higher-order linguistic effects from raw
 acoustic-temporal structure.
 
-## Implementation in SensiExtractor
+## Implementation in SENSI SpeechFeatures
 These columns are added downstream of
 [`Onset` / `End`](acoustic_boundaries.md) (from MFA). The
 derivation lives in `sensi/extractors/timing.py` — both are simple

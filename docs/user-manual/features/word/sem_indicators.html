@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Semantic-domain category indicators · SensiExtractor User Manual</title>
+<title>Semantic-domain category indicators · SENSI SpeechFeatures User Manual</title>
 <link rel="icon" href="../../assets/icon.svg">
 <link rel="stylesheet" href="../../assets/theme.css">
 <link rel="stylesheet" href="../../assets/layout.css">
@@ -13,7 +13,7 @@
 <button class="menu-btn" type="button" aria-label="Open the outline">☰ Contents</button>
 <div class="shell">
   <nav class="left" aria-label="Manual outline">
-    <a class="brand" href="../../index.html"><img src="../../assets/icon.svg" alt="">SensiExtractor <span>User Manual</span></a>
+    <a class="brand" href="../../index.html"><img src="../../assets/icon.svg" alt="">SENSI SpeechFeatures <span>User Manual</span></a>
     <div class="search">
       <input type="search" placeholder="Search features, columns…  ( / )" aria-label="Search the manual">
       <div class="search-results" role="listbox"></div>
@@ -44,7 +44,7 @@ in the content-POS set below).</p>
 <p><strong>Content-POS filter:</strong> scoring is restricted to <code>NOUN</code>, <code>VERB</code>, <code>ADJ</code>,
 <code>ADV</code>, <code>PROPN</code>. Function words, determiners, punctuation, etc. receive
 <code>NaN</code> for every category column.</p>
-</section><section id="see"><h2><span class="num">6.1.13.2</span>See it</h2><div class="card"><div class="caption">Example <b>LJ003-0007</b> (LJ Speech, public domain): “Hundreds of women and children came in every morning to spend the day there. And there was no limitation, whatever, to the numbers of visitors admitted to the debtor&#x27;s side.”</div><audio controls preload="none" src="../../assets/audio/LJ003-0007.wav"></audio><div ><figure><img src="../../assets/figures/sem_indicators.svg" alt="Semantic-domain category indicators — Default settings"></figure><figcaption>Semantic-domain category indicators — Default settings</figcaption><div class="provenance">Read from <span class='file'>word/LJ003-0007_features.csv</span>, written by SensiExtractor on the example shown here. Nothing on this figure is typed in.</div></div></div></section><section id="output"><h2><span class="num">6.1.13.3</span>In your output</h2><div class="card"><div class="card-title">File <span class="file">word/&lt;stim&gt;_features.csv</span></div><table class="excerpt"><thead><tr><th class="">token</th><th class="hl">Sem_Categories</th><th class="hl">Sem_Empath_family</th><th class="hl">Sem_Empath_communication</th></tr></thead><tbody><tr><td class="">Hundreds</td><td class="hl">money</td><td class="hl">0</td><td class="hl">0</td></tr><tr><td class="">of</td><td class="hl"></td><td class="hl"></td><td class="hl"></td></tr><tr><td class="">women</td><td class="hl"></td><td class="hl">0</td><td class="hl">0</td></tr><tr><td class="">and</td><td class="hl"></td><td class="hl"></td><td class="hl"></td></tr><tr><td class="">children</td><td class="hl">family</td><td class="hl">1</td><td class="hl">0</td></tr><tr><td class="">came</td><td class="hl"></td><td class="hl">0</td><td class="hl">0</td></tr><tr><td class="">in</td><td class="hl"></td><td class="hl"></td><td class="hl"></td></tr><tr><td class="">every</td><td class="hl"></td><td class="hl"></td><td class="hl"></td></tr><tr><td class="">morning</td><td class="hl"></td><td class="hl">0</td><td class="hl">0</td></tr><tr><td class="">to</td><td class="hl"></td><td class="hl"></td><td class="hl"></td></tr><tr><td class="">spend</td><td class="hl"></td><td class="hl">0</td><td class="hl">0</td></tr><tr><td class="">the</td><td class="hl"></td><td class="hl"></td><td class="hl"></td></tr></tbody></table><div class="caption">35 rows × 56 columns in the file; showing the feature's columns for the first sentence. An empty cell means no value (e.g. punctuation, or a word the measure doesn’t cover).</div><div class="provenance">Excerpt of the real file for <b>LJ003-0007</b>.</div></div></section><section id="matlab"><h2><span class="num">6.1.13.4</span>MATLAB</h2><div class="card" data-tabs><div class="tabpanel on"><pre data-copy><code>% Load the word-level table (one row per word)
+</section><section id="see"><h2><span class="num">6.1.13.2</span>See it</h2><div class="card"><div class="caption">Example <b>LJ003-0007</b> (LJ Speech, public domain): “Hundreds of women and children came in every morning to spend the day there. And there was no limitation, whatever, to the numbers of visitors admitted to the debtor&#x27;s side.”</div><audio controls preload="none" src="../../assets/audio/LJ003-0007.wav"></audio><div ><figure><img src="../../assets/figures/sem_indicators.svg" alt="Semantic-domain category indicators — Default settings"></figure><figcaption>Semantic-domain category indicators — Default settings</figcaption><div class="provenance">Read from <span class='file'>word/LJ003-0007_features.csv</span>, written by SENSI SpeechFeatures on the example shown here. Nothing on this figure is typed in.</div></div></div></section><section id="output"><h2><span class="num">6.1.13.3</span>In your output</h2><div class="card"><div class="card-title">File <span class="file">word/&lt;stim&gt;_features.csv</span></div><table class="excerpt"><thead><tr><th class="">token</th><th class="hl">Sem_Categories</th><th class="hl">Sem_Empath_family</th><th class="hl">Sem_Empath_communication</th></tr></thead><tbody><tr><td class="">Hundreds</td><td class="hl">money</td><td class="hl">0</td><td class="hl">0</td></tr><tr><td class="">of</td><td class="hl"></td><td class="hl"></td><td class="hl"></td></tr><tr><td class="">women</td><td class="hl"></td><td class="hl">0</td><td class="hl">0</td></tr><tr><td class="">and</td><td class="hl"></td><td class="hl"></td><td class="hl"></td></tr><tr><td class="">children</td><td class="hl">family</td><td class="hl">1</td><td class="hl">0</td></tr><tr><td class="">came</td><td class="hl"></td><td class="hl">0</td><td class="hl">0</td></tr><tr><td class="">in</td><td class="hl"></td><td class="hl"></td><td class="hl"></td></tr><tr><td class="">every</td><td class="hl"></td><td class="hl"></td><td class="hl"></td></tr><tr><td class="">morning</td><td class="hl"></td><td class="hl">0</td><td class="hl">0</td></tr><tr><td class="">to</td><td class="hl"></td><td class="hl"></td><td class="hl"></td></tr><tr><td class="">spend</td><td class="hl"></td><td class="hl">0</td><td class="hl">0</td></tr><tr><td class="">the</td><td class="hl"></td><td class="hl"></td><td class="hl"></td></tr></tbody></table><div class="caption">35 rows shown; showing the feature's columns, with the unit the run's units table gives for each for the first sentence. An empty cell means no value (e.g. punctuation, or a word the measure doesn’t cover).</div><div class="provenance">Excerpt of the real file for <b>LJ003-0007</b>.</div></div></section><section id="matlab"><h2><span class="num">6.1.13.4</span>MATLAB</h2><div class="card" data-tabs><div class="tabpanel on"><pre data-copy><code>% Load the word-level table (one row per word)
 T = readtable(&#x27;word/LJ003-0007_features.csv&#x27;, &#x27;TextType&#x27;, &#x27;string&#x27;);
 T.Properties.VariableNames             % every column in the file
 head(T(:, {&#x27;token&#x27;, &#x27;Sem_Categories&#x27;, &#x27;Sem_Empath_family&#x27;, &#x27;Sem_Empath_communication&#x27;}), 10)                % this feature&#x27;s columns (first rows)
@@ -54,9 +54,9 @@ cats = startsWith(T.Properties.VariableNames, &#x27;Sem_&#x27;) &amp; ~strcmp(T.
 imagesc(T{:, cats}&#x27;); yticks(1:nnz(cats)); yticklabels(T.Properties.VariableNames(cats))
 xticks(1:height(T)); xticklabels(T.token)
 </code></pre></div><div class="caption">Run from the output folder. Variable and column names were checked against the real files when this manual was built; the code itself was not run in MATLAB.</div></div></section><section id="x-backends-and-category-selection"><a id="backends-and-category-selection"></a><h2><span class="num">6.1.13.5</span>Backends and category selection</h2><blockquote>
-<p>ℹ️ <strong>LIWC is disabled in SensiExtractor.</strong> The LIWC-22 license
+<p>ℹ️ <strong>LIWC is disabled in SENSI SpeechFeatures.</strong> The LIWC-22 license
 agreement (<a href="https://www.liwc.app/help/eula">EULA</a>) forbids using LIWC
-dictionary material outside LIWC's own software, so SensiExtractor can
+dictionary material outside LIWC's own software, so SENSI SpeechFeatures can
 neither ship a <code>.dic</code> nor auto-select LIWC. The LIWC radio on the
 Word-level page is shown but greyed out, and <strong>Empath is the default</strong>.
 To obtain a LIWC license, see
@@ -87,14 +87,14 @@ To obtain a LIWC license, see
 </tbody>
 </table>
 <p><strong>Backend selection logic</strong> (from <code>detect_backend()</code>): always returns
-<strong>Empath</strong>. A stray <code>.dic</code> under <code>data/dictionaries/</code> no longer activates
+<strong>Empath</strong>. A stray <code>.dic</code> under <code>data/dictionaries/</code> does not activate
 LIWC.</p>
 <p>Categories are selected per-backend on the <strong>Word-level features →
 Semantic indicators</strong> card (via the &quot;Configure word-level categories…&quot;
 button) and the same selection is reused at the document level (see
 <a href="../../features/document/output_doc_category_proportions.html"><code>doc_category_proportions</code></a> if/when
 that doc exists).</p>
-</section><section id="code"><a id="implementation-in-sensiextractor"></a><h2><span class="num">6.1.13.6</span>In the code</h2><div class="card"><div class="card-title">Open in GitHub</div><ul><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/extractors/semantic_domain.py#L56"><code>sensi/extractors/semantic_domain.py → add_semantic_domain()</code></a></li></ul></div><p>Source: <code>sensi/extractors/semantic_domain.py:add_semantic_domain</code>. Backend
+</section><section id="code"><a id="implementation-in-sensi-speechfeatures"></a><h2><span class="num">6.1.13.6</span>In the code</h2><div class="card"><div class="card-title">Open in GitHub</div><ul><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/extractors/semantic_domain.py#L56"><code>sensi/extractors/semantic_domain.py → add_semantic_domain()</code></a></li></ul></div><p>Source: <code>sensi/extractors/semantic_domain.py:add_semantic_domain</code>. Backend
 classes: <code>_LiwcScorer</code> and <code>_EmpathScorer</code> in the same file.</p>
 <p><strong>What the code does:</strong></p>
 <ol>
@@ -177,7 +177,7 @@ available, but its categories are less curated.</p>
         <a class="prev" href="../../features/word/pred_topmatch.html"><small>Previous</small>Top-1 prediction match</a>
         <a class="next" href="../../features/word/master_word2vec.html"><small>Next</small>Word2Vec static word embeddings</a>
       </nav>
-      <footer>SensiExtractor User Manual · version 0.2.0 · built 2026-10-27 · source: <a href="https://github.com/edneuro/SENSI-Speech-Features">edneuro/SENSI-Speech-Features</a></footer>
+      <footer>SENSI SpeechFeatures User Manual · version 0.2.0 · built 2026-11-03 · source: <a href="https://github.com/edneuro/SENSI-Speech-Features">edneuro/SENSI-Speech-Features</a></footer>
     </div>
   </main>
   <aside class="right" aria-label="On this page">

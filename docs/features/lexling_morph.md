@@ -35,7 +35,7 @@ When spaCy returns an empty morphology bag the field is left **empty**
 - Build per-attribute one-hot covariates for regression analyses where
   finer-grained morphological controls are needed beyond [POS](lexling_pos.md).
 
-## Implementation in SensiExtractor
+## Implementation in SENSI SpeechFeatures
 Source: `sensi/extractors/text_parser.py:parse`. Emitted from spaCy's
 `token.morph` via `str(token.morph)`, which is already the empty string
 when the morph bag is empty; no `"NA"` sentinel is written, because it

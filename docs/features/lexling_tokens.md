@@ -24,7 +24,7 @@ The two most basic lexical columns:
   inflectional forms — e.g. count occurrences of `"run"` across
   `"runs"`, `"running"`, `"ran"`.
 
-## Implementation in SensiExtractor
+## Implementation in SENSI SpeechFeatures
 Source: `sensi/extractors/text_parser.py:parse`. Tokens come from spaCy's
 default tokenizer (rule-based, splits on whitespace + punctuation
 with a few language-specific exceptions for contractions like

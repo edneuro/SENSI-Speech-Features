@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Phoneme-level columns · SensiExtractor User Manual</title>
+<title>Phoneme-level columns · SENSI SpeechFeatures User Manual</title>
 <link rel="icon" href="../../assets/icon.svg">
 <link rel="stylesheet" href="../../assets/theme.css">
 <link rel="stylesheet" href="../../assets/layout.css">
@@ -13,7 +13,7 @@
 <button class="menu-btn" type="button" aria-label="Open the outline">☰ Contents</button>
 <div class="shell">
   <nav class="left" aria-label="Manual outline">
-    <a class="brand" href="../../index.html"><img src="../../assets/icon.svg" alt="">SensiExtractor <span>User Manual</span></a>
+    <a class="brand" href="../../index.html"><img src="../../assets/icon.svg" alt="">SENSI SpeechFeatures <span>User Manual</span></a>
     <div class="search">
       <input type="search" placeholder="Search features, columns…  ( / )" aria-label="Search the manual">
       <div class="search-results" role="listbox"></div>
@@ -80,11 +80,10 @@ Adrianna       2          1        D            d   dictionary  0.12  0.20
 Adrianna       2          2        R            ɹ   dictionary  0.20  0.25
 Adrianna       2          3        IY      0    i   dictionary  0.25  0.34
 </code></pre>
-<p>Before 2026-07-27 these three columns were one fused <code>Label</code> column
-(<code>EY2</code>), which could not be filtered or grouped without string surgery.
-<code>Label</code> is <strong>gone</strong> from the phoneme CSV — it is fully recoverable as
-<code>ARPABET + Stress</code> if you need the old form. (The <em>syllable</em> CSV's
-<code>Label</code> and <code>ARPABET</code> columns are unrelated and unchanged; see
+<p>These three columns let you filter or group without string surgery
+(<code>EY2</code> is stored as <code>ARPABET=EY</code>, <code>Stress=2</code>). There is no fused label
+column; <code>ARPABET + Stress</code> reproduces it if needed. (The <em>syllable</em> CSV's
+<code>Label</code> and <code>ARPABET</code> columns are unrelated; see
 <a href="../../features/subword/syllable_labels.html"><code>syllable_labels</code></a>.)</p>
 <h3 id="-stress-empty--0">⚠️ <code>Stress</code>: empty ≠ <code>0</code></h3>
 <p>This is the one column in the file that is easy to misread, and
@@ -103,7 +102,7 @@ in the corpus into an unstressed vowel. That is why the column is stored
 as pandas' <strong>nullable</strong> <code>Int64</code> and written to CSV as an empty field, and
 why <code>Stress == 0</code> is the correct filter for unstressed vowels while
 <code>Stress.notna()</code> is the correct filter for <em>&quot;is this segment a vowel&quot;</em>.</p>
-<p>To recover the old fused label: <code>ARPABET + Stress.astype(&quot;string&quot;).fillna(&quot;&quot;)</code>.</p>
+<p>To rebuild a fused label: <code>ARPABET + Stress.astype(&quot;string&quot;).fillna(&quot;&quot;)</code>.</p>
 <h3 id="pron_source--where-the-pronunciation-came-from"><code>Pron_Source</code> — where the pronunciation came from</h3>
 <p>MFA is a <em>lexicon-driven</em> aligner: it looks each word up in
 <code>english_us_arpa.dict</code> to know which phones to look for. This column
@@ -150,7 +149,7 @@ word's). <a href="../../features/subword/phoneme_surprisal.html"><code>phoneme_s
 <code>NaN</code> for exactly this reason.</p>
 <h3 id="-some-tokens-legitimately-have-no-phoneme-rows">⚠️ Some tokens legitimately have no phoneme rows</h3>
 <p>A word-CSV token with zero rows in this file is <strong>expected</strong> in two
-cases, and is not a bug:</p>
+cases, and is deliberate:</p>
 <ol>
 <li>
 <p><strong>Punctuation and unaligned tokens.</strong> They have no acoustic interval,
@@ -162,8 +161,7 @@ splits <code>wasn't</code> into two tokens, <code>was</code> + <code>n't</code>;
 <code>wasn't</code> with a single phone sequence. Possessives behave the same way
 (<code>debtor's</code> → <code>debtor</code> + <code>'s</code>). The phones are emitted <strong>once, under
 the first token</strong>, because emitting them under both would duplicate
-the same acoustic segments — which is precisely the bug fixed on
-2026-07-27 (it inflated row counts and doubled the
+the same acoustic segments (it would inflate row counts and double the
 <code>phoneme_surprisal.mat</code> impulse trains).</p>
 <p>The word CSV's <code>Transcript</code> column is what identifies the sharing: both
 <code>was</code> and <code>n't</code> carry <code>Transcript = &quot;wasn't&quot;</code> and the <em>same</em>
@@ -176,7 +174,7 @@ Doing so needs a hand-maintained rule table (<code>n't</code> → <code>N T</cod
 <code>AH0</code> belongs cleanly to neither token.</p>
 </li>
 </ol>
-</section><section id="see"><h2><span class="num">6.3.5.2</span>See it</h2><div class="card"><div class="caption">Example <b>LJ002-0321</b> (LJ Speech, public domain): “Others who arrived just after the time of distribution were often 48 hours without food. The latter might also be six days without meat.”</div><audio controls preload="none" src="../../assets/audio/LJ002-0321.wav"></audio><div ><figure><img src="../../assets/figures/phoneme.svg" alt="Phoneme-level columns — Default settings"></figure><figcaption>Phoneme-level columns — Default settings</figcaption><div class="provenance">Read from <span class='file'>phoneme/LJ002-0321_phonemes.csv</span>, written by SensiExtractor on the example shown here. Nothing on this figure is typed in.</div></div></div></section><section id="output"><h2><span class="num">6.3.5.3</span>In your output</h2><div class="card"><div class="card-title">File <span class="file">phoneme/&lt;stim&gt;_phonemes.csv</span></div><table class="excerpt"><thead><tr><th class="">token</th><th class="">phoneme_id</th><th class="hl">ARPABET</th><th class="hl">Stress</th><th class="hl">IPA</th><th class="hl">Pron_Source</th><th class="hl">Onset</th><th class="hl">End</th><th class="hl">Duration</th></tr></thead><tbody><tr><td class="">Others</td><td class="">1</td><td class="hl">AH</td><td class="hl">1</td><td class="hl">ʌ</td><td class="hl">dictionary</td><td class="hl">0</td><td class="hl">0.1</td><td class="hl">0.1</td></tr><tr><td class="">Others</td><td class="">1</td><td class="hl">DH</td><td class="hl"></td><td class="hl">ð</td><td class="hl">dictionary</td><td class="hl">0.1</td><td class="hl">0.16</td><td class="hl">0.06</td></tr><tr><td class="">Others</td><td class="">2</td><td class="hl">ER</td><td class="hl">0</td><td class="hl">ɚ</td><td class="hl">dictionary</td><td class="hl">0.16</td><td class="hl">0.3</td><td class="hl">0.14</td></tr><tr><td class="">Others</td><td class="">3</td><td class="hl">Z</td><td class="hl"></td><td class="hl">z</td><td class="hl">dictionary</td><td class="hl">0.3</td><td class="hl">0.42</td><td class="hl">0.12</td></tr><tr><td class="">who</td><td class="">1</td><td class="hl">HH</td><td class="hl"></td><td class="hl">h</td><td class="hl">dictionary</td><td class="hl">0.42</td><td class="hl">0.48</td><td class="hl">0.06</td></tr><tr><td class="">who</td><td class="">2</td><td class="hl">UW</td><td class="hl">1</td><td class="hl">u</td><td class="hl">dictionary</td><td class="hl">0.48</td><td class="hl">0.55</td><td class="hl">0.07</td></tr><tr><td class="">arrived</td><td class="">1</td><td class="hl">ER</td><td class="hl">0</td><td class="hl">ɚ</td><td class="hl">dictionary</td><td class="hl">0.55</td><td class="hl">0.7</td><td class="hl">0.15</td></tr><tr><td class="">arrived</td><td class="">1</td><td class="hl">AY</td><td class="hl">1</td><td class="hl">aɪ</td><td class="hl">dictionary</td><td class="hl">0.7</td><td class="hl">0.93</td><td class="hl">0.23</td></tr><tr><td class="">arrived</td><td class="">2</td><td class="hl">V</td><td class="hl"></td><td class="hl">v</td><td class="hl">dictionary</td><td class="hl">0.93</td><td class="hl">1</td><td class="hl">0.07</td></tr><tr><td class="">arrived</td><td class="">3</td><td class="hl">D</td><td class="hl"></td><td class="hl">d</td><td class="hl">dictionary</td><td class="hl">1</td><td class="hl">1.07</td><td class="hl">0.07</td></tr><tr><td class="">just</td><td class="">1</td><td class="hl">JH</td><td class="hl"></td><td class="hl">dʒ</td><td class="hl">dictionary</td><td class="hl">1.13</td><td class="hl">1.21</td><td class="hl">0.08</td></tr><tr><td class="">just</td><td class="">2</td><td class="hl">AH</td><td class="hl">1</td><td class="hl">ʌ</td><td class="hl">dictionary</td><td class="hl">1.21</td><td class="hl">1.3</td><td class="hl">0.09</td></tr></tbody></table><div class="caption">91 rows × 15 columns in the file; showing the feature's columns for the first sentence. An empty cell means no value (e.g. punctuation, or a word the measure doesn’t cover).</div><div class="provenance">Excerpt of the real file for <b>LJ002-0321</b>.</div></div></section><section id="matlab"><h2><span class="num">6.3.5.4</span>MATLAB</h2><div class="card" data-tabs><div class="tabpanel on"><pre data-copy><code>% Load the phoneme-level table (one row per phoneme)
+</section><section id="see"><h2><span class="num">6.3.5.2</span>See it</h2><div class="card"><div class="caption">Example <b>LJ002-0321</b> (LJ Speech, public domain): “Others who arrived just after the time of distribution were often 48 hours without food. The latter might also be six days without meat.”</div><audio controls preload="none" src="../../assets/audio/LJ002-0321.wav"></audio><div ><figure><img src="../../assets/figures/phoneme.svg" alt="Phoneme-level columns — Default settings"></figure><figcaption>Phoneme-level columns — Default settings</figcaption><div class="provenance">Read from <span class='file'>phoneme/LJ002-0321_phonemes.csv</span>, written by SENSI SpeechFeatures on the example shown here. Nothing on this figure is typed in.</div></div></div></section><section id="output"><h2><span class="num">6.3.5.3</span>In your output</h2><div class="card"><div class="card-title">File <span class="file">phoneme/&lt;stim&gt;_phonemes.csv</span></div><table class="excerpt"><thead><tr><th class="">token</th><th class="">phoneme_id</th><th class="hl">ARPABET</th><th class="hl">Stress</th><th class="hl">IPA</th><th class="hl">Pron_Source</th><th class="hl">Onset<br><small>seconds</small></th><th class="hl">End<br><small>seconds</small></th><th class="hl">Duration<br><small>seconds</small></th></tr></thead><tbody><tr><td class="">Others</td><td class="">1</td><td class="hl">AH</td><td class="hl">1</td><td class="hl">ʌ</td><td class="hl">dictionary</td><td class="hl">0</td><td class="hl">0.1</td><td class="hl">0.1</td></tr><tr><td class="">Others</td><td class="">1</td><td class="hl">DH</td><td class="hl"></td><td class="hl">ð</td><td class="hl">dictionary</td><td class="hl">0.1</td><td class="hl">0.16</td><td class="hl">0.06</td></tr><tr><td class="">Others</td><td class="">2</td><td class="hl">ER</td><td class="hl">0</td><td class="hl">ɚ</td><td class="hl">dictionary</td><td class="hl">0.16</td><td class="hl">0.3</td><td class="hl">0.14</td></tr><tr><td class="">Others</td><td class="">3</td><td class="hl">Z</td><td class="hl"></td><td class="hl">z</td><td class="hl">dictionary</td><td class="hl">0.3</td><td class="hl">0.42</td><td class="hl">0.12</td></tr><tr><td class="">who</td><td class="">1</td><td class="hl">HH</td><td class="hl"></td><td class="hl">h</td><td class="hl">dictionary</td><td class="hl">0.42</td><td class="hl">0.48</td><td class="hl">0.06</td></tr><tr><td class="">who</td><td class="">2</td><td class="hl">UW</td><td class="hl">1</td><td class="hl">u</td><td class="hl">dictionary</td><td class="hl">0.48</td><td class="hl">0.55</td><td class="hl">0.07</td></tr><tr><td class="">arrived</td><td class="">1</td><td class="hl">ER</td><td class="hl">0</td><td class="hl">ɚ</td><td class="hl">dictionary</td><td class="hl">0.55</td><td class="hl">0.7</td><td class="hl">0.15</td></tr><tr><td class="">arrived</td><td class="">1</td><td class="hl">AY</td><td class="hl">1</td><td class="hl">aɪ</td><td class="hl">dictionary</td><td class="hl">0.7</td><td class="hl">0.93</td><td class="hl">0.23</td></tr><tr><td class="">arrived</td><td class="">2</td><td class="hl">V</td><td class="hl"></td><td class="hl">v</td><td class="hl">dictionary</td><td class="hl">0.93</td><td class="hl">1</td><td class="hl">0.07</td></tr><tr><td class="">arrived</td><td class="">3</td><td class="hl">D</td><td class="hl"></td><td class="hl">d</td><td class="hl">dictionary</td><td class="hl">1</td><td class="hl">1.07</td><td class="hl">0.07</td></tr><tr><td class="">just</td><td class="">1</td><td class="hl">JH</td><td class="hl"></td><td class="hl">dʒ</td><td class="hl">dictionary</td><td class="hl">1.13</td><td class="hl">1.21</td><td class="hl">0.08</td></tr><tr><td class="">just</td><td class="">2</td><td class="hl">AH</td><td class="hl">1</td><td class="hl">ʌ</td><td class="hl">dictionary</td><td class="hl">1.21</td><td class="hl">1.3</td><td class="hl">0.09</td></tr></tbody></table><div class="caption">91 rows shown; showing the feature's columns, with the unit the run's units table gives for each for the first sentence. An empty cell means no value (e.g. punctuation, or a word the measure doesn’t cover).</div><div class="provenance">Excerpt of the real file for <b>LJ002-0321</b>.</div></div></section><section id="matlab"><h2><span class="num">6.3.5.4</span>MATLAB</h2><div class="card" data-tabs><div class="tabpanel on"><pre data-copy><code>% Load the phoneme-level table (one row per phoneme)
 T = readtable(&#x27;phoneme/LJ002-0321_phonemes.csv&#x27;, &#x27;TextType&#x27;, &#x27;string&#x27;);
 T.Properties.VariableNames             % every column in the file
 head(T(:, {&#x27;token&#x27;, &#x27;phoneme_id&#x27;, &#x27;ARPABET&#x27;, &#x27;Stress&#x27;, &#x27;IPA&#x27;, &#x27;Pron_Source&#x27;, &#x27;Onset&#x27;, &#x27;End&#x27;, &#x27;Duration&#x27;}), 10)                % this feature&#x27;s columns (first rows)
@@ -184,7 +182,7 @@ head(T(:, {&#x27;token&#x27;, &#x27;phoneme_id&#x27;, &#x27;ARPABET&#x27;, &#x27
 % Plot
 ok = ~isnan(T.Onset);
 stem((T.Onset(ok) + T.End(ok)) / 2, T.Duration(ok)); xlabel(&#x27;Time (s)&#x27;); ylabel(&#x27;Duration&#x27;)
-</code></pre></div><div class="caption">Run from the output folder. Variable and column names were checked against the real files when this manual was built; the code itself was not run in MATLAB.</div></div></section><section id="code"><a id="implementation-in-sensiextractor"></a><h2><span class="num">6.3.5.5</span>In the code</h2><div class="card"><div class="card-title">Open in GitHub</div><ul><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/extractors/syllabify.py#L265"><code>sensi/extractors/syllabify.py → syllabify_pairs()</code></a></li><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/extractors/arpabet_ipa.py"><code>sensi/extractors/arpabet_ipa.py</code></a></li><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/utils/transcript_prep.py"><code>sensi/utils/transcript_prep.py</code></a></li><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/pipeline.py"><code>sensi/pipeline.py</code></a></li></ul></div><p>Source: <code>sensi/extractors/syllabify.py:syllabify_pairs</code> (downstream of MFA
+</code></pre></div><div class="caption">Run from the output folder. Variable and column names were checked against the real files when this manual was built; the code itself was not run in MATLAB.</div></div></section><section id="code"><a id="implementation-in-sensi-speechfeatures"></a><h2><span class="num">6.3.5.5</span>In the code</h2><div class="card"><div class="card-title">Open in GitHub</div><ul><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/extractors/syllabify.py#L265"><code>sensi/extractors/syllabify.py → syllabify_pairs()</code></a></li><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/extractors/arpabet_ipa.py"><code>sensi/extractors/arpabet_ipa.py</code></a></li><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/utils/transcript_prep.py"><code>sensi/utils/transcript_prep.py</code></a></li><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/pipeline.py"><code>sensi/pipeline.py</code></a></li></ul></div><p>Source: <code>sensi/extractors/syllabify.py:syllabify_pairs</code> (downstream of MFA
 alignment), with the IPA lookup in <code>sensi/extractors/arpabet_ipa.py</code>.</p>
 <p><strong>Phone selection.</strong> <code>utils.textgrid_parser:parse_phones</code> parses the
 <code>phones</code> tier of MFA's TextGrid; <code>_phones_for_word</code> then assigns each
@@ -197,15 +195,12 @@ label: <code>'EY2'</code> → <code>('EY', 2)</code>, <code>'D'</code> → <code
 in the nullable <code>Int64</code> <code>Stress</code> column, which is the mechanism behind the
 empty-vs-<code>0</code> distinction above — a plain <code>int64</code> column physically cannot
 represent both.</p>
-<p><strong>Silence filtering, and the one phone we stopped filtering.</strong>
-<code>parse_phones</code> drops <code>''</code>, <code>sil</code>, <code>SIL</code> and <code>sp</code> as silence. Until
-2026-07-27 it also dropped <code>spn</code>, MFA's unknown-word phone — which meant
-an out-of-dictionary word arrived at <code>syllabify_pairs</code> with an empty
-phone list and was skipped, producing <strong>zero phoneme and zero syllable
-rows with no warning at all</strong>. Reproduced by re-aligning a real stimulus
-with one name replaced by the nonsense word <em>Zorblax</em>: the <code>words</code> tier
-held <code>zorblax</code>, the <code>phones</code> tier held a single <code>spn</code>, and the word
-vanished from both sub-word CSVs. <code>spn</code> is now kept, so the word yields
+<p><strong>Silence filtering.</strong>
+<code>parse_phones</code> drops <code>''</code>, <code>sil</code>, <code>SIL</code> and <code>sp</code> as silence. It keeps
+<code>spn</code>, MFA's unknown-word phone, so an out-of-dictionary word is never
+silently missing from the sub-word CSVs (e.g. a nonsense word such as
+<em>Zorblax</em> appears in the <code>words</code> tier with a single <code>spn</code> in the <code>phones</code>
+tier). The word yields
 one syllable and one phoneme row with its real timing and
 <code>Pron_Source = 'oov_unresolved'</code>. <code>Phone.is_vowel</code> is <code>False</code> for <code>spn</code>
 (no trailing digit), so <code>syllabify_word</code> takes its existing vowel-less
@@ -247,7 +242,7 @@ already parses, so a run does not read the 200k-line file twice.</p>
 independently from the Sub-word GUI page, wired through
 <code>_PHONEME_COLUMN_MAP</code> in <code>sensi/pipeline.py</code>. Dropping <code>Stress</code> does <strong>not</strong> change
 <code>IPA</code>: the IPA segment is computed before any column is dropped, so
-<code>AH0</code> → <code>ə</code> even in a CSV that no longer shows the <code>0</code>.</p>
+<code>AH0</code> → <code>ə</code> even in a CSV that does not show the <code>0</code>.</p>
 </section><section id="library"><h2><span class="num">6.3.5.6</span>Library</h2><p>ARPABET is the phoneme tagset of the CMU Pronouncing Dictionary
 (<a href="#cmudict">CMUdict</a>) and is what MFA's <code>english_us_arpa</code> dictionary and acoustic
 model use; the alignment step writes those labels straight into the
@@ -265,10 +260,10 @@ anchor for fine-grained acoustic-tracking analyses (<a href="#khalighinejad-2017
 reveal feature-specific neural responses that word-level analyses
 average over (<a href="#mesgarani-2014">Mesgarani 2014</a>). Building those classes is what the
 split into <code>ARPABET</code> + <code>Stress</code> is for: a class map keyed on <code>T</code>/<code>K</code>/<code>S</code>
-needs 39 keys, whereas one keyed on the old fused <code>Label</code> needed every
+needs 39 keys, whereas a map keyed on a fused label would need every
 vowel spelled out three times (<code>AE0</code>, <code>AE1</code>, <code>AE2</code>, …).</li>
 <li><strong>Stress-marked vowels</strong> identify prominent nuclei, the anchor points
-for stress-tracking analyses. <code>Stress == 1</code> is now a direct filter
+for stress-tracking analyses. <code>Stress == 1</code> is a direct filter
 rather than a string-suffix test.</li>
 <li><strong><code>IPA</code></strong> exists for readability and cross-corpus joining, not for a
 different analysis: it is a relabelling of <code>ARPABET</code>, so the two are
@@ -290,7 +285,7 @@ finds that nucleus via <code>Stress.notna()</code>.</li>
         <a class="prev" href="../../features/subword/feat_syllable_pcenter.html"><small>Previous</small>Perceptual centre (P-center)</a>
         <a class="next" href="../../features/subword/feat_phoneme_ipa.html"><small>Next</small>IPA phoneme symbol</a>
       </nav>
-      <footer>SensiExtractor User Manual · version 0.2.0 · built 2026-10-27 · source: <a href="https://github.com/edneuro/SENSI-Speech-Features">edneuro/SENSI-Speech-Features</a></footer>
+      <footer>SENSI SpeechFeatures User Manual · version 0.2.0 · built 2026-11-03 · source: <a href="https://github.com/edneuro/SENSI-Speech-Features">edneuro/SENSI-Speech-Features</a></footer>
     </div>
   </main>
   <aside class="right" aria-label="On this page">

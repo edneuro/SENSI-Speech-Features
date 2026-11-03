@@ -21,7 +21,7 @@ from sensi.gui.section_logs import LogsSection
 from sensi.utils.preferences import load_preferences, reset_to_defaults
 
 
-APP_NAME = "SENSI-FeatureExtractor"
+APP_NAME = "SENSI SpeechFeatures"
 
 
 SECTIONS = ["Inputs", "Word-level features", "Document-level features",

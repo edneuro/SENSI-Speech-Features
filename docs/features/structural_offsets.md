@@ -29,10 +29,10 @@ depth: stub
 - Useful for joining downstream annotations that are also indexed in
   sentence-relative character coordinates.
 
-## Implementation in SensiExtractor
+## Implementation in SENSI SpeechFeatures
 Source: `sensi/extractors/text_parser.py:parse`.
 
 Computed as `token.idx - sent.start_char + 1` and
 `char_start + len(token.text) - 1` during the spaCy sentence walk. The
 `+1` converts spaCy's native 0-indexed offsets into the 1-indexed
-inclusive convention used throughout the SensiExtractor outputs.
+inclusive convention used throughout the SENSI SpeechFeatures outputs.

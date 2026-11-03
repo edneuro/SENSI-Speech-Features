@@ -49,7 +49,7 @@ neural responses [Oganian 2019]. Including an onset predictor alongside the
 plain envelope in a TRF often improves fit and yields a sharper, earlier
 response component than the envelope alone [Crosse 2016].
 
-*Relationship to peakRate:* the SensiExtractor feature is the **continuous
+*Relationship to peakRate:* the SENSI SpeechFeatures feature is the **continuous
 half-wave-rectified derivative** of the envelope, i.e. the positive rate of
 change at every grid point. The *peakRate* landmark of [Oganian 2019] is the
 set of **local maxima** of the envelope's derivative. The two use different
@@ -75,7 +75,7 @@ across stimuli analyzed at *different* `analysis_rate` values, normalize
 one study at a fixed rate this is a non-issue. Like the envelope, the column
 is returned raw (not normalized).
 
-## Implementation in SensiExtractor
+## Implementation in SENSI SpeechFeatures
 Source: `sensi/extractors/acoustic_ts.py` → `onset_envelope(env)`. It takes the
 *already-computed* amplitude envelope as input (so the `env_method`/`comp`
 choices flow through automatically) and returns `np.clip(np.diff(env,

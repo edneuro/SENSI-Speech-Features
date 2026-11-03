@@ -9,6 +9,9 @@
 #   figure:   kind drawn by scripts/manual/figures.py (see that module)
 #   variants: other example_outputs/ folders to switch between (scripts/manual/examples.py VARIANTS)
 #   not_computed: reason the manual cannot show real output (then no figure)
+#   figure: none   no See it part (the In your output excerpt is the explanation)
+#   (document level) example: the stimulus_id rows to show; default = every
+#   example with a recording
 #
 # Defaults: example LJ002-0321, variant base.
 
@@ -30,31 +33,37 @@ levels:
       - title: Structural
         features:
           - key: structural_ids
+            example: structure
             output: "word/{stem}_features.csv"
             show: [doc_id, paragraph_id, sentence_id, token_id, token_in_sentence_id, token]
-            figure: table
+            figure: structure
           - key: structural_offsets
+            example: structure
             output: "word/{stem}_features.csv"
             show: [sentence_id, token, start, end]
-            figure: char_offsets
+            figure: none
           - key: feat_struct_sentence_text
+            example: structure
             output: "word/{stem}_features.csv"
             show: [sentence_id, token, sentence]
             figure: table
       - title: Lexical–linguistic
         features:
           - key: lexling_tokens
+            example: lemmas
             output: "word/{stem}_features.csv"
             show: [token, lemma]
-            figure: table
+            figure: lemmas
           - key: lexling_pos
+            example: lemmas
             output: "word/{stem}_features.csv"
             show: [token, upos, xpos]
             figure: tags
           - key: lexling_morph
+            example: lemmas
             output: "word/{stem}_features.csv"
             show: [token, upos, feats]
-            figure: table
+            figure: morph
           - key: lexling_dep
             output: "word/{stem}_features.csv"
             show: [token_id, token_in_sentence_id, token, dep_rel, head_token_id]
@@ -62,6 +71,7 @@ levels:
       - title: Frequency
         features:
           - key: freq_subtlex
+            example: zipf
             output: "word/{stem}_features.csv"
             show: [token, Zipf_Freq]
             figure: word_bars
@@ -109,6 +119,7 @@ levels:
       - title: Lexical norms
         features:
           - key: lexical_norms
+            example: norms
             output: "word/{stem}_features.csv"
             show: [token, AoA_Mean, AoA_SD, Concreteness, Imageability, Familiarity, Valence, Arousal, Dominance]
             figure: norms
@@ -155,24 +166,28 @@ levels:
       - title: Lexical diversity
         features:
           - key: output_doc_lex_diversity
+            example: [essay, diary]
             output: document/documents_summary.csv
             show: [stimulus_id, ttr, mtld]
             figure: doc_bars
       - title: Readability
         features:
           - key: output_doc_readability
+            example: [essay, memo, diary]
             output: document/documents_summary.csv
             show: [stimulus_id, flesch_reading_ease, flesch_kincaid_grade]
             figure: doc_bars
       - title: Category proportions
         features:
           - key: output_doc_category_proportions
+            example: [essay, memo, diary]
             output: document/documents_summary.csv
-            show: [stimulus_id, count_family, prop_family, count_communication, prop_communication]
+            show: [stimulus_id, prop_positive_emotion, prop_family, prop_science, prop_work]
             figure: doc_bars
       - title: Composite psychological scores
         features:
           - key: doc_psych_composite
+            example: [essay, memo, diary]
             output: document/documents_summary.csv
             show: [stimulus_id, psych_authentic, psych_analytic, psych_tone, psych_clout]
             figure: doc_bars
@@ -227,6 +242,7 @@ levels:
             output: "syllable/{stem}_syllables.csv"
             show: [token, Label, Onset, End, P_Center]
             figure: syllable_timeline
+            focus: [hours, without, food]
       - title: Phonemes
         features:
           - key: phoneme
@@ -257,9 +273,10 @@ levels:
       - title: Sentence timing
         features:
           - key: sentence_timing
+            example: LJ003-0007
             output: "sentence/{stem}_sentences.csv"
             show: [sentence_id, sentence, Onset, End]
-            figure: table
+            figure: sentence_timeline
       - title: Sentence prosody
         features:
           - key: sentence_prosody_pitch

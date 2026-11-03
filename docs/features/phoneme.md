@@ -34,11 +34,10 @@ Adrianna       2          2        R            ɹ   dictionary  0.20  0.25
 Adrianna       2          3        IY      0    i   dictionary  0.25  0.34
 ```
 
-Before 2026-07-27 these three columns were one fused `Label` column
-(`EY2`), which could not be filtered or grouped without string surgery.
-`Label` is **gone** from the phoneme CSV — it is fully recoverable as
-`ARPABET + Stress` if you need the old form. (The *syllable* CSV's
-`Label` and `ARPABET` columns are unrelated and unchanged; see
+These three columns let you filter or group without string surgery
+(`EY2` is stored as `ARPABET=EY`, `Stress=2`). There is no fused label
+column; `ARPABET + Stress` reproduces it if needed. (The *syllable* CSV's
+`Label` and `ARPABET` columns are unrelated; see
 [`syllable_labels`](syllable_labels.md).)
 
 ### ⚠️ `Stress`: empty ≠ `0`
@@ -60,7 +59,7 @@ as pandas' **nullable** `Int64` and written to CSV as an empty field, and
 why `Stress == 0` is the correct filter for unstressed vowels while
 `Stress.notna()` is the correct filter for *"is this segment a vowel"*.
 
-To recover the old fused label: `ARPABET + Stress.astype("string").fillna("")`.
+To rebuild a fused label: `ARPABET + Stress.astype("string").fillna("")`.
 
 ### `Pron_Source` — where the pronunciation came from
 
@@ -99,7 +98,7 @@ word's). [`phoneme_surprisal`](phoneme_surprisal.md) already scores them
 ### ⚠️ Some tokens legitimately have no phoneme rows
 
 A word-CSV token with zero rows in this file is **expected** in two
-cases, and is not a bug:
+cases, and is deliberate:
 
 1. **Punctuation and unaligned tokens.** They have no acoustic interval,
    so there is nothing to attach phones to.
@@ -108,8 +107,7 @@ cases, and is not a bug:
    `wasn't` with a single phone sequence. Possessives behave the same way
    (`debtor's` → `debtor` + `'s`). The phones are emitted **once, under
    the first token**, because emitting them under both would duplicate
-   the same acoustic segments — which is precisely the bug fixed on
-   2026-07-27 (it inflated row counts and doubled the
+   the same acoustic segments (it would inflate row counts and double the
    `phoneme_surprisal.mat` impulse trains).
 
    The word CSV's `Transcript` column is what identifies the sharing: both
@@ -134,10 +132,10 @@ available; for naturalistic-EEG / MEG:
   reveal feature-specific neural responses that word-level analyses
   average over ([Mesgarani 2014]). Building those classes is what the
   split into `ARPABET` + `Stress` is for: a class map keyed on `T`/`K`/`S`
-  needs 39 keys, whereas one keyed on the old fused `Label` needed every
+  needs 39 keys, whereas a map keyed on a fused label would need every
   vowel spelled out three times (`AE0`, `AE1`, `AE2`, …).
 - **Stress-marked vowels** identify prominent nuclei, the anchor points
-  for stress-tracking analyses. `Stress == 1` is now a direct filter
+  for stress-tracking analyses. `Stress == 1` is a direct filter
   rather than a string-suffix test.
 - **`IPA`** exists for readability and cross-corpus joining, not for a
   different analysis: it is a relabelling of `ARPABET`, so the two are
@@ -147,7 +145,7 @@ available; for naturalistic-EEG / MEG:
   of the onset consonants preceding the syllable's nucleus, and which
   finds that nucleus via `Stress.notna()`.
 
-## Implementation in SensiExtractor
+## Implementation in SENSI SpeechFeatures
 Source: `sensi/extractors/syllabify.py:syllabify_pairs` (downstream of MFA
 alignment), with the IPA lookup in `sensi/extractors/arpabet_ipa.py`.
 
@@ -164,15 +162,12 @@ in the nullable `Int64` `Stress` column, which is the mechanism behind the
 empty-vs-`0` distinction above — a plain `int64` column physically cannot
 represent both.
 
-**Silence filtering, and the one phone we stopped filtering.**
-`parse_phones` drops `''`, `sil`, `SIL` and `sp` as silence. Until
-2026-07-27 it also dropped `spn`, MFA's unknown-word phone — which meant
-an out-of-dictionary word arrived at `syllabify_pairs` with an empty
-phone list and was skipped, producing **zero phoneme and zero syllable
-rows with no warning at all**. Reproduced by re-aligning a real stimulus
-with one name replaced by the nonsense word *Zorblax*: the `words` tier
-held `zorblax`, the `phones` tier held a single `spn`, and the word
-vanished from both sub-word CSVs. `spn` is now kept, so the word yields
+**Silence filtering.**
+`parse_phones` drops `''`, `sil`, `SIL` and `sp` as silence. It keeps
+`spn`, MFA's unknown-word phone, so an out-of-dictionary word is never
+silently missing from the sub-word CSVs (e.g. a nonsense word such as
+*Zorblax* appears in the `words` tier with a single `spn` in the `phones`
+tier). The word yields
 one syllable and one phoneme row with its real timing and
 `Pron_Source = 'oov_unresolved'`. `Phone.is_vowel` is `False` for `spn`
 (no trailing digit), so `syllabify_word` takes its existing vowel-less
@@ -223,7 +218,7 @@ already parses, so a run does not read the 200k-line file twice.
 independently from the Sub-word GUI page, wired through
 `_PHONEME_COLUMN_MAP` in `sensi/pipeline.py`. Dropping `Stress` does **not** change
 `IPA`: the IPA segment is computed before any column is dropped, so
-`AH0` → `ə` even in a CSV that no longer shows the `0`.
+`AH0` → `ə` even in a CSV that does not show the `0`.
 
 ## Library
 ARPABET is the phoneme tagset of the CMU Pronouncing Dictionary

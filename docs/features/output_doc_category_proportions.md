@@ -49,7 +49,7 @@ The category set should match what's already configured for the
 word-level page — they share a single selection, edited in one place
 (Word-level features → Configure word-level categories…).
 
-## Implementation in SensiExtractor
+## Implementation in SENSI SpeechFeatures
 Computed in `sensi/utils/doc_summary.py:build_doc_summary`, called from
 `sensi/pipeline.py`'s document-batch finishing step. Walks the
 word-level DataFrame after the

@@ -95,7 +95,7 @@ def _chapter_sources() -> list[tuple[dict, str]]:
 
 def build_tree(manifest: dict, docs: dict[str, D.FeatureDoc]) -> tuple[Page, list[Page]]:
     """The whole manual as a tree; returns (root, reading order)."""
-    root = Page("root", "index.html", "SensiExtractor User Manual", kind="root")
+    root = Page("root", "index.html", "SENSI SpeechFeatures User Manual", kind="root")
     chapters = _chapter_sources()
     n = 0
 

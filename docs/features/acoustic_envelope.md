@@ -23,7 +23,7 @@ It is emitted as one column, `envelope`, in the per-stimulus
 series.
 
 ## What it is / how it's computed
-SensiExtractor offers two envelope methods (toggle: `env_method`). Both
+SENSI SpeechFeatures offers two envelope methods (toggle: `env_method`). Both
 return a value at every point of the canonical grid `N = round(duration ×
 rate)` and then apply a power-law compression `comp` (default
 `log₁₀(2) ≈ 0.30103`).
@@ -49,18 +49,16 @@ buffer, working along the time axis):
    samples; values `> 1` overlap adjacent frames for extra smoothing **without**
    changing the output rate — the same `window` argument as `mTRFresample`.
 
-   The mTRF default, which SensiExtractor matches, is the **exact** constant
+   The mTRF default, which SENSI SpeechFeatures matches, is the **exact** constant
    `comp = log₁₀(2) ≈ 0.30103` — carried at full float precision, not the
    rounded `0.3`. On normalized audio (values < 1) the difference is
    systematic: a rounded `0.3` makes every frame slightly larger than
-   MATLAB's, so the `rms` method would no longer be bit-for-bit with
-   `mTRFenvelope.m`. (Prior to prefs v17 the shipped default was `0.3`,
-   which quietly broke that replication; v17 migrates a stored `0.3` back to
-   the exact constant.) This is not arbitrary: Stevens' loudness
+   MATLAB's, so the `rms` method would not be bit-for-bit with
+   `mTRFenvelope.m`. This is not arbitrary: Stevens' loudness
    law found that the perceived loudness of a tone grows as a power function
    of intensity with exponent `log₁₀(2)` [Stevens 1955], and `mTRFenvelope.m`
    cites that law for its default ("to model human auditory perception").
-   Note the base of the exponent: the toolbox (and SensiExtractor) raise the
+   Note the base of the exponent: the toolbox (and SENSI SpeechFeatures) raise the
    **RMS amplitude** to `log₁₀(2)`, while Stevens' exponent is on
    **intensity**. Intensity is proportional to amplitude squared, so
    `amplitude^0.301 = intensity^0.151`: half the loudness-law exponent. The
@@ -116,7 +114,7 @@ full control: most TRF pipelines z-score each predictor and each EEG channel
 before fitting. The `config` struct in the `.mat` records `analysis_rate`,
 `env_method`, `env_comp`, `env_window`, and `source_sr` for provenance.
 
-## Implementation in SensiExtractor
+## Implementation in SENSI SpeechFeatures
 Source: `sensi/extractors/acoustic_ts.py` → `amplitude_envelope(y, sr, rate, *,
 method, comp, window)`. The `rms` branch is a line-for-line port of
 `mTRFenvelope.m` + `mTRFresample.m`: for each output frame it averages `y²`

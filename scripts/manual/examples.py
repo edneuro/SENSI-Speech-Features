@@ -1,4 +1,4 @@
-"""Real SensiExtractor output on the manual's example inputs.
+"""Real SENSI SpeechFeatures output on the manual's example inputs.
 
 Every number, table and figure in the User Manual comes from the files this
 module writes under dev/manual/example_outputs/<variant>/. It runs the real
@@ -65,7 +65,7 @@ def _prefs(variant: str, out_dir: Path) -> dict:
     for section, values in spec["set"].items():
         p[section].update(values)
     p["shared"].update({
-        "analyzer_name": "SensiExtractor manual",
+        "analyzer_name": "SENSI SpeechFeatures manual",
         "last_transcripts_folder": str(EXAMPLES_DIR / "transcripts"),
         "last_audio_folder": str(EXAMPLES_DIR / "audio"),
         "last_output_folder": str(out_dir),
@@ -98,9 +98,13 @@ def _copy_outputs(raw: Path, dest: Path, keep: str | None = None) -> None:
         shutil.rmtree(dest)
     for f in sorted(raw.rglob("*")):
         rel = f.relative_to(raw)
+        name = _TS.sub("", f.name)
+        if not keep and rel.parts[0] == "logs" and name.endswith("_session_units.csv"):
+            (dest / "units").mkdir(parents=True, exist_ok=True)   # the run's own column → unit table
+            shutil.copyfile(f, dest / "units" / name)
+            continue
         if f.is_dir() or rel.parts[0] in ("logs", "Montreal Forced Alignment"):
             continue
-        name = _TS.sub("", f.name)
         if keep and (rel.parent / name).as_posix() != keep:
             continue
         if name.endswith(_EMBEDDING_SUFFIXES) and not any(name.startswith(st + "_") for st in EMBEDDING_STEMS):

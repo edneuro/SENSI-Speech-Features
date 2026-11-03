@@ -72,7 +72,7 @@ def test_doc_opening_note_is_kept(built):
     """The note before a doc's first heading (shown atop the app's pop-up) is on the page."""
     out, _ = built
     page = (out / "features" / "word" / "edu_zipf.html").read_text(encoding="utf-8")
-    assert "doc-note" in page and "Unavailable in SensiExtractor" in page
+    assert "doc-note" in page and "Unavailable in SENSI SpeechFeatures" in page
 
 
 def test_matlab_snippets_use_valid_filters_and_short_tables(built):

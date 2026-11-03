@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Syllable labels (orthographic + ARPABET + IPA) · SensiExtractor User Manual</title>
+<title>Syllable labels (orthographic + ARPABET + IPA) · SENSI SpeechFeatures User Manual</title>
 <link rel="icon" href="../../assets/icon.svg">
 <link rel="stylesheet" href="../../assets/theme.css">
 <link rel="stylesheet" href="../../assets/layout.css">
@@ -13,7 +13,7 @@
 <button class="menu-btn" type="button" aria-label="Open the outline">☰ Contents</button>
 <div class="shell">
   <nav class="left" aria-label="Manual outline">
-    <a class="brand" href="../../index.html"><img src="../../assets/icon.svg" alt="">SensiExtractor <span>User Manual</span></a>
+    <a class="brand" href="../../index.html"><img src="../../assets/icon.svg" alt="">SENSI SpeechFeatures <span>User Manual</span></a>
     <div class="search">
       <input type="search" placeholder="Search features, columns…  ( / )" aria-label="Search the manual">
       <div class="search-results" role="listbox"></div>
@@ -96,13 +96,11 @@ page if you want it.</p>
 </tr>
 </tbody>
 </table>
-<p>The phoneme CSV's fused <code>Label</code> column was split into
-<code>ARPABET</code> + <code>Stress</code> + <code>IPA</code> on 2026-07-27. The syllable CSV's <code>ARPABET</code>
-was <strong>not</strong> touched: it is a dash-joined <em>string</em> over several phones, so
-there is no single stress value to lift out of it, and stripping the
-digits would have destroyed information for every existing consumer of
-that column. The 2026-07-27 change to this CSV was purely additive — one
-new <code>IPA</code> column.</p>
+<p>The phoneme CSV carries <code>ARPABET</code>, <code>Stress</code> and <code>IPA</code> as separate
+columns. The syllable CSV's <code>ARPABET</code> is a dash-joined <em>string</em> over
+several phones, so there is no single stress value to lift out of it, and
+stripping the digits would destroy information; the syllable CSV adds
+only an <code>IPA</code> column.</p>
 <p>Consequences to keep in mind:</p>
 <ul>
 <li>Do <strong>not</strong> write a stress filter that works on both files. On the
@@ -117,7 +115,7 @@ the phoneme CSV on <code>(doc_id, sentence_id, token_in_sentence_id, syllable_id
 was considered and rejected as out of scope for the additive-only
 change to this file.</li>
 </ul>
-</section><section id="see"><h2><span class="num">6.3.2.2</span>See it</h2><div class="card"><div class="caption">Example <b>LJ002-0321</b> (LJ Speech, public domain): “Others who arrived just after the time of distribution were often 48 hours without food. The latter might also be six days without meat.”</div><audio controls preload="none" src="../../assets/audio/LJ002-0321.wav"></audio><table class="excerpt strip"><thead><tr><th>token</th><th>Others</th><th>Others</th><th>who</th><th>arrived</th><th>arrived</th><th>just</th><th>after</th><th>after</th><th>the</th><th>time</th><th>of</th><th>distribution</th><th>distribution</th><th>distribution</th><th>distribution</th><th>were</th></tr></thead><tbody><tr><th class="hl">syllable_id</th><td>1</td><td>2</td><td>1</td><td>1</td><td>2</td><td>1</td><td>1</td><td>2</td><td>1</td><td>1</td><td>1</td><td>1</td><td>2</td><td>3</td><td>4</td><td>1</td></tr><tr><th class="hl">Label</th><td>Oth</td><td>ers</td><td>who</td><td>ar</td><td>rived</td><td>just</td><td>af</td><td>ter</td><td>the</td><td>time</td><td>of</td><td>dis</td><td>tri</td><td>bu</td><td>tion</td><td>were</td></tr><tr><th class="hl">ARPABET</th><td>AH1</td><td>DH-ER0-Z</td><td>HH-UW1</td><td>ER0</td><td>AY1-V-D</td><td>JH-AH1-S-T</td><td>AE1</td><td>F-T-ER0</td><td>DH-AH0</td><td>T-AY1-M</td><td>AH0-V</td><td>D-IH2</td><td>S-T-R-AH0</td><td>B-Y-UW1</td><td>SH-AH0-N</td><td>W-ER0</td></tr><tr><th class="hl">IPA</th><td>ʌ</td><td>ð-ɚ-z</td><td>h-u</td><td>ɚ</td><td>aɪ-v-d</td><td>dʒ-ʌ-s-t</td><td>æ</td><td>f-t-ɚ</td><td>ð-ə</td><td>t-aɪ-m</td><td>ə-v</td><td>d-ɪ</td><td>s-t-ɹ-ə</td><td>b-j-u</td><td>ʃ-ə-n</td><td>w-ɚ</td></tr></tbody></table><div class="provenance">Read from <span class='file'>syllable/LJ002-0321_syllables.csv</span>, written by SensiExtractor on the example shown here. Nothing on this figure is typed in.</div></div></section><section id="output"><h2><span class="num">6.3.2.3</span>In your output</h2><div class="card"><div class="card-title">File <span class="file">syllable/&lt;stim&gt;_syllables.csv</span></div><table class="excerpt"><thead><tr><th class="">token</th><th class="">syllable_id</th><th class="hl">Label</th><th class="hl">ARPABET</th><th class="hl">IPA</th></tr></thead><tbody><tr><td class="">Others</td><td class="">1</td><td class="hl">Oth</td><td class="hl">AH1</td><td class="hl">ʌ</td></tr><tr><td class="">Others</td><td class="">2</td><td class="hl">ers</td><td class="hl">DH-ER0-Z</td><td class="hl">ð-ɚ-z</td></tr><tr><td class="">who</td><td class="">1</td><td class="hl">who</td><td class="hl">HH-UW1</td><td class="hl">h-u</td></tr><tr><td class="">arrived</td><td class="">1</td><td class="hl">ar</td><td class="hl">ER0</td><td class="hl">ɚ</td></tr><tr><td class="">arrived</td><td class="">2</td><td class="hl">rived</td><td class="hl">AY1-V-D</td><td class="hl">aɪ-v-d</td></tr><tr><td class="">just</td><td class="">1</td><td class="hl">just</td><td class="hl">JH-AH1-S-T</td><td class="hl">dʒ-ʌ-s-t</td></tr><tr><td class="">after</td><td class="">1</td><td class="hl">af</td><td class="hl">AE1</td><td class="hl">æ</td></tr><tr><td class="">after</td><td class="">2</td><td class="hl">ter</td><td class="hl">F-T-ER0</td><td class="hl">f-t-ɚ</td></tr><tr><td class="">the</td><td class="">1</td><td class="hl">the</td><td class="hl">DH-AH0</td><td class="hl">ð-ə</td></tr><tr><td class="">time</td><td class="">1</td><td class="hl">time</td><td class="hl">T-AY1-M</td><td class="hl">t-aɪ-m</td></tr><tr><td class="">of</td><td class="">1</td><td class="hl">of</td><td class="hl">AH0-V</td><td class="hl">ə-v</td></tr><tr><td class="">distribution</td><td class="">1</td><td class="hl">dis</td><td class="hl">D-IH2</td><td class="hl">d-ɪ</td></tr></tbody></table><div class="caption">38 rows × 16 columns in the file; showing the feature's columns for the first sentence. An empty cell means no value (e.g. punctuation, or a word the measure doesn’t cover).</div><div class="provenance">Excerpt of the real file for <b>LJ002-0321</b>.</div></div></section><section id="matlab"><h2><span class="num">6.3.2.4</span>MATLAB</h2><div class="card" data-tabs><div class="tabpanel on"><pre data-copy><code>% Load the syllable-level table (one row per syllable)
+</section><section id="see"><h2><span class="num">6.3.2.2</span>See it</h2><div class="card"><div class="caption">Example <b>LJ002-0321</b> (LJ Speech, public domain): “Others who arrived just after the time of distribution were often 48 hours without food. The latter might also be six days without meat.”</div><audio controls preload="none" src="../../assets/audio/LJ002-0321.wav"></audio><table class="excerpt strip"><thead><tr><th>token</th><th>Others</th><th>Others</th><th>who</th><th>arrived</th><th>arrived</th><th>just</th><th>after</th><th>after</th><th>the</th><th>time</th><th>of</th><th>distribution</th><th>distribution</th><th>distribution</th><th>distribution</th><th>were</th></tr></thead><tbody><tr><th class="hl">syllable_id</th><td>1</td><td>2</td><td>1</td><td>1</td><td>2</td><td>1</td><td>1</td><td>2</td><td>1</td><td>1</td><td>1</td><td>1</td><td>2</td><td>3</td><td>4</td><td>1</td></tr><tr><th class="hl">Label</th><td>Oth</td><td>ers</td><td>who</td><td>ar</td><td>rived</td><td>just</td><td>af</td><td>ter</td><td>the</td><td>time</td><td>of</td><td>dis</td><td>tri</td><td>bu</td><td>tion</td><td>were</td></tr><tr><th class="hl">ARPABET</th><td>AH1</td><td>DH-ER0-Z</td><td>HH-UW1</td><td>ER0</td><td>AY1-V-D</td><td>JH-AH1-S-T</td><td>AE1</td><td>F-T-ER0</td><td>DH-AH0</td><td>T-AY1-M</td><td>AH0-V</td><td>D-IH2</td><td>S-T-R-AH0</td><td>B-Y-UW1</td><td>SH-AH0-N</td><td>W-ER0</td></tr><tr><th class="hl">IPA</th><td>ʌ</td><td>ð-ɚ-z</td><td>h-u</td><td>ɚ</td><td>aɪ-v-d</td><td>dʒ-ʌ-s-t</td><td>æ</td><td>f-t-ɚ</td><td>ð-ə</td><td>t-aɪ-m</td><td>ə-v</td><td>d-ɪ</td><td>s-t-ɹ-ə</td><td>b-j-u</td><td>ʃ-ə-n</td><td>w-ɚ</td></tr></tbody></table><div class="provenance">Read from <span class='file'>syllable/LJ002-0321_syllables.csv</span>, written by SENSI SpeechFeatures on the example shown here. Nothing on this figure is typed in.</div></div></section><section id="output"><h2><span class="num">6.3.2.3</span>In your output</h2><div class="card"><div class="card-title">File <span class="file">syllable/&lt;stim&gt;_syllables.csv</span></div><table class="excerpt"><thead><tr><th class="">token</th><th class="">syllable_id</th><th class="hl">Label</th><th class="hl">ARPABET</th><th class="hl">IPA</th></tr></thead><tbody><tr><td class="">Others</td><td class="">1</td><td class="hl">Oth</td><td class="hl">AH1</td><td class="hl">ʌ</td></tr><tr><td class="">Others</td><td class="">2</td><td class="hl">ers</td><td class="hl">DH-ER0-Z</td><td class="hl">ð-ɚ-z</td></tr><tr><td class="">who</td><td class="">1</td><td class="hl">who</td><td class="hl">HH-UW1</td><td class="hl">h-u</td></tr><tr><td class="">arrived</td><td class="">1</td><td class="hl">ar</td><td class="hl">ER0</td><td class="hl">ɚ</td></tr><tr><td class="">arrived</td><td class="">2</td><td class="hl">rived</td><td class="hl">AY1-V-D</td><td class="hl">aɪ-v-d</td></tr><tr><td class="">just</td><td class="">1</td><td class="hl">just</td><td class="hl">JH-AH1-S-T</td><td class="hl">dʒ-ʌ-s-t</td></tr><tr><td class="">after</td><td class="">1</td><td class="hl">af</td><td class="hl">AE1</td><td class="hl">æ</td></tr><tr><td class="">after</td><td class="">2</td><td class="hl">ter</td><td class="hl">F-T-ER0</td><td class="hl">f-t-ɚ</td></tr><tr><td class="">the</td><td class="">1</td><td class="hl">the</td><td class="hl">DH-AH0</td><td class="hl">ð-ə</td></tr><tr><td class="">time</td><td class="">1</td><td class="hl">time</td><td class="hl">T-AY1-M</td><td class="hl">t-aɪ-m</td></tr><tr><td class="">of</td><td class="">1</td><td class="hl">of</td><td class="hl">AH0-V</td><td class="hl">ə-v</td></tr><tr><td class="">distribution</td><td class="">1</td><td class="hl">dis</td><td class="hl">D-IH2</td><td class="hl">d-ɪ</td></tr></tbody></table><div class="caption">38 rows shown; showing the feature's columns, with the unit the run's units table gives for each for the first sentence. An empty cell means no value (e.g. punctuation, or a word the measure doesn’t cover).</div><div class="provenance">Excerpt of the real file for <b>LJ002-0321</b>.</div></div></section><section id="matlab"><h2><span class="num">6.3.2.4</span>MATLAB</h2><div class="card" data-tabs><div class="tabpanel on"><pre data-copy><code>% Load the syllable-level table (one row per syllable)
 T = readtable(&#x27;syllable/LJ002-0321_syllables.csv&#x27;, &#x27;TextType&#x27;, &#x27;string&#x27;);
 T.Properties.VariableNames             % every column in the file
 head(T(:, {&#x27;token&#x27;, &#x27;syllable_id&#x27;, &#x27;Label&#x27;, &#x27;ARPABET&#x27;, &#x27;IPA&#x27;}), 10)                % this feature&#x27;s columns (first rows)
@@ -132,7 +130,7 @@ parsing the <code>ARPABET</code> string.</li>
 stimulus-pair contrasts in phonological-similarity studies. Use <code>IPA</code>
 instead when matching against a corpus that is not ARPABET-annotated.</li>
 </ul>
-</section><section id="code"><a id="implementation-in-sensiextractor"></a><h2><span class="num">6.3.2.6</span>In the code</h2><div class="card"><div class="card-title">Open in GitHub</div><ul><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/extractors/syllabify.py#L124"><code>sensi/extractors/syllabify.py → assign_labels()</code></a></li><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/extractors/arpabet_ipa.py#L88"><code>sensi/extractors/arpabet_ipa.py → syllable_to_ipa()</code></a></li></ul></div><p>Source: <code>sensi/extractors/syllabify.py:assign_labels</code> (<code>Label</code> / <code>ARPABET</code>) and
+</section><section id="code"><a id="implementation-in-sensi-speechfeatures"></a><h2><span class="num">6.3.2.6</span>In the code</h2><div class="card"><div class="card-title">Open in GitHub</div><ul><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/extractors/syllabify.py#L124"><code>sensi/extractors/syllabify.py → assign_labels()</code></a></li><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/extractors/arpabet_ipa.py#L88"><code>sensi/extractors/arpabet_ipa.py → syllable_to_ipa()</code></a></li></ul></div><p>Source: <code>sensi/extractors/syllabify.py:assign_labels</code> (<code>Label</code> / <code>ARPABET</code>) and
 <code>sensi/extractors/arpabet_ipa.py:syllable_to_ipa</code> (<code>IPA</code>), both downstream of
 MFA alignment.</p>
 <ul>
@@ -165,16 +163,13 @@ digits stripped (e.g. <code>&quot;B-EH&quot;</code> instead of <code>&quot;B-EH1
 in <a href="../../features/document/feat_doc_prosody_articulation_rate.html"><code>articulation_rate</code></a> for the
 same dependency.</li>
 </ul>
-<p><strong>Rows, not just columns, changed on 2026-07-27.</strong> Two long-standing
-defects in which words reach this file were fixed at the same time, and
-they change row counts on real stimuli:</p>
+<p><strong>Which words reach this file</strong> affects row counts on real stimuli:</p>
 <ul>
 <li>A token that shares one MFA word with the token before it (spaCy's
-<code>was</code> + <code>n't</code> against MFA's single <code>wasn't</code>) used to produce a
-<strong>duplicate</strong> set of syllable rows. It now emits once, under the first
-token.</li>
-<li>An out-of-dictionary word used to produce <strong>no</strong> syllable rows at all.
-It now yields exactly one syllable carrying <code>ARPABET = 'spn'</code>.</li>
+<code>was</code> + <code>n't</code> against MFA's single <code>wasn't</code>) emits its syllable rows
+once, under the first token.</li>
+<li>An out-of-dictionary word yields exactly one syllable carrying
+<code>ARPABET = 'spn'</code>.</li>
 </ul>
 <p>Both are described in full in <a href="../../features/subword/phoneme.html"><code>phoneme</code></a>.</p>
 </section><section id="papers"><h2><span class="num">6.3.2.7</span>Papers</h2><ul>
@@ -207,7 +202,7 @@ syllabifier.</p>
         <a class="prev" href="../../features/subword/syllable_timing.html"><small>Previous</small>Syllable timing (Onset / End / Duration)</a>
         <a class="next" href="../../features/subword/syllable_prosody.html"><small>Next</small>Syllable-level prosody (pitch + volume + deltas)</a>
       </nav>
-      <footer>SensiExtractor User Manual · version 0.2.0 · built 2026-10-27 · source: <a href="https://github.com/edneuro/SENSI-Speech-Features">edneuro/SENSI-Speech-Features</a></footer>
+      <footer>SENSI SpeechFeatures User Manual · version 0.2.0 · built 2026-11-03 · source: <a href="https://github.com/edneuro/SENSI-Speech-Features">edneuro/SENSI-Speech-Features</a></footer>
     </div>
   </main>
   <aside class="right" aria-label="On this page">

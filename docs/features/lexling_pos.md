@@ -36,7 +36,7 @@ content-word masks for downstream extractors:
 ([P-center](feat_syllable_pcenter.md)), and PUNCT exclusion in
 [BERT embedding](master_bert_word.md) input.
 
-## Implementation in SensiExtractor
+## Implementation in SENSI SpeechFeatures
 Source: `sensi/extractors/text_parser.py:parse`. Tags are read directly from
 spaCy's tagger output (`token.pos_` for `upos`, `token.tag_` for
 `xpos`) — no post-processing. Tagger model is `en_core_web_sm`'s

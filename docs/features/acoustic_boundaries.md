@@ -47,7 +47,7 @@ linguistic features ([Broderick 2018], [Heilbron 2022]).
 `End` is the symmetric per-word audio offset; word duration
 ([`Word_Duration`](acoustic_durations.md)) is `End − Onset`.
 
-## Implementation in SensiExtractor
+## Implementation in SENSI SpeechFeatures
 Source: `sensi/extractors/aligner.py:align_with_phones`. TextGrid parsing:
 `sensi/utils/textgrid_parser.py:parse_words`.
 
@@ -85,10 +85,8 @@ folder and computes feature normalization (CMVN) and its speaker-adaptation
 transform (fMLLR, a second alignment pass) per speaker. With one folder per
 stimulus, every recording is normalized and adapted from its own audio
 only, so its `Onset`/`End` do not depend on which other recordings share
-the batch. Before 2026-10-21 all stimuli sat in one folder and MFA pooled
-them as a single speaker, which shifted some word boundaries by up to
-~80 ms depending on batch composition. TextGrids from that layout are
-re-aligned once (sidecar version 3).
+the batch. (Pooling all stimuli as a single speaker would shift some word
+boundaries by up to ~80 ms depending on batch composition.)
 
 This is also the **upstream step** for the syllable and phoneme
 sidecars and for the prosody extractors — they all consume the same

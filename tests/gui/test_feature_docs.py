@@ -26,7 +26,7 @@ def test_load_feature_doc_parses_frontmatter_and_body():
     assert not doc.body.startswith("---")
     assert "EEG rationale" in doc.body
     # Implementation section is the whole reason this field exists
-    assert "Implementation in SensiExtractor" in doc.body
+    assert "Implementation in SENSI SpeechFeatures" in doc.body
 
 
 def test_load_feature_doc_returns_none_for_unknown_key():

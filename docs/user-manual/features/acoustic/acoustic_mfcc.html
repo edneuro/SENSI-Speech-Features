@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>MFCC (Mel-frequency cepstral coefficients) · SensiExtractor User Manual</title>
+<title>MFCC (Mel-frequency cepstral coefficients) · SENSI SpeechFeatures User Manual</title>
 <link rel="icon" href="../../assets/icon.svg">
 <link rel="stylesheet" href="../../assets/theme.css">
 <link rel="stylesheet" href="../../assets/layout.css">
@@ -13,7 +13,7 @@
 <button class="menu-btn" type="button" aria-label="Open the outline">☰ Contents</button>
 <div class="shell">
   <nav class="left" aria-label="Manual outline">
-    <a class="brand" href="../../index.html"><img src="../../assets/icon.svg" alt="">SensiExtractor <span>User Manual</span></a>
+    <a class="brand" href="../../index.html"><img src="../../assets/icon.svg" alt="">SENSI SpeechFeatures <span>User Manual</span></a>
     <div class="search">
       <input type="search" placeholder="Search features, columns…  ( / )" aria-label="Search the manual">
       <div class="search-results" role="listbox"></div>
@@ -33,7 +33,7 @@ automatic speech recognition and speaker recognition <a href="#davis-1980">Davis
 <p>Emitted as a 2-D array <code>mfcc</code> of shape <code>(N, n_mfcc)</code> (default <code>n_mfcc = 13</code>)
 in <code>acoustic/&lt;stim&gt;_acoustic.mat</code>, on the shared grid (<code>t</code>, <code>fs</code>).
 <strong>Off by default</strong> (toggle <code>feat_acoustic_ts_mfcc</code>).</p>
-</section><section id="see"><h2><span class="num">6.5.4.2</span>See it</h2><div class="card"><div class="caption">Example <b>LJ002-0321</b> (LJ Speech, public domain): “Others who arrived just after the time of distribution were often 48 hours without food. The latter might also be six days without meat.”</div><audio controls preload="none" src="../../assets/audio/LJ002-0321.wav"></audio><div ><figure><img src="../../assets/figures/acoustic_mfcc.svg" alt="MFCC (Mel-frequency cepstral coefficients) — Default settings"></figure><figcaption>MFCC (Mel-frequency cepstral coefficients) — Default settings</figcaption><div class="provenance">Read from <span class='file'>acoustic/LJ002-0321_acoustic.mat</span>, written by SensiExtractor on the example shown here. Nothing on this figure is typed in.</div></div></div></section><section id="output"><h2><span class="num">6.5.4.3</span>In your output</h2><div class="card"><div class="card-title">File <span class="file">acoustic/&lt;stim&gt;_acoustic.mat</span></div><table class="excerpt vars"><thead><tr><th>variable</th><th>size</th><th>MATLAB class</th></tr></thead><tbody><tr><td><code>mfcc</code></td><td>1292 × 13</td><td>double</td></tr><tr><td><code>t</code></td><td>1292 × 1</td><td>double</td></tr><tr><td><code>fs</code></td><td>1 × 1</td><td>double</td></tr></tbody></table><div class="provenance">Excerpt of the real file for <b>LJ002-0321</b>.</div></div></section><section id="matlab"><h2><span class="num">6.5.4.4</span>MATLAB</h2><div class="card" data-tabs><div class="tabpanel on"><pre data-copy><code>S = load(&#x27;acoustic/LJ002-0321_acoustic.mat&#x27;);
+</section><section id="see"><h2><span class="num">6.5.4.2</span>See it</h2><div class="card"><div class="caption">Example <b>LJ002-0321</b> (LJ Speech, public domain): “Others who arrived just after the time of distribution were often 48 hours without food. The latter might also be six days without meat.”</div><audio controls preload="none" src="../../assets/audio/LJ002-0321.wav"></audio><div ><figure><img src="../../assets/figures/acoustic_mfcc.svg" alt="MFCC (Mel-frequency cepstral coefficients) — Default settings"></figure><figcaption>MFCC (Mel-frequency cepstral coefficients) — Default settings</figcaption><div class="provenance">Read from <span class='file'>acoustic/LJ002-0321_acoustic.mat</span>, written by SENSI SpeechFeatures on the example shown here. Nothing on this figure is typed in.</div></div></div></section><section id="output"><h2><span class="num">6.5.4.3</span>In your output</h2><div class="card"><div class="card-title">File <span class="file">acoustic/&lt;stim&gt;_acoustic.mat</span></div><table class="excerpt vars"><thead><tr><th>variable</th><th>size</th><th>MATLAB class</th></tr></thead><tbody><tr><td><code>mfcc</code></td><td>1292 × 13</td><td>double</td></tr><tr><td><code>t</code></td><td>1292 × 1</td><td>double</td></tr><tr><td><code>fs</code></td><td>1 × 1</td><td>double</td></tr></tbody></table><div class="provenance">Excerpt of the real file for <b>LJ002-0321</b>.</div></div></section><section id="matlab"><h2><span class="num">6.5.4.4</span>MATLAB</h2><div class="card" data-tabs><div class="tabpanel on"><pre data-copy><code>S = load(&#x27;acoustic/LJ002-0321_acoustic.mat&#x27;);
 whos(&#x27;-file&#x27;, &#x27;acoustic/LJ002-0321_acoustic.mat&#x27;)                % variables, sizes, classes
 
 imagesc(S.t, 1:size(S.mfcc, 2), S.mfcc&#x27;); axis xy
@@ -80,7 +80,7 @@ z-score per coefficient in your TRF pipeline before fitting, and note that
 <code>MFCC-0</code> (energy) is on a very different scale from the higher coefficients.
 When MFCCs are enabled and the log-mel is not, <code>mel_center_freqs</code> is still
 written for reference (the mel bands the DCT was taken over).</p>
-</section><section id="code"><a id="implementation-in-sensiextractor"></a><h2><span class="num">6.5.4.8</span>In the code</h2><p><code>mfcc(y, sr, rate, *, n_mfcc, n_mels, fmin, fmax)</code> shares the framing helpers
+</section><section id="code"><a id="implementation-in-sensi-speechfeatures"></a><h2><span class="num">6.5.4.8</span>In the code</h2><p><code>mfcc(y, sr, rate, *, n_mfcc, n_mels, fmin, fmax)</code> shares the framing helpers
 with <code>log_mel_spectrogram</code>, so MFCCs and the log-mel are computed over the
 same windows and bands. In <code>extract_acoustic</code>, MFCCs are gated by
 <code>cfg[&quot;mfcc&quot;]</code> (default <code>False</code>); when on, <code>mel_center_freqs</code> is populated from
@@ -102,7 +102,7 @@ m = mfcc(y, sr, rate=128, n_mfcc=13, n_mels=16, fmin=fmin, fmax=fmax)
         <a class="prev" href="../../features/acoustic/acoustic_logmel.html"><small>Previous</small>Log-mel spectrogram</a>
         <a class="next" href="../../chapters/outputs.html"><small>Next</small>Outputs reference</a>
       </nav>
-      <footer>SensiExtractor User Manual · version 0.2.0 · built 2026-10-27 · source: <a href="https://github.com/edneuro/SENSI-Speech-Features">edneuro/SENSI-Speech-Features</a></footer>
+      <footer>SENSI SpeechFeatures User Manual · version 0.2.0 · built 2026-11-03 · source: <a href="https://github.com/edneuro/SENSI-Speech-Features">edneuro/SENSI-Speech-Features</a></footer>
     </div>
   </main>
   <aside class="right" aria-label="On this page">

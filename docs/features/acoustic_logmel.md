@@ -93,7 +93,7 @@ Two practical notes:
 `mel_center_freqs` lets you label/inspect bands and is the same length as the
 band axis of `logmel`.
 
-## Implementation in SensiExtractor
+## Implementation in SENSI SpeechFeatures
 `log_mel_spectrogram(y, sr, rate, *, n_mels, fmin, fmax)` returns
 `(logmel, freqs)`; `fmin`/`fmax` come from `mel_range(preset, sr)`. The
 orchestrator `extract_acoustic` stores `logmel` and `mel_center_freqs`

@@ -35,7 +35,7 @@ def test_main_window_title_is_sensi(qtbot):
     from sensi.gui.main_window import MainWindow
     w = MainWindow()
     qtbot.addWidget(w)
-    assert w.windowTitle() == "SENSI-FeatureExtractor"
+    assert w.windowTitle() == "SENSI SpeechFeatures"
 
 
 def test_reset_settings_restores_defaults_and_rebuilds(qtbot, prefs_tmp, monkeypatch):

@@ -1,4 +1,4 @@
-/* SensiExtractor User Manual — LAYOUT. Uses only the variables in theme.css. */
+/* SENSI SpeechFeatures User Manual — LAYOUT. Uses only the variables in theme.css. */
 *, *::before, *::after { box-sizing: border-box; }
 html { scroll-padding-top: 16px; }
 body {
@@ -79,6 +79,9 @@ h4 { font-size: 16px; margin: 20px 0 6px; }
 .content table { border-collapse: collapse; margin: 14px 0; font: var(--size-small)/1.45 var(--font-ui); width: 100%; display: block; overflow-x: auto; }
 .content th, .content td { border: 1px solid var(--border); padding: 5px 9px; text-align: left; vertical-align: top; }
 .content th { background: var(--bg-table-head); font-weight: 600; color: var(--text); }
+/* Table text breaks only between words; headings and short values stay on one line. */
+.content th, .content td, .content td code { overflow-wrap: normal; word-break: normal; }
+.content th, .excerpt th, .excerpt td { white-space: nowrap; }
 blockquote { margin: 16px 0; padding: 10px 16px; background: var(--note-bg); border-left: 3px solid var(--accent); border-radius: 0 var(--radius-small) var(--radius-small) 0; }
 blockquote p { margin: 6px 0; }
 pre { background: var(--bg-code); border-radius: var(--radius-small); padding: 12px 14px; overflow-x: auto; line-height: 1.5; position: relative; }
@@ -149,7 +152,7 @@ audio { width: 100%; margin: 6px 0; }
 footer { margin-top: 40px; font: 12px var(--font-ui); color: var(--text-muted); border-top: 1px solid var(--border); padding-top: 12px; }
 
 /* long code, file names and URLs wrap instead of widening the page */
-.content p code, .content li code, .content td code, .file, .content a, .chip, .caption, .provenance { overflow-wrap: anywhere; }
+.content p code, .content li code, .file, .content a, .chip, .caption, .provenance { overflow-wrap: anywhere; }
 .toc-inline { display: none; margin: 4px 0 14px; font: var(--size-ui) var(--font-ui); border: 1px solid var(--border); border-radius: var(--radius-small); padding: 6px 12px; background: var(--bg-panel); }
 .toc-inline summary { cursor: pointer; font-weight: 600; color: var(--text-secondary); }
 .toc-inline ul { margin: 6px 0 2px; padding-left: 18px; }

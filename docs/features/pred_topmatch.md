@@ -49,10 +49,9 @@ facilitation is graded even among unpredictable words [Szewczyk 2022]. No
 paper we know of tests top-match against surprisal directly; this is a
 recommendation, not a measured result.
 
-## Implementation in SensiExtractor
+## Implementation in SENSI SpeechFeatures
 Source: `sensi/extractors/predictability.py:add_predictability` (the
-unified, roster-driven extractor; it replaced the old `extractors/llm_cloze.py`,
-which was removed on 2026-07-11) and
+unified, roster-driven extractor) and
 `_HuggingFaceBackend.score`.
 
 Computed in the same forward pass as `<slug>_Cloze` and

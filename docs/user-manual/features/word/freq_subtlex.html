@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Word frequency (Zipf, wordfreq) · SensiExtractor User Manual</title>
+<title>Word frequency (Zipf, wordfreq) · SENSI SpeechFeatures User Manual</title>
 <link rel="icon" href="../../assets/icon.svg">
 <link rel="stylesheet" href="../../assets/theme.css">
 <link rel="stylesheet" href="../../assets/layout.css">
@@ -13,7 +13,7 @@
 <button class="menu-btn" type="button" aria-label="Open the outline">☰ Contents</button>
 <div class="shell">
   <nav class="left" aria-label="Manual outline">
-    <a class="brand" href="../../index.html"><img src="../../assets/icon.svg" alt="">SensiExtractor <span>User Manual</span></a>
+    <a class="brand" href="../../index.html"><img src="../../assets/icon.svg" alt="">SENSI SpeechFeatures <span>User Manual</span></a>
     <div class="search">
       <input type="search" placeholder="Search features, columns…  ( / )" aria-label="Search the manual">
       <div class="search-results" role="listbox"></div>
@@ -38,7 +38,7 @@ looked up in the SUBTLEX-US spreadsheet.</p>
 <p>Subtitle corpora track conversational / naturalistic frequency much
 better than book/newspaper corpora, which is why they anchor the blend
 and why wordfreq is a standard reference for psycholinguistic stimuli.</p>
-<p>The Zipf scale is <code>log₁₀(occurrences per million) + 3</code>, calibrated so:</p>
+<p>The Zipf scale (<a href="#vanheuven-2014">van Heuven 2014</a>) is <code>log₁₀(occurrences per million) + 3</code>, calibrated so:</p>
 <table>
 <thead>
 <tr>
@@ -75,8 +75,8 @@ and why wordfreq is a standard reference for psycholinguistic stimuli.</p>
 </tr>
 </tbody>
 </table>
-</section><section id="see"><h2><span class="num">6.1.8.2</span>See it</h2><div class="card"><div class="caption">Example <b>LJ002-0321</b> (LJ Speech, public domain): “Others who arrived just after the time of distribution were often 48 hours without food. The latter might also be six days without meat.”</div><audio controls preload="none" src="../../assets/audio/LJ002-0321.wav"></audio><div ><figure><img src="../../assets/figures/freq_subtlex.svg" alt="Word frequency (Zipf, wordfreq) — Default settings"></figure><figcaption>Word frequency (Zipf, wordfreq) — Default settings</figcaption><div class="provenance">Read from <span class='file'>word/LJ002-0321_features.csv</span>, written by SensiExtractor on the example shown here. Nothing on this figure is typed in.</div></div></div></section><section id="output"><h2><span class="num">6.1.8.3</span>In your output</h2><div class="card"><div class="card-title">File <span class="file">word/&lt;stim&gt;_features.csv</span></div><table class="excerpt"><thead><tr><th class="">token</th><th class="hl">Zipf_Freq</th></tr></thead><tbody><tr><td class="">Others</td><td class="hl">6.16</td></tr><tr><td class="">who</td><td class="hl">6.34</td></tr><tr><td class="">arrived</td><td class="hl">4.38</td></tr><tr><td class="">just</td><td class="hl">6.43</td></tr><tr><td class="">after</td><td class="hl">6.11</td></tr><tr><td class="">the</td><td class="hl">7.73</td></tr><tr><td class="">time</td><td class="hl">6.29</td></tr><tr><td class="">of</td><td class="hl">7.4</td></tr><tr><td class="">distribution</td><td class="hl">4.64</td></tr><tr><td class="">were</td><td class="hl">6.79</td></tr><tr><td class="">often</td><td class="hl">5.41</td></tr><tr><td class="">48</td><td class="hl">4.82</td></tr></tbody></table><div class="caption">26 rows × 56 columns in the file; showing the feature's columns for the first sentence. An empty cell means no value (e.g. punctuation, or a word the measure doesn’t cover).</div><div class="provenance">Excerpt of the real file for <b>LJ002-0321</b>.</div></div></section><section id="matlab"><h2><span class="num">6.1.8.4</span>MATLAB</h2><div class="card" data-tabs><div class="tabpanel on"><pre data-copy><code>% Load the word-level table (one row per word)
-T = readtable(&#x27;word/LJ002-0321_features.csv&#x27;, &#x27;TextType&#x27;, &#x27;string&#x27;);
+</section><section id="see"><h2><span class="num">6.1.8.2</span>See it</h2><div class="card"><div class="caption">Example text (invented, run without audio): <b>zipf.txt</b>: “The ornithologist saw a quetzal in the jungle.”</div><div ><figure><img src="../../assets/figures/freq_subtlex.svg" alt="Word frequency (Zipf, wordfreq) — Default settings"></figure><figcaption>Word frequency (Zipf, wordfreq) — Default settings</figcaption><div class="provenance">Read from <span class='file'>word/zipf_features.csv</span>, written by SENSI SpeechFeatures on the example shown here. Nothing on this figure is typed in.</div></div></div></section><section id="output"><h2><span class="num">6.1.8.3</span>In your output</h2><div class="card"><div class="card-title">File <span class="file">word/&lt;stim&gt;_features.csv</span></div><table class="excerpt"><thead><tr><th class="">token</th><th class="hl">Zipf_Freq<br><small>Zipf (log10 frequency per billion words)</small></th></tr></thead><tbody><tr><td class="">The</td><td class="hl">7.73</td></tr><tr><td class="">ornithologist</td><td class="hl">2.26</td></tr><tr><td class="">saw</td><td class="hl">6.1</td></tr><tr><td class="">a</td><td class="hl">7.36</td></tr><tr><td class="">quetzal</td><td class="hl">2.01</td></tr><tr><td class="">in</td><td class="hl">7.27</td></tr><tr><td class="">the</td><td class="hl">7.73</td></tr><tr><td class="">jungle</td><td class="hl">4.12</td></tr><tr><td class="">.</td><td class="hl"></td></tr></tbody></table><div class="caption">9 rows shown; showing the feature's columns, with the unit the run's units table gives for each. An empty cell means no value (e.g. punctuation, or a word the measure doesn’t cover).</div><div class="provenance">Excerpt of the real file for <b>zipf</b>.</div></div></section><section id="matlab"><h2><span class="num">6.1.8.4</span>MATLAB</h2><div class="card" data-tabs><div class="tabpanel on"><pre data-copy><code>% Load the word-level table (one row per word)
+T = readtable(&#x27;word/zipf_features.csv&#x27;, &#x27;TextType&#x27;, &#x27;string&#x27;);
 T.Properties.VariableNames             % every column in the file
 head(T(:, {&#x27;token&#x27;, &#x27;Zipf_Freq&#x27;}), 10)                % this feature&#x27;s columns (first rows)
 
@@ -84,13 +84,14 @@ head(T(:, {&#x27;token&#x27;, &#x27;Zipf_Freq&#x27;}), 10)                % this
 w = T.upos ~= &quot;PUNCT&quot;;            % words only
 bar(T.Zipf_Freq(w)); xticks(1:nnz(w)); xticklabels(T.token(w)); ylabel(&#x27;Zipf_Freq&#x27;)
 </code></pre></div><div class="caption">Run from the output folder. Variable and column names were checked against the real files when this manual was built; the code itself was not run in MATLAB.</div></div></section><section id="computed"><a id="math--linguistics"></a><h2><span class="num">6.1.8.5</span>How it&#x27;s computed</h2><p><code>zipf_frequency(word, &quot;en&quot;)</code> returns</p>
-<pre><code>Zipf = log₁₀(occurrences_per_million) + 3
+<pre><code>Zipf = log₁₀(occurrences_per_million) + 3        [van Heuven 2014]
 </code></pre>
-<p>so a word that occurs 1 time per million words has Zipf = 3, one that
+<p>— equivalently <code>log₁₀</code> of the occurrences per <strong>billion</strong> words, which is
+how <a href="#wordfreq">wordfreq</a> states it. So a word that occurs 1 time per million words has Zipf = 3, one that
 occurs 1000 per million has Zipf = 6, and so on. The <code>+3</code> shift sets
 the scale to start near zero for rare words and avoids negative numbers
 in normal use.</p>
-</section><section id="code"><a id="implementation-in-sensiextractor"></a><h2><span class="num">6.1.8.6</span>In the code</h2><div class="card"><div class="card-title">Open in GitHub</div><ul><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/extractors/word_freq.py#L35"><code>sensi/extractors/word_freq.py → add_word_freq()</code></a></li></ul></div><p>Source: <code>sensi/extractors/word_freq.py:add_word_freq</code>.</p>
+</section><section id="code"><a id="implementation-in-sensi-speechfeatures"></a><h2><span class="num">6.1.8.6</span>In the code</h2><div class="card"><div class="card-title">Open in GitHub</div><ul><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/extractors/word_freq.py#L35"><code>sensi/extractors/word_freq.py → add_word_freq()</code></a></li></ul></div><p>Source: <code>sensi/extractors/word_freq.py:add_word_freq</code>.</p>
 <p><strong>What the code does:</strong></p>
 <ol>
 <li>Iterates over the word-level DataFrame row by row.</li>
@@ -139,6 +140,8 @@ words elicit larger N400s than high-frequency words (<a href="#vanpetten-1990">V
 is less well characterised than for reading time.</p>
 </section><section id="papers"><h2><span class="num">6.1.8.9</span>Papers</h2><ul>
 <li><a name="brysbaert-2009"></a><strong><a href="#brysbaert-2009">Brysbaert 2009</a></strong> Brysbaert &amp; New. <em>Moving beyond Kučera and Francis: A critical evaluation of current word frequency norms and the introduction of a new and improved word frequency measure for American English.</em> Behavior Research Methods 41(4), 977–990. <a href="https://doi.org/10.3758/BRM.41.4.977">doi:10.3758/BRM.41.4.977</a> — the SUBTLEX-US norms, a major component of <code>wordfreq</code>'s combined English list; establishes that the frequency effect on reading and lexical decision time is logarithmic in raw frequency (i.e. linear in Zipf).</li>
+<li><a name="vanheuven-2014"></a><strong><a href="#vanheuven-2014">van Heuven 2014</a></strong> van Heuven, Mandera, Keuleers &amp; Brysbaert. <em>SUBTLEX-UK: A new and improved word frequency database for British English.</em> Quarterly Journal of Experimental Psychology 67(6), 1176–1190. <a href="https://doi.org/10.1080/17470218.2013.850521">doi:10.1080/17470218.2013.850521</a> — introduces the Zipf scale.</li>
+<li><a name="wordfreq"></a><strong><a href="#wordfreq">wordfreq</a></strong> Speer. <em>wordfreq</em> (software). <a href="https://github.com/rspeer/wordfreq">github.com/rspeer/wordfreq</a> — defines <code>zipf_frequency</code> as the base-10 log of occurrences per billion words, crediting the scale to Brysbaert.</li>
 <li><a name="vanpetten-1990"></a><strong><a href="#vanpetten-1990">Van Petten 1990</a></strong> Van Petten &amp; Kutas. <em>Interactions between sentence context and word frequency in event-related brain potentials.</em> Memory &amp; Cognition 18(4), 380–393. <a href="https://doi.org/10.3758/BF03197127">doi:10.3758/BF03197127</a> — direct demonstration that less-frequent words elicit larger N400s than more-frequent words (modulated by sentence position).</li>
 <li><a name="dambacher-2006"></a><strong><a href="#dambacher-2006">Dambacher 2006</a></strong> Dambacher, Kliegl, Hofmann, Jacobs. <em>Frequency and predictability effects on event-related potentials during reading.</em> Brain Research 1084(1), 89–103. <a href="https://doi.org/10.1016/j.brainres.2006.02.010">doi:10.1016/j.brainres.2006.02.010</a> — separating frequency and predictability ERP effects.</li>
 </ul>
@@ -147,7 +150,7 @@ is less well characterised than for reading time.</p>
         <a class="prev" href="../../features/word/lexling_dep.html"><small>Previous</small>Dependency parse</a>
         <a class="next" href="../../features/word/edu_zipf.html"><small>Next</small>Educator's Word Frequency Guide (EWFG) grade-band frequencies</a>
       </nav>
-      <footer>SensiExtractor User Manual · version 0.2.0 · built 2026-10-27 · source: <a href="https://github.com/edneuro/SENSI-Speech-Features">edneuro/SENSI-Speech-Features</a></footer>
+      <footer>SENSI SpeechFeatures User Manual · version 0.2.0 · built 2026-11-03 · source: <a href="https://github.com/edneuro/SENSI-Speech-Features">edneuro/SENSI-Speech-Features</a></footer>
     </div>
   </main>
   <aside class="right" aria-label="On this page">

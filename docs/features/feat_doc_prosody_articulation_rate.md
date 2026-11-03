@@ -62,7 +62,7 @@ Counting from MFA's phones follows the pronunciation MFA aligned
 rather than the spelling, and counts a contraction that MFA
 aligns as one stretch ("wasn't") once.
 
-## Implementation in SensiExtractor
+## Implementation in SENSI SpeechFeatures
 Source: `sensi/extractors/prosody.py:compute_doc_prosody` — see the
 document-batch finishing step in `sensi/pipeline.py` which calls it.
 
@@ -80,18 +80,16 @@ document-batch finishing step in `sensi/pipeline.py` which calls it.
    `NaN` if that speaking time is not positive or `pyphen` is needed but
    unavailable.
 
-The syllable count no longer depends on whether the syllable-timing
+The syllable count does not depend on whether the syllable-timing
 outputs are switched on: the phone tier comes from the same alignment
 every time.
 
-**History (2026-10-21):** speaking time used to be the sum of each
-word's MFA duration. That dropped every short gap between words, so the
-pause threshold had no effect, and it counted a contraction sharing one
-MFA interval twice. Syllables used to be counted with `pyphen` over the
-spelling. On three validation stimuli the new values were 1–10 % higher
-(4.35 → 4.40, 3.52 → 3.85, 4.75 → 4.85 syl/s), mostly because MFA's
-pronunciations contain more syllables than the spelling-based estimate
-(e.g. 39 vs 33 for one stimulus).
+Speaking time is the sum of the merged word intervals, so short gaps
+between words count as pauses only above the pause threshold, and a
+contraction sharing one MFA interval is counted once. Counting syllables
+from MFA's pronunciations gives somewhat higher values than a
+spelling-based estimate, because the pronunciations contain more
+syllables (e.g. 39 vs 33 for one validation stimulus).
 
 ## Library
 ```python

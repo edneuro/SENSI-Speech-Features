@@ -67,12 +67,43 @@ word-internal cohort model as this feature) "uniquely predict[s] some
 part of early neural responses" alongside a model that uses sentence
 context. One step is still ours: their sentence-context model predicts
 phonemes, while GPT-2 `Surprisal` is a word-level value, so the two
-SensiExtractor columns are related to, not identical with, the models they
+SENSI SpeechFeatures columns are related to, not identical with, the models they
 compared.
 
 ## Math
 
-A phoneme-prefix trie is built once over the pronunciation lexicon.
+**In words.** While a word is being heard, the *cohort* is the set of
+dictionary words that start with the phonemes heard so far
+([Marslen-Wilson 1978]). Each word in it counts with its frequency `f(w)`
+(how common it is, from `wordfreq`), so common words weigh more
+([Brodbeck 2022]). Write `Z` for the cohort's total weight:
+
+    Z(cohort) = Σ f(w)  over the words w in the cohort
+
+Hearing the next phoneme removes every word that does not continue that
+way. The two columns describe that step:
+
+    phoneme_surprisal(φk) = −log2( Z(cohort after φk) / Z(cohort before φk) )        [Gillis 2021]
+
+    cohort_entropy(φk)    = −Σ p(w) · log2 p(w),  p(w) = f(w) / Z(cohort after φk)   [Gillis 2021]
+
+- **Surprisal** is how much of the cohort's weight the phoneme removed,
+  in bits. **0 bits**: nothing was removed (the phoneme was certain — the
+  word had already been identified). **1 bit**: the cohort lost half its
+  weight. **n bits**: it kept only 1/2ⁿ of its weight. The first phoneme of
+  a word is compared with the whole dictionary, so it is usually the most
+  surprising; phonemes late in a long word are often near 0. Never
+  negative.
+- **Entropy** is how uncertain the word's identity still is after this
+  phoneme, in bits. **0 bits**: only one word is left. Larger values: many
+  words of similar frequency are still possible (at most `log2 N` for `N`
+  equally common words). It usually falls through the word, reaching 0 once
+  the word is identified.
+
+Both use the frequencies in the dictionary only — never the sentence
+around the word.
+
+**How the code computes it.** A phoneme-prefix trie is built once over the pronunciation lexicon.
 Every trie node caches two accumulators over all lexicon words whose
 pronunciation passes through it:
 
@@ -132,9 +163,8 @@ propagates correctly: `NaN` impulses are skipped by the `.mat` rasterizer
 and are visible to any downstream `dropna`. If you would rather exclude
 these rows entirely, filter on `Pron_Source`.
 
-Before 2026-07-27 the question never arose, because `spn` was filtered out
-as silence upstream and out-of-dictionary words produced **no phoneme rows
-at all** — see [`phoneme`](phoneme.md#implementation-in-sensiextractor).
+Out-of-dictionary words keep their `spn` row (see
+[`phoneme`](phoneme.md#implementation-in-sensi-speechfeatures)).
 
 **Frequency floor.** A dictionary word with `wordfreq` frequency `0`
 (present in the MFA lexicon but not observed in the combined corpus
@@ -143,7 +173,7 @@ minimum nonzero frequency in the lexicon, and stays in the trie. This
 keeps the OOV cap reserved for pronunciations genuinely absent from
 the dictionary, rather than firing on every merely-rare word.
 
-## Implementation in SensiExtractor
+## Implementation in SENSI SpeechFeatures
 
 Source: `sensi/extractors/phoneme_surprisal.py`.
 
@@ -223,12 +253,9 @@ through `_PHONEME_COLUMN_MAP` in `sensi/pipeline.py` exactly like the
 `ARPABET`/`Stress`/`IPA`/`Pron_Source`/`Onset`/`End`/`Duration` phoneme
 columns, gated by `feat_phoneme_surprisal` / `feat_phoneme_cohort_entropy`.
 
-⚠️ Reading `ARPABET` rather than the old fused `Label` was mandatory, not
-cosmetic: after the 2026-07-27 column split there is no `Label` column on
-the phoneme frame, so the old code would have raised `KeyError` — the loud
-failure mode. The quiet one was next door in
-[`P_Center`](feat_syllable_pcenter.md), which detected vowels via
-`Label.str[-1:].str.isdigit()` and now uses `Stress.notna()`.
+⚠️ The extractor reads the bare `ARPABET` column (there is no fused
+`Label` column on the phoneme frame). Vowel detection in
+[`P_Center`](feat_syllable_pcenter.md) uses `Stress.notna()`.
 
 ### `.mat` sidecar: value + control impulse trains
 
@@ -252,16 +279,12 @@ MATLAB-style half-away-from-zero rounding as `acoustic_ts._mround`
 extractors independent). Same-sample collisions **sum** for the two
 value trains and stay at unit height for the two control trains.
 
-> ⚠️ That summing rule interacted with a real data bug, fixed 2026-07-27.
-> Contractions and possessives used to emit their phoneme rows **twice**
-> (spaCy's `was` + `n't` both claimed MFA's single `wasn't` interval), so
-> the duplicated rows landed on identical sample indices and **summed** —
-> the `phoneme_surprisal` and `cohort_entropy` trains carried doubled
-> impulses at every contraction, and `word_onset` fired twice at one
-> instant. Nothing raised. Deduplicating the phoneme rows in
-> `syllabify_pairs` fixed the `.mat` output as a side effect. If you have
-> archived `.mat` sidecars from before that date and your stimuli contain
-> contractions, they are affected and should be regenerated.
+> ⚠️ The summing rule matters for contractions and possessives. spaCy's
+> `was` + `n't` both map to MFA's single `wasn't` interval, so if both
+> tokens emitted phoneme rows they would land on identical sample indices
+> and **sum**, doubling the impulses at every contraction. The phoneme rows
+> are therefore emitted once, under the first token (deduplicated in
+> `syllabify_pairs`), so each interval contributes a single impulse.
 
 The
 file also carries `t = arange(N)/analysis_sr`, `fs = analysis_sr`, and

@@ -33,9 +33,9 @@ to the start (or end) of a syntactic unit. Common use cases:
   summaries — those columns need the sentence timing to slice their
   windows.
 - Grouping word-level data by sentence for sentence-level
-  aggregates downstream of the SensiExtractor outputs.
+  aggregates downstream of the SENSI SpeechFeatures outputs.
 
-## Implementation in SensiExtractor
+## Implementation in SENSI SpeechFeatures
 Source: `sensi/extractors/sentence_prosody.py` (the sentence-level
 extractor that builds the sidecar; despite the name, also handles the
 timing columns). Implementation derives sentence timing as the

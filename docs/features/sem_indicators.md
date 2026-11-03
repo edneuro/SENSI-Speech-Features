@@ -63,9 +63,9 @@ available, but its categories are less curated.
 
 ## Backends and category selection
 
-> ℹ️ **LIWC is disabled in SensiExtractor.** The LIWC-22 license
+> ℹ️ **LIWC is disabled in SENSI SpeechFeatures.** The LIWC-22 license
 > agreement ([EULA](https://www.liwc.app/help/eula)) forbids using LIWC
-> dictionary material outside LIWC's own software, so SensiExtractor can
+> dictionary material outside LIWC's own software, so SENSI SpeechFeatures can
 > neither ship a `.dic` nor auto-select LIWC. The LIWC radio on the
 > Word-level page is shown but greyed out, and **Empath is the default**.
 > To obtain a LIWC license, see
@@ -77,7 +77,7 @@ available, but its categories are less curated.
 | **LIWC** | Commercial; licensed `.dic` required | LIWC-2022 (or earlier) | **Disabled** (EULA) |
 
 **Backend selection logic** (from `detect_backend()`): always returns
-**Empath**. A stray `.dic` under `data/dictionaries/` no longer activates
+**Empath**. A stray `.dic` under `data/dictionaries/` does not activate
 LIWC.
 
 Categories are selected per-backend on the **Word-level features →
@@ -86,7 +86,7 @@ button) and the same selection is reused at the document level (see
 [`doc_category_proportions`](output_doc_category_proportions.md) if/when
 that doc exists).
 
-## Implementation in SensiExtractor
+## Implementation in SENSI SpeechFeatures
 Source: `sensi/extractors/semantic_domain.py:add_semantic_domain`. Backend
 classes: `_LiwcScorer` and `_EmpathScorer` in the same file.
 

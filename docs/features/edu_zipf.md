@@ -9,7 +9,7 @@ status: unavailable
 depth: deep
 ---
 
-> ⚠️ **Unavailable in SensiExtractor — no data.** These grade-band
+> ⚠️ **Unavailable in SENSI SpeechFeatures — no data.** These grade-band
 > frequencies are **not produced**. Their source, *The Educator's Word
 > Frequency Guide* ([Zeno 1995]), exists **only in print and has never
 > been digitized**, so there is no lookup table to query. The toggles are
@@ -62,7 +62,7 @@ the wrong yardstick.
   `Zipf_Freq` and is most useful as a sanity-check baseline against
   the SUBTLEX value.
 
-## Implementation in SensiExtractor
+## Implementation in SENSI SpeechFeatures
 Source: `sensi/extractors/educator_freq.py:add_edu_freq`.
 
 **What the code does:**
@@ -104,7 +104,7 @@ Source: `sensi/extractors/educator_freq.py:add_edu_freq`.
 **No digital source exists.** *The Educator's Word Frequency Guide*
 ([Zeno 1995]) was published as a print reference and, as far as we have
 been able to determine, has never been released in machine-readable
-form. SensiExtractor therefore ships **no** `data/dictionaries/edu_zipf.parquet`,
+form. SENSI SpeechFeatures therefore ships **no** `data/dictionaries/edu_zipf.parquet`,
 and without it the planner leaves these columns out of every run.
 
 To enable these columns in future, a `data/dictionaries/edu_zipf.parquet`

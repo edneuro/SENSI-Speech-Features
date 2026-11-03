@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Lexical norms (AoA, concreteness, imageability, familiarity, VAD) · SensiExtractor User Manual</title>
+<title>Lexical norms (AoA, concreteness, imageability, familiarity, VAD) · SENSI SpeechFeatures User Manual</title>
 <link rel="icon" href="../../assets/icon.svg">
 <link rel="stylesheet" href="../../assets/theme.css">
 <link rel="stylesheet" href="../../assets/layout.css">
@@ -13,7 +13,7 @@
 <button class="menu-btn" type="button" aria-label="Open the outline">☰ Contents</button>
 <div class="shell">
   <nav class="left" aria-label="Manual outline">
-    <a class="brand" href="../../index.html"><img src="../../assets/icon.svg" alt="">SensiExtractor <span>User Manual</span></a>
+    <a class="brand" href="../../index.html"><img src="../../assets/icon.svg" alt="">SENSI SpeechFeatures <span>User Manual</span></a>
     <div class="search">
       <input type="search" placeholder="Search features, columns…  ( / )" aria-label="Search the manual">
       <div class="search-results" role="listbox"></div>
@@ -25,9 +25,10 @@
       <div class="crumbs"><a href="../../features/index.html">Features</a> › <a href="../../features/word/index.html">Word level</a></div>
       <details class="toc-inline"><summary>On this page</summary><ul><li><a href="#what">What it is</a></li><li><a href="#see">See it</a></li><li><a href="#output">In your output</a></li><li><a href="#matlab">MATLAB</a></li><li><a href="#x-what-each-rating-is-and-how-it-was-made">What each rating is, and how it was made</a></li><li><a href="#x-document-level-aggregates">Document-level aggregates</a></li><li><a href="#code">In the code</a></li><li><a href="#library">Library</a></li><li><a href="#eeg">EEG rationale</a></li><li><a href="#papers">Papers</a></li></ul></details>
       <h1><span class="num">6.1.16</span>Lexical norms (AoA, concreteness, imageability, familiarity, VAD)</h1><p class="lede">Per-word psycholinguistic ratings looked up from published norm databases, keyed by lemma (with a surface-token fallback).</p><div class="facts"><span class="chip">App: <b>Word-level features</b> → <b>Lexical norms</b></span><span class="chip">Output: <b>word/&lt;stim&gt;_features.csv</b></span></div><div class="doc-note"><blockquote>
-<p>ℹ️ Requires the norm tables in <code>data/dictionaries/</code> — see
-<a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/data/dictionaries/README.md"><code>data/dictionaries/README.md</code></a>. The feature is
-<strong>off by default</strong>; columns are <code>NaN</code> until the tables are present.</p>
+<p>ℹ️ The norm tables ship with the project, in <code>data/dictionaries/</code> (where
+each comes from: <a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/data/dictionaries/README.md"><code>data/dictionaries/README.md</code></a>).
+The feature is <strong>off by default</strong> — switch on the Lexical norms card on
+the Word-level features page.</p>
 </blockquote>
 </div><section id="what"><a id="meaning"></a><h2><span class="num">6.1.16.1</span>What it is</h2><p>Per-word psycholinguistic ratings looked up from published norm databases,
 keyed by lemma (with a surface-token fallback):</p>
@@ -37,48 +38,57 @@ keyed by lemma (with a surface-token fallback):</p>
 <th>Column</th>
 <th>Norm</th>
 <th>What it captures</th>
+<th>Scale</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><code>AoA_Mean</code></td>
 <td>Age of acquisition (<a href="#kuperman-2012">Kuperman 2012</a>)</td>
-<td>mean rated age (years) at which the word is learned</td>
+<td>mean rated age at which the word is learned</td>
+<td>years (lower = learned earlier)</td>
 </tr>
 <tr>
 <td><code>AoA_SD</code></td>
 <td>&quot;</td>
-<td>rater dispersion of the AoA estimate (quality/weight)</td>
+<td>how much the raters disagreed about that age</td>
+<td>years</td>
 </tr>
 <tr>
 <td><code>Concreteness</code></td>
 <td><a href="#brysbaert-2014">Brysbaert 2014</a></td>
-<td>how concrete (perceptible) vs. abstract the referent is (1–5)</td>
+<td>how concrete (perceptible) vs. abstract the referent is</td>
+<td>1 (abstract) – 5 (concrete)</td>
 </tr>
 <tr>
 <td><code>Imageability</code></td>
 <td>MRC (<a href="#coltheart-1981">Coltheart 1981</a>)</td>
 <td>how easily the word evokes a mental image</td>
+<td>100 (hard) – 700 (easy)</td>
 </tr>
 <tr>
 <td><code>Familiarity</code></td>
 <td>MRC</td>
 <td>how familiar the word feels to typical readers</td>
+<td>100 (unfamiliar) – 700 (familiar)</td>
 </tr>
 <tr>
 <td><code>Valence</code></td>
 <td><a href="#warriner-2013">Warriner 2013</a></td>
-<td>pleasantness, 1 (unpleasant) – 9 (pleasant)</td>
+<td>how pleasant the word is</td>
+<td>1 (unpleasant) – 9 (pleasant)</td>
 </tr>
 <tr>
 <td><code>Arousal</code></td>
 <td>&quot;</td>
-<td>calm (1) – excited (9)</td>
+<td>how calming or exciting the word is</td>
+<td>1 (calm) – 9 (excited)</td>
 </tr>
 <tr>
 <td><code>Dominance</code></td>
 <td>&quot;</td>
-<td>feeling controlled (1) – in control (9)</td>
+<td>how much the word makes you feel in control</td>
+<td>1 (controlled) – 9 (in control)</td>
 </tr>
 </tbody>
 </table>
@@ -117,8 +127,8 @@ rate per stimulus. Concreteness (~40k words) correlates ≈0.9 with imageability
 (r = .91 across 5,553 words in the Glasgow Norms <a href="#scott-2019">Scott 2019</a>)
 and covers far more vocabulary, so it is usually the better choice when
 coverage matters.</p>
-</section><section id="see"><h2><span class="num">6.1.16.2</span>See it</h2><div class="card"><div class="caption">Example <b>LJ002-0321</b> (LJ Speech, public domain): “Others who arrived just after the time of distribution were often 48 hours without food. The latter might also be six days without meat.”</div><audio controls preload="none" src="../../assets/audio/LJ002-0321.wav"></audio><div ><figure><img src="../../assets/figures/lexical_norms.svg" alt="Lexical norms (AoA, concreteness, imageability, familiarity, VAD) — Default settings"></figure><figcaption>Lexical norms (AoA, concreteness, imageability, familiarity, VAD) — Default settings</figcaption><div class="provenance">Read from <span class='file'>word/LJ002-0321_features.csv</span>, written by SensiExtractor on the example shown here. Nothing on this figure is typed in.</div></div></div></section><section id="output"><h2><span class="num">6.1.16.3</span>In your output</h2><div class="card"><div class="card-title">File <span class="file">word/&lt;stim&gt;_features.csv</span></div><table class="excerpt"><thead><tr><th class="">token</th><th class="hl">AoA_Mean</th><th class="hl">AoA_SD</th><th class="hl">Concreteness</th><th class="hl">Imageability</th><th class="hl">Familiarity</th><th class="hl">Valence</th><th class="hl">Arousal</th><th class="hl">Dominance</th></tr></thead><tbody><tr><td class="">Others</td><td class="hl">5.33</td><td class="hl">2.35</td><td class="hl">2.04</td><td class="hl">265</td><td class="hl">581</td><td class="hl">5.41</td><td class="hl">3.48</td><td class="hl">6</td></tr><tr><td class="">who</td><td class="hl"></td><td class="hl"></td><td class="hl">1.74</td><td class="hl">261</td><td class="hl">599</td><td class="hl"></td><td class="hl"></td><td class="hl"></td></tr><tr><td class="">arrived</td><td class="hl">6.26</td><td class="hl">1.85</td><td class="hl">3.22</td><td class="hl"></td><td class="hl"></td><td class="hl">6.41</td><td class="hl">5</td><td class="hl">6.84</td></tr><tr><td class="">just</td><td class="hl"></td><td class="hl"></td><td class="hl">1.52</td><td class="hl">221</td><td class="hl">540</td><td class="hl"></td><td class="hl"></td><td class="hl"></td></tr><tr><td class="">after</td><td class="hl"></td><td class="hl"></td><td class="hl">2.12</td><td class="hl">217</td><td class="hl">575</td><td class="hl"></td><td class="hl"></td><td class="hl"></td></tr><tr><td class="">the</td><td class="hl"></td><td class="hl"></td><td class="hl">1.43</td><td class="hl">209</td><td class="hl">625</td><td class="hl"></td><td class="hl"></td><td class="hl"></td></tr><tr><td class="">time</td><td class="hl">5.16</td><td class="hl">1.86</td><td class="hl">3.07</td><td class="hl">413</td><td class="hl">604</td><td class="hl">5.6</td><td class="hl">3.41</td><td class="hl">4.36</td></tr><tr><td class="">of</td><td class="hl"></td><td class="hl"></td><td class="hl">1.67</td><td class="hl">217</td><td class="hl">598</td><td class="hl"></td><td class="hl"></td><td class="hl"></td></tr><tr><td class="">distribution</td><td class="hl">11</td><td class="hl">3.46</td><td class="hl">3.33</td><td class="hl"></td><td class="hl"></td><td class="hl">5.5</td><td class="hl">3.45</td><td class="hl">5.21</td></tr><tr><td class="">were</td><td class="hl">5.11</td><td class="hl">3.23</td><td class="hl">1.85</td><td class="hl">274</td><td class="hl">613</td><td class="hl">6.18</td><td class="hl">3.43</td><td class="hl">5.5</td></tr><tr><td class="">often</td><td class="hl"></td><td class="hl"></td><td class="hl">2.5</td><td class="hl"></td><td class="hl"></td><td class="hl"></td><td class="hl"></td><td class="hl"></td></tr><tr><td class="">48</td><td class="hl"></td><td class="hl"></td><td class="hl"></td><td class="hl"></td><td class="hl"></td><td class="hl"></td><td class="hl"></td><td class="hl"></td></tr></tbody></table><div class="caption">26 rows × 56 columns in the file; showing the feature's columns for the first sentence. An empty cell means no value (e.g. punctuation, or a word the measure doesn’t cover).</div><div class="provenance">Excerpt of the real file for <b>LJ002-0321</b>.</div></div></section><section id="matlab"><h2><span class="num">6.1.16.4</span>MATLAB</h2><div class="card" data-tabs><div class="tabpanel on"><pre data-copy><code>% Load the word-level table (one row per word)
-T = readtable(&#x27;word/LJ002-0321_features.csv&#x27;, &#x27;TextType&#x27;, &#x27;string&#x27;);
+</section><section id="see"><h2><span class="num">6.1.16.2</span>See it</h2><div class="card"><div class="caption">Example text (invented, run without audio): <b>norms.txt</b>: “The happy child hugged a puppy, but the soldier feared death and injustice.”</div><div ><figure><img src="../../assets/figures/lexical_norms.svg" alt="Lexical norms (AoA, concreteness, imageability, familiarity, VAD) — Default settings"></figure><figcaption>Lexical norms (AoA, concreteness, imageability, familiarity, VAD) — Default settings</figcaption><div class="provenance">Read from <span class='file'>word/norms_features.csv</span>, written by SENSI SpeechFeatures on the example shown here. Nothing on this figure is typed in.</div></div></div></section><section id="output"><h2><span class="num">6.1.16.3</span>In your output</h2><div class="card"><div class="card-title">File <span class="file">word/&lt;stim&gt;_features.csv</span></div><table class="excerpt"><thead><tr><th class="">token</th><th class="hl">AoA_Mean<br><small>years (rated age of acquisition)</small></th><th class="hl">AoA_SD<br><small>years</small></th><th class="hl">Concreteness<br><small>rating (1-5)</small></th><th class="hl">Imageability<br><small>rating (100-700; MRC 1-7 x 100)</small></th><th class="hl">Familiarity<br><small>rating (100-700; MRC 1-7 x 100)</small></th><th class="hl">Valence<br><small>rating (1-9)</small></th><th class="hl">Arousal<br><small>rating (1-9)</small></th><th class="hl">Dominance<br><small>rating (1-9)</small></th></tr></thead><tbody><tr><td class="">The</td><td class="hl"></td><td class="hl"></td><td class="hl">1.43</td><td class="hl">209</td><td class="hl">625</td><td class="hl"></td><td class="hl"></td><td class="hl"></td></tr><tr><td class="">happy</td><td class="hl">2.72</td><td class="hl">1.6</td><td class="hl">2.56</td><td class="hl">511</td><td class="hl">621</td><td class="hl">8.47</td><td class="hl">6.05</td><td class="hl">7.21</td></tr><tr><td class="">child</td><td class="hl"></td><td class="hl"></td><td class="hl">4.78</td><td class="hl">619</td><td class="hl">585</td><td class="hl">7.2</td><td class="hl">5.33</td><td class="hl">5.2</td></tr><tr><td class="">hugged</td><td class="hl">2.58</td><td class="hl">0.96</td><td class="hl">4.14</td><td class="hl"></td><td class="hl"></td><td class="hl">8.23</td><td class="hl">4.85</td><td class="hl">6.8</td></tr><tr><td class="">a</td><td class="hl"></td><td class="hl"></td><td class="hl">1.46</td><td class="hl">217</td><td class="hl">632</td><td class="hl"></td><td class="hl"></td><td class="hl"></td></tr><tr><td class="">puppy</td><td class="hl">3.28</td><td class="hl">1.13</td><td class="hl">4.78</td><td class="hl">635</td><td class="hl">522</td><td class="hl">7.85</td><td class="hl">5.84</td><td class="hl">6.24</td></tr><tr><td class="">,</td><td class="hl"></td><td class="hl"></td><td class="hl"></td><td class="hl"></td><td class="hl"></td><td class="hl"></td><td class="hl"></td><td class="hl"></td></tr><tr><td class="">but</td><td class="hl"></td><td class="hl"></td><td class="hl">2.04</td><td class="hl">206</td><td class="hl">603</td><td class="hl"></td><td class="hl"></td><td class="hl"></td></tr><tr><td class="">the</td><td class="hl"></td><td class="hl"></td><td class="hl">1.43</td><td class="hl">209</td><td class="hl">625</td><td class="hl"></td><td class="hl"></td><td class="hl"></td></tr><tr><td class="">soldier</td><td class="hl">6.94</td><td class="hl">2.48</td><td class="hl">4.72</td><td class="hl">578</td><td class="hl">517</td><td class="hl">5.45</td><td class="hl">5.9</td><td class="hl">5.84</td></tr><tr><td class="">feared</td><td class="hl">4.79</td><td class="hl">1.93</td><td class="hl">2.57</td><td class="hl">394</td><td class="hl">569</td><td class="hl">2.93</td><td class="hl">6.14</td><td class="hl">3.32</td></tr><tr><td class="">death</td><td class="hl">5.37</td><td class="hl">1.8</td><td class="hl">3.73</td><td class="hl">498</td><td class="hl">581</td><td class="hl">1.89</td><td class="hl">5.53</td><td class="hl">3.42</td></tr></tbody></table><div class="caption">15 rows shown; showing the feature's columns, with the unit the run's units table gives for each for the first sentence. An empty cell means no value (e.g. punctuation, or a word the measure doesn’t cover).</div><div class="provenance">Excerpt of the real file for <b>norms</b>.</div></div></section><section id="matlab"><h2><span class="num">6.1.16.4</span>MATLAB</h2><div class="card" data-tabs><div class="tabpanel on"><pre data-copy><code>% Load the word-level table (one row per word)
+T = readtable(&#x27;word/norms_features.csv&#x27;, &#x27;TextType&#x27;, &#x27;string&#x27;);
 T.Properties.VariableNames             % every column in the file
 head(T(:, {&#x27;token&#x27;, &#x27;AoA_Mean&#x27;, &#x27;AoA_SD&#x27;, &#x27;Concreteness&#x27;, &#x27;Imageability&#x27;, &#x27;Familiarity&#x27;, &#x27;Valence&#x27;, &#x27;Arousal&#x27;, &#x27;Dominance&#x27;}), 10)                % this feature&#x27;s columns (first rows)
 
@@ -196,7 +206,7 @@ each mean is).</li>
 <h3 id="relative-aoa-analysis-time-not-a-stored-column">Relative AoA (analysis-time, not a stored column)</h3>
 <p>A useful derived variable for developmental studies is
 <code>relative_aoa = AoA_Mean − participant_age</code> (years): a word's difficulty
-relative to the listener. SensiExtractor never sees participant age, so this
+relative to the listener. SENSI SpeechFeatures never sees participant age, so this
 is computed downstream by joining the stimulus <code>AoA_Mean</code> with participant
 metadata. Suggested uses: an AoA × age interaction term, an above/below-age
 word contrast, or a document-level proportion-above-age covariate. Caveat:
@@ -216,7 +226,7 @@ use <code>relative_aoa / AoA_SD</code>: that divides by rater disagreement — n
 spread of AoA across words — and would make the words people most disagreed on
 appear closest to the listener's age. (This is why <code>AoA_SD</code> ships as its own
 column.)</p>
-</section><section id="code"><a id="implementation-in-sensiextractor"></a><h2><span class="num">6.1.16.7</span>In the code</h2><div class="card"><div class="card-title">Open in GitHub</div><ul><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/extractors/lexical_norms.py#L58"><code>sensi/extractors/lexical_norms.py → add_lexical_norms()</code></a></li><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/utils/doc_summary.py#L196"><code>sensi/utils/doc_summary.py → _lexical_norm_aggregates()</code></a></li></ul></div><p>Source: <code>sensi/extractors/lexical_norms.py:add_lexical_norms</code>. For each source it
+</section><section id="code"><a id="implementation-in-sensi-speechfeatures"></a><h2><span class="num">6.1.16.7</span>In the code</h2><div class="card"><div class="card-title">Open in GitHub</div><ul><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/extractors/lexical_norms.py#L58"><code>sensi/extractors/lexical_norms.py → add_lexical_norms()</code></a></li><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/utils/doc_summary.py#L196"><code>sensi/utils/doc_summary.py → _lexical_norm_aggregates()</code></a></li></ul></div><p>Source: <code>sensi/extractors/lexical_norms.py:add_lexical_norms</code>. For each source it
 loads a parquet (cached), indexes by <code>word</code>, and does a vectorized
 <code>reindex</code> lookup on <code>lemma.lower()</code>, falling back to <code>token.lower()</code> where the
 lemma misses. PUNCT rows are excluded. <strong>MRC gotcha:</strong> a stored <code>0</code> in MRC's
@@ -292,7 +302,7 @@ regressors, not effects of interest.</p>
         <a class="prev" href="../../features/word/master_bert_word.html"><small>Previous</small>BERT contextual word embeddings</a>
         <a class="next" href="../../features/word/acoustic_boundaries.html"><small>Next</small>Acoustic word boundaries (MFA)</a>
       </nav>
-      <footer>SensiExtractor User Manual · version 0.2.0 · built 2026-10-27 · source: <a href="https://github.com/edneuro/SENSI-Speech-Features">edneuro/SENSI-Speech-Features</a></footer>
+      <footer>SENSI SpeechFeatures User Manual · version 0.2.0 · built 2026-11-03 · source: <a href="https://github.com/edneuro/SENSI-Speech-Features">edneuro/SENSI-Speech-Features</a></footer>
     </div>
   </main>
   <aside class="right" aria-label="On this page">

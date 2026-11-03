@@ -36,7 +36,7 @@ constant `doc_hnr`. Useful for:
   studies, where prosody and voice quality co-vary with content
   ([Banse 1996]).
 
-## Implementation in SensiExtractor
+## Implementation in SENSI SpeechFeatures
 Source: `sensi/extractors/sentence_prosody.py`. Same Praat harmonicity
 contour as the document-level extractor (the same
 `To Harmonicity (cc)` call) — sliced per sentence and averaged with

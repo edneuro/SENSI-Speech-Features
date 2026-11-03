@@ -39,7 +39,7 @@ alternative to word-locked analyses:
   gives two complementary syllable anchors — `Onset` for envelope
   alignment, `P_Center` for perceptual-rhythm alignment.
 
-## Implementation in SensiExtractor
+## Implementation in SENSI SpeechFeatures
 Source: `sensi/extractors/syllabify.py:syllabify_word` (downstream of
 [`acoustic_boundaries`](acoustic_boundaries.md)). Syllabification is
 performed on **MFA's phones tier** via the **Maximum Onset Principle**

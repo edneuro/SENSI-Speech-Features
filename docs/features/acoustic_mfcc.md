@@ -70,7 +70,7 @@ z-score per coefficient in your TRF pipeline before fitting, and note that
 When MFCCs are enabled and the log-mel is not, `mel_center_freqs` is still
 written for reference (the mel bands the DCT was taken over).
 
-## Implementation in SensiExtractor
+## Implementation in SENSI SpeechFeatures
 `mfcc(y, sr, rate, *, n_mfcc, n_mels, fmin, fmax)` shares the framing helpers
 with `log_mel_spectrogram`, so MFCCs and the log-mel are computed over the
 same windows and bands. In `extract_acoustic`, MFCCs are gated by

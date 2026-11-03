@@ -21,10 +21,10 @@ on first use. Everything below applies only to the three gated
 Llama-3 models.
 
 > **Why local-only (no OpenAI).** Scoring an *existing* string for per-token
-> log-probabilities needs the legacy OpenAI `/v1/completions` `echo=True,
-> logprobs` primitive, which OpenAI has retired and never served for the
+> log-probabilities needs the OpenAI `/v1/completions` `echo=True,
+> logprobs` primitive, which OpenAI does not offer and never served for the
 > `gpt-4o` family. There is no current OpenAI endpoint that returns the
-> probabilities these columns require, so SensiExtractor uses local
+> probabilities these columns require, so SENSI SpeechFeatures uses local
 > Hugging Face causal LMs only. (Selecting a `gpt-*` model id raises an
 > explanatory error rather than failing mid-run.) There is no API-key
 > input anywhere in the GUI for this feature — only local models are ever

@@ -1,0 +1,113 @@
+output_csv,column,unit
+features,Word_Duration,seconds
+features,Word_Gap,seconds
+features,Onset,seconds
+features,End,seconds
+features,Volume_Mean,dB
+features,Volume_Min,dB
+features,Volume_Max,dB
+features,Volume_Std,dB
+features,Volume_Delta,dB
+features,Zipf_Freq,Zipf (log10 frequency per billion words)
+features,Edu_Zipf_K2,Zipf (log10 frequency per billion words)
+features,Edu_Zipf_3to5,Zipf (log10 frequency per billion words)
+features,Edu_Zipf_6to8,Zipf (log10 frequency per billion words)
+features,Edu_Zipf_9to12,Zipf (log10 frequency per billion words)
+features,Edu_Zipf_Overall,Zipf (log10 frequency per billion words)
+features,AoA_Mean,years (rated age of acquisition)
+features,AoA_SD,years
+features,Concreteness,rating (1-5)
+features,Imageability,rating (100-700; MRC 1-7 x 100)
+features,Familiarity,rating (100-700; MRC 1-7 x 100)
+features,Valence,rating (1-9)
+features,Arousal,rating (1-9)
+features,Dominance,rating (1-9)
+syllables,Onset,seconds
+syllables,End,seconds
+syllables,Duration,seconds
+syllables,Volume_Mean,dB
+syllables,Volume_Delta,dB
+syllables,P_Center,seconds
+phonemes,Onset,seconds
+phonemes,End,seconds
+phonemes,Duration,seconds
+phonemes,phoneme_surprisal,bits
+phonemes,cohort_entropy,bits
+sentences,Onset,seconds
+sentences,End,seconds
+sentences,Volume_Mean,dB
+sentences,Volume_Min,dB
+sentences,Volume_Max,dB
+sentences,Volume_Std,dB
+sentences,Volume_Delta,dB
+sentences,HNR,dB
+documents_summary,n_tokens,count
+documents_summary,n_content_tokens,count
+documents_summary,n_sentences,count
+documents_summary,n_paragraphs,count
+documents_summary,mean_zipf_freq,Zipf (log10 frequency per billion words)
+documents_summary,mean_edu_zipf_k2,Zipf (log10 frequency per billion words)
+documents_summary,mean_edu_zipf_3to5,Zipf (log10 frequency per billion words)
+documents_summary,mean_edu_zipf_6to8,Zipf (log10 frequency per billion words)
+documents_summary,mean_edu_zipf_9to12,Zipf (log10 frequency per billion words)
+documents_summary,mean_edu_zipf_overall,Zipf (log10 frequency per billion words)
+documents_summary,ttr,ratio (0-1)
+documents_summary,mtld,tokens (mean factor length)
+documents_summary,flesch_reading_ease,Flesch score (~0-100)
+documents_summary,flesch_kincaid_grade,US grade level
+documents_summary,mean_aoa,years
+documents_summary,median_aoa,years
+documents_summary,max_aoa,years
+documents_summary,sd_aoa,years
+documents_summary,prop_late_acquired,proportion (0-1)
+documents_summary,mean_concreteness,rating (1-5)
+documents_summary,mean_imageability,rating (100-700)
+documents_summary,mean_familiarity,rating (100-700)
+documents_summary,mean_valence,rating (1-9)
+documents_summary,mean_arousal,rating (1-9)
+documents_summary,mean_dominance,rating (1-9)
+documents_summary,aoa_coverage,proportion (0-1)
+documents_summary,concreteness_coverage,proportion (0-1)
+documents_summary,imageability_coverage,proportion (0-1)
+documents_summary,familiarity_coverage,proportion (0-1)
+documents_summary,valence_coverage,proportion (0-1)
+documents_summary,arousal_coverage,proportion (0-1)
+documents_summary,dominance_coverage,proportion (0-1)
+documents_summary,doc_volume_mean,dB
+documents_summary,doc_volume_min,dB
+documents_summary,doc_volume_max,dB
+documents_summary,doc_volume_std,dB
+documents_summary,doc_volume_delta_mean,dB
+documents_summary,doc_hnr,dB
+documents_summary,doc_articulation_rate,syllables/second
+documents_summary,doc_pause_count,count
+documents_summary,doc_pause_mean_duration,seconds
+documents_summary,doc_pause_total_duration,seconds
+documents_summary,doc_pause_pct_silence,percent
+documents_summary,psych_authentic,Pennebaker score (~0-100)
+documents_summary,psych_analytic,Pennebaker score (~0-100)
+documents_summary,psych_tone,Pennebaker score (~0-100)
+documents_summary,psych_clout,Pennebaker score (~0-100)
+features,Pitch_Mean,semitones
+features,Pitch_Min,semitones
+features,Pitch_Max,semitones
+features,Pitch_Std,semitones
+features,Pitch_Delta,semitones
+syllables,Pitch_Mean,semitones
+syllables,Pitch_Delta,semitones
+sentences,Pitch_Mean,semitones
+sentences,Pitch_Min,semitones
+sentences,Pitch_Max,semitones
+sentences,Pitch_Std,semitones
+sentences,Pitch_Delta,semitones
+documents_summary,doc_pitch_mean,semitones
+documents_summary,doc_pitch_min,semitones
+documents_summary,doc_pitch_max,semitones
+documents_summary,doc_pitch_std,semitones
+documents_summary,doc_pitch_delta_mean,semitones
+features,gpt2_Surprisal,bits
+documents_summary,mean_gpt2_surprisal,bits
+features,gpt2_Cloze,probability (0-1)
+documents_summary,mean_gpt2_cloze,probability (0-1)
+features,gpt2_TopMatch,boolean
+documents_summary,mean_gpt2_topmatch,proportion (0-1)

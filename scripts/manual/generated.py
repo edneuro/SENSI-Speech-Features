@@ -36,6 +36,29 @@ def stems(entry) -> list[str]:
     return list(ex) if isinstance(ex, list) else [ex]
 
 
+def doc_rows(entry, examples_dir: Path) -> list[str]:
+    """The stimuli a document-level page shows: its `example` list, else every
+    example that has both a transcript and a recording."""
+    ex = entry.get("example")
+    if isinstance(ex, list):
+        return ex
+    return sorted(p.stem for p in (examples_dir / "audio").glob("*.wav")
+                  if (examples_dir / "transcripts" / f"{p.stem}.txt").exists())
+
+
+def units(outputs_root: Path) -> dict:
+    """(output file kind, column) -> unit, from the session-units tables the example run wrote."""
+    out = {}
+    for f in sorted((outputs_root / "base" / "units").glob("*.csv")):
+        for _, r in F.read_csv(f).iterrows():
+            out[(r["output_csv"], r["column"])] = r["unit"]
+    return out
+
+
+def _csv_kind(p: Path) -> str:
+    return "documents_summary" if "documents_summary" in p.name else p.stem.rsplit("_", 1)[-1]
+
+
 def outputs(entry) -> list[str]:
     o = entry.get("output") or []
     return [o] if isinstance(o, str) else list(o)
@@ -65,6 +88,9 @@ def check_names(entry, outputs_root: Path) -> list[str]:
             for n in want:
                 if n not in names:
                     errs.append(f"{entry['key']}: '{n}' is not in {p.name}")
+            if "documents_summary" in p.name and isinstance(entry.get("example"), list):
+                have = set(F.read_csv(p)["stimulus_id"])
+                errs += [f"{entry['key']}: no row '{s}' in {p.name}" for s in entry["example"] if s not in have]
             y = entry.get("y")
             if y and stem == stems(entry)[0] and pattern == outputs(entry)[0]:
                 need = [f"{y}_Mean", f"{y}_Min", f"{y}_Max"] if entry.get("figure") == "word_prosody" else [y]
@@ -91,7 +117,8 @@ def _draw(kind, entry, variant, outputs_root, examples_dir, out_svg) -> None:
     if kind == "word_bars":
         F.word_bars(F.read_csv(p), y, out_svg, title)
     elif kind == "predict_compare":
-        F.predict_compare({s: F.read_csv(_path(outputs_root, variant, pat, s)) for s in stems(entry)}, y, out_svg, title)
+        F.predict_compare({s: F.read_csv(_path(outputs_root, variant, pat, s)) for s in stems(entry)}, y, out_svg, title,
+                          log=y.endswith("_Cloze"))
     elif kind == "norms":
         F.norms(F.read_csv(p), entry["show"], out_svg, title)
     elif kind == "word_timeline":
@@ -100,11 +127,21 @@ def _draw(kind, entry, variant, outputs_root, examples_dir, out_svg) -> None:
     elif kind == "word_prosody":
         unit = "Hz" if variant == "pitch_hz" and y == "Pitch" else UNITS.get(y, "")
         F.word_prosody(F.read_csv(p), y, out_svg, title, unit)
+    elif kind == "structure":
+        F.structure(F.read_csv(p), out_svg, title)
+    elif kind == "lemmas":
+        F.lemmas(F.read_csv(p), out_svg, title)
+    elif kind == "morph":
+        F.morph(F.read_csv(p), out_svg, title)
+    elif kind == "sentence_timeline":
+        F.sentence_timeline(F.read_csv(p), stem, examples_dir, out_svg, title)
     elif kind in ("syllable_timeline",):
+        phon = _path(outputs_root, variant, "phoneme/{stem}_phonemes.csv", stem)
         F.syllable_timeline(F.read_csv(p), stem, examples_dir, out_svg, title,
-                            pcenter="P_Center" in entry["show"])
+                            pcenter="P_Center" in entry["show"],
+                            phonemes=F.read_csv(phon) if phon.exists() else None, focus=entry.get("focus"))
     elif kind == "syllable_prosody":
-        F.syllable_prosody(F.read_csv(p), out_svg, title)
+        F.syllable_prosody(F.read_csv(p), out_svg, title, UNITS)
     elif kind == "phoneme_timeline":
         F.phoneme_timeline(F.read_csv(p), out_svg, title)
     elif kind == "phoneme_surprisal":
@@ -123,7 +160,10 @@ def _draw(kind, entry, variant, outputs_root, examples_dir, out_svg) -> None:
         F.categories(F.read_csv(p), out_svg, title)
     elif kind == "doc_bars":
         df = F.read_csv(p)
-        F.doc_bars(df, entry["show"], out_svg, title)
+        rows = doc_rows(entry, examples_dir)
+        df = df.set_index("stimulus_id").loc[rows].reset_index()
+        u = units(outputs_root)
+        F.doc_bars(df, entry["show"], out_svg, title, {c: u.get(("documents_summary", c), "") for c in entry["show"]})
     elif kind == "dependency":
         F.dependency_svg(F.read_csv(p), out_svg, title)
     else:
@@ -134,7 +174,8 @@ VARIANT_LABEL = {"base": "Default settings", "env_hilbert": "env_method: hilbert
                  "mel_music": "mel_preset: music", "pitch_hz": "pitch_units: hz"}
 SVG_KINDS = {"word_bars", "predict_compare", "norms", "word_timeline", "word_prosody", "syllable_timeline",
              "syllable_prosody", "phoneme_timeline", "phoneme_surprisal", "timeseries", "image", "embedding",
-             "embedding_layers", "sentence_similarity", "categories", "doc_bars", "dependency"}
+             "embedding_layers", "sentence_similarity", "categories", "doc_bars", "dependency",
+             "structure", "lemmas", "morph", "sentence_timeline"}
 
 
 def see_it(entry, page_root: str, out_dir: Path, outputs_root: Path, examples_dir: Path) -> str:
@@ -146,8 +187,9 @@ def see_it(entry, page_root: str, out_dir: Path, outputs_root: Path, examples_di
                 f'{"<p>Columns this feature writes when it runs: " + cols + "</p>" if cols else ""}</div>')
     kind = entry.get("figure", "table")
     stem = stems(entry)[0]
-    src_note = " and ".join(f"<span class='file'>{user_path(o).replace('<stim>', s)}</span>" for o in outputs(entry)[:1] for s in stems(entry))
-    prov = f"Read from {src_note}, written by SensiExtractor on the example shown here. Nothing on this figure is typed in."
+    src_note = " and ".join(dict.fromkeys(f"<span class='file'>{user_path(o).replace('<stim>', s)}</span>"
+                                          for o in outputs(entry)[:1] for s in stems(entry)))
+    prov = f"Read from {src_note}, written by SENSI SpeechFeatures on the example shown here. Nothing on this figure is typed in."
     audio = ""
     wav = examples_dir / "audio" / f"{stem}.wav"
     if wav.exists() and entry.get("_level") != "document":
@@ -167,8 +209,17 @@ def see_it(entry, page_root: str, out_dir: Path, outputs_root: Path, examples_di
                 lines.append(f"<b>{s}.txt</b>: “{html.escape(' '.join(txt.read_text(encoding='utf-8').split()))}”")
         audio = f'<div class="caption">Example text (invented, run without audio): {"; ".join(lines)}</div>'
     else:
-        audio = ('<div class="caption">One row per example stimulus: the five LJ Speech clips and the two invented '
-                 'text-only sentences (no audio, so their audio-based columns are empty).</div>')
+        rows = doc_rows(entry, examples_dir)
+        if isinstance(entry.get("example"), list):
+            lines = []
+            for s in rows:
+                said = " ".join((examples_dir / "transcripts" / f"{s}.txt").read_text(encoding="utf-8").split())
+                lines.append(f"<b>{s}.txt</b>: “{html.escape(said)}”")
+            audio = ('<div class="caption">One row per example text (invented, run without audio):<br>'
+                     + "<br>".join(lines) + "</div>")
+        else:
+            audio = (f'<div class="caption">One row per example stimulus: the {len(rows)} LJ Speech recordings with '
+                     'their transcripts.</div>')
 
     if kind in SVG_KINDS:
         variants = ["base"] + list(entry.get("variants") or [])
@@ -198,12 +249,20 @@ def see_it(entry, page_root: str, out_dir: Path, outputs_root: Path, examples_di
 _MAT_CLASS = {"float64": "double", "float32": "single", "int64": "int64", "uint8": "uint8", "object": "cell"}
 
 
-def _excerpt_csv(p: Path, show: list[str], stem: str) -> str:
+def _excerpt_csv(p: Path, show: list[str], stem: str, unit_map: dict, rows: list[str] | None = None) -> str:
     df = F.read_csv(p)
+    if rows is not None:
+        df = df.set_index("stimulus_id").loc[rows].reset_index()
     sub = F.first_sentence(df).head(12) if "sentence_id" in df and len(df) > 12 else df.head(12)
     keys = {"token", "stimulus_id", "sentence_id", "syllable_id", "phoneme_id"}
     cols = [c for c in show if c in df.columns]
-    head = "".join(f'<th class="{"" if c in keys else "hl"}">{html.escape(c)}</th>' for c in cols)
+    kind = _csv_kind(p)
+
+    def th(c):
+        u = unit_map.get((kind, c))
+        return (f'<th class="{"" if c in keys else "hl"}">{html.escape(c)}'
+                + (f'<br><small>{html.escape(str(u))}</small>' if u else "") + "</th>")
+    head = "".join(th(c) for c in cols)
 
     def cell(v):
         if isinstance(v, float):
@@ -211,7 +270,8 @@ def _excerpt_csv(p: Path, show: list[str], stem: str) -> str:
         return html.escape(str(v))
     rows = "".join("<tr>" + "".join(f'<td class="{"" if c in keys else "hl"}">{cell(r[c])}</td>' for c in cols) + "</tr>"
                    for _, r in sub.iterrows())
-    more = f"{len(df)} rows × {len(df.columns)} columns in the file; showing the feature's columns"
+    more = ((f"{len(df)} rows shown" if rows is not None else f"{len(df)} rows × {len(df.columns)} columns in the file")
+            + "; showing the feature's columns, with the unit the run's units table gives for each")
     return (f'<table class="excerpt"><thead><tr>{head}</tr></thead><tbody>{rows}</tbody></table>'
             f'<div class="caption">{more}{" for the first sentence" if len(sub) < len(df) else ""}. '
             'An empty cell means no value (e.g. punctuation, or a word the measure doesn’t cover).</div>')
@@ -229,7 +289,7 @@ def _excerpt_mat(p: Path, show: list[str]) -> str:
             f'<tbody>{"".join(rows)}</tbody></table>')
 
 
-def in_output(entry, outputs_root: Path, front: dict) -> str:
+def in_output(entry, outputs_root: Path, front: dict, examples_dir: Path | None = None) -> str:
     if entry.get("not_computed"):
         cols = front.get("output_columns") or entry.get("show") or []
         return ("<p>When it runs, this feature writes these columns: "
@@ -240,11 +300,13 @@ def in_output(entry, outputs_root: Path, front: dict) -> str:
         p = _path(outputs_root, "base", pattern, stem)
         where = user_path(pattern)
         if p.suffix == ".csv":
-            body = _excerpt_csv(p, entry["show"], stem)
+            rows = doc_rows(entry, examples_dir) if "documents_summary" in p.name and examples_dir else None
+            body = _excerpt_csv(p, entry["show"], stem, units(outputs_root), rows)
         else:
             body = _excerpt_mat(p, entry.get("mat_show") or entry["show"])
         parts.append(f'<div class="card"><div class="card-title">File <span class="file">{html.escape(where)}</span>'
-                     f'</div>{body}<div class="provenance">Excerpt of the real file for <b>{stem}</b>.</div></div>')
+                     f'</div>{body}<div class="provenance">Excerpt of the real file'
+                     + ("" if "documents_summary" in p.name else f" for <b>{stem}</b>") + ".</div></div>")
     return "".join(parts)
 
 

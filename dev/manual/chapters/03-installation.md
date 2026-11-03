@@ -107,11 +107,3 @@ python gui.py
 From the project folder, `git pull` (or download the new ZIP over the old folder), then
 start the app as usual. If the dependencies changed, run the setup script again — it
 rebuilds `env/` from the new lock file.
-
-<div class="callout">
-<b>Updating a copy from before 27 October 2026?</b> The folders were reorganized then (code in
-<code>sensi/</code>, models and dictionaries in <code>data/</code>). The first start after
-updating moves your existing <code>hf_cache/</code>, <code>mfa_data/</code>,
-<code>gensim_data/</code> and any private files in <code>dictionaries/</code> into
-<code>data/</code> and prints what it moved. Nothing is downloaded again.
-</div>

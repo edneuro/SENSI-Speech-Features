@@ -74,7 +74,7 @@ Semitone conversion (when `pitch_units == "semitones"`):
 `speaker_median_pitch_hz` is computed once per audio file from all
 voiced frames.
 
-## Implementation in SensiExtractor
+## Implementation in SENSI SpeechFeatures
 Source: `sensi/extractors/prosody.py:add_word_prosody`. Underlying contours:
 `sensi/extractors/audio_features.py:Contours` (Parselmouth call).
 

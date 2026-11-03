@@ -41,7 +41,7 @@ the last on word-to-word deltas (averaged as magnitudes).
   *changes* from word to word, a continuous proxy for prosodic
   expressiveness.
 
-## Implementation in SensiExtractor
+## Implementation in SENSI SpeechFeatures
 See [word-level volume features](prosody_volume.md) — the document-level
 columns reuse the same Praat intensity contour, aggregated over the
 full audio. `doc_volume_delta_mean` is the NaN-aware mean of the

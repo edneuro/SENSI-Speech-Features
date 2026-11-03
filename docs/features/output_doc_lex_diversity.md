@@ -48,7 +48,7 @@ is the right per-stimulus covariate to include in a regression.
   pass ([McCarthy 2010]). Higher MTLD = it takes more tokens before
   TTR drops to the threshold = the text uses more types per token.
 
-## Implementation in SensiExtractor
+## Implementation in SENSI SpeechFeatures
 Computed in `sensi/extractors/lexical_diversity.py` (in-house implementation
 of the published procedure — equivalent to [McCarthy 2010], not
 verified bit-for-bit against the authors' original tool), called from

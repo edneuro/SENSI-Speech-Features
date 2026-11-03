@@ -41,7 +41,7 @@ The semantic-similarity metric typically used downstream is cosine:
 
     sim(w₁, w₂) = (v(w₁) · v(w₂)) / (‖v(w₁)‖ · ‖v(w₂)‖)
 
-## Implementation in SensiExtractor
+## Implementation in SENSI SpeechFeatures
 Source: `sensi/extractors/word2vec_embed.py`. 
 
 **What the code does** (verified against the source):

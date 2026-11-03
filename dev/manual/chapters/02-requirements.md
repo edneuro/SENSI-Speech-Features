@@ -1,7 +1,7 @@
 ---
 id: requirements
 title: Requirements
-lede: What your computer needs before you install SensiExtractor.
+lede: What your computer needs before you install SENSI SpeechFeatures.
 keywords: requirements platform windows mac linux disk memory gpu miniconda
 ---
 

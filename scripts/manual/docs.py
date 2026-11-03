@@ -24,7 +24,7 @@ HEADING_MAP = {
     "math": ("computed", "How it's computed"),
     "math / linguistics": ("computed", "How it's computed"),
     "what it is / how it's computed": ("computed", "How it's computed"),
-    "implementation in sensiextractor": ("code", "In the code"),
+    "implementation in sensi speechfeatures": ("code", "In the code"),
     "library": ("library", "Library"),
     "eeg rationale": ("eeg", "EEG rationale"),
     "papers": ("papers", "Papers"),

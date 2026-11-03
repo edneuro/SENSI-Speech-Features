@@ -1,4 +1,4 @@
-/* SensiExtractor User Manual — behaviour. Plain JS, works from file:// (no fetch). */
+/* SENSI SpeechFeatures User Manual — behaviour. Plain JS, works from file:// (no fetch). */
 (function () {
   "use strict";
   var ROOT = document.body.getAttribute("data-root") || "";

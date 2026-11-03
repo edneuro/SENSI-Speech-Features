@@ -8,24 +8,25 @@ status: implemented
 depth: deep
 ---
 
-> ℹ️ Requires the norm tables in `data/dictionaries/` — see
-> [`data/dictionaries/README.md`](../../data/dictionaries/README.md). The feature is
-> **off by default**; columns are `NaN` until the tables are present.
+> ℹ️ The norm tables ship with the project, in `data/dictionaries/` (where
+> each comes from: [`data/dictionaries/README.md`](../../data/dictionaries/README.md)).
+> The feature is **off by default** — switch on the Lexical norms card on
+> the Word-level features page.
 
 ## Meaning
 Per-word psycholinguistic ratings looked up from published norm databases,
 keyed by lemma (with a surface-token fallback):
 
-| Column | Norm | What it captures |
-|---|---|---|
-| `AoA_Mean` | Age of acquisition ([Kuperman 2012]) | mean rated age (years) at which the word is learned |
-| `AoA_SD` | " | rater dispersion of the AoA estimate (quality/weight) |
-| `Concreteness` | [Brysbaert 2014] | how concrete (perceptible) vs. abstract the referent is (1–5) |
-| `Imageability` | MRC ([Coltheart 1981]) | how easily the word evokes a mental image |
-| `Familiarity` | MRC | how familiar the word feels to typical readers |
-| `Valence` | [Warriner 2013] | pleasantness, 1 (unpleasant) – 9 (pleasant) |
-| `Arousal` | " | calm (1) – excited (9) |
-| `Dominance` | " | feeling controlled (1) – in control (9) |
+| Column | Norm | What it captures | Scale |
+|---|---|---|---|
+| `AoA_Mean` | Age of acquisition ([Kuperman 2012]) | mean rated age at which the word is learned | years (lower = learned earlier) |
+| `AoA_SD` | " | how much the raters disagreed about that age | years |
+| `Concreteness` | [Brysbaert 2014] | how concrete (perceptible) vs. abstract the referent is | 1 (abstract) – 5 (concrete) |
+| `Imageability` | MRC ([Coltheart 1981]) | how easily the word evokes a mental image | 100 (hard) – 700 (easy) |
+| `Familiarity` | MRC | how familiar the word feels to typical readers | 100 (unfamiliar) – 700 (familiar) |
+| `Valence` | [Warriner 2013] | how pleasant the word is | 1 (unpleasant) – 9 (pleasant) |
+| `Arousal` | " | how calming or exciting the word is | 1 (calm) – 9 (excited) |
+| `Dominance` | " | how much the word makes you feel in control | 1 (controlled) – 9 (in control) |
 
 Out-of-vocabulary words and punctuation are `NaN` (**never imputed** — a blank
 means "no norm available", and downstream code decides how to handle it).
@@ -153,7 +154,7 @@ adds, computed over **content words** (`NOUN/VERB/ADJ/ADV/PROPN`):
 ### Relative AoA (analysis-time, not a stored column)
 A useful derived variable for developmental studies is
 `relative_aoa = AoA_Mean − participant_age` (years): a word's difficulty
-relative to the listener. SensiExtractor never sees participant age, so this
+relative to the listener. SENSI SpeechFeatures never sees participant age, so this
 is computed downstream by joining the stimulus `AoA_Mean` with participant
 metadata. Suggested uses: an AoA × age interaction term, an above/below-age
 word contrast, or a document-level proportion-above-age covariate. Caveat:
@@ -176,7 +177,7 @@ spread of AoA across words — and would make the words people most disagreed on
 appear closest to the listener's age. (This is why `AoA_SD` ships as its own
 column.)
 
-## Implementation in SensiExtractor
+## Implementation in SENSI SpeechFeatures
 Source: `sensi/extractors/lexical_norms.py:add_lexical_norms`. For each source it
 loads a parquet (cached), indexes by `word`, and does a vectorized
 `reindex` lookup on `lemma.lower()`, falling back to `token.lower()` where the

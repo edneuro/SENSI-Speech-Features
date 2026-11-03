@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Surprisal · SensiExtractor User Manual</title>
+<title>Surprisal · SENSI SpeechFeatures User Manual</title>
 <link rel="icon" href="../../assets/icon.svg">
 <link rel="stylesheet" href="../../assets/theme.css">
 <link rel="stylesheet" href="../../assets/layout.css">
@@ -13,7 +13,7 @@
 <button class="menu-btn" type="button" aria-label="Open the outline">☰ Contents</button>
 <div class="shell">
   <nav class="left" aria-label="Manual outline">
-    <a class="brand" href="../../index.html"><img src="../../assets/icon.svg" alt="">SensiExtractor <span>User Manual</span></a>
+    <a class="brand" href="../../index.html"><img src="../../assets/icon.svg" alt="">SENSI SpeechFeatures <span>User Manual</span></a>
     <div class="search">
       <input type="search" placeholder="Search features, columns…  ( / )" aria-label="Search the manual">
       <div class="search-results" role="listbox"></div>
@@ -27,8 +27,12 @@
       <h1><span class="num">6.1.10</span>Surprisal</h1><p class="lede">Per-word surprisal — the negative log probability that a language model assigns to a word given everything that came before it in the document, in bits.</p><div class="facts"><span class="chip">App: <b>Word-level features</b> → <b>Predictability</b></span><span class="chip">Output: <b>word/&lt;stim&gt;_features.csv</b></span><span class="chip">Libraries: <b>transformers, torch</b></span></div><section id="what"><a id="meaning"></a><h2><span class="num">6.1.10.1</span>What it is</h2><p>Per-word <strong>surprisal</strong> — the negative log probability that a language
 model assigns to a word given everything that came before it in the
 document, in <strong>bits</strong>:</p>
-<pre><code>&lt;slug&gt;_Surprisal(wᵢ) = -log₂ P_model(wᵢ | w₁ … wᵢ₋₁)
+<pre><code>&lt;slug&gt;_Surprisal(wᵢ) = -log₂ P_model(wᵢ | w₁ … wᵢ₋₁)        [Hale 2001], [Levy 2008]
 </code></pre>
+<p><code>&lt;slug&gt;</code> stands for the model's short name — <code>gpt2</code>, <code>llama32_3b</code>,
+<code>llama3_8b</code> or <code>llama3_70b</code> — and is the prefix of the column name, so
+<code>gpt2_Surprisal</code> is surprisal from GPT-2. Each model you tick writes its own
+column, and the name always says which model produced it.</p>
 <p>A high-frequency word in a strongly constraining context has low
 surprisal (≈ 1–3 bits); a low-frequency or contextually unexpected word
 has high surprisal (≈ 8–20 bits). PUNCT rows are <code>NaN</code>, and so is the
@@ -39,7 +43,7 @@ writes one namespaced column per model (e.g. <code>gpt2_Surprisal</code> and
 <code>llama3_8b_Surprisal</code> side by side), so a single run can directly
 compare estimator quality on the same stimulus rather than committing
 to one model.</p>
-</section><section id="see"><h2><span class="num">6.1.10.2</span>See it</h2><div class="card"><div class="caption">Example text (invented, run without audio): <b>predictable.txt</b>: “She spread butter on her toast.”; <b>surprising.txt</b>: “She spread butter on her violin.”</div><div ><figure><img src="../../assets/figures/pred_surprisal.svg" alt="Surprisal — Default settings"></figure><figcaption>Surprisal — Default settings</figcaption><div class="provenance">Read from <span class='file'>word/predictable_features.csv</span> and <span class='file'>word/surprising_features.csv</span>, written by SensiExtractor on the example shown here. Nothing on this figure is typed in.</div></div></div></section><section id="output"><h2><span class="num">6.1.10.3</span>In your output</h2><div class="card"><div class="card-title">File <span class="file">word/&lt;stim&gt;_features.csv</span></div><table class="excerpt"><thead><tr><th class="">token</th><th class="hl">gpt2_Surprisal</th></tr></thead><tbody><tr><td class="">She</td><td class="hl"></td></tr><tr><td class="">spread</td><td class="hl">13.94</td></tr><tr><td class="">butter</td><td class="hl">11.24</td></tr><tr><td class="">on</td><td class="hl">2.868</td></tr><tr><td class="">her</td><td class="hl">3.09</td></tr><tr><td class="">violin</td><td class="hl">16.95</td></tr><tr><td class="">.</td><td class="hl"></td></tr></tbody></table><div class="caption">7 rows × 43 columns in the file; showing the feature's columns. An empty cell means no value (e.g. punctuation, or a word the measure doesn’t cover).</div><div class="provenance">Excerpt of the real file for <b>surprising</b>.</div></div></section><section id="matlab"><h2><span class="num">6.1.10.4</span>MATLAB</h2><div class="card" data-tabs><div class="tabpanel on"><pre data-copy><code>% Load the word-level table (one row per word)
+</section><section id="see"><h2><span class="num">6.1.10.2</span>See it</h2><div class="card"><div class="caption">Example text (invented, run without audio): <b>predictable.txt</b>: “She spread butter on her toast.”; <b>surprising.txt</b>: “She spread butter on her violin.”</div><div ><figure><img src="../../assets/figures/pred_surprisal.svg" alt="Surprisal — Default settings"></figure><figcaption>Surprisal — Default settings</figcaption><div class="provenance">Read from <span class='file'>word/predictable_features.csv</span> and <span class='file'>word/surprising_features.csv</span>, written by SENSI SpeechFeatures on the example shown here. Nothing on this figure is typed in.</div></div></div></section><section id="output"><h2><span class="num">6.1.10.3</span>In your output</h2><div class="card"><div class="card-title">File <span class="file">word/&lt;stim&gt;_features.csv</span></div><table class="excerpt"><thead><tr><th class="">token</th><th class="hl">gpt2_Surprisal<br><small>bits</small></th></tr></thead><tbody><tr><td class="">She</td><td class="hl"></td></tr><tr><td class="">spread</td><td class="hl">13.94</td></tr><tr><td class="">butter</td><td class="hl">11.24</td></tr><tr><td class="">on</td><td class="hl">2.868</td></tr><tr><td class="">her</td><td class="hl">3.09</td></tr><tr><td class="">violin</td><td class="hl">16.95</td></tr><tr><td class="">.</td><td class="hl"></td></tr></tbody></table><div class="caption">7 rows shown; showing the feature's columns, with the unit the run's units table gives for each. An empty cell means no value (e.g. punctuation, or a word the measure doesn’t cover).</div><div class="provenance">Excerpt of the real file for <b>surprising</b>.</div></div></section><section id="matlab"><h2><span class="num">6.1.10.4</span>MATLAB</h2><div class="card" data-tabs><div class="tabpanel on"><pre data-copy><code>% Load the word-level table (one row per word)
 T = readtable(&#x27;word/surprising_features.csv&#x27;, &#x27;TextType&#x27;, &#x27;string&#x27;);
 T.Properties.VariableNames             % every column in the file
 head(T(:, {&#x27;token&#x27;, &#x27;gpt2_Surprisal&#x27;}), 10)                % this feature&#x27;s columns (first rows)
@@ -58,7 +62,7 @@ constitute the word:</p>
 <pre><code>P(w) = P(s₁) · P(s₂ | s₁) · ... · P(sₖ | s₁..sₖ₋₁)
 </code></pre>
 <p>so</p>
-<pre><code>-log₂ P(w) = Σᵢ -log₂ P(sᵢ | s₁..sᵢ₋₁)
+<pre><code>-log₂ P(w) = Σᵢ -log₂ P(sᵢ | s₁..sᵢ₋₁)        (chain rule of probability)
 </code></pre>
 <p>The sum is correct because every model in the roster is autoregressive
 and conditions each subword on the prior context (including earlier
@@ -75,14 +79,11 @@ multi-select; each selected model is scored once per stimulus and
 contributes its own <code>&lt;slug&gt;_Surprisal</code> column when the Surprisal metric
 checkbox is on. Better/larger LMs generally produce surprisal estimates
 that predict reading time and neural responses more tightly than
-GPT-2's (see <em>EEG rationale</em> below); GPT-2 is retained as a free,
-always-available baseline and for cross-study comparability with the
-pre-unification <code>Surprisal</code> column.</li>
+GPT-2's (see <em>EEG rationale</em> below); GPT-2 is the free,
+always-available baseline.</li>
 </ul>
-</section><section id="code"><a id="implementation-in-sensiextractor"></a><h2><span class="num">6.1.10.7</span>In the code</h2><div class="card"><div class="card-title">Open in GitHub</div><ul><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/extractors/predictability.py#L35"><code>sensi/extractors/predictability.py → add_predictability()</code></a></li><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/extractors/predictability_models.py"><code>sensi/extractors/predictability_models.py</code></a></li></ul></div><p>Source: <code>sensi/extractors/predictability.py:add_predictability</code> (the unified,
-roster-driven extractor; it replaced the old per-model
-<code>extractors/surprisal.py</code> / <code>extractors/llm_cloze.py</code>, both removed on
-2026-07-11); long-text handling is in
+</section><section id="code"><a id="implementation-in-sensi-speechfeatures"></a><h2><span class="num">6.1.10.7</span>In the code</h2><div class="card"><div class="card-title">Open in GitHub</div><ul><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/extractors/predictability.py#L35"><code>sensi/extractors/predictability.py → add_predictability()</code></a></li><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/extractors/predictability_models.py"><code>sensi/extractors/predictability_models.py</code></a></li></ul></div><p>Source: <code>sensi/extractors/predictability.py:add_predictability</code> (the unified,
+roster-driven extractor); long-text handling is in
 <code>_chunk_slices</code> / <code>_HuggingFaceBackend.score</code>.</p>
 <p><strong>This also produces</strong> <a href="../../features/word/pred_cloze.html"><code>Cloze</code></a> and
 <a href="../../features/word/pred_topmatch.html"><code>TopMatch</code></a> from the same forward pass per model —
@@ -220,10 +221,9 @@ default to reproduce the full-context values.</p>
 <p>A 1-subword stride would maximise context but costs roughly <code>window / 2</code>× more passes than the current setting. A causal LM's per-token loss
 flattens well before its full context window is consumed, so the
 marginal accuracy gain from a smaller stride is small. The <code>window // 2</code> stride trades up to <code>window // 2 - 1</code> subwords of additional
-context for a <code>window // 2</code>× compute reduction. This is the same
-trade-off historically documented for GPT-2 alone (512-subword stride
-against its 1024-subword window); it now applies uniformly to every
-roster model via its own <code>window</code>.</p>
+context for a <code>window // 2</code>× compute reduction. For GPT-2 this is a
+512-subword stride against its 1024-subword window; the same rule
+applies to every roster model via its own <code>window</code>.</p>
 <h3 id="step-by-step">Step by step</h3>
 <ol>
 <li><code>_get_backend</code> / <code>_cached_backend</code> lazily load an
@@ -274,8 +274,7 @@ remove the mask in <code>add_predictability</code> if you specifically want
 punctuation surprisal.</li>
 <li><em>One backend implementation for every model</em>: GPT-2 loads through
 <code>AutoModelForCausalLM</code> exactly like the Llama models (it resolves to
-the same <code>GPT2LMHeadModel</code> class, identical weights/logits as the
-legacy direct-load code) — there is exactly one scoring path, used
+the <code>GPT2LMHeadModel</code> class) — there is exactly one scoring path, used
 by every roster model, instead of a GPT-2-specific extractor and a
 separate LLM extractor.</li>
 </ul>
@@ -317,11 +316,13 @@ reproducing analyses of that kind.</p>
 surprisal estimates that predict <strong>reading time</strong> more tightly
 (<a href="#goodkind-2018">Goodkind 2018</a>, <a href="#wilcox-2020">Wilcox 2020</a>) and predict more variance in
 fMRI / ECoG responses to language (<a href="#schrimpf-2021">Schrimpf 2021</a>, <a href="#goldstein-2022">Goldstein 2022</a>).
-Empirically, larger / better LMs improve N400 prediction up to a point
-and then plateau (<a href="#schrimpf-2021">Schrimpf 2021</a>, <a href="#caucheteux-2022">Caucheteux 2022</a>) — enabling both a
-small and a large model on the same run lets you study how estimator
-quality affects your specific neural fit, rather than assuming a
-larger model is automatically better for your data.</p>
+Bigger is not automatically better, though. Across GPT-Neo and OPT
+models, surprisal from the <strong>larger</strong> transformers (lower perplexity) fit
+human reading times <strong>worse</strong> (<a href="#oh-2023">Oh 2023</a>): they predict named entities
+and other memorisable sequences better than people do, so their surprisal
+underestimates human difficulty there. Enabling both a small and a large
+model on the same run lets you test which estimator fits your own neural
+data, rather than assuming a larger model is better for it.</p>
 </section><section id="papers"><h2><span class="num">6.1.10.10</span>Papers</h2><p><strong>Surprisal theory:</strong></p>
 <ul>
 <li><a name="hale-2001"></a><strong><a href="#hale-2001">Hale 2001</a></strong> Hale. <em>A probabilistic Earley parser as a psycholinguistic model.</em> NAACL 2001. <a href="https://aclanthology.org/N01-1021/">PDF</a> — introduces surprisal as a cognitive complexity metric.</li>
@@ -340,7 +341,12 @@ larger model is automatically better for your data.</p>
 </ul>
 <p><strong>Surprisal ↔ LM quality:</strong></p>
 <ul>
-<li><a name="wilcox-2020"></a><strong><a href="#wilcox-2020">Wilcox 2020</a></strong> Wilcox, Gauthier, Hu, Qian, Levy. <em>On the Predictive Power of Neural Language Models for Human Real-Time Comprehension Behavior.</em> CogSci 2020. <a href="https://arxiv.org/abs/2006.01912">arXiv:2006.01912</a> — across architectures, better next-word prediction correlates with stronger prediction of human reading times and eye movements.</li>
+<li>
+<p><a name="wilcox-2020"></a><strong><a href="#wilcox-2020">Wilcox 2020</a></strong> Wilcox, Gauthier, Hu, Qian, Levy. <em>On the Predictive Power of Neural Language Models for Human Real-Time Comprehension Behavior.</em> CogSci 2020. <a href="https://arxiv.org/abs/2006.01912">arXiv:2006.01912</a> — across architectures, better next-word prediction correlates with stronger prediction of human reading times and eye movements.</p>
+</li>
+<li>
+<p><a name="oh-2023"></a><strong><a href="#oh-2023">Oh 2023</a></strong> Oh &amp; Schuler. <em>Why Does Surprisal From Larger Transformer-Based Language Models Provide a Poorer Fit to Human Reading Times?</em> Transactions of the ACL 11, 336–350. <a href="https://doi.org/10.1162/tacl_a_00548">doi:10.1162/tacl_a_00548</a> — across five GPT-Neo and eight OPT sizes, lower perplexity goes with a poorer fit to reading times; larger models &quot;memorize&quot; sequences such as named entities.</p>
+</li>
 </ul>
 <p><strong>Modern LM ↔ neural data:</strong></p>
 <ul>
@@ -353,7 +359,7 @@ larger model is automatically better for your data.</p>
         <a class="prev" href="../../features/word/edu_zipf.html"><small>Previous</small>Educator's Word Frequency Guide (EWFG) grade-band frequencies</a>
         <a class="next" href="../../features/word/pred_cloze.html"><small>Next</small>Cloze probability</a>
       </nav>
-      <footer>SensiExtractor User Manual · version 0.2.0 · built 2026-10-27 · source: <a href="https://github.com/edneuro/SENSI-Speech-Features">edneuro/SENSI-Speech-Features</a></footer>
+      <footer>SENSI SpeechFeatures User Manual · version 0.2.0 · built 2026-11-03 · source: <a href="https://github.com/edneuro/SENSI-Speech-Features">edneuro/SENSI-Speech-Features</a></footer>
     </div>
   </main>
   <aside class="right" aria-label="On this page">

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Articulation rate · SensiExtractor User Manual</title>
+<title>Articulation rate · SENSI SpeechFeatures User Manual</title>
 <link rel="icon" href="../../assets/icon.svg">
 <link rel="stylesheet" href="../../assets/theme.css">
 <link rel="stylesheet" href="../../assets/layout.css">
@@ -13,7 +13,7 @@
 <button class="menu-btn" type="button" aria-label="Open the outline">☰ Contents</button>
 <div class="shell">
   <nav class="left" aria-label="Manual outline">
-    <a class="brand" href="../../index.html"><img src="../../assets/icon.svg" alt="">SensiExtractor <span>User Manual</span></a>
+    <a class="brand" href="../../index.html"><img src="../../assets/icon.svg" alt="">SENSI SpeechFeatures <span>User Manual</span></a>
     <div class="search">
       <input type="search" placeholder="Search features, columns…  ( / )" aria-label="Search the manual">
       <div class="search-results" role="listbox"></div>
@@ -31,7 +31,7 @@ pause threshold. Single value per stimulus.</p>
 1990</a>). Values outside this range usually indicate either a
 configuration problem (no aligned words → zero) or an unusual stimulus
 (e.g. read poetry at ~2 syl/sec; rapid news broadcast at ~7 syl/sec).</p>
-</section><section id="see"><h2><span class="num">6.2.10.2</span>See it</h2><div class="card"><div class="caption">One row per example stimulus: the five LJ Speech clips and the two invented text-only sentences (no audio, so their audio-based columns are empty).</div><div ><figure><img src="../../assets/figures/feat_doc_prosody_articulation_rate.svg" alt="Articulation rate — Default settings"></figure><figcaption>Articulation rate — Default settings</figcaption><div class="provenance">Read from <span class='file'>document/documents_summary_<timestamp>.csv</span>, written by SensiExtractor on the example shown here. Nothing on this figure is typed in.</div></div></div></section><section id="output"><h2><span class="num">6.2.10.3</span>In your output</h2><div class="card"><div class="card-title">File <span class="file">document/documents_summary_&lt;timestamp&gt;.csv</span></div><table class="excerpt"><thead><tr><th class="">stimulus_id</th><th class="hl">doc_articulation_rate</th></tr></thead><tbody><tr><td class="">LJ002-0321</td><td class="hl">4.232</td></tr><tr><td class="">LJ003-0007</td><td class="hl">4.847</td></tr><tr><td class="">LJ005-0063</td><td class="hl">4.377</td></tr><tr><td class="">LJ005-0066</td><td class="hl">4.058</td></tr><tr><td class="">LJ019-0027</td><td class="hl">4.437</td></tr><tr><td class="">predictable</td><td class="hl"></td></tr><tr><td class="">surprising</td><td class="hl"></td></tr></tbody></table><div class="caption">7 rows × 80 columns in the file; showing the feature's columns. An empty cell means no value (e.g. punctuation, or a word the measure doesn’t cover).</div><div class="provenance">Excerpt of the real file for <b>LJ002-0321</b>.</div></div></section><section id="matlab"><h2><span class="num">6.2.10.4</span>MATLAB</h2><div class="card" data-tabs><div class="tabpanel on"><pre data-copy><code>% Load the document-level table (one row per stimulus)
+</section><section id="see"><h2><span class="num">6.2.10.2</span>See it</h2><div class="card"><div class="caption">One row per example stimulus: the 5 LJ Speech recordings with their transcripts.</div><div ><figure><img src="../../assets/figures/feat_doc_prosody_articulation_rate.svg" alt="Articulation rate — Default settings"></figure><figcaption>Articulation rate — Default settings</figcaption><div class="provenance">Read from <span class='file'>document/documents_summary_<timestamp>.csv</span>, written by SENSI SpeechFeatures on the example shown here. Nothing on this figure is typed in.</div></div></div></section><section id="output"><h2><span class="num">6.2.10.3</span>In your output</h2><div class="card"><div class="card-title">File <span class="file">document/documents_summary_&lt;timestamp&gt;.csv</span></div><table class="excerpt"><thead><tr><th class="">stimulus_id</th><th class="hl">doc_articulation_rate<br><small>syllables/second</small></th></tr></thead><tbody><tr><td class="">LJ002-0321</td><td class="hl">4.232</td></tr><tr><td class="">LJ003-0007</td><td class="hl">4.847</td></tr><tr><td class="">LJ005-0063</td><td class="hl">4.377</td></tr><tr><td class="">LJ005-0066</td><td class="hl">4.058</td></tr><tr><td class="">LJ019-0027</td><td class="hl">4.437</td></tr></tbody></table><div class="caption">5 rows shown; showing the feature's columns, with the unit the run's units table gives for each. An empty cell means no value (e.g. punctuation, or a word the measure doesn’t cover).</div><div class="provenance">Excerpt of the real file.</div></div></section><section id="matlab"><h2><span class="num">6.2.10.4</span>MATLAB</h2><div class="card" data-tabs><div class="tabpanel on"><pre data-copy><code>% Load the document-level table (one row per stimulus)
 T = readtable(&#x27;document/documents_summary_&lt;timestamp&gt;.csv&#x27;, &#x27;TextType&#x27;, &#x27;string&#x27;);
 T.Properties.VariableNames             % every column in the file
 head(T(:, {&#x27;stimulus_id&#x27;, &#x27;doc_articulation_rate&#x27;}), 10)                % this feature&#x27;s columns (first rows)
@@ -59,7 +59,7 @@ counted with the <code>pyphen</code> spelling-based estimate instead.</li>
 <p>Counting from MFA's phones follows the pronunciation MFA aligned
 rather than the spelling, and counts a contraction that MFA
 aligns as one stretch (&quot;wasn't&quot;) once.</p>
-</section><section id="code"><a id="implementation-in-sensiextractor"></a><h2><span class="num">6.2.10.6</span>In the code</h2><div class="card"><div class="card-title">Open in GitHub</div><ul><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/extractors/prosody.py#L148"><code>sensi/extractors/prosody.py → compute_doc_prosody()</code></a></li><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/pipeline.py"><code>sensi/pipeline.py</code></a></li></ul></div><p>Source: <code>sensi/extractors/prosody.py:compute_doc_prosody</code> — see the
+</section><section id="code"><a id="implementation-in-sensi-speechfeatures"></a><h2><span class="num">6.2.10.6</span>In the code</h2><div class="card"><div class="card-title">Open in GitHub</div><ul><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/extractors/prosody.py#L148"><code>sensi/extractors/prosody.py → compute_doc_prosody()</code></a></li><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/pipeline.py"><code>sensi/pipeline.py</code></a></li></ul></div><p>Source: <code>sensi/extractors/prosody.py:compute_doc_prosody</code> — see the
 document-batch finishing step in <code>sensi/pipeline.py</code> which calls it.</p>
 <p><strong>What the code does:</strong></p>
 <ol>
@@ -75,17 +75,15 @@ non-punctuation token.</li>
 <code>NaN</code> if that speaking time is not positive or <code>pyphen</code> is needed but
 unavailable.</li>
 </ol>
-<p>The syllable count no longer depends on whether the syllable-timing
+<p>The syllable count does not depend on whether the syllable-timing
 outputs are switched on: the phone tier comes from the same alignment
 every time.</p>
-<p><strong>History (2026-10-21):</strong> speaking time used to be the sum of each
-word's MFA duration. That dropped every short gap between words, so the
-pause threshold had no effect, and it counted a contraction sharing one
-MFA interval twice. Syllables used to be counted with <code>pyphen</code> over the
-spelling. On three validation stimuli the new values were 1–10 % higher
-(4.35 → 4.40, 3.52 → 3.85, 4.75 → 4.85 syl/s), mostly because MFA's
-pronunciations contain more syllables than the spelling-based estimate
-(e.g. 39 vs 33 for one stimulus).</p>
+<p>Speaking time is the sum of the merged word intervals, so short gaps
+between words count as pauses only above the pause threshold, and a
+contraction sharing one MFA interval is counted once. Counting syllables
+from MFA's pronunciations gives somewhat higher values than a
+spelling-based estimate, because the pronunciations contain more
+syllables (e.g. 39 vs 33 for one validation stimulus).</p>
 </section><section id="library"><h2><span class="num">6.2.10.7</span>Library</h2><pre><code class="language-python">import pyphen
 dic = pyphen.Pyphen(lang=&quot;en_US&quot;)
 n_syllables_in_unbelievable = dic.inserted(&quot;unbelievable&quot;).count(&quot;-&quot;) + 1
@@ -121,7 +119,7 @@ articulation rate gives a complete picture of timing.</p>
         <a class="prev" href="../../features/document/doc_prosody_pauses.html"><small>Previous</small>Document-level pause statistics</a>
         <a class="next" href="../../features/document/feat_doc_prosody_hnr.html"><small>Next</small>Document-level Harmonics-to-Noise Ratio (HNR)</a>
       </nav>
-      <footer>SensiExtractor User Manual · version 0.2.0 · built 2026-10-27 · source: <a href="https://github.com/edneuro/SENSI-Speech-Features">edneuro/SENSI-Speech-Features</a></footer>
+      <footer>SENSI SpeechFeatures User Manual · version 0.2.0 · built 2026-11-03 · source: <a href="https://github.com/edneuro/SENSI-Speech-Features">edneuro/SENSI-Speech-Features</a></footer>
     </div>
   </main>
   <aside class="right" aria-label="On this page">

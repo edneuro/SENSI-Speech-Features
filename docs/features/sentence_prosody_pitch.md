@@ -45,7 +45,7 @@ See [`prosody_pitch`](prosody_pitch.md) for the full theoretical and
 methodological rationale — the only difference is the aggregation
 window (sentence vs. word).
 
-## Implementation in SensiExtractor
+## Implementation in SENSI SpeechFeatures
 Source: `sensi/extractors/sentence_prosody.py`. Uses the same `Contours`
 object as the word- and document-level prosody extractors; slices to
 `[Onset, End)` per sentence and computes the same `_agg(slice) =

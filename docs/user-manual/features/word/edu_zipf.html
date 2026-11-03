@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Educator's Word Frequency Guide (EWFG) grade-band frequencies · SensiExtractor User Manual</title>
+<title>Educator's Word Frequency Guide (EWFG) grade-band frequencies · SENSI SpeechFeatures User Manual</title>
 <link rel="icon" href="../../assets/icon.svg">
 <link rel="stylesheet" href="../../assets/theme.css">
 <link rel="stylesheet" href="../../assets/layout.css">
@@ -13,7 +13,7 @@
 <button class="menu-btn" type="button" aria-label="Open the outline">☰ Contents</button>
 <div class="shell">
   <nav class="left" aria-label="Manual outline">
-    <a class="brand" href="../../index.html"><img src="../../assets/icon.svg" alt="">SensiExtractor <span>User Manual</span></a>
+    <a class="brand" href="../../index.html"><img src="../../assets/icon.svg" alt="">SENSI SpeechFeatures <span>User Manual</span></a>
     <div class="search">
       <input type="search" placeholder="Search features, columns…  ( / )" aria-label="Search the manual">
       <div class="search-results" role="listbox"></div>
@@ -25,7 +25,7 @@
       <div class="crumbs"><a href="../../features/index.html">Features</a> › <a href="../../features/word/index.html">Word level</a></div>
       <details class="toc-inline"><summary>On this page</summary><ul><li><a href="#what">What it is</a></li><li><a href="#see">See it</a></li><li><a href="#output">In your output</a></li><li><a href="#matlab">MATLAB</a></li><li><a href="#x-data-acquisition">Data acquisition</a></li><li><a href="#code">In the code</a></li><li><a href="#library">Library</a></li><li><a href="#eeg">EEG rationale</a></li><li><a href="#papers">Papers</a></li></ul></details>
       <h1><span class="num">6.1.9</span>Educator&#x27;s Word Frequency Guide (EWFG) grade-band frequencies</h1><p class="lede">Per-word Zipf-scale frequencies derived from the Educator&#x27;s Word Frequency Guide (Zeno 1995), a corpus of texts that American schoolchildren actually encounter, bucketed by grade band.</p><div class="facts"><span class="chip">App: <b>Word-level features</b> → <b>Frequency</b></span><span class="chip">Libraries: <b>pyarrow</b></span><span class="chip status">Not computed in this manual</span><span class="chip status">Status: unavailable</span></div><div class="doc-note"><blockquote>
-<p>⚠️ <strong>Unavailable in SensiExtractor — no data.</strong> These grade-band
+<p>⚠️ <strong>Unavailable in SENSI SpeechFeatures — no data.</strong> These grade-band
 frequencies are <strong>not produced</strong>. Their source, <em>The Educator's Word
 Frequency Guide</em> (<a href="#zeno-1995">Zeno 1995</a>), exists <strong>only in print and has never
 been digitized</strong>, so there is no lookup table to query. The toggles are
@@ -75,7 +75,7 @@ Missing-from-lookup rows are <code>NaN</code> (PUNCT rows also <code>NaN</code>)
 </section><section id="see"><h2><span class="num">6.1.9.2</span>See it</h2><div class="card notcomputed"><div class="card-title">◇ Not computed in this manual</div><p>The Educator&#x27;s Word Frequency Guide exists only in print, so there is no lookup table; these columns are never written (the planner leaves them out unless you supply data/dictionaries/edu_zipf.parquet).</p><p>Columns this feature writes when it runs: <code>Edu_Zipf_K2</code>, <code>Edu_Zipf_3to5</code>, <code>Edu_Zipf_6to8</code>, <code>Edu_Zipf_9to12</code>, <code>Edu_Zipf_Overall</code></p></div></section><section id="output"><h2><span class="num">6.1.9.3</span>In your output</h2><p>When it runs, this feature writes these columns: <code>Edu_Zipf_K2</code>, <code>Edu_Zipf_3to5</code>, <code>Edu_Zipf_6to8</code>, <code>Edu_Zipf_9to12</code>, <code>Edu_Zipf_Overall</code>.</p></section><section id="matlab"><h2><span class="num">6.1.9.4</span>MATLAB</h2><p>Nothing to load: this feature is not written in this manual's example outputs.</p></section><section id="x-data-acquisition"><a id="data-acquisition"></a><h2><span class="num">6.1.9.5</span>Data acquisition</h2><p><strong>No digital source exists.</strong> <em>The Educator's Word Frequency Guide</em>
 (<a href="#zeno-1995">Zeno 1995</a>) was published as a print reference and, as far as we have
 been able to determine, has never been released in machine-readable
-form. SensiExtractor therefore ships <strong>no</strong> <code>data/dictionaries/edu_zipf.parquet</code>,
+form. SENSI SpeechFeatures therefore ships <strong>no</strong> <code>data/dictionaries/edu_zipf.parquet</code>,
 and without it the planner leaves these columns out of every run.</p>
 <p>To enable these columns in future, a <code>data/dictionaries/edu_zipf.parquet</code>
 would need to be built — indexed by <code>word</code>, with columns
@@ -85,7 +85,7 @@ Once that file is in place, a headless <code>run.py</code> with the <code>freq_e
 (and, for the document means, <code>doc_agg_edu_zipf</code>) toggles on in
 <code>config/features.yaml</code> produces the columns; the app's toggles stay
 disabled until the GUI is changed to match.</p>
-</section><section id="code"><a id="implementation-in-sensiextractor"></a><h2><span class="num">6.1.9.6</span>In the code</h2><div class="card"><div class="card-title">Open in GitHub</div><ul><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/extractors/educator_freq.py#L48"><code>sensi/extractors/educator_freq.py → add_edu_freq()</code></a></li><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/gui/planner/registry.py"><code>sensi/gui/planner/registry.py</code></a></li></ul></div><p>Source: <code>sensi/extractors/educator_freq.py:add_edu_freq</code>.</p>
+</section><section id="code"><a id="implementation-in-sensi-speechfeatures"></a><h2><span class="num">6.1.9.6</span>In the code</h2><div class="card"><div class="card-title">Open in GitHub</div><ul><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/extractors/educator_freq.py#L48"><code>sensi/extractors/educator_freq.py → add_edu_freq()</code></a></li><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/gui/planner/registry.py"><code>sensi/gui/planner/registry.py</code></a></li></ul></div><p>Source: <code>sensi/extractors/educator_freq.py:add_edu_freq</code>.</p>
 <p><strong>What the code does:</strong></p>
 <ol>
 <li>Loads a parquet lookup from
@@ -167,7 +167,7 @@ the SUBTLEX value.</li>
         <a class="prev" href="../../features/word/freq_subtlex.html"><small>Previous</small>Word frequency (Zipf, wordfreq)</a>
         <a class="next" href="../../features/word/pred_surprisal.html"><small>Next</small>Surprisal</a>
       </nav>
-      <footer>SensiExtractor User Manual · version 0.2.0 · built 2026-10-27 · source: <a href="https://github.com/edneuro/SENSI-Speech-Features">edneuro/SENSI-Speech-Features</a></footer>
+      <footer>SENSI SpeechFeatures User Manual · version 0.2.0 · built 2026-11-03 · source: <a href="https://github.com/edneuro/SENSI-Speech-Features">edneuro/SENSI-Speech-Features</a></footer>
     </div>
   </main>
   <aside class="right" aria-label="On this page">

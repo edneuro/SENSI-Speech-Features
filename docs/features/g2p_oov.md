@@ -39,7 +39,7 @@ spelling↔pronunciation pairs proposes the phone sequence an English
 speaker would most plausibly produce: `Z AO1 R B L AE2 K S`. MFA ships
 pretrained G2P models per language, and `mfa align` accepts
 `--g2p_model_path`, documented as *"Path to G2P model to use for OOV
-items"* ([MFA G2P]). With the option on, SensiExtractor passes the
+items"* ([MFA G2P]). With the option on, SENSI SpeechFeatures passes the
 vendored `english_us_arpa` G2P model on that flag, so out-of-dictionary
 words get a generated pronunciation and are aligned with real phone
 boundaries like any other word.
@@ -124,13 +124,9 @@ output (checked: no likelihood/confidence flag, and no
 
 The setting changes MFA's output, so a cached TextGrid produced under the
 other setting is stale. Alignment persistence handles this: the freshness
-sidecar written next to each TextGrid records an `mfa_g2p` key, and its
-`SIDECAR_VERSION` was bumped 1 → 2 when the key was added (and to 3 on
-2026-10-21 for the one-speaker-per-stimulus layout). So:
+sidecar written next to each TextGrid records an `mfa_g2p` key. So:
 
-- The first batch run after upgrading re-aligns every stimulus **once**
-  (the sidecar version changed), then caches normally.
-- Flipping the toggle thereafter re-aligns **once** and caches again.
+- Flipping the toggle re-aligns **once** and caches again.
 - MFA still runs at most once per document per dispatch — the option
   changes the *arguments*, never the number of alignment passes.
 
@@ -138,9 +134,7 @@ Both alignment paths honour the setting. The batch pre-alignment pass
 (`aligner.ensure_alignments`) and the per-document path
 (`aligner.align_with_phones` with a `persist_dir`, used when the batch
 pre-pass failed and fell back) both reuse a TextGrid only when its sidecar
-matches the current inputs, `mfa_g2p` included. Before 2026-10-21 the
-per-document path trusted any existing TextGrid, so flipping this option
-could silently change nothing there. Only a direct `run()` call with no
+matches the current inputs, `mfa_g2p` included. Only a direct `run()` call with no
 output folder (as in some tests) has no persistence directory and runs MFA
 every time.
 
@@ -172,7 +166,7 @@ warns and proceeds without it rather than failing:
 words will align to spn. Run: python scripts/download_models.py
 ```
 
-## Implementation in SensiExtractor
+## Implementation in SENSI SpeechFeatures
 Sources: `sensi/extractors/aligner.py` (the flag, the sidecar, the model path),
 `sensi/extractors/syllabify.py` (`Pron_Source`), `scripts/download_models.py`
 (fetching the model).
@@ -206,7 +200,7 @@ Sources: `sensi/extractors/aligner.py` (the flag, the sidecar, the model path),
   **Reset settings** turns it back off — the correct behaviour for an
   opt-in that adds modeled data.
 - **`Pron_Source` derivation** is described in
-  [`phoneme`](phoneme.md#implementation-in-sensiextractor). Briefly: MFA
+  [`phoneme`](phoneme.md#implementation-in-sensi-speechfeatures). Briefly: MFA
   does not mark G2P-derived words in the TextGrid, so provenance is
   inferred from whether the **MFA words-tier form** is present in
   `english_us_arpa.dict`. Consequence worth knowing: `Pron_Source` reports

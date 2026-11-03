@@ -72,7 +72,7 @@ def _apply_palette(app: "QApplication") -> None:
 def main() -> int:
     _set_windows_app_id()
     app = QApplication(sys.argv)
-    app.setApplicationName("SENSI-FeatureExtractor")
+    app.setApplicationName("SENSI SpeechFeatures")
     if _ICON_PATH.exists():
         app.setWindowIcon(QIcon(str(_ICON_PATH)))
     # Palette fallback first, then QSS on top. If a widget escapes the QSS

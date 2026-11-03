@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Running on Sherlock · SensiExtractor User Manual</title>
+<title>Running on Sherlock · SENSI SpeechFeatures User Manual</title>
 <link rel="icon" href="../assets/icon.svg">
 <link rel="stylesheet" href="../assets/theme.css">
 <link rel="stylesheet" href="../assets/layout.css">
@@ -13,7 +13,7 @@
 <button class="menu-btn" type="button" aria-label="Open the outline">☰ Contents</button>
 <div class="shell">
   <nav class="left" aria-label="Manual outline">
-    <a class="brand" href="../index.html"><img src="../assets/icon.svg" alt="">SensiExtractor <span>User Manual</span></a>
+    <a class="brand" href="../index.html"><img src="../assets/icon.svg" alt="">SENSI SpeechFeatures <span>User Manual</span></a>
     <div class="search">
       <input type="search" placeholder="Search features, columns…  ( / )" aria-label="Search the manual">
       <div class="search-results" role="listbox"></div>
@@ -26,7 +26,7 @@
       <details class="toc-inline"><summary>On this page</summary><ul><li><a href="#the-idea">The idea</a></li><li><a href="#what-this-is-and-why">What this is and why</a></li><li><a href="#fill-in-your-own-identifiers">Fill in your own identifiers</a></li><li><a href="#two-folders-on-sherlock-fixed-names-used-everywhere-below">Two folders on Sherlock (fixed names — used everywhere below)</a></li><li><a href="#which-terminal-runs-what">Which terminal runs what</a></li><li><a href="#1-build-the-container-linux-once">1 · Build the container — [linux], once</a></li><li><a href="#2-configure-the-extraction-local">2 · Configure the extraction — [local]</a></li><li><a href="#3-connect-note-your-paths-make-the-folders-sherlock-login-once">3 · Connect, note your paths, make the folders — [Sherlock-login], once</a></li><li><a href="#4-upload-code-container-data-linux">4 · Upload code, container, data — [linux]</a></li><li><a href="#5-get-your-hf-token-save-it-download-the-weights-sherlock-login-once">5 · Get your HF token, save it, download the weights — [Sherlock-login], once</a></li><li><a href="#6-optional-dry-run-sherlock-compute">6 · (Optional) dry-run — [Sherlock-compute]</a></li><li><a href="#7-build-amp-submit-the-gpu-job-sherlock-login">7 · Build &amp; submit the GPU job — [Sherlock-login]</a></li><li><a href="#8-collect-results">8 · Collect results</a></li><li><a href="#gotchas">Gotchas</a></li></ul></details>
       <h1><span class="num">5</span>Running on Sherlock</h1><p class="lede">Large batches and the bigger language models run on Stanford&#x27;s Sherlock cluster, inside a container, driven by the same features.yaml you set up in the app.</p><h2 id="the-idea"><span class="num">5.1</span>The idea</h2>
 <p>The app's environment is built for one operating system, and Sherlock's compute nodes are
-headless Linux machines, so SensiExtractor runs there inside a portable <strong>Apptainer
+headless Linux machines, so SENSI SpeechFeatures runs there inside a portable <strong>Apptainer
 container</strong> (<code>sensiextractor.sif</code>) that carries the whole environment. The flow:</p>
 <ol class="steps">
 <li><b>On your computer</b>, set up the features in the app as usual — that writes <code>config/features.yaml</code>.</li>
@@ -105,13 +105,12 @@ apptainer<span class="w"> </span>build<span class="w"> </span>sherlock/sensiextr
 <h2 id="2-configure-the-extraction-local"><span class="num">5.7</span>2 · Configure the extraction — [local]</h2>
 <p>From the repo root: set your feature toggles / model choices (and the output levels
 on the Run page) in the GUI, then close it. The GUI saves them straight to
-<code>config/features.yaml</code> — that file <strong>is</strong> the shareable config now, no export
+<code>config/features.yaml</code> — that file <strong>is</strong> the shareable config; no export
 step needed:</p>
 <pre><code class="language-bash">conda<span class="w"> </span>activate<span class="w"> </span>./env
 python<span class="w"> </span>gui.py
 </code></pre>
-<p><code>config/features.yaml</code> is gitignored (machine-local like the old <code>preferences.json</code>
-was), but it rsyncs to Sherlock in step 4 like any other file. It carries WHAT to
+<p><code>config/features.yaml</code> is gitignored (machine-local), but it rsyncs to Sherlock in step 4 like any other file. It carries WHAT to
 extract (feature toggles, predictability models, semantic categories, …) — nothing
 machine-specific lives in it.</p>
 <h2 id="3-connect-note-your-paths-make-the-folders-sherlock-login-once"><span class="num">5.8</span>3 · Connect, note your paths, make the folders — [Sherlock-login], once</h2>
@@ -153,9 +152,9 @@ on Sherlock is an equivalent way to start this file for any <em>future</em> re-r
 <p>Use the <strong>literal</strong> <code>&lt;GROUP_HOME&gt;</code>/<code>&lt;SCRATCH&gt;</code> from step 3 (rsync won't expand them).
 Code first (small; carries <code>config/features.yaml</code> — your GUI's live feature choices;
 <code>*.sif</code> excluded so the container isn't sent here; the model folders under <code>data/</code>
-and the <code>dev/</code> project-history folder stay behind (<code>data/dictionaries/</code> is sent);
+and the <code>dev/</code> folder stay behind (<code>data/dictionaries/</code> is sent);
 <code>config/run.yaml</code> and
-<code>config/preferences.json*</code> excluded so your local machine's folders/legacy prefs
+<code>config/preferences.json*</code> excluded so your local machine's folders and prefs
 never clobber the <code>run.yaml</code> you wrote on Sherlock in step 3):</p>
 <pre><code class="language-bash"><span class="nb">cd</span><span class="w"> </span>path/to/SensiExtractor
 rsync<span class="w"> </span>-avP<span class="w"> </span>--exclude<span class="w"> </span>env<span class="w"> </span>--exclude<span class="w"> </span>hf_cache<span class="w"> </span>--exclude<span class="w"> </span>mfa_data<span class="w"> </span>--exclude<span class="w"> </span>gensim_data<span class="w"> </span>--exclude<span class="w"> </span>/dev<span class="w"> </span>--exclude<span class="w"> </span>.git<span class="w"> </span><span class="se">\</span>
@@ -164,11 +163,9 @@ rsync<span class="w"> </span>-avP<span class="w"> </span>--exclude<span class="w
 <span class="w">  </span>./<span class="w"> </span>&lt;sunetid&gt;@login.sherlock.stanford.edu:&lt;GROUP_HOME&gt;/SensiExtractor/
 </code></pre>
 <blockquote>
-<p><strong>Updating a copy uploaded before 2026-10-27</strong> (the repo was reorganized then): rsync
-adds the new layout but never deletes, so the old top-level <code>main.py</code>, <code>__init__.py</code>,
-<code>extractors/</code>, <code>gui/</code>, <code>utils/</code> stay behind. They are unused (<code>run.py</code> imports only
-<code>sensi/</code>) and can be removed once: <code>cd $GROUP_HOME/SensiExtractor &amp;&amp; rm -rf main.py __init__.py extractors gui utils</code>. Leave <code>dictionaries/</code> and <code>gensim_data/</code> alone: the
-first <code>run.py</code> start moves their files into <code>data/</code> itself, and prints what it moved.</p>
+<p>rsync adds and overwrites files but never deletes, so files you removed
+locally stay on Sherlock until you delete them there. <code>run.py</code> imports
+only <code>sensi/</code>, so stray top-level folders are harmless.</p>
 </blockquote>
 <p>Container into the repo's <code>sherlock/</code> folder (a few GB):</p>
 <pre><code class="language-bash">rsync<span class="w"> </span>-avP<span class="w"> </span>sherlock/sensiextractor.sif<span class="w"> </span><span class="se">\</span>
@@ -302,7 +299,7 @@ VRAM, so you can verify you got the size you asked for.</p>
         <a class="prev" href="../chapters/usage.html"><small>Previous</small>Using the app</a>
         <a class="next" href="../features/index.html"><small>Next</small>Features</a>
       </nav>
-      <footer>SensiExtractor User Manual · version 0.2.0 · built 2026-10-27 · source: <a href="https://github.com/edneuro/SENSI-Speech-Features">edneuro/SENSI-Speech-Features</a></footer>
+      <footer>SENSI SpeechFeatures User Manual · version 0.2.0 · built 2026-11-03 · source: <a href="https://github.com/edneuro/SENSI-Speech-Features">edneuro/SENSI-Speech-Features</a></footer>
     </div>
   </main>
   <aside class="right" aria-label="On this page">

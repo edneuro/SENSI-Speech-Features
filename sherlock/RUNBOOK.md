@@ -59,14 +59,13 @@ apptainer build sherlock/sensiextractor.sif sherlock/Apptainer.def
 ## 2 · Configure the extraction — [local]
 From the repo root: set your feature toggles / model choices (and the output levels
 on the Run page) in the GUI, then close it. The GUI saves them straight to
-`config/features.yaml` — that file **is** the shareable config now, no export
+`config/features.yaml` — that file **is** the shareable config; no export
 step needed:
 ```bash
 conda activate ./env
 python gui.py
 ```
-`config/features.yaml` is gitignored (machine-local like the old `preferences.json`
-was), but it rsyncs to Sherlock in step 4 like any other file. It carries WHAT to
+`config/features.yaml` is gitignored (machine-local), but it rsyncs to Sherlock in step 4 like any other file. It carries WHAT to
 extract (feature toggles, predictability models, semantic categories, …) — nothing
 machine-specific lives in it.
 
@@ -114,9 +113,9 @@ on Sherlock is an equivalent way to start this file for any *future* re-run.)
 Use the **literal** `<GROUP_HOME>`/`<SCRATCH>` from step 3 (rsync won't expand them).
 Code first (small; carries `config/features.yaml` — your GUI's live feature choices;
 `*.sif` excluded so the container isn't sent here; the model folders under `data/`
-and the `dev/` project-history folder stay behind (`data/dictionaries/` is sent);
+and the `dev/` folder stay behind (`data/dictionaries/` is sent);
 `config/run.yaml` and
-`config/preferences.json*` excluded so your local machine's folders/legacy prefs
+`config/preferences.json*` excluded so your local machine's folders and prefs
 never clobber the `run.yaml` you wrote on Sherlock in step 3):
 ```bash
 cd path/to/SensiExtractor
@@ -125,12 +124,9 @@ rsync -avP --exclude env --exclude hf_cache --exclude mfa_data --exclude gensim_
   --exclude 'config/run.yaml' --exclude 'config/preferences.json*' \
   ./ <sunetid>@login.sherlock.stanford.edu:<GROUP_HOME>/SensiExtractor/
 ```
-> **Updating a copy uploaded before 2026-10-27** (the repo was reorganized then): rsync
-> adds the new layout but never deletes, so the old top-level `main.py`, `__init__.py`,
-> `extractors/`, `gui/`, `utils/` stay behind. They are unused (`run.py` imports only
-> `sensi/`) and can be removed once: `cd $GROUP_HOME/SensiExtractor && rm -rf main.py
-> __init__.py extractors gui utils`. Leave `dictionaries/` and `gensim_data/` alone: the
-> first `run.py` start moves their files into `data/` itself, and prints what it moved.
+> rsync adds and overwrites files but never deletes, so files you removed
+> locally stay on Sherlock until you delete them there. `run.py` imports
+> only `sensi/`, so stray top-level folders are harmless.
 
 Container into the repo's `sherlock/` folder (a few GB):
 ```bash

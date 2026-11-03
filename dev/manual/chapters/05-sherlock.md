@@ -8,7 +8,7 @@ keywords: sherlock hpc cluster apptainer container slurm sbatch gpu
 ## The idea
 
 The app's environment is built for one operating system, and Sherlock's compute nodes are
-headless Linux machines, so SensiExtractor runs there inside a portable **Apptainer
+headless Linux machines, so SENSI SpeechFeatures runs there inside a portable **Apptainer
 container** (`sensiextractor.sif`) that carries the whole environment. The flow:
 
 <ol class="steps">

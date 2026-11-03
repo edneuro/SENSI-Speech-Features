@@ -14,7 +14,12 @@ Per-word **surprisal** — the negative log probability that a language
 model assigns to a word given everything that came before it in the
 document, in **bits**:
 
-    <slug>_Surprisal(wᵢ) = -log₂ P_model(wᵢ | w₁ … wᵢ₋₁)
+    <slug>_Surprisal(wᵢ) = -log₂ P_model(wᵢ | w₁ … wᵢ₋₁)        [Hale 2001], [Levy 2008]
+
+`<slug>` stands for the model's short name — `gpt2`, `llama32_3b`,
+`llama3_8b` or `llama3_70b` — and is the prefix of the column name, so
+`gpt2_Surprisal` is surprisal from GPT-2. Each model you tick writes its own
+column, and the name always says which model produced it.
 
 A high-frequency word in a strongly constraining context has low
 surprisal (≈ 1–3 bits); a low-frequency or contextually unexpected word
@@ -39,9 +44,8 @@ multi-select; each selected model is scored once per stimulus and
 contributes its own `<slug>_Surprisal` column when the Surprisal metric
 checkbox is on. Better/larger LMs generally produce surprisal estimates
 that predict reading time and neural responses more tightly than
-GPT-2's (see *EEG rationale* below); GPT-2 is retained as a free,
-always-available baseline and for cross-study comparability with the
-pre-unification `Surprisal` column.
+GPT-2's (see *EEG rationale* below); GPT-2 is the free,
+always-available baseline.
 
 ## EEG rationale
 Surprisal is a well-replicated word-level predictor of **N400
@@ -66,11 +70,13 @@ Model quality matters, not just architecture: better LMs produce
 surprisal estimates that predict **reading time** more tightly
 ([Goodkind 2018], [Wilcox 2020]) and predict more variance in
 fMRI / ECoG responses to language ([Schrimpf 2021], [Goldstein 2022]).
-Empirically, larger / better LMs improve N400 prediction up to a point
-and then plateau ([Schrimpf 2021], [Caucheteux 2022]) — enabling both a
-small and a large model on the same run lets you study how estimator
-quality affects your specific neural fit, rather than assuming a
-larger model is automatically better for your data.
+Bigger is not automatically better, though. Across GPT-Neo and OPT
+models, surprisal from the **larger** transformers (lower perplexity) fit
+human reading times **worse** ([Oh 2023]): they predict named entities
+and other memorisable sequences better than people do, so their surprisal
+underestimates human difficulty there. Enabling both a small and a large
+model on the same run lets you test which estimator fits your own neural
+data, rather than assuming a larger model is better for it.
 
 ## Math / linguistics
 A causal language model outputs a probability distribution over its
@@ -86,18 +92,16 @@ constitute the word:
 
 so
 
-    -log₂ P(w) = Σᵢ -log₂ P(sᵢ | s₁..sᵢ₋₁)
+    -log₂ P(w) = Σᵢ -log₂ P(sᵢ | s₁..sᵢ₋₁)        (chain rule of probability)
 
 The sum is correct because every model in the roster is autoregressive
 and conditions each subword on the prior context (including earlier
 subwords of the same spaCy token). This holds identically whether the
 backend is GPT-2 or a Llama-3 variant.
 
-## Implementation in SensiExtractor
+## Implementation in SENSI SpeechFeatures
 Source: `sensi/extractors/predictability.py:add_predictability` (the unified,
-roster-driven extractor; it replaced the old per-model
-`extractors/surprisal.py` / `extractors/llm_cloze.py`, both removed on
-2026-07-11); long-text handling is in
+roster-driven extractor); long-text handling is in
 `_chunk_slices` / `_HuggingFaceBackend.score`.
 
 **This also produces** [`Cloze`](pred_cloze.md) and
@@ -199,10 +203,9 @@ A 1-subword stride would maximise context but costs roughly `window /
 flattens well before its full context window is consumed, so the
 marginal accuracy gain from a smaller stride is small. The `window //
 2` stride trades up to `window // 2 - 1` subwords of additional
-context for a `window // 2`× compute reduction. This is the same
-trade-off historically documented for GPT-2 alone (512-subword stride
-against its 1024-subword window); it now applies uniformly to every
-roster model via its own `window`.
+context for a `window // 2`× compute reduction. For GPT-2 this is a
+512-subword stride against its 1024-subword window; the same rule
+applies to every roster model via its own `window`.
 
 ### Step by step
 1. `_get_backend` / `_cached_backend` lazily load an
@@ -254,8 +257,7 @@ bit-for-bit regardless of the machine's GPU availability.
   punctuation surprisal.
 - *One backend implementation for every model*: GPT-2 loads through
   `AutoModelForCausalLM` exactly like the Llama models (it resolves to
-  the same `GPT2LMHeadModel` class, identical weights/logits as the
-  legacy direct-load code) — there is exactly one scoring path, used
+  the `GPT2LMHeadModel` class) — there is exactly one scoring path, used
   by every roster model, instead of a GPT-2-specific extractor and a
   separate LLM extractor.
 
@@ -298,6 +300,8 @@ for i in range(1, len(ids)):
 **Surprisal ↔ LM quality:**
 - <a name="wilcox-2020"></a>**[Wilcox 2020]** Wilcox, Gauthier, Hu, Qian, Levy. *On the Predictive Power of Neural Language Models for Human Real-Time Comprehension Behavior.* CogSci 2020. [arXiv:2006.01912](https://arxiv.org/abs/2006.01912) — across architectures, better next-word prediction correlates with stronger prediction of human reading times and eye movements.
 
+- <a name="oh-2023"></a>**[Oh 2023]** Oh & Schuler. *Why Does Surprisal From Larger Transformer-Based Language Models Provide a Poorer Fit to Human Reading Times?* Transactions of the ACL 11, 336–350. [doi:10.1162/tacl_a_00548](https://doi.org/10.1162/tacl_a_00548) — across five GPT-Neo and eight OPT sizes, lower perplexity goes with a poorer fit to reading times; larger models "memorize" sequences such as named entities.
+
 **Modern LM ↔ neural data:**
 - <a name="schrimpf-2021"></a>**[Schrimpf 2021]** Schrimpf et al. *The neural architecture of language: Integrative modeling converges on predictive processing.* PNAS. [doi:10.1073/pnas.2105646118](https://doi.org/10.1073/pnas.2105646118)
 - <a name="caucheteux-2022"></a>**[Caucheteux 2022]** Caucheteux & King. *Brains and algorithms partially converge in natural language processing.* Communications Biology. [doi:10.1038/s42003-022-03036-1](https://doi.org/10.1038/s42003-022-03036-1)
@@ -311,6 +315,7 @@ for i in range(1, len(ids)):
 [Michaelov 2024]: #michaelov-2024
 [Heilbron 2022]: #heilbron-2022
 [Wilcox 2020]: #wilcox-2020
+[Oh 2023]: #oh-2023
 [Schrimpf 2021]: #schrimpf-2021
 [Caucheteux 2022]: #caucheteux-2022
 [Goldstein 2022]: #goldstein-2022

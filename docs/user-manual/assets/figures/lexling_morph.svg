@@ -1,0 +1,281 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="494.28pt" height="261.049062pt" viewBox="0 0 494.28 261.049062" xmlns="http://www.w3.org/2000/svg" version="1.1">
+ <metadata>
+  <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <cc:Work>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:format>image/svg+xml</dc:format>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="figure_1">
+  <g id="patch_1">
+   <path d="M 0 261.049062 
+L 494.28 261.049062 
+L 494.28 0 
+L 0 0 
+z
+" style="fill: #ffffff"/>
+  </g>
+  <g id="axes_1">
+   <g id="text_1">
+    <text style="font-size: 10px; font-family: 'Segoe UI', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #1f2328" x="38.19225" y="41.308068" transform="rotate(-0 38.19225 41.308068)">The</text>
+   </g>
+   <g id="text_2">
+    <g id="patch_2">
+     <path d="M 31.257875 63.187832 
+L 45.126625 63.187832 
+Q 47.126625 63.187832 47.126625 61.187832 
+L 47.126625 53.425332 
+Q 47.126625 51.425332 45.126625 51.425332 
+L 31.257875 51.425332 
+Q 29.257875 51.425332 29.257875 53.425332 
+L 29.257875 61.187832 
+Q 29.257875 63.187832 31.257875 63.187832 
+z
+" style="fill: #0093ab"/>
+    </g>
+    <text style="font-size: 8px; font-family: 'Segoe UI', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #ffffff" x="38.19225" y="59.347832" transform="rotate(-0 38.19225 59.347832)">DET</text>
+   </g>
+   <g id="text_3">
+    <text style="font-size: 8px; font-family: 'Segoe UI', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #c77a00" x="38.19225" y="78.339577" transform="rotate(-0 38.19225 78.339577)">Definite=Def</text>
+   </g>
+   <g id="text_4">
+    <text style="font-size: 8px; font-family: 'Segoe UI', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #c77a00" x="38.19225" y="93.313806" transform="rotate(-0 38.19225 93.313806)">PronType=Art</text>
+   </g>
+   <g id="text_5">
+    <text style="font-size: 10px; font-family: 'Segoe UI', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #1f2328" x="98.17725" y="41.308068" transform="rotate(-0 98.17725 41.308068)">children</text>
+   </g>
+   <g id="text_6">
+    <g id="patch_3">
+     <path d="M 86.4285 63.187832 
+L 109.926 63.187832 
+Q 111.926 63.187832 111.926 61.187832 
+L 111.926 53.425332 
+Q 111.926 51.425332 109.926 51.425332 
+L 86.4285 51.425332 
+Q 84.4285 51.425332 84.4285 53.425332 
+L 84.4285 61.187832 
+Q 84.4285 63.187832 86.4285 63.187832 
+z
+" style="fill: #0093ab"/>
+    </g>
+    <text style="font-size: 8px; font-family: 'Segoe UI', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #ffffff" x="98.17725" y="59.347832" transform="rotate(-0 98.17725 59.347832)">NOUN</text>
+   </g>
+   <g id="text_7">
+    <text style="font-size: 8px; font-family: 'Segoe UI', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #c77a00" x="98.17725" y="78.339577" transform="rotate(-0 98.17725 78.339577)">Number=Plur</text>
+   </g>
+   <g id="text_8">
+    <text style="font-size: 10px; font-family: 'Segoe UI', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #1f2328" x="158.16225" y="41.308068" transform="rotate(-0 158.16225 41.308068)">were</text>
+   </g>
+   <g id="text_9">
+    <g id="patch_4">
+     <path d="M 150.52975 63.187832 
+L 165.79475 63.187832 
+Q 167.79475 63.187832 167.79475 61.187832 
+L 167.79475 53.425332 
+Q 167.79475 51.425332 165.79475 51.425332 
+L 150.52975 51.425332 
+Q 148.52975 51.425332 148.52975 53.425332 
+L 148.52975 61.187832 
+Q 148.52975 63.187832 150.52975 63.187832 
+z
+" style="fill: #0093ab"/>
+    </g>
+    <text style="font-size: 8px; font-family: 'Segoe UI', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #ffffff" x="158.16225" y="59.347832" transform="rotate(-0 158.16225 59.347832)">AUX</text>
+   </g>
+   <g id="text_10">
+    <text style="font-size: 8px; font-family: 'Segoe UI', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #c77a00" x="158.16225" y="78.339577" transform="rotate(-0 158.16225 78.339577)">Mood=Ind</text>
+   </g>
+   <g id="text_11">
+    <text style="font-size: 8px; font-family: 'Segoe UI', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #c77a00" x="158.16225" y="93.356306" transform="rotate(-0 158.16225 93.356306)">Tense=Past</text>
+   </g>
+   <g id="text_12">
+    <text style="font-size: 8px; font-family: 'Segoe UI', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #c77a00" x="158.16225" y="108.373035" transform="rotate(-0 158.16225 108.373035)">VerbForm=Fin</text>
+   </g>
+   <g id="text_13">
+    <text style="font-size: 10px; font-family: 'Segoe UI', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #1f2328" x="222.14625" y="41.254943" transform="rotate(-0 222.14625 41.254943)">running</text>
+   </g>
+   <g id="text_14">
+    <g id="patch_5">
+     <path d="M 212.9525 63.187832 
+L 231.34 63.187832 
+Q 233.34 63.187832 233.34 61.187832 
+L 233.34 53.425332 
+Q 233.34 51.425332 231.34 51.425332 
+L 212.9525 51.425332 
+Q 210.9525 51.425332 210.9525 53.425332 
+L 210.9525 61.187832 
+Q 210.9525 63.187832 212.9525 63.187832 
+z
+" style="fill: #0093ab"/>
+    </g>
+    <text style="font-size: 8px; font-family: 'Segoe UI', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #ffffff" x="222.14625" y="59.347832" transform="rotate(-0 222.14625 59.347832)">VERB</text>
+   </g>
+   <g id="text_15">
+    <text style="font-size: 8px; font-family: 'Segoe UI', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #c77a00" x="222.14625" y="78.297077" transform="rotate(-0 222.14625 78.297077)">Aspect=Prog</text>
+   </g>
+   <g id="text_16">
+    <text style="font-size: 8px; font-family: 'Segoe UI', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #c77a00" x="222.14625" y="93.356306" transform="rotate(-0 222.14625 93.356306)">Tense=Pres</text>
+   </g>
+   <g id="text_17">
+    <text style="font-size: 8px; font-family: 'Segoe UI', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #c77a00" x="222.14625" y="108.373035" transform="rotate(-0 222.14625 108.373035)">VerbForm=Part</text>
+   </g>
+   <g id="text_18">
+    <text style="font-size: 10px; font-family: 'Segoe UI', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #1f2328" x="272.13375" y="41.308068" transform="rotate(-0 272.13375 41.308068)">while</text>
+   </g>
+   <g id="text_19">
+    <g id="patch_6">
+     <path d="M 260.15125 63.187832 
+L 284.11625 63.187832 
+Q 286.11625 63.187832 286.11625 61.187832 
+L 286.11625 53.425332 
+Q 286.11625 51.425332 284.11625 51.425332 
+L 260.15125 51.425332 
+Q 258.15125 51.425332 258.15125 53.425332 
+L 258.15125 61.187832 
+Q 258.15125 63.187832 260.15125 63.187832 
+z
+" style="fill: #0093ab"/>
+    </g>
+    <text style="font-size: 8px; font-family: 'Segoe UI', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #ffffff" x="272.13375" y="59.347832" transform="rotate(-0 272.13375 59.347832)">SCONJ</text>
+   </g>
+   <g id="text_20">
+    <text style="font-size: 8px; font-family: 'Segoe UI', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #8a8f98" x="272.13375" y="78.339577" transform="rotate(-0 272.13375 78.339577)">(none)</text>
+   </g>
+   <g id="text_21">
+    <text style="font-size: 10px; font-family: 'Segoe UI', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #1f2328" x="320.12175" y="41.308068" transform="rotate(-0 320.12175 41.308068)">the</text>
+   </g>
+   <g id="text_22">
+    <g id="patch_7">
+     <path d="M 313.187375 63.187832 
+L 327.056125 63.187832 
+Q 329.056125 63.187832 329.056125 61.187832 
+L 329.056125 53.425332 
+Q 329.056125 51.425332 327.056125 51.425332 
+L 313.187375 51.425332 
+Q 311.187375 51.425332 311.187375 53.425332 
+L 311.187375 61.187832 
+Q 311.187375 63.187832 313.187375 63.187832 
+z
+" style="fill: #0093ab"/>
+    </g>
+    <text style="font-size: 8px; font-family: 'Segoe UI', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #ffffff" x="320.12175" y="59.347832" transform="rotate(-0 320.12175 59.347832)">DET</text>
+   </g>
+   <g id="text_23">
+    <text style="font-size: 8px; font-family: 'Segoe UI', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #c77a00" x="320.12175" y="78.339577" transform="rotate(-0 320.12175 78.339577)">Definite=Def</text>
+   </g>
+   <g id="text_24">
+    <text style="font-size: 8px; font-family: 'Segoe UI', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #c77a00" x="320.12175" y="93.313806" transform="rotate(-0 320.12175 93.313806)">PronType=Art</text>
+   </g>
+   <g id="text_25">
+    <text style="font-size: 10px; font-family: 'Segoe UI', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #1f2328" x="380.10675" y="41.308068" transform="rotate(-0 380.10675 41.308068)">mice</text>
+   </g>
+   <g id="text_26">
+    <g id="patch_8">
+     <path d="M 368.358 63.187832 
+L 391.8555 63.187832 
+Q 393.8555 63.187832 393.8555 61.187832 
+L 393.8555 53.425332 
+Q 393.8555 51.425332 391.8555 51.425332 
+L 368.358 51.425332 
+Q 366.358 51.425332 366.358 53.425332 
+L 366.358 61.187832 
+Q 366.358 63.187832 368.358 63.187832 
+z
+" style="fill: #0093ab"/>
+    </g>
+    <text style="font-size: 8px; font-family: 'Segoe UI', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #ffffff" x="380.10675" y="59.347832" transform="rotate(-0 380.10675 59.347832)">NOUN</text>
+   </g>
+   <g id="text_27">
+    <text style="font-size: 8px; font-family: 'Segoe UI', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #c77a00" x="380.10675" y="78.339577" transform="rotate(-0 380.10675 78.339577)">Number=Plur</text>
+   </g>
+   <g id="text_28">
+    <text style="font-size: 10px; font-family: 'Segoe UI', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #1f2328" x="440.09175" y="41.308068" transform="rotate(-0 440.09175 41.308068)">ate</text>
+   </g>
+   <g id="text_29">
+    <g id="patch_9">
+     <path d="M 430.898 63.187832 
+L 449.2855 63.187832 
+Q 451.2855 63.187832 451.2855 61.187832 
+L 451.2855 53.425332 
+Q 451.2855 51.425332 449.2855 51.425332 
+L 430.898 51.425332 
+Q 428.898 51.425332 428.898 53.425332 
+L 428.898 61.187832 
+Q 428.898 63.187832 430.898 63.187832 
+z
+" style="fill: #0093ab"/>
+    </g>
+    <text style="font-size: 8px; font-family: 'Segoe UI', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #ffffff" x="440.09175" y="59.347832" transform="rotate(-0 440.09175 59.347832)">VERB</text>
+   </g>
+   <g id="text_30">
+    <text style="font-size: 8px; font-family: 'Segoe UI', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #c77a00" x="440.09175" y="78.339577" transform="rotate(-0 440.09175 78.339577)">Tense=Past</text>
+   </g>
+   <g id="text_31">
+    <text style="font-size: 8px; font-family: 'Segoe UI', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #c77a00" x="440.09175" y="93.356306" transform="rotate(-0 440.09175 93.356306)">VerbForm=Fin</text>
+   </g>
+   <g id="text_32">
+    <text style="font-size: 10px; font-family: 'Segoe UI', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #1f2328" x="38.19225" y="158.791887" transform="rotate(-0 38.19225 158.791887)">their</text>
+   </g>
+   <g id="text_33">
+    <g id="patch_10">
+     <path d="M 27.591625 180.671651 
+L 48.792875 180.671651 
+Q 50.792875 180.671651 50.792875 178.671651 
+L 50.792875 170.909151 
+Q 50.792875 168.909151 48.792875 168.909151 
+L 27.591625 168.909151 
+Q 25.591625 168.909151 25.591625 170.909151 
+L 25.591625 178.671651 
+Q 25.591625 180.671651 27.591625 180.671651 
+z
+" style="fill: #0093ab"/>
+    </g>
+    <text style="font-size: 8px; font-family: 'Segoe UI', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #ffffff" x="38.19225" y="176.831651" transform="rotate(-0 38.19225 176.831651)">PRON</text>
+   </g>
+   <g id="text_34">
+    <text style="font-size: 8px; font-family: 'Segoe UI', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #c77a00" x="38.19225" y="195.823397" transform="rotate(-0 38.19225 195.823397)">Number=Plur</text>
+   </g>
+   <g id="text_35">
+    <text style="font-size: 8px; font-family: 'Segoe UI', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #c77a00" x="38.19225" y="210.840125" transform="rotate(-0 38.19225 210.840125)">Person=3</text>
+   </g>
+   <g id="text_36">
+    <text style="font-size: 8px; font-family: 'Segoe UI', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #c77a00" x="38.19225" y="225.856854" transform="rotate(-0 38.19225 225.856854)">Poss=Yes</text>
+   </g>
+   <g id="text_37">
+    <text style="font-size: 8px; font-family: 'Segoe UI', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #c77a00" x="38.19225" y="240.831083" transform="rotate(-0 38.19225 240.831083)">PronType=Prs</text>
+   </g>
+   <g id="text_38">
+    <text style="font-size: 10px; font-family: 'Segoe UI', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #1f2328" x="98.17725" y="158.791887" transform="rotate(-0 98.17725 158.791887)">cheese</text>
+   </g>
+   <g id="text_39">
+    <g id="patch_11">
+     <path d="M 86.4285 180.671651 
+L 109.926 180.671651 
+Q 111.926 180.671651 111.926 178.671651 
+L 111.926 170.909151 
+Q 111.926 168.909151 109.926 168.909151 
+L 86.4285 168.909151 
+Q 84.4285 168.909151 84.4285 170.909151 
+L 84.4285 178.671651 
+Q 84.4285 180.671651 86.4285 180.671651 
+z
+" style="fill: #0093ab"/>
+    </g>
+    <text style="font-size: 8px; font-family: 'Segoe UI', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #ffffff" x="98.17725" y="176.831651" transform="rotate(-0 98.17725 176.831651)">NOUN</text>
+   </g>
+   <g id="text_40">
+    <text style="font-size: 8px; font-family: 'Segoe UI', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #c77a00" x="98.17725" y="195.802147" transform="rotate(-0 98.17725 195.802147)">Number=Sing</text>
+   </g>
+   <g id="text_41">
+    <text style="font-weight: 600; font-size: 10.5px; font-family: 'Segoe UI', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: start" x="7.2" y="15.089766" transform="rotate(-0 7.2 15.089766)">Morphological features  (word · upos · each feats entry)</text>
+   </g>
+  </g>
+ </g>
+</svg>

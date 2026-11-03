@@ -62,7 +62,7 @@ higher-order linguistic effects typically include all three.
 - Single-frame words: `Volume_Std = 0`, min/max/mean all collapse to
   the same value.
 
-## Implementation in SensiExtractor
+## Implementation in SENSI SpeechFeatures
 Source: `sensi/extractors/prosody.py:add_word_prosody`. Shared
 forward-pass implementation as [pitch](prosody_pitch.md) — the same
 loop slices and aggregates both contours per word. `Volume_Delta` is
@@ -81,7 +81,7 @@ emission, not compute.
 - *No reference-level normalization* — the extractor reports dB SPL
   directly from Praat without an audio-level normalization pass.
   The assumption is that input audio is already loudness-normalized
-  upstream of SensiExtractor; for cross-stimulus volume comparisons,
+  upstream of SENSI SpeechFeatures; for cross-stimulus volume comparisons,
   perform your own normalization before invoking the extractor.
 
 ## Library

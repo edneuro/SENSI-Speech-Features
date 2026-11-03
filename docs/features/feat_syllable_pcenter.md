@@ -21,11 +21,7 @@ Where:
 - `nucleus_onset` = onset time of the syllable's vowel — the first phone
   in the [phoneme CSV](phoneme.md) whose `Stress` is **not** empty.
   ⚠️ Note the polarity: `Stress == 0` is an *unstressed vowel* and counts
-  as a nucleus; only an empty `Stress` means "not a vowel". Before the
-  2026-07-27 column split this was a suffix test on the fused `Label`
-  string (`Label.str[-1:].str.isdigit()`); had it not been migrated, no
-  vowel would ever have been detected and every `P_Center` would have
-  silently fallen back to the syllable onset with no exception raised.
+  as a nucleus; only an empty `Stress` means "not a vowel".
 - `onset_consonant_duration` = total duration of the consonant(s)
   preceding the vowel.
 - `k` = an empirical coefficient (default **0.3**, configurable on the
@@ -35,6 +31,20 @@ A syllable like `"strike"` (`S T R AY1 K`) has a long consonant onset;
 its physical `Onset` (start of /s/) is earlier than its `P_Center`
 (near the vowel /AY/). A syllable like `"oh"` (`OW1`) has no
 preceding consonants, so `P_Center ≈ Onset`.
+
+**Where it falls.** When the onset consonants run straight up to the
+vowel, `onset_consonant_duration = nucleus_onset − Onset`, so the formula
+becomes
+
+    P_Center = Onset + (1 − k) · (nucleus_onset − Onset)
+
+— with the default `k = 0.3`, **70 % of the way from the start of the
+syllable to the start of its vowel**. So the P-center always sits *at or
+after* the syllable's `Onset` and *before* its vowel: at the very start for a
+syllable that begins with its vowel (*oh*, *in*), and just before the vowel
+for one that begins with consonants — in *food* (`F UW1 D`), 70 % of the way
+through the /f/. A P-center just ahead of the vowel is therefore what the
+formula intends, not an alignment error.
 
 Stored to 4 decimal places, in seconds from audio start. PUNCT and
 unaligned syllables → `NaN`.
@@ -58,7 +68,7 @@ For EEG specifically:
   `Onset` answers "when did the audio waveform start for this
   syllable" — a different question ([Villing 2011]).
 
-## Implementation in SensiExtractor
+## Implementation in SENSI SpeechFeatures
 Source: `sensi/extractors/pcenter.py:add_pcenter`
 
 **What the code does:**
@@ -83,8 +93,8 @@ Source: `sensi/extractors/pcenter.py:add_pcenter`
 - *Vowel-nucleus identification by presence of stress* — the ARPABET
   convention is that every vowel carries a stress digit and no consonant
   does ([CMUdict](phoneme.md#cmudict)), so "has a stress value" is a clean
-  vowel discriminator. Since the 2026-07-27 column split the pipeline
-  stores that digit in a nullable `Stress` column, so the test is
+  vowel discriminator. The pipeline stores that digit in a nullable
+  `Stress` column, so the test is
   `Stress.notna()` — and an unstressed vowel (`Stress == 0`) is correctly
   still a nucleus. An `oov_unresolved` `spn` row has no stress, so such a
   syllable takes the fallback in step 4.

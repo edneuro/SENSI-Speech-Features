@@ -15,9 +15,15 @@ given preceding context — i.e. the raw P, not its negative log:
 
     <slug>_Cloze(wᵢ) = P_model(wᵢ | w₁ … wᵢ₋₁)    ∈ (0, 1]
 
-Mathematical exponential inverse of [`<slug>_Surprisal`](pred_surprisal.md):
+Mathematical exponential inverse of [`<slug>_Surprisal`](pred_surprisal.md)
+(which is defined as `-log₂ P` [Hale 2001]), so
 
     <slug>_Cloze = 2^(-<slug>_Surprisal)
+
+`<slug>` stands for the model's short name — `gpt2`, `llama32_3b`,
+`llama3_8b` or `llama3_70b` — and is the prefix of the column name, so
+`gpt2_Cloze` is the probability from GPT-2. Each model you tick writes its own
+column, and the name always says which model produced it.
 
 PUNCT rows are `NaN`, and so is the document's first word (no
 preceding context to condition on). `<slug>_Cloze`, `<slug>_Surprisal`
@@ -58,15 +64,14 @@ ERP-amplitude modelling (the more common choice) and `<slug>_Cloze` when you
 specifically need the cloze metric, or enter both if you want to test the
 linear-plus-log shape of [Szewczyk 2022].
 
-## Implementation in SensiExtractor
+## Implementation in SENSI SpeechFeatures
 Source: `sensi/extractors/predictability.py:add_predictability` (the
-unified, roster-driven extractor; it replaced the old `extractors/llm_cloze.py`,
-which was removed on 2026-07-11). Backend:
+unified, roster-driven extractor). Backend:
 `_HuggingFaceBackend`, built on `AutoModelForCausalLM` for every
 roster model (GPT-2 included) — local Hugging Face weights only, no
 OpenAI backend; see [LLM access & credentials](llm_credentials.md).
 
-See [`Surprisal` § Implementation](pred_surprisal.md#implementation-in-sensiextractor)
+See [`Surprisal` § Implementation](pred_surprisal.md#implementation-in-sensi-speechfeatures)
 — `<slug>_Cloze` is computed in the same scoring call as
 `<slug>_Surprisal` and [`<slug>_TopMatch`](pred_topmatch.md), once per
 selected model. Per spaCy token:
@@ -80,13 +85,13 @@ top_match = (argmax_subword == actual_subword)  # at the first subword
 PUNCT rows are masked to `NaN`. The probability is stored to 6
 **significant digits** (e.g. `0.0123457`, or `2.07e-12` for a very
 unlikely word), so it is never rounded down to exactly 0 and
-`Cloze = 2^(−Surprisal)` holds for every word. Before 2026-10-21 it was
-rounded to 6 decimal places, which turned any word above about 20 bits
-of surprisal into `0.0`.
+`Cloze = 2^(−Surprisal)` holds for every word (rounding to 6 decimal places
+would turn any word above about 20 bits of surprisal into `0.0`).
 
 ## Papers
 
 **Cloze procedure & N400:**
+- <a name="hale-2001"></a>**[Hale 2001]** Hale. *A probabilistic Earley parser as a psycholinguistic model.* NAACL 2001. [ACL Anthology N01-1021](https://aclanthology.org/N01-1021/) — defines surprisal as −log P of a word given its context.
 - <a name="taylor-1953"></a>**[Taylor 1953]** Taylor. *"Cloze procedure": A new tool for measuring readability.* Journalism Quarterly. [doi:10.1177/107769905303000401](https://doi.org/10.1177/107769905303000401) — original cloze methodology.
 - <a name="kutas-1984"></a>**[Kutas 1984]** Kutas & Hillyard. *Brain potentials during reading reflect word expectancy and semantic association.* Nature. [doi:10.1038/307161a0](https://doi.org/10.1038/307161a0) — N400 ∝ −cloze probability.
 - <a name="delong-2005"></a>**[DeLong 2005]** DeLong, Urbach, Kutas. *Probabilistic word pre-activation during language comprehension inferred from electrical brain activity.* Nature Neuroscience. [doi:10.1038/nn1504](https://doi.org/10.1038/nn1504)
@@ -97,6 +102,7 @@ of surprisal into `0.0`.
 - <a name="michaelov-2024"></a>**[Michaelov 2024]** Michaelov, Bardolph, Van Petten, Bergen, Coulson. *Strong Prediction: Language Model Surprisal Explains Multiple N400 Effects.* Neurobiology of Language 5(1), 107–135. [doi:10.1162/nol_a_00105](https://doi.org/10.1162/nol_a_00105) — direct comparison: LM surprisal explains N400 amplitude better than cloze probability or distributional semantic similarity.
 - <a name="szewczyk-2022"></a>**[Szewczyk 2022]** Szewczyk & Federmeier. *Context-based facilitation of semantic access follows both logarithmic and linear functions of stimulus probability.* Journal of Memory and Language 123, 104311. [doi:10.1016/j.jml.2021.104311](https://doi.org/10.1016/j.jml.2021.104311) — N400 facilitation "combines linear and logarithmic functions"; graded even among unpredictable words.
 
+[Hale 2001]: #hale-2001
 [Taylor 1953]: #taylor-1953
 [Kutas 1984]: #kutas-1984
 [DeLong 2005]: #delong-2005

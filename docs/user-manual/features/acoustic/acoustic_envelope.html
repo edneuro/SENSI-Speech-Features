@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Amplitude envelope (broadband) · SensiExtractor User Manual</title>
+<title>Amplitude envelope (broadband) · SENSI SpeechFeatures User Manual</title>
 <link rel="icon" href="../../assets/icon.svg">
 <link rel="stylesheet" href="../../assets/theme.css">
 <link rel="stylesheet" href="../../assets/layout.css">
@@ -13,7 +13,7 @@
 <button class="menu-btn" type="button" aria-label="Open the outline">☰ Contents</button>
 <div class="shell">
   <nav class="left" aria-label="Manual outline">
-    <a class="brand" href="../../index.html"><img src="../../assets/icon.svg" alt="">SensiExtractor <span>User Manual</span></a>
+    <a class="brand" href="../../index.html"><img src="../../assets/icon.svg" alt="">SENSI SpeechFeatures <span>User Manual</span></a>
     <div class="search">
       <input type="search" placeholder="Search features, columns…  ( / )" aria-label="Search the manual">
       <div class="search-results" role="listbox"></div>
@@ -34,11 +34,11 @@ cortical-tracking / temporal-response-function (TRF) studies.</p>
 <code>acoustic/&lt;stim&gt;_acoustic.mat</code> sidecar, sampled on the shared analysis grid
 (<code>t</code>, <code>fs</code>) so it lines up sample-for-sample with the other acoustic time
 series.</p>
-</section><section id="see"><h2><span class="num">6.5.1.2</span>See it</h2><div class="card"><div class="caption">Example <b>LJ002-0321</b> (LJ Speech, public domain): “Others who arrived just after the time of distribution were often 48 hours without food. The latter might also be six days without meat.”</div><audio controls preload="none" src="../../assets/audio/LJ002-0321.wav"></audio><div data-tabs><div class="tabs" role="tablist"><button type="button" class="on">Default settings</button><button type="button" class="">env_method: hilbert</button></div><div class="tabpanel on"><figure><img src="../../assets/figures/acoustic_envelope.svg" alt="Amplitude envelope (broadband) — Default settings"></figure><figcaption>Amplitude envelope (broadband) — Default settings</figcaption><div class="provenance">Read from <span class='file'>acoustic/LJ002-0321_acoustic.mat</span>, written by SensiExtractor on the example shown here. Nothing on this figure is typed in.</div></div><div class="tabpanel"><figure><img src="../../assets/figures/acoustic_envelope__env_hilbert.svg" alt="Amplitude envelope (broadband) — env_method: hilbert"></figure><figcaption>Amplitude envelope (broadband) — env_method: hilbert</figcaption><div class="provenance">Read from <span class='file'>acoustic/LJ002-0321_acoustic.mat</span>, written by SensiExtractor on the example shown here. Nothing on this figure is typed in.</div></div></div><div class="caption">Switch between real runs that differ only in this one setting.</div></div></section><section id="output"><h2><span class="num">6.5.1.3</span>In your output</h2><div class="card"><div class="card-title">File <span class="file">acoustic/&lt;stim&gt;_acoustic.mat</span></div><table class="excerpt vars"><thead><tr><th>variable</th><th>size</th><th>MATLAB class</th></tr></thead><tbody><tr><td><code>envelope</code></td><td>1292 × 1</td><td>double</td></tr><tr><td><code>t</code></td><td>1292 × 1</td><td>double</td></tr><tr><td><code>fs</code></td><td>1 × 1</td><td>double</td></tr></tbody></table><div class="provenance">Excerpt of the real file for <b>LJ002-0321</b>.</div></div></section><section id="matlab"><h2><span class="num">6.5.1.4</span>MATLAB</h2><div class="card" data-tabs><div class="tabpanel on"><pre data-copy><code>S = load(&#x27;acoustic/LJ002-0321_acoustic.mat&#x27;);
+</section><section id="see"><h2><span class="num">6.5.1.2</span>See it</h2><div class="card"><div class="caption">Example <b>LJ002-0321</b> (LJ Speech, public domain): “Others who arrived just after the time of distribution were often 48 hours without food. The latter might also be six days without meat.”</div><audio controls preload="none" src="../../assets/audio/LJ002-0321.wav"></audio><div data-tabs><div class="tabs" role="tablist"><button type="button" class="on">Default settings</button><button type="button" class="">env_method: hilbert</button></div><div class="tabpanel on"><figure><img src="../../assets/figures/acoustic_envelope.svg" alt="Amplitude envelope (broadband) — Default settings"></figure><figcaption>Amplitude envelope (broadband) — Default settings</figcaption><div class="provenance">Read from <span class='file'>acoustic/LJ002-0321_acoustic.mat</span>, written by SENSI SpeechFeatures on the example shown here. Nothing on this figure is typed in.</div></div><div class="tabpanel"><figure><img src="../../assets/figures/acoustic_envelope__env_hilbert.svg" alt="Amplitude envelope (broadband) — env_method: hilbert"></figure><figcaption>Amplitude envelope (broadband) — env_method: hilbert</figcaption><div class="provenance">Read from <span class='file'>acoustic/LJ002-0321_acoustic.mat</span>, written by SENSI SpeechFeatures on the example shown here. Nothing on this figure is typed in.</div></div></div><div class="caption">Switch between real runs that differ only in this one setting.</div></div></section><section id="output"><h2><span class="num">6.5.1.3</span>In your output</h2><div class="card"><div class="card-title">File <span class="file">acoustic/&lt;stim&gt;_acoustic.mat</span></div><table class="excerpt vars"><thead><tr><th>variable</th><th>size</th><th>MATLAB class</th></tr></thead><tbody><tr><td><code>envelope</code></td><td>1292 × 1</td><td>double</td></tr><tr><td><code>t</code></td><td>1292 × 1</td><td>double</td></tr><tr><td><code>fs</code></td><td>1 × 1</td><td>double</td></tr></tbody></table><div class="provenance">Excerpt of the real file for <b>LJ002-0321</b>.</div></div></section><section id="matlab"><h2><span class="num">6.5.1.4</span>MATLAB</h2><div class="card" data-tabs><div class="tabpanel on"><pre data-copy><code>S = load(&#x27;acoustic/LJ002-0321_acoustic.mat&#x27;);
 whos(&#x27;-file&#x27;, &#x27;acoustic/LJ002-0321_acoustic.mat&#x27;)                % variables, sizes, classes
 
 plot(S.t, S.envelope); xlabel(&#x27;Time (s)&#x27;); ylabel(&#x27;envelope&#x27;)   % one value per time step, fs = S.fs Hz
-</code></pre></div><div class="caption">Run from the output folder. Variable and column names were checked against the real files when this manual was built; the code itself was not run in MATLAB.</div></div></section><section id="computed"><a id="what-it-is--how-its-computed"></a><h2><span class="num">6.5.1.5</span>How it&#x27;s computed</h2><p>SensiExtractor offers two envelope methods (toggle: <code>env_method</code>). Both
+</code></pre></div><div class="caption">Run from the output folder. Variable and column names were checked against the real files when this manual was built; the code itself was not run in MATLAB.</div></div></section><section id="computed"><a id="what-it-is--how-its-computed"></a><h2><span class="num">6.5.1.5</span>How it&#x27;s computed</h2><p>SENSI SpeechFeatures offers two envelope methods (toggle: <code>env_method</code>). Both
 return a value at every point of the canonical grid <code>N = round(duration × rate)</code> and then apply a power-law compression <code>comp</code> (default
 <code>log₁₀(2) ≈ 0.30103</code>).</p>
 <p><strong><code>rms</code> (default) — faithful replica of <code>mTRFenvelope.m</code> → <code>mTRFresample.m</code>.</strong>
@@ -67,18 +67,16 @@ anti-alias filter and the downsampling step; no separate filter is applied.</p>
 <p>The <strong><code>window</code></strong> parameter (default <code>1</code>) sets the averaging width in output
 samples; values <code>&gt; 1</code> overlap adjacent frames for extra smoothing <strong>without</strong>
 changing the output rate — the same <code>window</code> argument as <code>mTRFresample</code>.</p>
-<p>The mTRF default, which SensiExtractor matches, is the <strong>exact</strong> constant
+<p>The mTRF default, which SENSI SpeechFeatures matches, is the <strong>exact</strong> constant
 <code>comp = log₁₀(2) ≈ 0.30103</code> — carried at full float precision, not the
 rounded <code>0.3</code>. On normalized audio (values &lt; 1) the difference is
 systematic: a rounded <code>0.3</code> makes every frame slightly larger than
-MATLAB's, so the <code>rms</code> method would no longer be bit-for-bit with
-<code>mTRFenvelope.m</code>. (Prior to prefs v17 the shipped default was <code>0.3</code>,
-which quietly broke that replication; v17 migrates a stored <code>0.3</code> back to
-the exact constant.) This is not arbitrary: Stevens' loudness
+MATLAB's, so the <code>rms</code> method would not be bit-for-bit with
+<code>mTRFenvelope.m</code>. This is not arbitrary: Stevens' loudness
 law found that the perceived loudness of a tone grows as a power function
 of intensity with exponent <code>log₁₀(2)</code> <a href="#stevens-1955">Stevens 1955</a>, and <code>mTRFenvelope.m</code>
 cites that law for its default (&quot;to model human auditory perception&quot;).
-Note the base of the exponent: the toolbox (and SensiExtractor) raise the
+Note the base of the exponent: the toolbox (and SENSI SpeechFeatures) raise the
 <strong>RMS amplitude</strong> to <code>log₁₀(2)</code>, while Stevens' exponent is on
 <strong>intensity</strong>. Intensity is proportional to amplitude squared, so
 <code>amplitude^0.301 = intensity^0.151</code>: half the loudness-law exponent. The
@@ -114,7 +112,7 @@ trim the EEG and predictor to the common length.</li>
 full control: most TRF pipelines z-score each predictor and each EEG channel
 before fitting. The <code>config</code> struct in the <code>.mat</code> records <code>analysis_rate</code>,
 <code>env_method</code>, <code>env_comp</code>, <code>env_window</code>, and <code>source_sr</code> for provenance.</p>
-</section><section id="code"><a id="implementation-in-sensiextractor"></a><h2><span class="num">6.5.1.7</span>In the code</h2><div class="card"><div class="card-title">Open in GitHub</div><ul><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/extractors/acoustic_ts.py"><code>sensi/extractors/acoustic_ts.py</code></a></li></ul></div><p>Source: <code>sensi/extractors/acoustic_ts.py</code> → <code>amplitude_envelope(y, sr, rate, *, method, comp, window)</code>. The <code>rms</code> branch is a line-for-line port of
+</section><section id="code"><a id="implementation-in-sensi-speechfeatures"></a><h2><span class="num">6.5.1.7</span>In the code</h2><div class="card"><div class="card-title">Open in GitHub</div><ul><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/extractors/acoustic_ts.py"><code>sensi/extractors/acoustic_ts.py</code></a></li></ul></div><p>Source: <code>sensi/extractors/acoustic_ts.py</code> → <code>amplitude_envelope(y, sr, rate, *, method, comp, window)</code>. The <code>rms</code> branch is a line-for-line port of
 <code>mTRFenvelope.m</code> + <code>mTRFresample.m</code>: for each output frame it averages <code>y²</code>
 over the centered window <code>[round(sr·(t−h)), round(sr·(t+h))]</code> (with <code>t = i/rate</code>
 and <code>h = 0.5·window/rate</code>), clamped to the signal bounds, then takes the square
@@ -158,7 +156,7 @@ higher-level (lexical, semantic) responses.</p>
         <a class="prev" href="../../features/acoustic/index.html"><small>Previous</small>Acoustic level</a>
         <a class="next" href="../../features/acoustic/acoustic_onset_envelope.html"><small>Next</small>Onset envelope (HWR derivative)</a>
       </nav>
-      <footer>SensiExtractor User Manual · version 0.2.0 · built 2026-10-27 · source: <a href="https://github.com/edneuro/SENSI-Speech-Features">edneuro/SENSI-Speech-Features</a></footer>
+      <footer>SENSI SpeechFeatures User Manual · version 0.2.0 · built 2026-11-03 · source: <a href="https://github.com/edneuro/SENSI-Speech-Features">edneuro/SENSI-Speech-Features</a></footer>
     </div>
   </main>
   <aside class="right" aria-label="On this page">

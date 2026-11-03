@@ -48,7 +48,7 @@ contrasts can be expressed acoustically**. For naturalistic-EEG:
   including the step into each new word — a useful regressor for
   studies of intonational phrase structure.
 
-## Implementation in SensiExtractor
+## Implementation in SENSI SpeechFeatures
 Source: `sensi/extractors/syllable_prosody.py`. Reuses the same `Contours`
 object as the word- and document-level prosody extractors — one Praat
 call per audio file, three different slicing windows.
@@ -61,9 +61,8 @@ call per audio file, three different slicing windows.
 3. Over the whole stimulus, subtract from each syllable's mean the
    mean of the most recent earlier syllable that has one
    (`mean - mean.ffill().shift(1)`), giving `Pitch_Delta` /
-   `Volume_Delta`. This matches the word-level deltas. Before
-   2026-10-21 a plain `diff()` was used, so a syllable following an
-   unvoiced one was also blank.
+   `Volume_Delta`. This matches the word-level deltas, so a syllable following an
+   unvoiced one is not blank.
 4. PUNCT / unaligned rows → NaN for all four columns.
 
 The pitch-units configuration (semitones vs. Hz) is shared with the

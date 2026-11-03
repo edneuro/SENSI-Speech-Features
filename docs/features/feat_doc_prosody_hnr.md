@@ -49,7 +49,7 @@ autocorrelation function ([Boersma 1993]). Unvoiced frames return
 −200 dB (Praat's sentinel for "no harmonic content"); those frames
 are excluded from the mean.
 
-## Implementation in SensiExtractor
+## Implementation in SENSI SpeechFeatures
 Computed in `sensi/extractors/prosody.py:compute_doc_prosody` (called from
 `sensi/pipeline.py`'s document-batch finishing step) from the same `Contours`
 object used by the other prosody columns. Per-frame HNR

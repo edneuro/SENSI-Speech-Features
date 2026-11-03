@@ -36,7 +36,7 @@ All 12 layers are shipped intact for the same reason as the
 sentence-level EEG / fMRI prediction is task- and ROI-dependent
 ([Toneva 2019]).
 
-## Implementation in SensiExtractor
+## Implementation in SENSI SpeechFeatures
 Source: `sensi/extractors/bert_embed.py:embed_bert_words_and_sentences`
 
 **What the code does** (verified against the source):
@@ -95,7 +95,7 @@ so `embeddings` stays backward-compatible:
 - *Mean-pool rather than the CLS token* — raw BERT's CLS vector is a
   poor unsupervised sentence embedding: on semantic-similarity
   benchmarks, averaging BERT's token vectors scored 54.8 vs 29.2 for the
-  CLS output [Reimers 2019]. Mean-pooling is SensiExtractor's choice,
+  CLS output [Reimers 2019]. Mean-pooling is SENSI SpeechFeatures's choice,
   not a convention of the brain-encoding papers: [Toneva 2019] and
   [Schrimpf 2021] instead use the hidden state at the *last* word after
   feeding the preceding context. If you want that representation, take

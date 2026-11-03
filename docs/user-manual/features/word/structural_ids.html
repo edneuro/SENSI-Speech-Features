@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Structural identifier columns · SensiExtractor User Manual</title>
+<title>Structural identifier columns · SENSI SpeechFeatures User Manual</title>
 <link rel="icon" href="../../assets/icon.svg">
 <link rel="stylesheet" href="../../assets/theme.css">
 <link rel="stylesheet" href="../../assets/layout.css">
@@ -13,7 +13,7 @@
 <button class="menu-btn" type="button" aria-label="Open the outline">☰ Contents</button>
 <div class="shell">
   <nav class="left" aria-label="Manual outline">
-    <a class="brand" href="../../index.html"><img src="../../assets/icon.svg" alt="">SensiExtractor <span>User Manual</span></a>
+    <a class="brand" href="../../index.html"><img src="../../assets/icon.svg" alt="">SENSI SpeechFeatures <span>User Manual</span></a>
     <div class="search">
       <input type="search" placeholder="Search features, columns…  ( / )" aria-label="Search the manual">
       <div class="search-results" role="listbox"></div>
@@ -56,41 +56,23 @@ hierarchy. All are <strong>1-indexed integers</strong>.</p>
 </tr>
 </tbody>
 </table>
-<h3 id="whitespace-tokens-are-not-rows-fixed-2026-07-27">Whitespace tokens are not rows (fixed 2026-07-27)</h3>
+<h3 id="whitespace-tokens-are-not-rows">Whitespace tokens are not rows</h3>
 <p>spaCy emits a literal newline in the transcript as its own token
-(<code>upos == 'SPACE'</code>, text <code>&quot;\n&quot;</code>). Until 2026-07-27 the parser iterated
-every token, so each hard line wrap became an <strong>all-NaN word-CSV row that
-consumed both a <code>token_id</code> and a <code>token_in_sentence_id</code></strong>:</p>
-<pre><code>token_id=10  token_in_sentence_id=10  token=\n     ← consumed position 10
-token_id=11  token_in_sentence_id=11  token=were
-</code></pre>
-<p>Every word after a line break was therefore off by one in both id columns,
-and <code>token_in_sentence_id</code> was <strong>not</strong> a true position within its sentence
-— it was a position within the sentence's token stream <em>including</em> line
-wraps. Three of the ten SENSI validation transcripts were affected (the
-hard-wrapped <code>LJ*</code> files); the single-line ISC stimuli have no SPACE
-tokens, which is why it went unnoticed.</p>
-<p>Whitespace tokens are now skipped entirely. Consequences:</p>
+(<code>upos == 'SPACE'</code>, text <code>&quot;\n&quot;</code>). The parser skips these tokens
+entirely, so a hard line wrap does not produce a word-CSV row and does
+not consume a <code>token_id</code> or a <code>token_in_sentence_id</code>. Consequences:</p>
 <ul>
 <li><code>token_id</code> and <code>token_in_sentence_id</code> count <strong>emitted tokens only</strong> and
 are contiguous with no gaps.</li>
-<li><code>token_in_sentence_id</code> <strong>is</strong> now a true position within its sentence —
+<li><code>token_in_sentence_id</code> <strong>is</strong> a true position within its sentence —
 word <em>n</em> of the sentence, as printed.</li>
-<li>Nothing is lost by dropping the rows. They carried no features (every
-feature column was NaN), and paragraph membership was never encoded by
-them: <code>paragraph_id</code> is computed from <strong>blank lines</strong>, not single
-newlines, and has been all along. A hard wrap inside a sentence is not a
-paragraph break — in one validation stimulus a <code>\n</code> falls mid-sentence,
-and spaCy correctly assigns both halves the same <code>sentence_id</code>.</li>
-<li><code>head_token_id</code> still resolves correctly; see the note in
-Implementation, because that part was <strong>not</strong> free.</li>
+<li><code>paragraph_id</code> is computed from <strong>blank lines</strong>, not single newlines, so
+a hard wrap inside a sentence is not a paragraph break: both halves keep
+the same <code>sentence_id</code> and <code>paragraph_id</code>.</li>
+<li><code>head_token_id</code> resolves correctly; see the note in Implementation.</li>
 </ul>
-<p>⚠️ If you are comparing against a word CSV generated before 2026-07-27
-from a transcript containing hard line wraps, the id columns will differ
-by the number of preceding newlines. Join on <code>token</code>/<code>Onset</code> rather than
-on <code>token_id</code> when reconciling old and new outputs.</p>
-</section><section id="see"><h2><span class="num">6.1.1.2</span>See it</h2><div class="card"><div class="caption">Example <b>LJ002-0321</b> (LJ Speech, public domain): “Others who arrived just after the time of distribution were often 48 hours without food. The latter might also be six days without meat.”</div><audio controls preload="none" src="../../assets/audio/LJ002-0321.wav"></audio><table class="excerpt strip"><thead><tr><th>token</th><th>Others</th><th>who</th><th>arrived</th><th>just</th><th>after</th><th>the</th><th>time</th><th>of</th><th>distribution</th><th>were</th><th>often</th><th>48</th><th>hours</th><th>without</th><th>food</th><th>.</th></tr></thead><tbody><tr><th class="hl">doc_id</th><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td></tr><tr><th class="hl">paragraph_id</th><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td></tr><tr><th class="hl">sentence_id</th><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td></tr><tr><th class="hl">token_id</th><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td><td>9</td><td>10</td><td>11</td><td>12</td><td>13</td><td>14</td><td>15</td><td>16</td></tr><tr><th class="hl">token_in_sentence_id</th><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td><td>9</td><td>10</td><td>11</td><td>12</td><td>13</td><td>14</td><td>15</td><td>16</td></tr></tbody></table><div class="provenance">Read from <span class='file'>word/LJ002-0321_features.csv</span>, written by SensiExtractor on the example shown here. Nothing on this figure is typed in.</div></div></section><section id="output"><h2><span class="num">6.1.1.3</span>In your output</h2><div class="card"><div class="card-title">File <span class="file">word/&lt;stim&gt;_features.csv</span></div><table class="excerpt"><thead><tr><th class="hl">doc_id</th><th class="hl">paragraph_id</th><th class="">sentence_id</th><th class="hl">token_id</th><th class="hl">token_in_sentence_id</th><th class="">token</th></tr></thead><tbody><tr><td class="hl">1</td><td class="hl">1</td><td class="">1</td><td class="hl">1</td><td class="hl">1</td><td class="">Others</td></tr><tr><td class="hl">1</td><td class="hl">1</td><td class="">1</td><td class="hl">2</td><td class="hl">2</td><td class="">who</td></tr><tr><td class="hl">1</td><td class="hl">1</td><td class="">1</td><td class="hl">3</td><td class="hl">3</td><td class="">arrived</td></tr><tr><td class="hl">1</td><td class="hl">1</td><td class="">1</td><td class="hl">4</td><td class="hl">4</td><td class="">just</td></tr><tr><td class="hl">1</td><td class="hl">1</td><td class="">1</td><td class="hl">5</td><td class="hl">5</td><td class="">after</td></tr><tr><td class="hl">1</td><td class="hl">1</td><td class="">1</td><td class="hl">6</td><td class="hl">6</td><td class="">the</td></tr><tr><td class="hl">1</td><td class="hl">1</td><td class="">1</td><td class="hl">7</td><td class="hl">7</td><td class="">time</td></tr><tr><td class="hl">1</td><td class="hl">1</td><td class="">1</td><td class="hl">8</td><td class="hl">8</td><td class="">of</td></tr><tr><td class="hl">1</td><td class="hl">1</td><td class="">1</td><td class="hl">9</td><td class="hl">9</td><td class="">distribution</td></tr><tr><td class="hl">1</td><td class="hl">1</td><td class="">1</td><td class="hl">10</td><td class="hl">10</td><td class="">were</td></tr><tr><td class="hl">1</td><td class="hl">1</td><td class="">1</td><td class="hl">11</td><td class="hl">11</td><td class="">often</td></tr><tr><td class="hl">1</td><td class="hl">1</td><td class="">1</td><td class="hl">12</td><td class="hl">12</td><td class="">48</td></tr></tbody></table><div class="caption">26 rows × 56 columns in the file; showing the feature's columns for the first sentence. An empty cell means no value (e.g. punctuation, or a word the measure doesn’t cover).</div><div class="provenance">Excerpt of the real file for <b>LJ002-0321</b>.</div></div></section><section id="matlab"><h2><span class="num">6.1.1.4</span>MATLAB</h2><div class="card" data-tabs><div class="tabpanel on"><pre data-copy><code>% Load the word-level table (one row per word)
-T = readtable(&#x27;word/LJ002-0321_features.csv&#x27;, &#x27;TextType&#x27;, &#x27;string&#x27;);
+</section><section id="see"><h2><span class="num">6.1.1.2</span>See it</h2><div class="card"><div class="caption">Example text (invented, run without audio): <b>structure.txt</b>: “The dog barked. Then it slept. Morning came.”</div><div ><figure><img src="../../assets/figures/structural_ids.svg" alt="Structural identifier columns — Default settings"></figure><figcaption>Structural identifier columns — Default settings</figcaption><div class="provenance">Read from <span class='file'>word/structure_features.csv</span>, written by SENSI SpeechFeatures on the example shown here. Nothing on this figure is typed in.</div></div></div></section><section id="output"><h2><span class="num">6.1.1.3</span>In your output</h2><div class="card"><div class="card-title">File <span class="file">word/&lt;stim&gt;_features.csv</span></div><table class="excerpt"><thead><tr><th class="hl">doc_id</th><th class="hl">paragraph_id</th><th class="">sentence_id</th><th class="hl">token_id</th><th class="hl">token_in_sentence_id</th><th class="">token</th></tr></thead><tbody><tr><td class="hl">12</td><td class="hl">1</td><td class="">1</td><td class="hl">1</td><td class="hl">1</td><td class="">The</td></tr><tr><td class="hl">12</td><td class="hl">1</td><td class="">1</td><td class="hl">2</td><td class="hl">2</td><td class="">dog</td></tr><tr><td class="hl">12</td><td class="hl">1</td><td class="">1</td><td class="hl">3</td><td class="hl">3</td><td class="">barked</td></tr><tr><td class="hl">12</td><td class="hl">1</td><td class="">1</td><td class="hl">4</td><td class="hl">4</td><td class="">.</td></tr><tr><td class="hl">12</td><td class="hl">1</td><td class="">2</td><td class="hl">5</td><td class="hl">1</td><td class="">Then</td></tr><tr><td class="hl">12</td><td class="hl">1</td><td class="">2</td><td class="hl">6</td><td class="hl">2</td><td class="">it</td></tr><tr><td class="hl">12</td><td class="hl">1</td><td class="">2</td><td class="hl">7</td><td class="hl">3</td><td class="">slept</td></tr><tr><td class="hl">12</td><td class="hl">1</td><td class="">2</td><td class="hl">8</td><td class="hl">4</td><td class="">.</td></tr><tr><td class="hl">12</td><td class="hl">2</td><td class="">3</td><td class="hl">9</td><td class="hl">1</td><td class="">Morning</td></tr><tr><td class="hl">12</td><td class="hl">2</td><td class="">3</td><td class="hl">10</td><td class="hl">2</td><td class="">came</td></tr><tr><td class="hl">12</td><td class="hl">2</td><td class="">3</td><td class="hl">11</td><td class="hl">3</td><td class="">.</td></tr></tbody></table><div class="caption">11 rows shown; showing the feature's columns, with the unit the run's units table gives for each. An empty cell means no value (e.g. punctuation, or a word the measure doesn’t cover).</div><div class="provenance">Excerpt of the real file for <b>structure</b>.</div></div></section><section id="matlab"><h2><span class="num">6.1.1.4</span>MATLAB</h2><div class="card" data-tabs><div class="tabpanel on"><pre data-copy><code>% Load the word-level table (one row per word)
+T = readtable(&#x27;word/structure_features.csv&#x27;, &#x27;TextType&#x27;, &#x27;string&#x27;);
 T.Properties.VariableNames             % every column in the file
 head(T(:, {&#x27;doc_id&#x27;, &#x27;paragraph_id&#x27;, &#x27;sentence_id&#x27;, &#x27;token_id&#x27;, &#x27;token_in_sentence_id&#x27;, &#x27;token&#x27;}), 10)                % this feature&#x27;s columns (first rows)
 </code></pre></div><div class="caption">Run from the output folder. Variable and column names were checked against the real files when this manual was built; the code itself was not run in MATLAB.</div></div></section><section id="x-usage"><a id="usage"></a><h2><span class="num">6.1.1.5</span>Usage</h2><ul>
@@ -104,7 +86,7 @@ needed to resolve the dependency tree.</li>
 its position inside its sentence. This pair is the foreign key the
 sub-word (syllable / phoneme) sidecars join back on.</li>
 </ul>
-</section><section id="code"><a id="implementation-in-sensiextractor"></a><h2><span class="num">6.1.1.6</span>In the code</h2><div class="card"><div class="card-title">Open in GitHub</div><ul><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/extractors/text_parser.py#L82"><code>sensi/extractors/text_parser.py → parse()</code></a></li><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/pipeline.py"><code>sensi/pipeline.py</code></a></li></ul></div><p>Source: <code>sensi/extractors/text_parser.py:parse</code>.</p>
+</section><section id="code"><a id="implementation-in-sensi-speechfeatures"></a><h2><span class="num">6.1.1.6</span>In the code</h2><div class="card"><div class="card-title">Open in GitHub</div><ul><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/extractors/text_parser.py#L82"><code>sensi/extractors/text_parser.py → parse()</code></a></li><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/pipeline.py"><code>sensi/pipeline.py</code></a></li></ul></div><p>Source: <code>sensi/extractors/text_parser.py:parse</code>.</p>
 <p><code>doc_id</code> is a parameter on <code>parse(text, doc_id=1)</code> — the batch loops in
 <code>sensi/pipeline.py</code> set it to each pair's 1-indexed position in the batch
 (<code>args.doc_id = i + 1</code>).</p>
@@ -121,14 +103,11 @@ aligner each see the raw text first.</p>
 as a per-sentence counter over non-whitespace tokens, and <code>token_id</code> as a
 global counter that increments across sentences. Tokens for which
 <code>token.is_space</code> is true are skipped and never become rows.</p>
-<p>⚠️ <strong>The whitespace skip required a second, non-obvious change</strong>, and
-omitting it would have silently corrupted the dependency parse. <code>parse</code>
-previously computed <code>head_token_id = token.head.i + 1</code>, using spaCy's own
-document index — which counts SPACE tokens. That agreed with <code>token_id</code>
-only <em>by accident</em>, because <code>token_id</code> counted them too. Skipping the rows
-without remapping would have left every <code>head_token_id</code> past the first
-newline pointing at the wrong word, with no error raised.</p>
-<p>So <code>parse</code> now runs two passes: the first builds
+<p>⚠️ <strong>The whitespace skip requires remapping heads.</strong> spaCy's own
+document index (<code>token.head.i + 1</code>) counts SPACE tokens, so using it
+directly would leave every <code>head_token_id</code> past the first newline
+pointing at the wrong word.</p>
+<p>So <code>parse</code> runs two passes: the first builds
 <code>id_by_doc_index: {token.i → token_id}</code> over surviving tokens only, and
 the second resolves each head through that map. A root token maps to its
 own <code>token_id</code>. Because heads are resolved through the map rather than
@@ -142,7 +121,7 @@ extractor as 1-based counters during the sentence walk.</p>
         <a class="prev" href="../../features/word/index.html"><small>Previous</small>Word level</a>
         <a class="next" href="../../features/word/structural_offsets.html"><small>Next</small>Structural character offsets</a>
       </nav>
-      <footer>SensiExtractor User Manual · version 0.2.0 · built 2026-10-27 · source: <a href="https://github.com/edneuro/SENSI-Speech-Features">edneuro/SENSI-Speech-Features</a></footer>
+      <footer>SENSI SpeechFeatures User Manual · version 0.2.0 · built 2026-11-03 · source: <a href="https://github.com/edneuro/SENSI-Speech-Features">edneuro/SENSI-Speech-Features</a></footer>
     </div>
   </main>
   <aside class="right" aria-label="On this page">

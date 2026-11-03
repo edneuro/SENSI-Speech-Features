@@ -45,7 +45,7 @@ the **text**, not the speaker's psychology directly.
 > ℹ️ **Not produced by LIWC software.** These reproduce, license-clean,
 > the *kind* of summary scores LIWC popularized, but compute them from
 > spaCy POS/morphology + a free valence lexicon — **no LIWC dictionary is
-> involved**. SensiExtractor cannot bundle LIWC: its
+> involved**. SENSI SpeechFeatures cannot bundle LIWC: its
 > [license](https://www.liwc.app/help/eula) forbids using the dictionary
 > outside LIWC's own software. For official LIWC-22 Analytic / Clout /
 > Authentic / Tone numbers, run LIWC's software — licensing at
@@ -125,7 +125,7 @@ LIWC algorithm and are not published with these values anywhere. This is
 why the scores are only meaningful **relative** to each other across your
 own stimuli (see the ⚠️ note under [*Meaning*](#meaning)).
 
-## Implementation in SensiExtractor
+## Implementation in SENSI SpeechFeatures
 Source: `sensi/extractors/psych_composite.py:compute_psych_composite`. It reads
 the spaCy-parsed token DataFrame the pipeline already produces (columns
 `token`, `upos`, `lemma`, `feats`, `dep_rel`) and maps each token to the

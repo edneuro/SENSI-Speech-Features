@@ -65,7 +65,7 @@ discourse:
 The same threshold applies to all four columns — they're not
 independently tunable.
 
-## Implementation in SensiExtractor
+## Implementation in SENSI SpeechFeatures
 Source: `sensi/extractors/prosody.py:compute_doc_prosody`. All four columns
 come from the MFA-aligned words (rows with an `Onset`/`End`), sorted by
 onset. The gap between consecutive words is the same quantity as the
@@ -84,9 +84,8 @@ doc_pause_pct_silence    = 100.0 * doc_pause_total_duration / span
 Words that share one MFA interval (e.g. the two halves of a contraction)
 produce a negative or zero gap, which never counts as a pause.
 
-Before 2026-10-21, `doc_pause_pct_silence` was emitted as a fraction
-(0–1) despite its name, and `doc_pause_mean_duration` was 0 instead of
-blank for a stimulus with no pauses.
+`doc_pause_pct_silence` is a percentage (0–100) of the speech span, and
+`doc_pause_mean_duration` is blank (not 0) for a stimulus with no pauses.
 
 These columns need forced alignment; without it the document prosody
 step does not run and they are left out. The doc-level page's preflight

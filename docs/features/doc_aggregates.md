@@ -45,7 +45,7 @@ column is the **proportion** of content words that model `<slug>`
 nailed exactly — a single-number "predictability score" for the
 document, per model.
 
-## Implementation in SensiExtractor
+## Implementation in SENSI SpeechFeatures
 Computed in `sensi/utils/doc_summary.py:build_doc_summary`. The
 `mean_zipf_freq` / `mean_edu_zipf_*` columns are each
 `np.nanmean(word_df[<fixed source column>])`. The predictability

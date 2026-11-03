@@ -54,13 +54,11 @@ page if you want it.
 | **Syllable** CSV | the `ARPABET` string itself, as a digit suffix per vowel | `D-R-IY1` |
 | **Phoneme** CSV | a separate [`Stress`](phoneme.md) column; `ARPABET` is bare | `ARPABET=IY`, `Stress=1` |
 
-The phoneme CSV's fused `Label` column was split into
-`ARPABET` + `Stress` + `IPA` on 2026-07-27. The syllable CSV's `ARPABET`
-was **not** touched: it is a dash-joined *string* over several phones, so
-there is no single stress value to lift out of it, and stripping the
-digits would have destroyed information for every existing consumer of
-that column. The 2026-07-27 change to this CSV was purely additive — one
-new `IPA` column.
+The phoneme CSV carries `ARPABET`, `Stress` and `IPA` as separate
+columns. The syllable CSV's `ARPABET` is a dash-joined *string* over
+several phones, so there is no single stress value to lift out of it, and
+stripping the digits would destroy information; the syllable CSV adds
+only an `IPA` column.
 
 Consequences to keep in mind:
 
@@ -88,7 +86,7 @@ Consequences to keep in mind:
   stimulus-pair contrasts in phonological-similarity studies. Use `IPA`
   instead when matching against a corpus that is not ARPABET-annotated.
 
-## Implementation in SensiExtractor
+## Implementation in SENSI SpeechFeatures
 Source: `sensi/extractors/syllabify.py:assign_labels` (`Label` / `ARPABET`) and
 `sensi/extractors/arpabet_ipa.py:syllable_to_ipa` (`IPA`), both downstream of
 MFA alignment.
@@ -122,16 +120,13 @@ MFA alignment.
   in [`articulation_rate`](feat_doc_prosody_articulation_rate.md) for the
   same dependency.
 
-**Rows, not just columns, changed on 2026-07-27.** Two long-standing
-defects in which words reach this file were fixed at the same time, and
-they change row counts on real stimuli:
+**Which words reach this file** affects row counts on real stimuli:
 
 - A token that shares one MFA word with the token before it (spaCy's
-  `was` + `n't` against MFA's single `wasn't`) used to produce a
-  **duplicate** set of syllable rows. It now emits once, under the first
-  token.
-- An out-of-dictionary word used to produce **no** syllable rows at all.
-  It now yields exactly one syllable carrying `ARPABET = 'spn'`.
+  `was` + `n't` against MFA's single `wasn't`) emits its syllable rows
+  once, under the first token.
+- An out-of-dictionary word yields exactly one syllable carrying
+  `ARPABET = 'spn'`.
 
 Both are described in full in [`phoneme`](phoneme.md).
 

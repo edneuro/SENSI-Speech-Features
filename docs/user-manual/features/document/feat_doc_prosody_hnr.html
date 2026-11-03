@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Document-level Harmonics-to-Noise Ratio (HNR) · SensiExtractor User Manual</title>
+<title>Document-level Harmonics-to-Noise Ratio (HNR) · SENSI SpeechFeatures User Manual</title>
 <link rel="icon" href="../../assets/icon.svg">
 <link rel="stylesheet" href="../../assets/theme.css">
 <link rel="stylesheet" href="../../assets/layout.css">
@@ -13,7 +13,7 @@
 <button class="menu-btn" type="button" aria-label="Open the outline">☰ Contents</button>
 <div class="shell">
   <nav class="left" aria-label="Manual outline">
-    <a class="brand" href="../../index.html"><img src="../../assets/icon.svg" alt="">SensiExtractor <span>User Manual</span></a>
+    <a class="brand" href="../../index.html"><img src="../../assets/icon.svg" alt="">SENSI SpeechFeatures <span>User Manual</span></a>
     <div class="search">
       <input type="search" placeholder="Search features, columns…  ( / )" aria-label="Search the manual">
       <div class="search-results" role="listbox"></div>
@@ -34,7 +34,7 @@ while hoarse voices give an [a] much lower than 20 dB (<a href="#boersma-2003">B
 figures are not a threshold for it; compare it between stimuli. Observed
 on our 10-stimulus validation corpus: <code>doc_hnr</code> 8.97–13.01 dB.</p>
 <p>A single value per stimulus.</p>
-</section><section id="see"><h2><span class="num">6.2.11.2</span>See it</h2><div class="card"><div class="caption">One row per example stimulus: the five LJ Speech clips and the two invented text-only sentences (no audio, so their audio-based columns are empty).</div><div ><figure><img src="../../assets/figures/feat_doc_prosody_hnr.svg" alt="Document-level Harmonics-to-Noise Ratio (HNR) — Default settings"></figure><figcaption>Document-level Harmonics-to-Noise Ratio (HNR) — Default settings</figcaption><div class="provenance">Read from <span class='file'>document/documents_summary_<timestamp>.csv</span>, written by SensiExtractor on the example shown here. Nothing on this figure is typed in.</div></div></div></section><section id="output"><h2><span class="num">6.2.11.3</span>In your output</h2><div class="card"><div class="card-title">File <span class="file">document/documents_summary_&lt;timestamp&gt;.csv</span></div><table class="excerpt"><thead><tr><th class="">stimulus_id</th><th class="hl">doc_hnr</th></tr></thead><tbody><tr><td class="">LJ002-0321</td><td class="hl">12.57</td></tr><tr><td class="">LJ003-0007</td><td class="hl">13.01</td></tr><tr><td class="">LJ005-0063</td><td class="hl">11.44</td></tr><tr><td class="">LJ005-0066</td><td class="hl">12.4</td></tr><tr><td class="">LJ019-0027</td><td class="hl">12.7</td></tr><tr><td class="">predictable</td><td class="hl"></td></tr><tr><td class="">surprising</td><td class="hl"></td></tr></tbody></table><div class="caption">7 rows × 80 columns in the file; showing the feature's columns. An empty cell means no value (e.g. punctuation, or a word the measure doesn’t cover).</div><div class="provenance">Excerpt of the real file for <b>LJ002-0321</b>.</div></div></section><section id="matlab"><h2><span class="num">6.2.11.4</span>MATLAB</h2><div class="card" data-tabs><div class="tabpanel on"><pre data-copy><code>% Load the document-level table (one row per stimulus)
+</section><section id="see"><h2><span class="num">6.2.11.2</span>See it</h2><div class="card"><div class="caption">One row per example stimulus: the 5 LJ Speech recordings with their transcripts.</div><div ><figure><img src="../../assets/figures/feat_doc_prosody_hnr.svg" alt="Document-level Harmonics-to-Noise Ratio (HNR) — Default settings"></figure><figcaption>Document-level Harmonics-to-Noise Ratio (HNR) — Default settings</figcaption><div class="provenance">Read from <span class='file'>document/documents_summary_<timestamp>.csv</span>, written by SENSI SpeechFeatures on the example shown here. Nothing on this figure is typed in.</div></div></div></section><section id="output"><h2><span class="num">6.2.11.3</span>In your output</h2><div class="card"><div class="card-title">File <span class="file">document/documents_summary_&lt;timestamp&gt;.csv</span></div><table class="excerpt"><thead><tr><th class="">stimulus_id</th><th class="hl">doc_hnr<br><small>dB</small></th></tr></thead><tbody><tr><td class="">LJ002-0321</td><td class="hl">12.57</td></tr><tr><td class="">LJ003-0007</td><td class="hl">13.01</td></tr><tr><td class="">LJ005-0063</td><td class="hl">11.44</td></tr><tr><td class="">LJ005-0066</td><td class="hl">12.4</td></tr><tr><td class="">LJ019-0027</td><td class="hl">12.7</td></tr></tbody></table><div class="caption">5 rows shown; showing the feature's columns, with the unit the run's units table gives for each. An empty cell means no value (e.g. punctuation, or a word the measure doesn’t cover).</div><div class="provenance">Excerpt of the real file.</div></div></section><section id="matlab"><h2><span class="num">6.2.11.4</span>MATLAB</h2><div class="card" data-tabs><div class="tabpanel on"><pre data-copy><code>% Load the document-level table (one row per stimulus)
 T = readtable(&#x27;document/documents_summary_&lt;timestamp&gt;.csv&#x27;, &#x27;TextType&#x27;, &#x27;string&#x27;);
 T.Properties.VariableNames             % every column in the file
 head(T(:, {&#x27;stimulus_id&#x27;, &#x27;doc_hnr&#x27;}), 10)                % this feature&#x27;s columns (first rows)
@@ -48,7 +48,7 @@ barh(T.doc_hnr); yticks(1:height(T)); yticklabels(T.stimulus_id); xlabel(&#x27;d
 autocorrelation function (<a href="#boersma-1993">Boersma 1993</a>). Unvoiced frames return
 −200 dB (Praat's sentinel for &quot;no harmonic content&quot;); those frames
 are excluded from the mean.</p>
-</section><section id="code"><a id="implementation-in-sensiextractor"></a><h2><span class="num">6.2.11.6</span>In the code</h2><div class="card"><div class="card-title">Open in GitHub</div><ul><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/extractors/prosody.py#L148"><code>sensi/extractors/prosody.py → compute_doc_prosody()</code></a></li><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/pipeline.py"><code>sensi/pipeline.py</code></a></li></ul></div><p>Computed in <code>sensi/extractors/prosody.py:compute_doc_prosody</code> (called from
+</section><section id="code"><a id="implementation-in-sensi-speechfeatures"></a><h2><span class="num">6.2.11.6</span>In the code</h2><div class="card"><div class="card-title">Open in GitHub</div><ul><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/extractors/prosody.py#L148"><code>sensi/extractors/prosody.py → compute_doc_prosody()</code></a></li><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/pipeline.py"><code>sensi/pipeline.py</code></a></li></ul></div><p>Computed in <code>sensi/extractors/prosody.py:compute_doc_prosody</code> (called from
 <code>sensi/pipeline.py</code>'s document-batch finishing step) from the same <code>Contours</code>
 object used by the other prosody columns. Per-frame HNR
 values come from Praat's <code>To Harmonicity (cc)</code> call; the mean
@@ -90,7 +90,7 @@ EEG confound.</p>
         <a class="prev" href="../../features/document/feat_doc_prosody_articulation_rate.html"><small>Previous</small>Articulation rate</a>
         <a class="next" href="../../features/subword/index.html"><small>Next</small>Sub-word level</a>
       </nav>
-      <footer>SensiExtractor User Manual · version 0.2.0 · built 2026-10-27 · source: <a href="https://github.com/edneuro/SENSI-Speech-Features">edneuro/SENSI-Speech-Features</a></footer>
+      <footer>SENSI SpeechFeatures User Manual · version 0.2.0 · built 2026-11-03 · source: <a href="https://github.com/edneuro/SENSI-Speech-Features">edneuro/SENSI-Speech-Features</a></footer>
     </div>
   </main>
   <aside class="right" aria-label="On this page">
