@@ -53,7 +53,7 @@ Forced alignment gives one acoustic word where the text parser sees several
 tokens (`don't` is parsed as `do` + `n't`; `John's` as `John` + `'s`). The CSV
 keeps one row per parsed token, each carrying the same `Onset`/`End`. The
 `.mat` merges such a run into **one row**, so it differs from the CSV on those
-words. `token` is the aligned word; the feature columns combine as follows:
+words. `token` is the original text span of the word (for example `Don't`); the feature columns combine as follows:
 
 | Column kind | Rule |
 |---|---|
@@ -64,6 +64,8 @@ words. `token` is the aligned word; the feature columns combine as follows:
 | prosody and timing (`Pitch_*`, `Volume_*`, `Word_Gap`, …) | first part (the parts share one Onset–End window) |
 | frequency and lexical norms (`Zipf_Freq`, `AoA_*`, `Concreteness`, …) | looked up again for the joined form with the same lookup the CSV uses; `NaN` if the joined form is absent |
 | `token_id`, `sentence_id` | first part |
+
+A merged word's value is `NaN` if any of its parts is `NaN`.
 
 ⚠️ Why these rules: surprisal is a negative log probability, and by the chain
 rule −log P(do) − log P(n't | do) = −log P(don't), so the parts' surprisals
@@ -88,8 +90,9 @@ xlabel('time (s)'); ylabel('gpt2 surprisal');
 
 % Put the events on your own sampling grid (fs Hz, N samples)
 fs = 128;
-N  = ceil(max(S.offset) * fs);
-x  = accumarray(round(S.onset*fs) + 1, S.gpt2_Surprisal, [N 1]);
+N  = ceil(max(S.offset) * fs) + 1;
+ok = ~isnan(S.gpt2_Surprisal);
+x  = accumarray(round(S.onset(ok)*fs) + 1, S.gpt2_Surprisal(ok), [N 1]);
 
 % What the feature columns are, and their units
 [S.columns, S.units]

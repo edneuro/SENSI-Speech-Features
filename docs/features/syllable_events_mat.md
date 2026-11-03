@@ -55,15 +55,16 @@ xlabel('time (s)'); ylabel('Pitch\_Mean');
 
 % Put the events on your own sampling grid (fs Hz, N samples)
 fs = 128;
-N  = ceil(max(S.offset) * fs);
-x  = accumarray(round(S.pcenter*fs) + 1, S.Pitch_Mean, [N 1]);
+N  = ceil(max(S.offset) * fs) + 1;
+ok = ~isnan(S.Pitch_Mean);
+x  = accumarray(round(S.pcenter(ok)*fs) + 1, S.Pitch_Mean(ok), [N 1]);
 ```
 
 `accumarray` adds the values that land on the same sample; `x(idx) = v` would
 keep only the last of several events sharing a sample. Replace `S.pcenter`
 with `S.onset` for physical syllable onsets, or if P-center was off (the
 variable is then absent). `NaN` feature values propagate through
-`accumarray`; use `fillmissing` or drop them first if the feature has gaps.
+`accumarray`, so the snippet drops them first when the feature has gaps.
 
 ## Implementation in SENSI SpeechFeatures
 Source: `sensi/utils/event_mat.py:syllable_event_vars`; written by

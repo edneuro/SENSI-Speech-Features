@@ -93,11 +93,14 @@ def test_word_events_when_csv_off(tmp_path, monkeypatch):
 
 def test_text_only_skips(tmp_path, monkeypatch, capsys):
     df = WORD_DF.drop(columns=["Onset", "End"])
-    args, out = _setup(tmp_path, monkeypatch, audio=False, word_df=df)
+    args, out = _setup(tmp_path, monkeypatch, audio=False, word_df=df,
+                       no_syllable_events_mat=False)
     run_word_level_batch(args)
     _manifest_ok(out)
     assert not list(out.rglob("*_events.mat"))
-    assert "[word_events] skipped for story: no aligned words" in capsys.readouterr().err
+    err = capsys.readouterr().err
+    assert "[word_events] skipped for story: no aligned words" in err
+    assert "[syllable_events] skipped for story: no aligned syllables" in err
 
 
 def test_syllable_events_with_syllable_csv_off(tmp_path, monkeypatch):
@@ -114,8 +117,6 @@ def test_syllable_events_with_syllable_csv_off(tmp_path, monkeypatch):
 def test_doc_pass_never_writes(tmp_path, monkeypatch):
     args, out = _setup(tmp_path, monkeypatch)
     args.no_word_events_mat = False
-    try:
-        run_doc_level_batch(args)
-    except Exception:
-        pass  # the doc pass is stubbed only as far as run(); we assert on outputs
+    run_doc_level_batch(args)
+    assert list((out / "document").glob("*.csv"))
     assert not list(out.rglob("*_events.mat"))

@@ -178,7 +178,7 @@ phoneme-surprisal card): per-file toggles on the level pages, not the Run page.
   only the frame, which the word pass always builds; the syllable toggle makes
   `syllabify_pairs` run like `_want_psr` does for the phoneme `.mat`. "Agrees
   with the CSV" means: the same per-column toggles decide the columns.
-- Units (my call): `emit.py` puts a `{(artifact, column): unit}` map on the
+- Units (my call): `emit.py` puts a `{artifact: {column: unit}}` map on the
   namespace (`ns.event_units`), built once per dispatch from the same plan, so
   the writer never re-reads prefs. The unit lookup must cover the event files'
   columns even when the CSV artifact is off.

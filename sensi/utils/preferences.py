@@ -1046,10 +1046,6 @@ def _migrate_outputs_to_levels(merged: dict, old_output: dict) -> None:
         o.pop(key, None)
 
 # ---------------------------------------------------------------------------
-# Active schema aliases
-# ---------------------------------------------------------------------------
-
-# ---------------------------------------------------------------------------
 # v22 constants
 #
 # Additive: opt-in per-stimulus MATLAB event files (word/<stim>_word_events.mat,

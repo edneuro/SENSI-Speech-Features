@@ -1012,6 +1012,9 @@ def run_word_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None
                             lambda t, u: syllable_event_vars(
                                 full_syll_df, syll_df.columns, t, u),
                             'no aligned syllables')
+                elif _want_syll_events:
+                    print(f'[syllable_events] skipped for {pair.stimulus_id}: '
+                          'no aligned syllables', file=sys.stderr)
 
                 if not getattr(args, 'no_phonemes', False) and len(phon_df) > 0:
                     drop = _phoneme_columns_to_drop(
@@ -1020,6 +1023,9 @@ def run_word_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None
                         phon_df = phon_df.drop(columns=[c for c in drop if c in phon_df.columns])
                     phon_path = _level_dir(output_dir, 'phoneme') / f'{pair.stimulus_id}_phonemes.csv'
                     phon_df.to_csv(phon_path, index=False)
+            elif _want_syll_events:
+                print(f'[syllable_events] skipped for {pair.stimulus_id}: '
+                      'no aligned syllables', file=sys.stderr)
 
             # Sentence-level sidecar — emits sentence/ subfolder CSV.
             if not getattr(args, 'no_sentences', False):

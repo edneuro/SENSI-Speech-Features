@@ -87,7 +87,8 @@ def merge_spoken_words(df: pd.DataFrame,
     """Merge consecutive non-PUNCT rows sharing (Onset, End, Transcript).
 
     Groups of one row pass through unchanged. Rows with NaN Onset or PUNCT
-    are never merged. A merged row's `token` is the group's Transcript.
+    are never merged. A merged row's `token` is the original text span (the
+    group's Transcript when no sentence offsets are available).
     """
     need = {"Onset", "End", "Transcript"}
     if df.empty or not need.issubset(df.columns):
@@ -114,10 +115,17 @@ def merge_spoken_words(df: pd.DataFrame,
         part = df.iloc[g]
         word = part["Transcript"].iloc[0]
         looked = relookup(word) or {}
+        shown = word            # start/end are 1-indexed inclusive
+        if {"sentence", "start", "end"}.issubset(df.columns):
+            try:
+                shown = str(part["sentence"].iloc[0])[
+                    int(part["start"].iloc[0]) - 1:int(part["end"].iloc[-1])]
+            except (TypeError, ValueError):
+                shown = word
         row = {}
         for col in df.columns:
             if col == "token":
-                row[col] = word
+                row[col] = shown
             elif col == "End":
                 row[col] = part[col].iloc[-1]
             elif col == "Word_Duration":
@@ -144,6 +152,8 @@ def _feature_columns(df, keep, exclude) -> list[str]:
         if col not in keep or col in exclude:
             continue
         src = df[col]
+        if col in _STRING_COLS:
+            continue
         num = pd.to_numeric(src, errors="coerce")
         if num.isna().all() and src.notna().any():
             continue                      # string column

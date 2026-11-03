@@ -150,3 +150,24 @@ def test_savemat_roundtrip(tmp_path):
     assert m["token"].shape == (3, 1)
     assert m["token"].dtype == object
     assert m["onset"].shape == (3, 1)
+
+
+def test_merged_token_uses_original_text_span():
+    df = pd.DataFrame({
+        "token": ["Do", "n't"], "upos": ["AUX", "PART"],
+        "sentence": ["Don't go.", "Don't go."], "start": [1, 3], "end": [2, 5],
+        "Transcript": ["don't", "don't"],
+        "Onset": [0.1, 0.1], "End": [0.5, 0.5],
+        "gpt2_Surprisal": [1.0, 2.0],
+    })
+    m = merge_spoken_words(df, RELOOK)
+    assert len(m) == 1 and m.token[0] == "Don't"
+    assert m.gpt2_Surprisal[0] == 3.0
+
+
+def test_all_nan_string_column_is_not_a_double_variable():
+    df = _frame().iloc[:4].copy()
+    df["Sem_Categories"] = NAN
+    v = word_event_vars(df, _keep(df), "the debtor's side", {}, RELOOK)
+    assert "Sem_Categories" not in v
+    assert "Sem_Categories" not in list(np.atleast_1d(v["columns"]))

@@ -111,20 +111,21 @@ xlabel('time (s)'); ylabel('Pitch\_Mean');
 
 % Put the events on your own sampling grid (fs Hz, N samples)
 fs = 128;
-N  = ceil(max(S.offset) * fs);
-x  = accumarray(round(S.pcenter*fs) + 1, S.Pitch_Mean, [N 1]);
+N  = ceil(max(S.offset) * fs) + 1;
+ok = ~isnan(S.Pitch_Mean);
+x  = accumarray(round(S.pcenter(ok)*fs) + 1, S.Pitch_Mean(ok), [N 1]);
 </code></pre>
 <p><code>accumarray</code> adds the values that land on the same sample; <code>x(idx) = v</code> would
 keep only the last of several events sharing a sample. Replace <code>S.pcenter</code>
 with <code>S.onset</code> for physical syllable onsets, or if P-center was off (the
 variable is then absent). <code>NaN</code> feature values propagate through
-<code>accumarray</code>; use <code>fillmissing</code> or drop them first if the feature has gaps.</p>
+<code>accumarray</code>, so the snippet drops them first when the feature has gaps.</p>
 </section><section id="x-configuration"><a id="configuration"></a><h2><span class="num">6.3.2.7</span>Configuration</h2><p>Sub-word features → <strong>Syllable timing</strong> card → <code>Events .mat (&lt;stim&gt;_syllable_events.mat)</code> toggle, off by default. The card's switch
 (<code>features.master_syllable_intervals</code>) greys it out; in <code>config/features.yaml</code>
 it is <code>features.feat_syllable_events_mat</code>. It is written only when the
 Sub-word level output is on, and a run with it on always aligns and
 syllabifies.</p>
-</section><section id="code"><a id="implementation-in-sensi-speechfeatures"></a><h2><span class="num">6.3.2.8</span>In the code</h2><div class="card"><div class="card-title">Open in GitHub</div><ul><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/utils/event_mat.py#L202"><code>sensi/utils/event_mat.py → syllable_event_vars()</code></a></li><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/pipeline.py#L851"><code>sensi/pipeline.py → run_word_level_batch()</code></a></li></ul></div><p>Source: <code>sensi/utils/event_mat.py:syllable_event_vars</code>; written by
+</section><section id="code"><a id="implementation-in-sensi-speechfeatures"></a><h2><span class="num">6.3.2.8</span>In the code</h2><div class="card"><div class="card-title">Open in GitHub</div><ul><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/utils/event_mat.py#L212"><code>sensi/utils/event_mat.py → syllable_event_vars()</code></a></li><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/pipeline.py#L851"><code>sensi/pipeline.py → run_word_level_batch()</code></a></li></ul></div><p>Source: <code>sensi/utils/event_mat.py:syllable_event_vars</code>; written by
 <code>sensi/pipeline.py:run_word_level_batch</code>.</p>
 <p><strong>What the code does:</strong></p>
 <ol>
