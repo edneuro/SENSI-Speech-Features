@@ -1,6 +1,6 @@
 ---
 key: pred_cloze
-name: Cloze probability
+name: Cloze probability (model estimate)
 levels: [word]
 gui_toggle: pred_cloze
 output_columns: ["<slug>_Cloze"]
@@ -10,8 +10,38 @@ depth: deep
 ---
 
 ## Meaning
-The conditional probability that a selected model assigns to each word
-given preceding context — i.e. the raw P, not its negative log:
+**Cloze in the literature.** A word's cloze probability is the
+proportion of people who, shown a sentence up to a gap, fill the gap with
+that word ([Taylor 1953]). If 18 of 30 participants write *toast* after
+*She spread butter on her …*, *toast* has a cloze probability of 0.6.
+
+**What this column is.** No participants are involved here:
+`<slug>_Cloze` is a **language-model estimate used in place of cloze**,
+the probability the model gives to the word that actually comes next. It
+is named after cloze because it answers the same question (how expected
+is this word, on a 0–1 scale), but it is a different quantity:
+
+- Human cloze counts each person's single best guess; the model spreads
+  its probability over its whole vocabulary, so its values for the same
+  words tend to be lower. On the target nouns of a large N400 study, the
+  mean GPT-2 (XL) probability was 0.38 against a mean human cloze of 0.63
+  ([Michaelov 2022]).
+- A word nobody writes down has a cloze probability of exactly 0. The
+  model never gives exactly 0: *violin* in *She spread butter on her
+  violin* gets `gpt2_Cloze` = 0.000008 in the manual's example run.
+- The closest model analogue of "most people would guess this word" is
+  [`<slug>_TopMatch`](pred_topmatch.md): whether the word was the model's
+  top prediction for the next word.
+- Which of the two better predicts behaviour or the brain is an empirical
+  question. Model probabilities predicted eye-tracking reading times
+  better than human cloze ([Hofmann 2022]), and surprisal from large
+  models fit N400 amplitude better than human cloze ([Michaelov 2022]).
+
+If your study has human cloze norms for its stimuli, they are a separate
+measure; this column does not reproduce them.
+
+The column itself is the model's conditional probability of each word
+given the preceding context, i.e. the raw P, not its negative log:
 
     <slug>_Cloze(wᵢ) = P_model(wᵢ | w₁ … wᵢ₋₁)    ∈ (0, 1]
 
@@ -34,12 +64,8 @@ once (see [Models](pred_surprisal.md#models)) writes one column per
 model, e.g. `gpt2_Cloze` and `llama3_8b_Cloze` side by side.
 
 ## EEG rationale
-"Cloze probability" is the historical name from offline human-cloze
-norming ([Taylor 1953]): show humans the context up to position `i`
-and ask them to fill in the missing word; tally the proportion who
-produce each candidate. The N400 was originally characterized as
-inversely proportional to (human) cloze probability ([Kutas 1984],
-[DeLong 2005]).
+The N400 was originally characterized as inversely proportional to
+(human) cloze probability ([Kutas 1984], [DeLong 2005]).
 
 `<slug>_Cloze` is the **modern machine analogue** — a model's
 conditional probability over the actual continuation. Where the
@@ -99,6 +125,7 @@ would turn any word above about 20 bits of surprisal into `0.0`).
 
 **LM-derived cloze:**
 - <a name="hofmann-2022"></a>**[Hofmann 2022]** Hofmann, Remus, Biemann, Radach, Kuchinke. *Language models explain word reading times better than empirical predictability.* Frontiers in Artificial Intelligence. [doi:10.3389/frai.2021.730570](https://doi.org/10.3389/frai.2021.730570) — LM probabilities outperform human cloze-completion probabilities at predicting fixation durations and gaze durations in English and German eye-tracking corpora.
+- <a name="michaelov-2022"></a>**[Michaelov 2022]** Michaelov, Coulson, Bergen. *So Cloze yet so Far: N400 Amplitude is Better Predicted by Distributional Information than Human Predictability Judgements.* IEEE Transactions on Cognitive and Developmental Systems. [doi:10.1109/TCDS.2022.3176783](https://doi.org/10.1109/TCDS.2022.3176783) ([arXiv:2109.01226](https://arxiv.org/abs/2109.01226)) — on the Nieuwland et al. (2018) EEG data, GPT-3, RoBERTa and ALBERT surprisal fit N400 amplitude better than human cloze; reports mean model probabilities and human cloze for the same target nouns.
 - <a name="michaelov-2024"></a>**[Michaelov 2024]** Michaelov, Bardolph, Van Petten, Bergen, Coulson. *Strong Prediction: Language Model Surprisal Explains Multiple N400 Effects.* Neurobiology of Language 5(1), 107–135. [doi:10.1162/nol_a_00105](https://doi.org/10.1162/nol_a_00105) — direct comparison: LM surprisal explains N400 amplitude better than cloze probability or distributional semantic similarity.
 - <a name="szewczyk-2022"></a>**[Szewczyk 2022]** Szewczyk & Federmeier. *Context-based facilitation of semantic access follows both logarithmic and linear functions of stimulus probability.* Journal of Memory and Language 123, 104311. [doi:10.1016/j.jml.2021.104311](https://doi.org/10.1016/j.jml.2021.104311) — N400 facilitation "combines linear and logarithmic functions"; graded even among unpredictable words.
 
@@ -108,6 +135,7 @@ would turn any word above about 20 bits of surprisal into `0.0`).
 [DeLong 2005]: #delong-2005
 [Smith 2013]: #smith-2013
 [Hofmann 2022]: #hofmann-2022
+[Michaelov 2022]: #michaelov-2022
 [Michaelov 2024]: #michaelov-2024
 [Szewczyk 2022]: #szewczyk-2022
 

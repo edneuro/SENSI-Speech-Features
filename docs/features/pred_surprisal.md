@@ -49,6 +49,13 @@ step as 12 vs 14. Real values from the manual's example run (GPT-2):
   → 2.9 bits; **hours** after *48* → 0.89 bits.
 - a content word after a short, open context sits high: **spread** after
   *She* → 13.9 bits, since almost any verb could follow.
+- a word the model did not see coming sits high even when it is ordinary
+  English. In *Others who arrived just after the time of* **distribution**
+  (LJ002-0321), GPT-2 gave *the* 56 % and **distribution** 14.7 bits;
+  after *were often*, **48** gets 18.7 bits (GPT-2's top guess, *the*, had
+  only 3 %), and **six** after *might also be* gets 12.7 bits. Writing
+  the number out does not lower it: *forty-eight* in the same place is
+  even less expected.
 
 Model surprisal on naturalistic reading corpora spans roughly 0–20 bits
 ([Wilcox 2020], Fig. 1), with most words well below the top of that

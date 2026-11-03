@@ -1208,7 +1208,7 @@ L 595.152 185.180002
    </g>
   </g>
   <g id="text_35">
-   <text style="font-weight: 600; font-size: 10.5px; font-family: 'Segoe UI', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: start" x="7.2" y="14.973281" transform="rotate(-0 7.2 14.973281)">Cloze probability</text>
+   <text style="font-weight: 600; font-size: 10.5px; font-family: 'Segoe UI', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: start" x="7.2" y="14.973281" transform="rotate(-0 7.2 14.973281)">Cloze probability (model estimate)</text>
   </g>
  </g>
  <defs>

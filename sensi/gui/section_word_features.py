@@ -216,7 +216,7 @@ class WordFeaturesSection(QWidget):
         for key, doc_key, label in [
             ("surprisal", "pred_surprisal",
              "Surprisal — -log₂ P(word | preceding context), in bits"),
-            ("cloze", "pred_cloze", "Cloze — P(word | preceding context)"),
+            ("cloze", "pred_cloze", "Cloze (model estimate) — P(word | preceding context)"),
             ("topmatch", "pred_topmatch",
              "Top-match — 1 if the model's top predicted next "
              "token equals the actual word"),
