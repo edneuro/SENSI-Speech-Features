@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Headless SensiExtractor runner — reads config/features.yaml + config/run.yaml.
+"""Headless SENSI SpeechFeatures runner — reads config/features.yaml + config/run.yaml.
 
 Uses the same planner + batch runners as the GUI, so behavior matches the app
 exactly. features.yaml says WHAT to extract (shareable; the GUI edits it);

@@ -1,4 +1,4 @@
-# SensiExtractor
+# SENSI SpeechFeatures
 
 Turn a spoken-word **audio file + its transcript** into publication-ready,
 **word-level feature tables** for naturalistic EEG analysis (e.g. N400 or TRF
@@ -98,7 +98,7 @@ Download the installer for your OS from
 
 ### Step 2 — Run the setup script
 
-From the SensiExtractor project folder:
+From the SENSI SpeechFeatures project folder:
 
 **Windows** (Anaconda Prompt):
 ```
@@ -121,9 +121,9 @@ Setup creates a double-click launcher tailored to your machine. A small
 console window opens alongside the GUI showing live progress logs (that's
 intentional — close the GUI and press a key to dismiss it).
 
-- **Windows:** double-click **`SensiExtractor`** (a shortcut with the app icon; it runs `runGUI.bat`).
-- **Linux:** double-click **`SensiExtractor`** (a `.desktop` entry with the app icon; it runs `runGUI.sh`).
-- **macOS:** double-click **`SensiExtractor`** (`SensiExtractor.app`, with the app icon). It opens no Terminal window; its log goes to `~/Library/Logs/SensiExtractor.log`. For live logs in Terminal, double-click **`runGUI.command`** instead.
+- **Windows:** double-click **`SENSI-SpeechFeatures`** (a shortcut with the app icon; it runs `runGUI.bat`).
+- **Linux:** double-click **`SENSI-SpeechFeatures`** (a `.desktop` entry with the app icon; it runs `runGUI.sh`).
+- **macOS:** double-click **`SENSI-SpeechFeatures`** (`SENSI-SpeechFeatures.app`, with the app icon). It opens no Terminal window; its log goes to `~/Library/Logs/SENSI-SpeechFeatures.log`. For live logs in Terminal, double-click **`runGUI.command`** instead.
 
 Or launch from a terminal:
 ```bash
@@ -145,8 +145,8 @@ app as usual: on its first start it moves your existing `hf_cache/`, `mfa_data/`
 
 ### GUI (recommended)
 
-Double-click the launcher created by setup (**`SensiExtractor`**, the
-app-icon shortcut on Windows/Linux and `SensiExtractor.app` on macOS), or from a
+Double-click the launcher created by setup (**`SENSI-SpeechFeatures`**, the
+app-icon shortcut on Windows/Linux and `SENSI-SpeechFeatures.app` on macOS), or from a
 terminal:
 
 ```bash
@@ -262,7 +262,7 @@ for that file.
 
 The GUI can't run on Sherlock (it's headless), and a local `./env` is built for
 one OS so it won't run on the cluster's nodes. Instead, the whole environment is
-packaged into a portable **Apptainer container** (`sensiextractor.sif`) and run
+packaged into a portable **Apptainer container** (`sensi-speechfeatures.sif`) and run
 there via a config file.
 
 Everything for that workflow — building the container, configuring the run,
@@ -284,7 +284,7 @@ policy are in **[`docs/reproducibility.md`](docs/reproducibility.md)**.
 ## Project structure
 
 ```
-SensiExtractor/
+SENSI-Speech-Features/
 ├── gui.py  run.py             # the two ways to start the app (GUI / headless)
 ├── setup.bat / setup.sh       # one-time setup (installs ./env from conda-lock.yml)
 ├── environment.yml            # conda deps (source)

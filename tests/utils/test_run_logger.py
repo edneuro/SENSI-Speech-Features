@@ -77,7 +77,7 @@ def test_manifest_contents(tmp_path):
     assert data['pairs'][0]['stimulus_id'] == 's1'
     assert data['pairs'][0]['status'] == 'success'
     assert 'system_info' in data
-    assert 'sensi_extractor_version' in data
+    assert 'sensi_speechfeatures_version' in data
     assert data['total_runtime_seconds'] >= 0
 
 

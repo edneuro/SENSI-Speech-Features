@@ -1,6 +1,6 @@
 # Reproducibility runbook
 
-How SensiExtractor's Python environment is pinned, how to change it safely, and
+How the SENSI SpeechFeatures Python environment is pinned, how to change it safely, and
 what to archive alongside a dataset release so the pipeline can be re-run years
 later. Design rationale (why two tiers, why conda-lock, why these platforms) is
 in [`dev/superpowers/specs/2026-07-10-reproducible-cross-platform-install-design.md`](../dev/superpowers/specs/2026-07-10-reproducible-cross-platform-install-design.md);
@@ -58,7 +58,7 @@ with Intel builds), and PyTorch stopped publishing Intel-Mac wheels at
 2.2.2 — a version that predates the NumPy 2 baseline the rest of this
 project's stack (gensim, pandas 2.x) requires. There is no pin that
 satisfies both "runs on Intel Mac" and "modern NumPy 2 stack," so Intel Mac
-is dropped upstream, not by a SensiExtractor decision. If a future PyTorch
+is dropped upstream, not by a SENSI SpeechFeatures decision. If a future PyTorch
 release resurrects Intel-Mac wheels against NumPy 2, revisit; until then,
 never add `osx-64` back to `environment.yml`.
 
@@ -66,7 +66,7 @@ never add `osx-64` back to `environment.yml`.
 
 `requirements.txt` pins `torch>=2.0,<2.8` (conda-lock currently resolves
 `2.7.1` on all three platforms). This is a **tooling limitation, not a
-SensiExtractor preference**: conda-lock's pip resolver cannot solve torch
+SENSI SpeechFeatures preference**: conda-lock's pip resolver cannot solve torch
 2.8+'s dependency chain, because torch 2.8+ declares newer NVIDIA CUDA
 wheels (`nvidia-*-cu12` 12.8.x, and CUDA-13-era `nvidia-*` 13.x packages)
 that the resolver can't find candidates for — the lock solve fails outright,
@@ -161,7 +161,7 @@ produce a published dataset. At each dataset release, record and store
 **three things together**, beside the published dataset in
 `../Data Curation/` (not just in this repo, which may itself change or move):
 
-1. **The git commit hash** of SensiExtractor at the time the dataset's
+1. **The git commit hash** of SENSI SpeechFeatures at the time the dataset's
    features were extracted (`git rev-parse HEAD`).
 2. **`conda-lock.yml`** from that same commit — the exact, hashed dependency
    graph. This is the primary, lightweight record: given the commit + this
@@ -169,7 +169,7 @@ produce a published dataset. At each dataset release, record and store
    same environment on any of the three supported platforms, indefinitely,
    as long as conda-forge/PyPI keep serving the pinned package versions.
 3. **A built image**, as a backup in case package indices go stale or
-   disappear: the existing `sherlock/sensiextractor.sif` Apptainer image (if
+   disappear: the existing `sherlock/sensi-speechfeatures.sif` Apptainer image (if
    one was built for that release), and optionally a portable `docker save`d
    tarball of the same environment plus its SHA256 checksum, so bit-rot in
    the tarball itself is detectable.

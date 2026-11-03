@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# SLURM GPU job: run the SensiExtractor pipeline on Sherlock INSIDE the Apptainer
-# container (sensiextractor.sif), driven by the two-file YAML config in
+# SLURM GPU job: run the SENSI SpeechFeatures pipeline on Sherlock INSIDE the Apptainer
+# container (sensi-speechfeatures.sif), driven by the two-file YAML config in
 # config/ (features.yaml + run.yaml), via the top-level run.py. The
 # environment comes from the .sif, so there is no $HOME/quota/module friction.
 # Submit from a login node:   sbatch sherlock/run_container.sbatch
@@ -29,16 +29,16 @@ ulimit -n "$(ulimit -Hn)" 2>/dev/null || true
 # ------------------------- CONFIG -------------------------------------
 # These default to the folder layout in RUNBOOK.md step 3. If you put the repo
 # or weights somewhere else, DON'T edit this file — override at submit time, e.g.
-#   sbatch --export=ALL,REPO=/my/path/SensiExtractor,HF_HOME=/my/scratch/hf_cache \
+#   sbatch --export=ALL,REPO=/my/path/SENSI-Speech-Features,HF_HOME=/my/scratch/hf_cache \
 #          -C GPU_MEM:16GB sherlock/run_container.sbatch
 # (editing here works too, but a re-rsync of the repo would overwrite it).
 # Durable base ($OAK if present, else $GROUP_HOME).
 STORAGE_BASE="${STORAGE_BASE:-${OAK:-$GROUP_HOME}}"
 # App code — bind-mounted, NOT baked into the .sif, so a re-rsync updates the
 # code (and config/features.yaml) without rebuilding the container.
-REPO="${REPO:-$GROUP_HOME/SensiExtractor}"
+REPO="${REPO:-$GROUP_HOME/SENSI-Speech-Features}"
 # The built container (one file), rsync'd into the repo's sherlock/ folder.
-SIF="${SIF:-$REPO/sherlock/sensiextractor.sif}"
+SIF="${SIF:-$REPO/sherlock/sensi-speechfeatures.sif}"
 # HF weights on personal $SCRATCH — MUST match download_models.sh's HF_HOME.
 export HF_HOME="${HF_HOME:-${SCRATCH:-$STORAGE_BASE}/sensi/hf_cache}"
 

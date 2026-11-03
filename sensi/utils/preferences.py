@@ -1402,7 +1402,7 @@ def load_preferences() -> dict[str, Any]:
         for path_, ok_ in ((f_path, f_ok), (r_path, r_ok)):
             if not ok_ and str(path_) not in _WARNED_UNPARSEABLE:
                 _WARNED_UNPARSEABLE.add(str(path_))
-                print(f"SensiExtractor: warning: {path_} could not be parsed "
+                print(f"SENSI SpeechFeatures: warning: {path_} could not be parsed "
                       "as YAML — it will be left unchanged on disk and this "
                       "session falls back to defaults for its settings.",
                       file=sys.stderr)

@@ -4,7 +4,7 @@
 Sherlock is a remote, **headless** HPC cluster — there's no desktop to run the GUI
 on, and a local conda env is built for one OS/CPU so it won't run on Sherlock's
 nodes as-is. So we package the whole environment — Python + MFA/Kaldi + models —
-into a single portable Linux **container image**, `sensiextractor.sif`, built with
+into a single portable Linux **container image**, `sensi-speechfeatures.sif`, built with
 **Apptainer** (the container runtime HPC clusters allow). That one file runs
 unchanged on Sherlock's compute nodes, including a GPU for the Llama LLM‑cloze.
 
@@ -23,11 +23,11 @@ container, via the top-level `run.py`.
 ## Two folders on Sherlock (fixed names — used everywhere below)
 | Purpose | Folder | Holds |
 |---|---|---|
-| **Durable** (code + container) | `$GROUP_HOME/SensiExtractor` | the repo, incl. `sherlock/sensiextractor.sif`, `config/features.yaml` (rsync'd from your machine), and `config/run.yaml` (created on Sherlock) |
+| **Durable** (code + container) | `$GROUP_HOME/SENSI-Speech-Features` | the repo, incl. `sherlock/sensi-speechfeatures.sif`, `config/features.yaml` (rsync'd from your machine), and `config/run.yaml` (created on Sherlock) |
 | **Working** (data + weights) | `$SCRATCH/sensi` | `transcripts/`, `audio/`, `output/`, `hf_cache/` |
 
 `$GROUP_HOME` is shared with your whole group — if a labmate also uses a folder
-called `SensiExtractor`, add a personal one in front (e.g. `$GROUP_HOME/<sunetid>/…`)
+called `SENSI-Speech-Features`, add a personal one in front (e.g. `$GROUP_HOME/<sunetid>/…`)
 and adjust the paths. Step 3 creates both folders.
 
 ## Which terminal runs what
@@ -51,9 +51,9 @@ sudo apt update && sudo apt install -y apptainer uidmap squashfuse fuse2fs
 Build it from the repo root. On Windows/WSL the repo is under `/mnt/c/...`; on
 Linux/macOS use its path. Output ≈ a few GB (mostly the CUDA torch for GPU Llama):
 ```bash
-cd path/to/SensiExtractor
+cd path/to/SENSI-Speech-Features
 export APPTAINER_TMPDIR=/var/tmp/apptmp APPTAINER_CACHEDIR=/var/tmp/apptmp/cache
-apptainer build sherlock/sensiextractor.sif sherlock/Apptainer.def
+apptainer build sherlock/sensi-speechfeatures.sif sherlock/Apptainer.def
 ```
 
 ## 2 · Configure the extraction — [local]
@@ -79,7 +79,7 @@ echo $GROUP_HOME $SCRATCH
 ```
 Create both folders (these expand automatically here):
 ```bash
-mkdir -p $GROUP_HOME/SensiExtractor $SCRATCH/sensi/{transcripts,audio,output,hf_cache}
+mkdir -p $GROUP_HOME/SENSI-Speech-Features $SCRATCH/sensi/{transcripts,audio,output,hf_cache}
 ```
 Create `config/run.yaml` in the repo folder — this is **machine-specific** (folders,
 analyzer name, token-file path) and is never rsync'd from your machine, so you write
@@ -87,8 +87,8 @@ it once, directly here. The repo's own `config/run_defaults.yaml` (a committed
 template, generated from the code defaults — it isn't on Sherlock yet, since the
 code lands in step 4) is the shape to copy; fill in your paths ✎:
 ```bash
-mkdir -p $GROUP_HOME/SensiExtractor/config
-cat > $GROUP_HOME/SensiExtractor/config/run.yaml <<'YAML'
+mkdir -p $GROUP_HOME/SENSI-Speech-Features/config
+cat > $GROUP_HOME/SENSI-Speech-Features/config/run.yaml <<'YAML'
 shared:
   analyzer_name: sherlock-run
   last_transcripts_folder: $SCRATCH/sensi/transcripts
@@ -102,7 +102,7 @@ YAML
 written. `hf_token_file` is just a **path** — you create that file in step 5, so no
 secret ever goes into this config. The shipped default, `hf_token.txt`, is a
 *relative* path, which `run.py` resolves against `config/` itself (not your home
-dir) — so it means `$GROUP_HOME/SensiExtractor/config/hf_token.txt` here. Use an
+dir) — so it means `$GROUP_HOME/SENSI-Speech-Features/config/hf_token.txt` here. Use an
 absolute path or `~/...` instead if you'd rather keep the token outside the repo
 folder. The folder keys (`last_*_folder`) follow the same rule: a relative
 path is resolved against `config/`, so absolute `$SCRATCH/...` paths are the
@@ -118,11 +118,11 @@ and the `dev/` folder stay behind (`data/dictionaries/` is sent);
 `config/preferences.json*` excluded so your local machine's folders and prefs
 never clobber the `run.yaml` you wrote on Sherlock in step 3):
 ```bash
-cd path/to/SensiExtractor
+cd path/to/SENSI-Speech-Features
 rsync -avP --exclude env --exclude hf_cache --exclude mfa_data --exclude gensim_data --exclude /dev --exclude .git \
   --exclude '*.sif' --exclude '__pycache__' \
   --exclude 'config/run.yaml' --exclude 'config/preferences.json*' \
-  ./ <sunetid>@login.sherlock.stanford.edu:<GROUP_HOME>/SensiExtractor/
+  ./ <sunetid>@login.sherlock.stanford.edu:<GROUP_HOME>/SENSI-Speech-Features/
 ```
 > rsync adds and overwrites files but never deletes, so files you removed
 > locally stay on Sherlock until you delete them there. `run.py` imports
@@ -130,8 +130,8 @@ rsync -avP --exclude env --exclude hf_cache --exclude mfa_data --exclude gensim_
 
 Container into the repo's `sherlock/` folder (a few GB):
 ```bash
-rsync -avP sherlock/sensiextractor.sif \
-  <sunetid>@login.sherlock.stanford.edu:<GROUP_HOME>/SensiExtractor/sherlock/
+rsync -avP sherlock/sensi-speechfeatures.sif \
+  <sunetid>@login.sherlock.stanford.edu:<GROUP_HOME>/SENSI-Speech-Features/sherlock/
 ```
 **Your input files — the data you actually want to analyze.** These go into
 `$SCRATCH/sensi/transcripts` and (only if using alignment / prosody / acoustic
@@ -162,12 +162,12 @@ HF website, saved once on Sherlock:**
 2. On Sherlock, save that token into the file your `config/run.yaml` points at —
    the shipped default `hf_token_file: hf_token.txt` (see step 3) is a relative
    path, so it resolves against the repo's own `config/` dir, i.e.
-   `$GROUP_HOME/SensiExtractor/config/hf_token.txt` — readable only by you.
+   `$GROUP_HOME/SENSI-Speech-Features/config/hf_token.txt` — readable only by you.
    Replace `hf_xxx…` with the token you just copied ✎:
 ```bash
 umask 077
-printf 'hf_xxxYOURTOKEN\n' > $GROUP_HOME/SensiExtractor/config/hf_token.txt
-chmod 600 $GROUP_HOME/SensiExtractor/config/hf_token.txt
+printf 'hf_xxxYOURTOKEN\n' > $GROUP_HOME/SENSI-Speech-Features/config/hf_token.txt
+chmod 600 $GROUP_HOME/SENSI-Speech-Features/config/hf_token.txt
 ```
    (This file is gitignored, same as on your local machine, so it's never rsync'd
    by the code-upload step or committed by accident.)
@@ -177,17 +177,17 @@ chmod 600 $GROUP_HOME/SensiExtractor/config/hf_token.txt
 ```bash
 export HF_HOME=$SCRATCH/sensi/hf_cache; mkdir -p $HF_HOME
 apptainer exec --bind $SCRATCH:$SCRATCH --env HF_HOME=$HF_HOME \
-  --env HF_TOKEN="$(cat $GROUP_HOME/SensiExtractor/config/hf_token.txt)" \
+  --env HF_TOKEN="$(cat $GROUP_HOME/SENSI-Speech-Features/config/hf_token.txt)" \
   --env HF_HUB_DISABLE_XET=1 \
-  $GROUP_HOME/SensiExtractor/sherlock/sensiextractor.sif \
+  $GROUP_HOME/SENSI-Speech-Features/sherlock/sensi-speechfeatures.sif \
   bash -c 'hf download gpt2 && hf download meta-llama/Meta-Llama-3-8B'
 ```
    If Word2Vec is ticked, also download it (~1.7 GB, once) into the repo's
    `data/gensim_data/`, where the offline job looks for it by default:
 ```bash
-apptainer exec --bind $GROUP_HOME/SensiExtractor:$GROUP_HOME/SensiExtractor \
-  --env GENSIM_DATA_DIR=$GROUP_HOME/SensiExtractor/data/gensim_data \
-  $GROUP_HOME/SensiExtractor/sherlock/sensiextractor.sif \
+apptainer exec --bind $GROUP_HOME/SENSI-Speech-Features:$GROUP_HOME/SENSI-Speech-Features \
+  --env GENSIM_DATA_DIR=$GROUP_HOME/SENSI-Speech-Features/data/gensim_data \
+  $GROUP_HOME/SENSI-Speech-Features/sherlock/sensi-speechfeatures.sif \
   python -c 'import gensim.downloader as d; print(d.load("word2vec-google-news-300", return_path=True))'
 ```
 
@@ -203,10 +203,10 @@ ulimit -n "$(ulimit -Hn)"
 export HF_HOME=$SCRATCH/sensi/hf_cache
 apptainer exec \
   --bind $SCRATCH:$SCRATCH \
-  --bind $GROUP_HOME/SensiExtractor:$GROUP_HOME/SensiExtractor \
+  --bind $GROUP_HOME/SENSI-Speech-Features:$GROUP_HOME/SENSI-Speech-Features \
   --env HF_HOME=$HF_HOME --env HF_HUB_OFFLINE=1 --env TRANSFORMERS_OFFLINE=1 \
-  $GROUP_HOME/SensiExtractor/sherlock/sensiextractor.sif \
-  python $GROUP_HOME/SensiExtractor/run.py
+  $GROUP_HOME/SENSI-Speech-Features/sherlock/sensi-speechfeatures.sif \
+  python $GROUP_HOME/SENSI-Speech-Features/run.py
 ```
 
 ## 7 · Build & submit the GPU job — [Sherlock-login]
@@ -229,19 +229,19 @@ size from the `sinfo` list that fits your model:
 - Bigger VRAM = **longer queue**, so don't over-request.
 ```bash
 sbatch --partition=gpu -C GPU_MEM:16GB \
-  $GROUP_HOME/SensiExtractor/sherlock/run_container.sbatch
+  $GROUP_HOME/SENSI-Speech-Features/sherlock/run_container.sbatch
 ```
 (Drop `--partition=gpu` if `gpu` is already your default; swap it for your partition
 otherwise. Change `16GB` to any value from the `sinfo` list.)
 
 > **⚠️ Paths.** The sbatch assumes the folder layout from **step 3**
-> (`$GROUP_HOME/SensiExtractor` for code+container, `$SCRATCH/sensi/hf_cache` for
+> (`$GROUP_HOME/SENSI-Speech-Features` for code+container, `$SCRATCH/sensi/hf_cache` for
 > weights). If you followed step 3, it just works. **If you used different folders,**
 > tell the sbatch where they are — add them to the same `--export` flag:
 > ```bash
 > sbatch --partition=gpu -C GPU_MEM:16GB \
->   --export=ALL,REPO=/your/path/SensiExtractor,HF_HOME=/your/scratch/hf_cache \
->   /your/path/SensiExtractor/sherlock/run_container.sbatch
+>   --export=ALL,REPO=/your/path/SENSI-Speech-Features,HF_HOME=/your/scratch/hf_cache \
+>   /your/path/SENSI-Speech-Features/sherlock/run_container.sbatch
 > ```
 > If a path is wrong the job exits immediately with `ERROR: … not found at <path>`
 > and the override hint — so it fails clearly, never silently.

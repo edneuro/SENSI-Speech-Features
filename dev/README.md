@@ -1,6 +1,6 @@
 # `dev/` — project history and development material
 
-Not needed to install or run SensiExtractor. This folder is the record of
+Not needed to install or run SENSI SpeechFeatures. This folder is the record of
 how the tool was built and why it works the way it does.
 
 | Path | What it is |

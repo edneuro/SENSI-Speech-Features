@@ -1,4 +1,4 @@
-"""SensiExtractor — PySide6 entry point.
+"""SENSI SpeechFeatures — PySide6 entry point.
 
 Run: python gui.py
 """
@@ -33,7 +33,7 @@ _ICON_PATH = ASSETS_DIR / "icon.svg"
 # Windows picks the taskbar button's icon by the process's AppUserModelID, not
 # by the window. Without an explicit ID the GUI runs as plain python.exe, gets
 # grouped with Python, and the taskbar can show Python's icon instead of ours.
-_APP_USER_MODEL_ID = "edneuro.SensiExtractor.GUI"
+_APP_USER_MODEL_ID = "edneuro.SENSI-SpeechFeatures.GUI"
 
 
 def _set_windows_app_id() -> None:

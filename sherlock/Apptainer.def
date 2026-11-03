@@ -1,4 +1,4 @@
-# SensiExtractor environment container for Sherlock.
+# SENSI SpeechFeatures environment container for Sherlock.
 #
 # WHAT THIS IS: a single-file (.sif) build of the *environment only* — conda
 # (MFA/Kaldi) + the pip layer, both installed from the committed conda-lock.yml,
@@ -17,13 +17,13 @@
 # BUILD (do this in WSL Ubuntu on your PC, from the REPO ROOT so the %files paths
 # below resolve — NOT from inside sherlock/):
 #
-#     cd /path/to/SensiExtractor        # your local clone of the repo
-#     apptainer build sherlock/sensiextractor.sif sherlock/Apptainer.def
+#     cd /path/to/SENSI-Speech-Features        # your local clone of the repo
+#     apptainer build sherlock/sensi-speechfeatures.sif sherlock/Apptainer.def
 #
 # The build needs outbound internet (conda + pip + spaCy + MFA downloads). It
-# produces ONE file: sherlock/sensiextractor.sif (~3-4 GB). Copy that one file to Sherlock:
+# produces ONE file: sherlock/sensi-speechfeatures.sif (~3-4 GB). Copy that one file to Sherlock:
 #
-#     rsync -avP sherlock/sensiextractor.sif <you>@login.sherlock.stanford.edu:$GROUP_HOME/sensi/
+#     rsync -avP sherlock/sensi-speechfeatures.sif <you>@login.sherlock.stanford.edu:$GROUP_HOME/sensi/
 #
 # ------------------------------------------------------------------------------
 # WHY miniforge base + conda-forge (not the old setup_env.sh gymnastics): inside
@@ -81,7 +81,7 @@ From: condaforge/miniforge3:latest
     export MKL_THREADING_LAYER=sequential
 
 %runscript
-    # `apptainer run sensiextractor.sif <args>` execs whatever you pass, inside the env.
+    # `apptainer run sensi-speechfeatures.sif <args>` execs whatever you pass, inside the env.
     # run_container.sbatch instead uses `apptainer exec ... python <repo>/run.py`.
     exec "$@"
 
@@ -91,7 +91,7 @@ From: condaforge/miniforge3:latest
     org.sensi.excludes  app-code(bind-mount) llama-weights(bind-mount)
 
 %help
-    SensiExtractor environment container (environment-only) for Sherlock.
+    SENSI SpeechFeatures environment container (environment-only) for Sherlock.
     Build in WSL from the repo root:
-        apptainer build sherlock/sensiextractor.sif sherlock/Apptainer.def
+        apptainer build sherlock/sensi-speechfeatures.sif sherlock/Apptainer.def
     Run the batch CLI (code + weights bind-mounted) via run_container.sbatch.

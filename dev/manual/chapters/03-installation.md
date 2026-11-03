@@ -87,13 +87,13 @@ It takes a while (the environment is about 6 GB). You only do it once.
 
 ## Step 3 — Launch
 
-Double-click the **SensiExtractor** launcher the setup created in the project folder:
+Double-click the **SENSI-SpeechFeatures** launcher the setup created in the project folder:
 
 | System | Launcher | Notes |
 |---|---|---|
-| Windows | **SensiExtractor** shortcut (runs `runGUI.bat`) | a console window opens next to the app with live progress — that's intentional |
-| macOS | **SensiExtractor.app** | no Terminal window; the log goes to `~/Library/Logs/SensiExtractor.log`. For live logs, double-click `runGUI.command` instead |
-| Linux | **SensiExtractor** desktop entry (runs `runGUI.sh`) | |
+| Windows | **SENSI-SpeechFeatures** shortcut (runs `runGUI.bat`) | a console window opens next to the app with live progress — that's intentional |
+| macOS | **SENSI-SpeechFeatures.app** | no Terminal window; the log goes to `~/Library/Logs/SENSI-SpeechFeatures.log`. For live logs, double-click `runGUI.command` instead |
+| Linux | **SENSI-SpeechFeatures** desktop entry (runs `runGUI.sh`) | |
 
 Or from a terminal in the project folder:
 

@@ -44,7 +44,7 @@ def detect_backend(dictionaries_dir: Path | None = None) -> tuple[str, Path | No
 
     LIWC is no longer auto-selected: the LIWC-22 EULA
     (https://www.liwc.app/help/eula) forbids using LIWC dictionary material
-    outside LIWC's own software, so SensiExtractor does not ship or default
+    outside LIWC's own software, so SENSI SpeechFeatures does not ship or default
     to it. The `_LiwcScorer` path is retained only for a license holder who
     explicitly selects it (semantic.backend: liwc, with their own `.dic` in
     data/dictionaries/; handled by `sensi.pipeline._resolve_sem_backend`, not here). `dictionaries_dir` is accepted

@@ -52,6 +52,9 @@ data/dictionaries/*.csv
 runGUI.command
 runGUI.sh
 runGUI.bat
+SENSI-SpeechFeatures.lnk
+SENSI-SpeechFeatures.desktop
+# launchers from before the rename (SensiExtractor)
 SensiExtractor.lnk
 SensiExtractor.desktop
 
@@ -82,7 +85,8 @@ sherlock/*.sif
 # Apptainer build scratch (writable sandbox dirs + interrupted-build leftovers)
 sherlock/build-temp-*/
 sherlock/*_sandbox/
+SENSI-SpeechFeatures.app/
 SensiExtractor.app/
 
-# User Manual: the real SensiExtractor outputs the manual is built from (scripts/build_manual.py)
+# User Manual: the real SENSI SpeechFeatures outputs the manual is built from (scripts/build_manual.py)
 !dev/manual/example_outputs/**/*.csv

@@ -33,13 +33,13 @@ RUN_YAML = "run.yaml"
 _RUN_SECTIONS = ("shared",)
 
 _FEATURES_HEADER = (
-    "# SensiExtractor feature config (features.yaml) — what to extract.\n"
+    "# SENSI SpeechFeatures feature config (features.yaml) — what to extract.\n"
     "# Global/shareable: the GUI's \"Reset settings\" rewrites this file, and a\n"
     "# headless run (run.py) consumes it as-is.\n"
     "# Comments are regenerated on every save; hand-added comments do not survive.\n"
 )
 _RUN_HEADER = (
-    "# SensiExtractor run config (run.yaml) — machine/run-specific.\n"
+    "# SENSI SpeechFeatures run config (run.yaml) — machine/run-specific.\n"
     "# Folders, analyzer name, theme, token-file paths. Never touched by the\n"
     "# GUI's \"Reset settings\".\n"
     "# Comments are regenerated on every save; hand-added comments do not survive.\n"

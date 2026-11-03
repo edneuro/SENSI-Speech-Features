@@ -75,7 +75,7 @@ def external_links(out_dir: Path) -> list[str]:
             if not doi_registered(u):
                 bad.append(f"DOI not registered: {u}")
             continue
-        req = urllib.request.Request(u, method="GET", headers={"User-Agent": "Mozilla/5.0 (SensiExtractor manual link check)"})
+        req = urllib.request.Request(u, method="GET", headers={"User-Agent": "Mozilla/5.0 (SENSI SpeechFeatures manual link check)"})
         try:
             with urllib.request.urlopen(req, timeout=12) as r:
                 if r.status >= 400:

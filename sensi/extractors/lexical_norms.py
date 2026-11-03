@@ -7,7 +7,7 @@ Adds these columns to a token DataFrame:
     Imageability, Familiarity  (MRC Psycholinguistic Database)
     Valence, Arousal, Dominance (Warriner et al. 2013)
 
-Norm data is **never shipped** with SensiExtractor (house-use / BYO-files —
+Norm data is **never shipped** with SENSI SpeechFeatures (house-use / BYO-files —
 see the data-distribution policy). Each source is a user-supplied parquet at
 a configurable local path under ``data/dictionaries/``. If a source's file is
 missing, that source's columns are emitted as NaN and a warning is logged;

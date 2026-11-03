@@ -1,6 +1,6 @@
 # Feature Dependencies Map
 
-**Purpose.** Bottom-up inventory of every feature SensiExtractor produces, grouped by **level** (word / sub-word / sentence / document) and by **cluster** (features that share libraries, inputs, and outputs). The top section lists **shared stages** — heavy infrastructure (spaCy parse, MFA, Praat-Parselmouth) that produces level-independent artifacts multiple feature clusters consume.
+**Purpose.** Bottom-up inventory of every feature SENSI SpeechFeatures produces, grouped by **level** (word / sub-word / sentence / document) and by **cluster** (features that share libraries, inputs, and outputs). The top section lists **shared stages** — heavy infrastructure (spaCy parse, MFA, Praat-Parselmouth) that produces level-independent artifacts multiple feature clusters consume.
 
 **Audience.** Anyone designing the dispatcher / planner that translates the user's output selection into a minimal pipeline run. The planner walks this graph backward: from "what columns/CSVs the user wants" → "which feature clusters" → "which shared stages must run".
 

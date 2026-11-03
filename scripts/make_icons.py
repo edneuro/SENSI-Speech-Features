@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """Render assets/icon.svg into raster icon files used by the double-click
 launchers: assets/icon.png (Linux .desktop), assets/icon.ico (Windows
-shortcut) and assets/icon.icns (macOS SensiExtractor.app). Committed
+shortcut) and assets/icon.icns (macOS SENSI-SpeechFeatures.app). Committed
 artifacts — re-run this only if icon.svg changes:
 
     conda run -p ./env python scripts/make_icons.py

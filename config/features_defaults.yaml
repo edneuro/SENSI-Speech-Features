@@ -3,7 +3,7 @@
 # defaults for "what to extract". Regenerate after a schema change:
 #     python scripts/export_default_config.py
 # ==================================================================
-# SensiExtractor feature config (features.yaml) — what to extract.
+# SENSI SpeechFeatures feature config (features.yaml) — what to extract.
 # Global/shareable: the GUI's "Reset settings" rewrites this file, and a
 # headless run (run.py) consumes it as-is.
 # Comments are regenerated on every save; hand-added comments do not survive.

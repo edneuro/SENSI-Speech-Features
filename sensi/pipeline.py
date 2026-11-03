@@ -1,5 +1,5 @@
 """
-SensiExtractor — stimulus feature extraction pipeline.
+SENSI SpeechFeatures — stimulus feature extraction pipeline.
 
 Called by the two launchers, never run directly: gui.py (Run tab, via
 sensi/gui/run_dispatch.py) and run.py (headless, from config/features.yaml

@@ -317,7 +317,7 @@ class WordFeaturesSection(QWidget):
             saved_backend = "empath"
         _liwc_tooltip = (
             "LIWC is disabled. The LIWC-22 license agreement forbids using its "
-            "dictionary outside LIWC's own software, so SensiExtractor cannot "
+            "dictionary outside LIWC's own software, so SENSI SpeechFeatures cannot "
             "ship it. Empath is the open-source default. See the ⓘ info for how "
             "to license LIWC for your own offline use."
         )

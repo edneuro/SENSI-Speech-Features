@@ -1,5 +1,5 @@
 """The GUI entry point gives Windows its own taskbar identity, so the taskbar
-shows the SensiExtractor icon instead of grouping the window under Python."""
+shows the SENSI SpeechFeatures icon instead of grouping the window under Python."""
 import ctypes
 import importlib.util
 import sys

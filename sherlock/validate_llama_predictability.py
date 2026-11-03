@@ -28,9 +28,9 @@ HOW TO RUN (mirrors sherlock/RUNBOOK.md's own apptainer invocation style)
 
 1. Weights must already be downloaded (RUNBOOK.md step 5), e.g.:
      apptainer exec --bind $SCRATCH:$SCRATCH --env HF_HOME=$SCRATCH/sensi/hf_cache \\
-       --env HF_TOKEN="$(cat $GROUP_HOME/SensiExtractor/config/hf_token.txt)" \\
+       --env HF_TOKEN="$(cat $GROUP_HOME/SENSI-Speech-Features/config/hf_token.txt)" \\
        --env HF_HUB_DISABLE_XET=1 \\
-       $GROUP_HOME/SensiExtractor/sherlock/sensiextractor.sif \\
+       $GROUP_HOME/SENSI-Speech-Features/sherlock/sensi-speechfeatures.sif \\
        bash -c 'hf download meta-llama/Llama-3.2-3B'
    (swap the model id for whichever slug you're validating -- see --model-slug below)
 
@@ -41,10 +41,10 @@ HOW TO RUN (mirrors sherlock/RUNBOOK.md's own apptainer invocation style)
      export HF_HOME=$SCRATCH/sensi/hf_cache
      apptainer exec \\
        --bind $SCRATCH:$SCRATCH \\
-       --bind $GROUP_HOME/SensiExtractor:$GROUP_HOME/SensiExtractor \\
+       --bind $GROUP_HOME/SENSI-Speech-Features:$GROUP_HOME/SENSI-Speech-Features \\
        --env HF_HOME=$HF_HOME --env HF_HUB_OFFLINE=1 --env TRANSFORMERS_OFFLINE=1 \\
-       $GROUP_HOME/SensiExtractor/sherlock/sensiextractor.sif \\
-       python $GROUP_HOME/SensiExtractor/sherlock/validate_llama_predictability.py \\
+       $GROUP_HOME/SENSI-Speech-Features/sherlock/sensi-speechfeatures.sif \\
+       python $GROUP_HOME/SENSI-Speech-Features/sherlock/validate_llama_predictability.py \\
        --model-slug llama32_3b
 
 3. On a GPU node (llama3_8b), same single command but submitted via

@@ -9,7 +9,7 @@ keywords: sherlock hpc cluster apptainer container slurm sbatch gpu
 
 The app's environment is built for one operating system, and Sherlock's compute nodes are
 headless Linux machines, so SENSI SpeechFeatures runs there inside a portable **Apptainer
-container** (`sensiextractor.sif`) that carries the whole environment. The flow:
+container** (`sensi-speechfeatures.sif`) that carries the whole environment. The flow:
 
 <ol class="steps">
 <li><b>On your computer</b>, set up the features in the app as usual — that writes <code>config/features.yaml</code>.</li>

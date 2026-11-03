@@ -6,7 +6,7 @@ Run once from the project root:
     python scripts/download_lexical_norms.py
 
 It fetches the published norm sets from public mirrors and writes the parquet
-files SensiExtractor expects into `data/dictionaries/` (plus a `.csv` mirror of each
+files SENSI SpeechFeatures expects into `data/dictionaries/` (plus a `.csv` mirror of each
 for human-readable inspection — the extractor uses the parquet):
 
     data/dictionaries/aoa_kuperman.parquet          word, aoa_mean, aoa_sd

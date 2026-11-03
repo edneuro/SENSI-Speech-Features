@@ -1,4 +1,4 @@
-"""Theme tokens and QSS stylesheet for the SensiExtractor GUI.
+"""Theme tokens and QSS stylesheet for the SENSI SpeechFeatures GUI.
 
 Light theme only. The dark variant and OS-follow logic were removed in
 batch 3 — the lab wanted a single calm light surface (#F4F6F8) rather

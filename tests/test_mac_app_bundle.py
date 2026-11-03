@@ -1,4 +1,4 @@
-"""scripts/make_mac_app.sh builds a valid SensiExtractor.app bundle.
+"""scripts/make_mac_app.sh builds a valid SENSI-SpeechFeatures.app bundle.
 
 Runs the real script with bash (Git Bash on Windows) into a temp copy of the
 repo layout; only launching the app needs a Mac.
@@ -29,14 +29,14 @@ def built_app(tmp_path):
         [BASH, _bash_path(SCRIPT), _bash_path(tmp_path), "/opt/conda-test"],
         capture_output=True, text=True)
     assert result.returncode == 0, result.stderr
-    return tmp_path / "SensiExtractor.app"
+    return tmp_path / "SENSI-SpeechFeatures.app"
 
 
 def test_bundle_layout_and_plist(built_app):
     contents = built_app / "Contents"
     plist = plistlib.loads((contents / "Info.plist").read_bytes())
-    assert plist["CFBundleName"] == "SensiExtractor"
-    assert plist["CFBundleExecutable"] == "SensiExtractor"
+    assert plist["CFBundleName"] == "SENSI SpeechFeatures"
+    assert plist["CFBundleExecutable"] == "SENSI-SpeechFeatures"
     assert plist["CFBundleIconFile"] == "icon"
     assert plist["CFBundlePackageType"] == "APPL"
     assert (contents / "MacOS" / plist["CFBundleExecutable"]).is_file()
@@ -44,7 +44,7 @@ def test_bundle_layout_and_plist(built_app):
 
 
 def test_launcher_script_is_valid_bash_with_baked_paths(built_app, tmp_path):
-    launcher = built_app / "Contents" / "MacOS" / "SensiExtractor"
+    launcher = built_app / "Contents" / "MacOS" / "SENSI-SpeechFeatures"
     text = launcher.read_text(encoding="utf-8")
     assert f'cd "{_bash_path(tmp_path)}"' in text
     assert 'source "/opt/conda-test/etc/profile.d/conda.sh"' in text

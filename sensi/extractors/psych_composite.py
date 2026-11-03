@@ -9,7 +9,7 @@ dictionary material is required or used.**
 
 Why the switch: the LIWC-22 EULA (https://www.liwc.app/help/eula) forbids
 using LIWC dictionary material outside LIWC's own software, so
-SensiExtractor can no longer ship the `.dic`-based implementation.
+SENSI SpeechFeatures can no longer ship the `.dic`-based implementation.
 
 Provenance and scale (important):
 - `analytic` follows the **Categorical-Dynamic Index (CDI)** of Pennebaker

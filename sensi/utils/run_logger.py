@@ -216,7 +216,7 @@ class RunLogger:
             'end_time': end.isoformat(timespec='seconds'),
             'total_runtime_seconds': round(total, 3),
             'analyzer': self._analyzer,
-            'sensi_extractor_version': __version__,
+            'sensi_speechfeatures_version': __version__,
             'system_info': gather_system_info(),
             'config': self._config,
             'input_transcripts_folder': str(self._input_transcripts_folder),
