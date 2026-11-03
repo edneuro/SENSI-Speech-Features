@@ -788,6 +788,66 @@ def _record_mfa_timing(run_args, items, result, seconds) -> None:
         print(f'[timing] could not record MFA timing: {exc}', file=sys.stderr)
 
 
+def _event_text(pair) -> str:
+    """Normalized transcript text stored in the event .mat files."""
+    from sensi.utils.transcript_prep import normalize_whitespace
+    return normalize_whitespace(pair.transcript_path.read_text(encoding='utf-8'))
+
+
+def _make_event_relookup(args):
+    """Memoized word -> lookup-column values, for words the event writer merges.
+
+    Re-runs only the lookup stages the word pass ran (frequency, EWFG bands,
+    lexical norms) on a one-row frame; never touches alignment.
+    """
+    import functools
+
+    @functools.lru_cache(maxsize=None)
+    def _lookup(word: str) -> tuple:
+        row = pd.DataFrame({'token': [word], 'lemma': [word.lower()], 'upos': ['X']})
+        if not args.no_freq:
+            from sensi.extractors.word_freq import add_word_freq
+            row = add_word_freq(row)
+        if not args.no_edu_freq:
+            from sensi.extractors.educator_freq import add_edu_freq
+            bands = (
+                [b.strip() for b in args.edu_bands.split(',') if b.strip()]
+                if getattr(args, 'edu_bands', None) else None
+            )
+            row = add_edu_freq(row, lookup_path=args.edu_freq_lookup, bands=bands)
+        if not getattr(args, 'no_lexical_norms', True):
+            from sensi.extractors.lexical_norms import add_lexical_norms
+            row = add_lexical_norms(
+                row, paths=getattr(args, 'lexical_norms_paths', None))
+        out = {}
+        for col in row.columns:
+            if col in ('token', 'lemma', 'upos'):
+                continue
+            val = pd.to_numeric(row[col], errors='coerce').iloc[0]
+            out[col] = float(val)
+        return tuple(out.items())
+
+    return lambda word: dict(_lookup(word))
+
+
+def _write_event_mat(args, pair, output_dir, level, units_key, get_text,
+                     build, empty_reason) -> None:
+    """Build + save one <stim>_<level>_events.mat; never fails the pair."""
+    try:
+        import scipy.io
+        units = (getattr(args, 'event_units', {}) or {}).get(units_key, {})
+        mat_vars = build(get_text(), units)
+        if mat_vars is None:
+            print(f'[{level}_events] skipped for {pair.stimulus_id}: {empty_reason}',
+                  file=sys.stderr)
+            return
+        path = _level_dir(output_dir, level) / f'{pair.stimulus_id}_{level}_events.mat'
+        scipy.io.savemat(str(path), mat_vars, oned_as='column')
+    except Exception as exc:
+        print(f'[{level}_events] failed for {pair.stimulus_id}: {exc}',
+              file=sys.stderr)
+
+
 def run_word_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None:
     """Process all matched (transcript, audio) pairs in the configured folders."""
     transcripts_dir = Path(args.transcripts_folder)
@@ -844,6 +904,7 @@ def run_word_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None
     work_items = _batch_work_items(pairing)
     args._stage_timer = _new_stage_timer()
     _prealign_batch(args, work_items, output_dir, logger)
+    _event_relookup = _make_event_relookup(args)
     for i, pair in enumerate(work_items):
         if should_cancel and should_cancel():
             logger.add_warning('Run cancelled by user before processing complete')
@@ -855,6 +916,7 @@ def run_word_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None
             args.audio = str(pair.audio_path) if pair.audio_path else ""
             args.doc_id = i + 1
             df = run(args)
+            full_df = df  # pre-drop frame for the event .mat writer
 
             # Sub-word sidecars (Task 7) — emit BEFORE the per-column drop.
             # The drop step below removes columns the user toggled off for the
@@ -863,10 +925,12 @@ def run_word_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None
             # syllabify_pairs requires exactly those columns on word_df, so
             # dropping them first silently produces empty syll/phon DataFrames.
             phones_df = getattr(args, '_phones_df', None)
+            _want_syll_events = not getattr(args, 'no_syllable_events_mat', True)
             _want_psr = (not getattr(args, 'no_phoneme_surprisal', True)
                          or not getattr(args, 'no_phoneme_surprisal_mat', True))
             if phones_df is not None and len(phones_df) > 0 and (
                 not getattr(args, 'no_syllables', False)
+                or _want_syll_events
                 or not getattr(args, 'no_phonemes', False)
                 or _want_psr
             ):
@@ -919,7 +983,8 @@ def run_word_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None
                                     / f'{pair.stimulus_id}_phoneme_surprisal.mat')
                         scipy.io.savemat(str(mat_path), mat_vars)
 
-                if not getattr(args, 'no_syllables', False) and len(syll_df) > 0:
+                if (not getattr(args, 'no_syllables', False)
+                        or _want_syll_events) and len(syll_df) > 0:
                     syll_df = add_syllable_prosody(
                         syll_df,
                         getattr(args, '_contours', None),
@@ -931,12 +996,22 @@ def run_word_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None
                             syll_df, phon_df,
                             k=getattr(args, 'pcenter_k', 0.3),
                         )
+                    full_syll_df = syll_df  # pre-drop frame for the event .mat
                     drop = _syllable_columns_to_drop(
                         getattr(args, 'feature_toggles', {}) or {})
                     if drop:
                         syll_df = syll_df.drop(columns=[c for c in drop if c in syll_df.columns])
-                    syll_path = _level_dir(output_dir, 'syllable') / f'{pair.stimulus_id}_syllables.csv'
-                    syll_df.to_csv(syll_path, index=False)
+                    if not getattr(args, 'no_syllables', False):
+                        syll_path = _level_dir(output_dir, 'syllable') / f'{pair.stimulus_id}_syllables.csv'
+                        syll_df.to_csv(syll_path, index=False)
+                    if _want_syll_events:
+                        from sensi.utils.event_mat import syllable_event_vars
+                        _write_event_mat(
+                            args, pair, output_dir, 'syllable', 'syllable_events_mat',
+                            lambda: _event_text(pair),
+                            lambda t, u: syllable_event_vars(
+                                full_syll_df, syll_df.columns, t, u),
+                            'no aligned syllables')
 
                 if not getattr(args, 'no_phonemes', False) and len(phon_df) > 0:
                     drop = _phoneme_columns_to_drop(
@@ -1040,6 +1115,15 @@ def run_word_level_batch(args, *, on_pair_done=None, should_cancel=None) -> None
                 df.to_csv(features_path, index=False)
             else:
                 features_path = None
+
+            if not getattr(args, 'no_word_events_mat', True):
+                from sensi.utils.event_mat import word_event_vars
+                _write_event_mat(
+                    args, pair, output_dir, 'word', 'word_events_mat',
+                    lambda: _event_text(pair),
+                    lambda t, u: word_event_vars(
+                        full_df, df.columns, t, u, _event_relookup),
+                    'no aligned words')
 
             logger.record_pair_success(
                 stimulus_id=pair.stimulus_id,
