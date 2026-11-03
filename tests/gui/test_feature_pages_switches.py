@@ -183,3 +183,34 @@ def test_radio_backend_does_not_count_as_a_selected_feature(qtbot):
     assert card.tag_text() == "Included — nothing selected"
     page.toggle("sem_indicators").set_checked(True)
     assert card.tag_text() == "Included"
+
+
+def test_word_events_mat_tick(qtbot):
+    from sensi.gui.info_popup import InfoIcon
+    from sensi.utils.preferences import load_preferences
+    page = WordFeaturesSection()
+    qtbot.addWidget(page)
+    row = page.toggle("feat_word_events_mat")
+    assert "_word_events.mat" in row.label.text()
+    assert row.findChildren(InfoIcon), "the .mat tick should have an info icon"
+    row.set_checked(True)
+    assert load_preferences()["features"]["feat_word_events_mat"] is True
+    card = _card_titled(page, "MATLAB events file")
+    assert card.master_toggle().is_checked()
+    card.master_toggle().set_checked(False)
+    assert load_preferences()["features"]["master_word_events"] is False
+    assert not row.check.isEnabled()
+
+
+def test_syllable_events_mat_tick(qtbot):
+    from sensi.gui.info_popup import InfoIcon
+    from sensi.utils.preferences import load_preferences
+    page = SubwordFeaturesSection()
+    qtbot.addWidget(page)
+    row = page.toggle("feat_syllable_events_mat")
+    assert "_syllable_events.mat" in row.label.text()
+    assert row.findChildren(InfoIcon), "the .mat tick should have an info icon"
+    row.set_checked(True)
+    assert load_preferences()["features"]["feat_syllable_events_mat"] is True
+    _card_titled(page, "Syllable timing").master_toggle().set_checked(False)
+    assert not row.check.isEnabled()

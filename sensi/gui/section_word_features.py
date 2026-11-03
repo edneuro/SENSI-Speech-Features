@@ -387,6 +387,20 @@ class WordFeaturesSection(QWidget):
         sim_card.add_group("Embeddings", sim_box)
         layout.addWidget(sim_card)
 
+        # --- MATLAB events file (one entry per spoken word) ---
+        events_card = ClusterCard(
+            "MATLAB events file",
+            "One .mat per stimulus with each spoken word's onset, offset, token "
+            "and every kept numeric feature, for stem plots in MATLAB.",
+            master_key="master_word_events",
+        )
+        events_card.settings_changed.connect(self.settings_changed)
+        events_card.add_child(self._make_toggle(
+            "feat_word_events_mat",
+            "Events .mat (<stim>_word_events.mat)",
+            f["feat_word_events_mat"], "features"))
+        layout.addWidget(events_card)
+
         # --- Lexical norms (per-column; user-supplied data) ---
         norms_card = ClusterCard(
             "Lexical norms",

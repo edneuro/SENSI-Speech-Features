@@ -38,6 +38,10 @@ class SubwordFeaturesSection(QWidget):
                 i // 2, i % 2,
             )
         syll_timing_card.add_group("Columns", syll_timing_grid)
+        syll_timing_card.add_child(self._make_toggle(
+            "feat_syllable_events_mat",
+            "Events .mat (<stim>_syllable_events.mat)",
+            f["feat_syllable_events_mat"]))
         syll_timing_card.settings_changed.connect(self.settings_changed)
         layout.addWidget(syll_timing_card)
 
