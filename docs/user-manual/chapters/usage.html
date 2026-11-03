@@ -239,12 +239,12 @@ cp<span class="w"> </span>config/run_defaults.yaml<span class="w"> </span>config
 </code></pre>
 <h3><code>run.yaml</code> — where</h3>
 <pre><code class="language-yaml"><span class="nt">shared</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">analyzer_name</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;&#39;</span>
-<span class="w">  </span><span class="nt">last_transcripts_folder</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;&#39;</span>
-<span class="w">  </span><span class="nt">last_audio_folder</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;&#39;</span>
-<span class="w">  </span><span class="nt">last_output_folder</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;&#39;</span>
-<span class="w">  </span><span class="nt">theme</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">system</span>
-<span class="w">  </span><span class="nt">hf_token_file</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">hf_token.txt</span>
+<span class="w">  </span><span class="nt">analyzer_name</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;&#39;</span><span class="w">  </span><span class="c1"># your name or initials, recorded in the run log</span>
+<span class="w">  </span><span class="nt">last_transcripts_folder</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;&#39;</span><span class="w">  </span><span class="c1"># folder of .txt transcripts (run.py needs it)</span>
+<span class="w">  </span><span class="nt">last_audio_folder</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;&#39;</span><span class="w">  </span><span class="c1"># folder of .wav files; &#39;&#39; = text-only run</span>
+<span class="w">  </span><span class="nt">last_output_folder</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;&#39;</span><span class="w">  </span><span class="c1"># folder the outputs go to (run.py needs it)</span>
+<span class="w">  </span><span class="nt">theme</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">system</span><span class="w">  </span><span class="c1"># not used (the app has one light theme)</span>
+<span class="w">  </span><span class="nt">hf_token_file</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">hf_token.txt</span><span class="w">  </span><span class="c1"># text file holding your HuggingFace token; a relative path is inside config/</span>
 </code></pre>
 <p>Set <code>analyzer_name</code> and the three folders. Folder paths can be absolute (recommended) or
 relative — a relative path is taken from the folder that holds <code>run.yaml</code>.</p>
@@ -261,20 +261,20 @@ relative — a relative path is taken from the folder that holds <code>run.yaml<
 <p>Feature switches are <code>true</code> / <code>false</code> under <code>features:</code> (each feature page in this manual
 lists the keys it uses). Settings that aren't switches have their own blocks, for example:</p>
 <pre><code class="language-yaml"><span class="nt">prosody</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">pitch_units</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">semitones</span>
-<span class="w">  </span><span class="nt">pitch_floor_hz</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">75</span>
-<span class="w">  </span><span class="nt">pitch_ceiling_hz</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">500</span>
-<span class="w">  </span><span class="nt">pause_threshold_s</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.25</span>
-<span class="w">  </span><span class="nt">pcenter_k</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.3</span>
+<span class="w">  </span><span class="nt">pitch_units</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">semitones</span><span class="w">  </span><span class="c1"># semitones | hz</span>
+<span class="w">  </span><span class="nt">pitch_floor_hz</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">75</span><span class="w">  </span><span class="c1"># Hz, below pitch_ceiling_hz (GUI range 20-400)</span>
+<span class="w">  </span><span class="nt">pitch_ceiling_hz</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">500</span><span class="w">  </span><span class="c1"># Hz, above pitch_floor_hz (GUI range 100-1200)</span>
+<span class="w">  </span><span class="nt">pause_threshold_s</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.25</span><span class="w">  </span><span class="c1"># seconds, greater than 0 (GUI range 0.05-5)</span>
+<span class="w">  </span><span class="nt">pcenter_k</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.3</span><span class="w">  </span><span class="c1"># 0 to 1</span>
 </code></pre>
 <pre><code class="language-yaml"><span class="nt">acoustic_ts</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">analysis_rate</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">128</span>
-<span class="w">  </span><span class="nt">env_method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">rms</span>
-<span class="w">  </span><span class="nt">env_comp</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.3010299956639812</span>
-<span class="w">  </span><span class="nt">env_window</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0</span>
-<span class="w">  </span><span class="nt">n_mels</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">16</span>
-<span class="w">  </span><span class="nt">n_mfcc</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">13</span>
-<span class="w">  </span><span class="nt">mel_preset</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">speech</span>
+<span class="w">  </span><span class="nt">analysis_rate</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">128</span><span class="w">  </span><span class="c1"># Hz, greater than 0 (GUI range 1-2000)</span>
+<span class="w">  </span><span class="nt">env_method</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">rms</span><span class="w">  </span><span class="c1"># rms | hilbert</span>
+<span class="w">  </span><span class="nt">env_comp</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.3010299956639812</span><span class="w">  </span><span class="c1"># compression exponent, greater than 0 (GUI range 0.01-2; default log10(2), as in mTRF)</span>
+<span class="w">  </span><span class="nt">env_window</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0</span><span class="w">  </span><span class="c1"># averaging width in output samples (GUI range 1-16)</span>
+<span class="w">  </span><span class="nt">n_mels</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">16</span><span class="w">  </span><span class="c1"># whole number, 1 or more (GUI range 1-128)</span>
+<span class="w">  </span><span class="nt">n_mfcc</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">13</span><span class="w">  </span><span class="c1"># whole number, 1 up to n_mels (GUI range 1-60)</span>
+<span class="w">  </span><span class="nt">mel_preset</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">speech</span><span class="w">  </span><span class="c1"># speech | music | general</span>
 </code></pre>
 <p>Predictability is chosen by model and metric:</p>
 <pre><code class="language-yaml"><span class="nt">predictability</span><span class="p">:</span>

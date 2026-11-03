@@ -10,6 +10,6 @@ doc_id,paragraph_id,sentence_id,sentence,start,end,token_id,token_in_sentence_id
 11,1,1,"She spread butter on her toast.
 ",22,24,5,5,her,her,PRON,PRP$,Gender=Fem|Number=Sing|Person=3|Poss=Yes|PronType=Prs,poss,6,6.3,,,,,,,,,,,,,,,0.117447,3.0899,0.0,,,,,3.0,464.0,569.0,,,
 11,1,1,"She spread butter on her toast.
-",26,30,6,6,toast,toast,NOUN,NN,Number=Sing,pobj,4,3.96,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,,0.00706494,7.1451,0.0,,,4.67,3.34,4.93,594.0,571.0,6.73,3.65,6.39
+",26,30,6,6,toast,toast,NOUN,NN,Number=Sing,pobj,4,3.96,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,,0.00706466,7.1452,0.0,,,4.67,3.34,4.93,594.0,571.0,6.73,3.65,6.39
 11,1,1,"She spread butter on her toast.
 ",31,31,7,7,.,.,PUNCT,.,PunctType=Peri,punct,2,,,,,,,,,,,,,,,,,,,,,,,,,,,,

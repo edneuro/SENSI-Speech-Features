@@ -10,6 +10,7 @@ validate_features_yaml/validate_run_yaml before loading them.
 from __future__ import annotations
 
 import os
+import re
 import yaml
 from copy import deepcopy
 
@@ -114,14 +115,76 @@ def read_yaml(path) -> dict:
     return data if isinstance(data, dict) else {}
 
 
+def _key_comments() -> dict[tuple[str, str], str]:
+    """What to write for each non-true/false setting, as `(section, key)` →
+    end-of-line comment. Allowed values come from config_checks (what run.py
+    and the Run tab accept); number ranges are the GUI spinbox ranges."""
+    from sensi.utils.config_checks import (
+        _ENV_METHODS, _MEL_PRESETS, _METRICS, _PITCH_UNITS, _SEM_BACKENDS)
+    from sensi.extractors.predictability_models import all_specs
+    specs = all_specs()
+    windows = ", ".join(f"{s.slug} {s.native_ctx}" for s in specs)
+    return {
+        ("predictability", "models"):
+            f"list of model names: any of {', '.join(s.slug for s in specs)}, "
+            "e.g. [gpt2]; the llama* models need a HuggingFace token",
+        ("predictability", "metrics"):
+            f"{' / '.join(_METRICS)}: true or false each",
+        ("predictability", "context"):
+            "optional per-model limit on preceding context, in tokens, e.g. {gpt2: 512}; "
+            f"128 up to the model's window ({windows}); {{}} = full window",
+        ("semantic", "backend"):
+            f"{' | '.join(_SEM_BACKENDS)} (auto = empath; liwc needs your own .dic "
+            "in data/dictionaries/)",
+        ("semantic", "categories_liwc"): "list of LIWC category names (used only with backend: liwc)",
+        ("semantic", "categories_empath"): "list of Empath category names (Empath's built-in list)",
+        ("prosody", "pitch_units"): " | ".join(_PITCH_UNITS),
+        ("prosody", "pitch_floor_hz"): "Hz, below pitch_ceiling_hz (GUI range 20-400)",
+        ("prosody", "pitch_ceiling_hz"): "Hz, above pitch_floor_hz (GUI range 100-1200)",
+        ("prosody", "pause_threshold_s"): "seconds, greater than 0 (GUI range 0.05-5)",
+        ("prosody", "pcenter_k"): "0 to 1",
+        ("lexical_norms", "paths"):
+            "optional {source: file path} overrides; sources: aoa, concreteness, mrc, "
+            "warriner; {} = the default files in data/dictionaries/",
+        ("lexical_norms", "late_acquired_threshold"): "age in years, 0 or more (GUI range 0-25)",
+        ("acoustic_ts", "analysis_rate"): "Hz, greater than 0 (GUI range 1-2000)",
+        ("acoustic_ts", "env_method"): " | ".join(_ENV_METHODS),
+        ("acoustic_ts", "env_comp"):
+            "compression exponent, greater than 0 (GUI range 0.01-2; default log10(2), as in mTRF)",
+        ("acoustic_ts", "env_window"): "averaging width in output samples (GUI range 1-16)",
+        ("acoustic_ts", "n_mels"): "whole number, 1 or more (GUI range 1-128)",
+        ("acoustic_ts", "n_mfcc"): "whole number, 1 up to n_mels (GUI range 1-60)",
+        ("acoustic_ts", "mel_preset"): " | ".join(_MEL_PRESETS),
+        ("phoneme_surprisal", "analysis_sr"): "Hz, greater than 0 (GUI range 1-1000)",
+        ("shared", "analyzer_name"): "your name or initials, recorded in the run log",
+        ("shared", "last_transcripts_folder"): "folder of .txt transcripts (run.py needs it)",
+        ("shared", "last_audio_folder"): "folder of .wav files; '' = text-only run",
+        ("shared", "last_output_folder"): "folder the outputs go to (run.py needs it)",
+        ("shared", "theme"): "not used (the app has one light theme)",
+        ("shared", "hf_token_file"):
+            "text file holding your HuggingFace token; a relative path is inside config/",
+    }
+
+
+def _with_key_comments(section: str, dumped: str) -> str:
+    """Append `# comment` to each `  key:` line of a dumped section."""
+    comments = _key_comments()
+    out = []
+    for line in dumped.splitlines(keepends=True):
+        m = re.match(r"^  ([A-Za-z_]\w*):", line)
+        note = comments.get((section, m.group(1))) if m else None
+        out.append(f"{line.rstrip()}  # {note}\n" if note else line)
+    return "".join(out)
+
+
 def _dump_with_sections(header: str, data: dict) -> str:
     parts = [header]
     for key, value in data.items():
         comment = _SECTION_COMMENTS.get(key)
         if comment:
             parts.append(f"\n# {comment}\n")
-        parts.append(yaml.safe_dump({key: value}, sort_keys=False,
-                                    allow_unicode=True, default_flow_style=False))
+        parts.append(_with_key_comments(key, yaml.safe_dump(
+            {key: value}, sort_keys=False, allow_unicode=True, default_flow_style=False)))
     return "".join(parts)
 
 

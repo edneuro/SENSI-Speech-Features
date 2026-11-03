@@ -4,27 +4,27 @@ doc_id,paragraph_id,sentence_id,sentence,start,end,token_id,token_in_sentence_id
 10,1,1,"The happy child hugged a puppy, but the soldier feared death and injustice.
 ",5,9,2,2,happy,happy,ADJ,JJ,Degree=Pos,amod,3,5.35,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,positive_emotion,8.02438e-05,13.6053,0.0,,,2.72,1.6,2.56,511.0,621.0,8.47,6.05,7.21
 10,1,1,"The happy child hugged a puppy, but the soldier feared death and injustice.
-",11,15,3,3,child,child,NOUN,NN,Number=Sing,nsubj,4,5.3,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,family,0.00300424,8.3788,0.0,,,,,4.78,619.0,585.0,7.2,5.33,5.2
+",11,15,3,3,child,child,NOUN,NN,Number=Sing,nsubj,4,5.3,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,family,0.00300422,8.3788,0.0,,,,,4.78,619.0,585.0,7.2,5.33,5.2
 10,1,1,"The happy child hugged a puppy, but the soldier feared death and injustice.
-",17,22,4,4,hugged,hug,VERB,VBD,Tense=Past|VerbForm=Fin,ROOT,4,4.09,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,,4.32104e-05,14.4983,0.0,,,2.58,0.96,4.14,,,8.23,4.85,6.8
+",17,22,4,4,hugged,hug,VERB,VBD,Tense=Past|VerbForm=Fin,ROOT,4,4.09,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,,4.32111e-05,14.4982,0.0,,,2.58,0.96,4.14,,,8.23,4.85,6.8
 10,1,1,"The happy child hugged a puppy, but the soldier feared death and injustice.
-",24,24,5,5,a,a,DET,DT,Definite=Ind|PronType=Art,det,6,7.36,,,,,,,,,,,,,,,0.024515,5.3502,0.0,,,,,1.46,217.0,632.0,,,
+",24,24,5,5,a,a,DET,DT,Definite=Ind|PronType=Art,det,6,7.36,,,,,,,,,,,,,,,0.0245152,5.3502,0.0,,,,,1.46,217.0,632.0,,,
 10,1,1,"The happy child hugged a puppy, but the soldier feared death and injustice.
-",26,30,6,6,puppy,puppy,NOUN,NN,Number=Sing,dobj,4,4.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,,0.00232354,8.7495,0.0,,,3.28,1.13,4.78,635.0,522.0,7.85,5.84,6.24
+",26,30,6,6,puppy,puppy,NOUN,NN,Number=Sing,dobj,4,4.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,,0.00232351,8.7495,0.0,,,3.28,1.13,4.78,635.0,522.0,7.85,5.84,6.24
 10,1,1,"The happy child hugged a puppy, but the soldier feared death and injustice.
 ",31,31,7,7,",",",",PUNCT,",",PunctType=Comm,punct,4,,,,,,,,,,,,,,,,,,,,,,,,,,,,
 10,1,1,"The happy child hugged a puppy, but the soldier feared death and injustice.
-",33,35,8,8,but,but,CCONJ,CC,ConjType=Cmp,cc,4,6.63,,,,,,,,,,,,,,,0.0228549,5.4514,0.0,,,,,2.04,206.0,603.0,,,
+",33,35,8,8,but,but,CCONJ,CC,ConjType=Cmp,cc,4,6.63,,,,,,,,,,,,,,,0.0228547,5.4514,0.0,,,,,2.04,206.0,603.0,,,
 10,1,1,"The happy child hugged a puppy, but the soldier feared death and injustice.
-",37,39,9,9,the,the,DET,DT,Definite=Def|PronType=Art,det,10,7.73,,,,,,,,,,,,,,,0.102866,3.2812,1.0,,,,,1.43,209.0,625.0,,,
+",37,39,9,9,the,the,DET,DT,Definite=Def|PronType=Art,det,10,7.73,,,,,,,,,,,,,,,0.102865,3.2812,1.0,,,,,1.43,209.0,625.0,,,
 10,1,1,"The happy child hugged a puppy, but the soldier feared death and injustice.
 ",41,47,10,10,soldier,soldier,NOUN,NN,Number=Sing,nsubj,11,4.46,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,,0.000197649,12.3048,0.0,,,6.94,2.48,4.72,578.0,517.0,5.45,5.9,5.84
 10,1,1,"The happy child hugged a puppy, but the soldier feared death and injustice.
 ",49,54,11,11,feared,fear,VERB,VBD,Tense=Past|VerbForm=Fin,conj,4,4.95,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,,0.000384196,11.3459,0.0,,,4.79,1.93,2.57,394.0,569.0,2.93,6.14,3.32
 10,1,1,"The happy child hugged a puppy, but the soldier feared death and injustice.
-",56,60,12,12,death,death,NOUN,NN,Number=Sing,dobj,11,5.4,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,negative_emotion,0.00730278,7.0973,0.0,,,5.37,1.8,3.73,498.0,581.0,1.89,5.53,3.42
+",56,60,12,12,death,death,NOUN,NN,Number=Sing,dobj,11,5.4,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,negative_emotion,0.00730283,7.0973,0.0,,,5.37,1.8,3.73,498.0,581.0,1.89,5.53,3.42
 10,1,1,"The happy child hugged a puppy, but the soldier feared death and injustice.
-",62,64,13,13,and,and,CCONJ,CC,ConjType=Cmp,cc,12,7.41,,,,,,,,,,,,,,,0.0646729,3.9507,0.0,,,,,1.52,226.0,620.0,,,
+",62,64,13,13,and,and,CCONJ,CC,ConjType=Cmp,cc,12,7.41,,,,,,,,,,,,,,,0.0646732,3.9507,0.0,,,,,1.52,226.0,620.0,,,
 10,1,1,"The happy child hugged a puppy, but the soldier feared death and injustice.
 ",66,74,14,14,injustice,injustice,NOUN,NN,Number=Sing,conj,12,3.81,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,,1.30155e-06,19.5513,0.0,,,10.89,3.5,1.4,,,2.45,6.45,3.27
 10,1,1,"The happy child hugged a puppy, but the soldier feared death and injustice.

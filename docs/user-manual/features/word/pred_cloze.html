@@ -55,7 +55,7 @@ bar(T.gpt2_Cloze(w)); xticks(1:nnz(w)); xticklabels(T.token(w)); ylabel(&#x27;gp
 models need a HuggingFace token + license approval before they run.
 This is shared with <code>&lt;slug&gt;_Surprisal</code> and <code>&lt;slug&gt;_TopMatch</code> — see
 <strong><a href="../../chapters/usage.html#huggingface-token">LLM access &amp; credentials</a></strong> for the full step-by-step.</p>
-</section><section id="code"><a id="implementation-in-sensi-speechfeatures"></a><h2><span class="num">6.1.11.6</span>In the code</h2><div class="card"><div class="card-title">Open in GitHub</div><ul><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/extractors/predictability.py#L35"><code>sensi/extractors/predictability.py → add_predictability()</code></a></li></ul></div><p>Source: <code>sensi/extractors/predictability.py:add_predictability</code> (the
+</section><section id="code"><a id="implementation-in-sensi-speechfeatures"></a><h2><span class="num">6.1.11.6</span>In the code</h2><div class="card"><div class="card-title">Open in GitHub</div><ul><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/extractors/predictability.py#L36"><code>sensi/extractors/predictability.py → add_predictability()</code></a></li></ul></div><p>Source: <code>sensi/extractors/predictability.py:add_predictability</code> (the
 unified, roster-driven extractor). Backend:
 <code>_HuggingFaceBackend</code>, built on <code>AutoModelForCausalLM</code> for every
 roster model (GPT-2 included) — local Hugging Face weights only, no

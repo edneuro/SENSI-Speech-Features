@@ -142,17 +142,17 @@ features:
 
 # Predictability roster: models (slugs), metrics, per-model context caps.
 predictability:
-  models: []
-  metrics:
+  models: []  # list of model names: any of gpt2, llama32_3b, llama3_8b, llama3_70b, e.g. [gpt2]; the llama* models need a HuggingFace token
+  metrics:  # surprisal / cloze / topmatch: true or false each
     surprisal: false
     cloze: false
     topmatch: false
-  context: {}
+  context: {}  # optional per-model limit on preceding context, in tokens, e.g. {gpt2: 512}; 128 up to the model's window (gpt2 1024, llama32_3b 131072, llama3_8b 8192, llama3_70b 8192); {} = full window
 
 # Semantic-indicator backend + category multi-selects.
 semantic:
-  backend: empath
-  categories_liwc:
+  backend: empath  # auto | empath | liwc (auto = empath; liwc needs your own .dic in data/dictionaries/)
+  categories_liwc:  # list of LIWC category names (used only with backend: liwc)
   - affect
   - cogproc
   - emo_pos
@@ -168,7 +168,7 @@ semantic:
   - relig
   - focuspresent
   - social
-  categories_empath:
+  categories_empath:  # list of Empath category names (Empath's built-in list)
   - friends
   - philosophy
   - positive_emotion
@@ -211,30 +211,30 @@ output:
 
 # Praat pitch/pause parameters + p-center k.
 prosody:
-  pitch_units: semitones
-  pitch_floor_hz: 75
-  pitch_ceiling_hz: 500
-  pause_threshold_s: 0.25
-  pcenter_k: 0.3
+  pitch_units: semitones  # semitones | hz
+  pitch_floor_hz: 75  # Hz, below pitch_ceiling_hz (GUI range 20-400)
+  pitch_ceiling_hz: 500  # Hz, above pitch_floor_hz (GUI range 100-1200)
+  pause_threshold_s: 0.25  # seconds, greater than 0 (GUI range 0.05-5)
+  pcenter_k: 0.3  # 0 to 1
 
 # Lexical-norm table paths + late-AoA threshold.
 lexical_norms:
-  paths: {}
-  late_acquired_threshold: 10
+  paths: {}  # optional {source: file path} overrides; sources: aoa, concreteness, mrc, warriner; {} = the default files in data/dictionaries/
+  late_acquired_threshold: 10  # age in years, 0 or more (GUI range 0-25)
 
 # Acoustic time-series (TRF) parameters.
 acoustic_ts:
-  analysis_rate: 128
-  env_method: rms
-  env_comp: 0.3010299956639812
-  env_window: 1.0
-  n_mels: 16
-  n_mfcc: 13
-  mel_preset: speech
+  analysis_rate: 128  # Hz, greater than 0 (GUI range 1-2000)
+  env_method: rms  # rms | hilbert
+  env_comp: 0.3010299956639812  # compression exponent, greater than 0 (GUI range 0.01-2; default log10(2), as in mTRF)
+  env_window: 1.0  # averaging width in output samples (GUI range 1-16)
+  n_mels: 16  # whole number, 1 or more (GUI range 1-128)
+  n_mfcc: 13  # whole number, 1 up to n_mels (GUI range 1-60)
+  mel_preset: speech  # speech | music | general
 
 # Phoneme surprisal / cohort entropy parameters.
 phoneme_surprisal:
-  analysis_sr: 128
+  analysis_sr: 128  # Hz, greater than 0 (GUI range 1-1000)
   strip_stress: true
   primary_only: true
 

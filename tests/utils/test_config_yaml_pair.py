@@ -196,3 +196,26 @@ def test_retired_keys_present_ignores_a_genuine_typo():
     features, _ = split_prefs(DEFAULT_PREFS)
     features["features"]["feat_phoneme_arpabetX"] = True
     assert retired_keys_present(features) == []
+
+
+def test_non_boolean_settings_say_which_values_to_use(tmp_path):
+    """Every setting that is not true/false carries its allowed values or range
+    as an end-of-line comment, and the comments don't change what loads."""
+    fp, rp = tmp_path / "features.yaml", tmp_path / "run.yaml"
+    features, run = split_prefs(deepcopy(DEFAULT_PREFS))
+    write_features_yaml(fp, features)
+    write_run_yaml(rp, run)
+    text = fp.read_text(encoding="utf-8")
+    assert "  pitch_units: semitones  # semitones | hz\n" in text
+    assert "  mel_preset: speech  # speech | music | general\n" in text
+    assert "gpt2, llama32_3b, llama3_8b, llama3_70b" in text
+    assert "  theme: system  # not used" in rp.read_text(encoding="utf-8")
+    for section in ("prosody", "acoustic_ts", "semantic", "predictability",
+                    "lexical_norms", "phoneme_surprisal"):
+        for key, val in DEFAULT_PREFS[section].items():
+            if isinstance(val, bool) or isinstance(val, dict) and val and \
+                    all(isinstance(v, bool) for v in val.values()) and key != "metrics":
+                continue
+            line = next(l for l in text.splitlines() if l.startswith(f"  {key}:"))
+            assert "  # " in line, f"{section}.{key} has no comment"
+    assert join_yaml_pair(read_yaml(fp), read_yaml(rp)) == join_yaml_pair(features, run)

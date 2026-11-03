@@ -22,6 +22,7 @@ import numpy as np
 import pandas as pd
 
 from sensi.extractors.predictability_models import spec_for, effective_context
+from sensi.utils.transcript_prep import normalize_whitespace
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +40,9 @@ def add_predictability(df, text, *, models, metrics, context=None, backends=None
     for slug in models:
         spec_for(slug)          # validate; KeyError on unknown
     ctx_map = context or {}
+    # Line breaks in a transcript are layout, not speech: a raw "\n" makes the
+    # next word a space-less line start (LJ002-0321 "were": 22 bits vs 2.8).
+    text = normalize_whitespace(text)
     out = df.copy()
     upos = out["upos"].tolist()
     tokens = [str(t) for t in out["token"].tolist()]

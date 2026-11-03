@@ -21,10 +21,43 @@ document, in **bits**:
 `gpt2_Surprisal` is surprisal from GPT-2. Each model you tick writes its own
 column, and the name always says which model produced it.
 
-A high-frequency word in a strongly constraining context has low
-surprisal (≈ 1–3 bits); a low-frequency or contextually unexpected word
-has high surprisal (≈ 8–20 bits). PUNCT rows are `NaN`, and so is the
-document's first word (no left context to condition on).
+Low surprisal means the model expected the word; high surprisal means it
+did not (see *Reading the numbers* below for the scale). PUNCT rows are
+`NaN`, and so is the document's first word (no left context to condition
+on).
+
+## Reading the numbers
+Surprisal has no upper limit and no fixed "surprising" cut-off, but every
+value converts exactly to a probability: `P = 2^(−surprisal)`.
+
+| Surprisal (bits) | Probability the model gave the word | Roughly "1 in …" |
+|---|---|---|
+| 0 | 1 | certain |
+| 1 | 0.5 | 2 |
+| 3.3 | 0.1 | 10 |
+| 6.6 | 0.01 | 100 |
+| 10 | 0.001 | 1,000 |
+| 13.3 | 0.0001 | 10,000 |
+| 20 | 0.000001 | 1,000,000 |
+
+Each extra bit halves the probability, so 2 bits vs 4 bits is the same
+step as 12 vs 14. Real values from the manual's example run (GPT-2):
+
+- *She spread butter on her* **toast** → 7.1 bits; **violin** in the same
+  frame → 17.0 bits.
+- function words in an expected slot sit low: **on** after *spread butter*
+  → 2.9 bits; **hours** after *48* → 0.89 bits.
+- a content word after a short, open context sits high: **spread** after
+  *She* → 13.9 bits, since almost any verb could follow.
+
+Model surprisal on naturalistic reading corpora spans roughly 0–20 bits
+([Wilcox 2020], Fig. 1), with most words well below the top of that
+range. What counts as "high" depends on the model, the text and its
+genre, so compare words **within** a stimulus (or z-score the column per
+stimulus, as N400 studies do with surprisal predictors, [Michaelov 2022])
+rather than against a fixed threshold. Values from different models are
+on the same bits scale but are not interchangeable: a stronger model is
+less surprised by text overall.
 
 The metric itself is **identical across models** — only the estimator
 (which language model computes `P`) changes. Enabling multiple models
@@ -42,10 +75,9 @@ token, CPU-capable baseline) and three gated **Llama-3** variants
 Pick one or several from the GUI's Predictability card's model
 multi-select; each selected model is scored once per stimulus and
 contributes its own `<slug>_Surprisal` column when the Surprisal metric
-checkbox is on. Better/larger LMs generally produce surprisal estimates
-that predict reading time and neural responses more tightly than
-GPT-2's (see *EEG rationale* below); GPT-2 is the free,
-always-available baseline.
+checkbox is on. Whether a larger model's surprisal fits human data
+better depends on the measure and on how large the models are — see
+*EEG rationale* below; GPT-2 is the free, always-available baseline.
 
 ## EEG rationale
 Surprisal is a well-replicated word-level predictor of **N400
@@ -66,17 +98,37 @@ listening, dissociating syntactic, phonemic and semantic prediction
 signatures — the `gpt2_Surprisal` column is the one to use when
 reproducing analyses of that kind.
 
-Model quality matters, not just architecture: better LMs produce
-surprisal estimates that predict **reading time** more tightly
-([Goodkind 2018], [Wilcox 2020]) and predict more variance in
-fMRI / ECoG responses to language ([Schrimpf 2021], [Goldstein 2022]).
-Bigger is not automatically better, though. Across GPT-Neo and OPT
-models, surprisal from the **larger** transformers (lower perplexity) fit
-human reading times **worse** ([Oh 2023]): they predict named entities
-and other memorisable sequences better than people do, so their surprisal
-underestimates human difficulty there. Enabling both a small and a large
-model on the same run lets you test which estimator fits your own neural
-data, rather than assuming a larger model is better for it.
+Does a better language model give better surprisal? The literature
+disagrees, and the disagreement matters for which model you tick:
+
+- **Better is better (small models, reading time).** Across more than two
+  dozen models trained on at most 42M tokens (test perplexity roughly
+  30–500), lower perplexity went with surprisal that predicted reading
+  times better ([Wilcox 2020]; also [Goodkind 2018]). Models that predict
+  the next word better also predict more variance in fMRI / ECoG responses
+  to language
+  ([Schrimpf 2021], [Goldstein 2022]).
+- **Bigger is worse (large models, reading time).** Across GPT-Neo and
+  OPT models, surprisal from the **larger** transformers (lower
+  perplexity) fit human reading times **worse** ([Oh 2023]): they predict
+  named entities and other memorisable sequences better than people do,
+  so their surprisal underestimates human difficulty there.
+- **Bigger is better (large models, N400).** On EEG from 334 participants
+  (94 sentences after filtering), surprisal from GPT-3 (175B parameters),
+  RoBERTa and ALBERT fit N400 amplitude better than human cloze
+  probability, while GPT-2 XL, Transformer-XL and two RNNs did not; within
+  each model type the higher-quality model fit better ([Michaelov 2022]).
+
+⚠️ The first two results cover different ranges of model quality, so they
+need not contradict each other: the gain from a better model shows up in
+Wilcox's small models and reverses only among Oh's much larger ones. The
+third result does contradict the second for its measure — the largest
+model was the best fit to the N400, not the worst — so the reversal seen
+in reading times cannot be assumed for EEG. The default `gpt2` is the
+124M-parameter GPT-2, smaller than the GPT-2 XL that did not beat cloze
+in [Michaelov 2022]. Ticking a small and a large model on the same run
+writes one column each, so you can test which estimator fits your own
+neural data instead of assuming either direction.
 
 ## Math / linguistics
 A causal language model outputs a probability distribution over its
@@ -300,6 +352,8 @@ for i in range(1, len(ids)):
 **Surprisal ↔ LM quality:**
 - <a name="wilcox-2020"></a>**[Wilcox 2020]** Wilcox, Gauthier, Hu, Qian, Levy. *On the Predictive Power of Neural Language Models for Human Real-Time Comprehension Behavior.* CogSci 2020. [arXiv:2006.01912](https://arxiv.org/abs/2006.01912) — across architectures, better next-word prediction correlates with stronger prediction of human reading times and eye movements.
 
+- <a name="michaelov-2022"></a>**[Michaelov 2022]** Michaelov, Coulson, Bergen. *So Cloze yet so Far: N400 Amplitude is Better Predicted by Distributional Information than Human Predictability Judgements.* IEEE Transactions on Cognitive and Developmental Systems. [doi:10.1109/TCDS.2022.3176783](https://doi.org/10.1109/TCDS.2022.3176783) ([arXiv:2109.01226](https://arxiv.org/abs/2109.01226)) — on the Nieuwland et al. (2018) EEG data, GPT-3, RoBERTa and ALBERT surprisal fit N400 amplitude better than human cloze; smaller LMs (incl. GPT-2 XL) did not.
+
 - <a name="oh-2023"></a>**[Oh 2023]** Oh & Schuler. *Why Does Surprisal From Larger Transformer-Based Language Models Provide a Poorer Fit to Human Reading Times?* Transactions of the ACL 11, 336–350. [doi:10.1162/tacl_a_00548](https://doi.org/10.1162/tacl_a_00548) — across five GPT-Neo and eight OPT sizes, lower perplexity goes with a poorer fit to reading times; larger models "memorize" sequences such as named entities.
 
 **Modern LM ↔ neural data:**
@@ -315,6 +369,7 @@ for i in range(1, len(ids)):
 [Michaelov 2024]: #michaelov-2024
 [Heilbron 2022]: #heilbron-2022
 [Wilcox 2020]: #wilcox-2020
+[Michaelov 2022]: #michaelov-2022
 [Oh 2023]: #oh-2023
 [Schrimpf 2021]: #schrimpf-2021
 [Caucheteux 2022]: #caucheteux-2022

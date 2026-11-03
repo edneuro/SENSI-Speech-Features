@@ -10,9 +10,9 @@
 
 # Machine-specific: folders, analyzer name, theme, token-file paths.
 shared:
-  analyzer_name: ''
-  last_transcripts_folder: ''
-  last_audio_folder: ''
-  last_output_folder: ''
-  theme: system
-  hf_token_file: hf_token.txt
+  analyzer_name: ''  # your name or initials, recorded in the run log
+  last_transcripts_folder: ''  # folder of .txt transcripts (run.py needs it)
+  last_audio_folder: ''  # folder of .wav files; '' = text-only run
+  last_output_folder: ''  # folder the outputs go to (run.py needs it)
+  theme: system  # not used (the app has one light theme)
+  hf_token_file: hf_token.txt  # text file holding your HuggingFace token; a relative path is inside config/

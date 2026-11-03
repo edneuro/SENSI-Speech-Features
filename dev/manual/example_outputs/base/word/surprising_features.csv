@@ -10,6 +10,6 @@ doc_id,paragraph_id,sentence_id,sentence,start,end,token_id,token_in_sentence_id
 13,1,1,"She spread butter on her violin.
 ",22,24,5,5,her,her,PRON,PRP$,Gender=Fem|Number=Sing|Person=3|Poss=Yes|PronType=Prs,poss,6,6.3,,,,,,,,,,,,,,,0.117447,3.0899,0.0,,,,,3.0,464.0,569.0,,,
 13,1,1,"She spread butter on her violin.
-",26,31,6,6,violin,violin,NOUN,NN,Number=Sing,pobj,4,3.74,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,,7.87678e-06,16.954,0.0,,,7.45,2.19,4.96,606.0,468.0,6.56,3.41,5.58
+",26,31,6,6,violin,violin,NOUN,NN,Number=Sing,pobj,4,3.74,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,,7.87653e-06,16.954,0.0,,,7.45,2.19,4.96,606.0,468.0,6.56,3.41,5.58
 13,1,1,"She spread butter on her violin.
 ",32,32,7,7,.,.,PUNCT,.,PunctType=Peri,punct,2,,,,,,,,,,,,,,,,,,,,,,,,,,,,

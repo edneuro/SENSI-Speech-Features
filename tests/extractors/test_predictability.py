@@ -572,3 +572,22 @@ def test_add_predictability_threads_effective_context(monkeypatch):
     m.add_predictability(df, "a b", models=["llama3_8b"], metrics=["surprisal"],
                          context={"llama3_8b": 2048})
     assert calls == [("llama3_8b", 2048)]
+
+
+def test_line_breaks_reach_the_model_as_single_spaces():
+    """A transcript's line breaks are layout, not speech. Passed raw, GPT-2
+    reads "distribution\\nwere" as a new line starting with a space-less
+    "were" and scored it 22 bits instead of ~3 (LJ002-0321)."""
+    seen = []
+
+    class _Recording(_Fake):
+        def score(self, text, tokens):
+            seen.append(text)
+            return super().score(text, tokens)
+
+    df = pd.DataFrame({"token": ["Others", "arrived", "were", "late", "."],
+                       "upos": ["NOUN", "VERB", "AUX", "ADV", "PUNCT"]})
+    add_predictability(df, "Others arrived\nwere  late\r\n\n.\n",
+                       models=["gpt2"], metrics=["surprisal"],
+                       backends={"gpt2": _Recording()})
+    assert seen == ["Others arrived were late ."]

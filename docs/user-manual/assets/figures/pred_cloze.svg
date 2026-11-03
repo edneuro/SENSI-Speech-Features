@@ -74,8 +74,8 @@ z
    <g id="patch_8">
     <path d="M 286.61373 185.180002 
 L 315.003364 185.180002 
-L 315.003364 101.620475 
-L 286.61373 101.620475 
+L 315.003364 101.620848 
+L 286.61373 101.620848 
 z
 " clip-path="url(#p1cbee9cc15)" style="fill: #00b2d0"/>
    </g>
@@ -628,7 +628,7 @@ L 326.562 185.180002
     <text style="font-size: 7px; font-family: 'Segoe UI', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #5b6370" x="260.251928" y="72.192139" transform="rotate(-0 260.251928 72.192139)">0.12</text>
    </g>
    <g id="text_20">
-    <text style="font-size: 7px; font-family: 'Segoe UI', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #5b6370" x="300.808547" y="98.692797" transform="rotate(-0 300.808547 98.692797)">0.0071</text>
+    <text style="font-size: 7px; font-family: 'Segoe UI', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #5b6370" x="300.808547" y="98.693171" transform="rotate(-0 300.808547 98.693171)">0.0071</text>
    </g>
    <g id="text_21">
     <text style="font-weight: 600; font-size: 10.5px; font-family: 'Segoe UI', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: start" x="72.272" y="44.496" transform="rotate(-0 72.272 44.496)">predictable.txt</text>
@@ -686,8 +686,8 @@ z
    <g id="patch_17">
     <path d="M 555.20373 185.180002 
 L 583.593364 185.180002 
-L 583.593364 165.721347 
-L 555.20373 165.721347 
+L 583.593364 165.721646 
+L 555.20373 165.721646 
 z
 " clip-path="url(#pbe39641c0f)" style="fill: #c77a00"/>
    </g>
@@ -1201,7 +1201,7 @@ L 595.152 185.180002
     <text style="font-size: 7px; font-family: 'Segoe UI', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #5b6370" x="528.841928" y="72.192139" transform="rotate(-0 528.841928 72.192139)">0.12</text>
    </g>
    <g id="text_33">
-    <text style="font-size: 7px; font-family: 'Segoe UI', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #5b6370" x="569.398547" y="162.79367" transform="rotate(-0 569.398547 162.79367)">7.9e-06</text>
+    <text style="font-size: 7px; font-family: 'Segoe UI', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: middle; fill: #5b6370" x="569.398547" y="162.793969" transform="rotate(-0 569.398547 162.793969)">7.9e-06</text>
    </g>
    <g id="text_34">
     <text style="font-weight: 600; font-size: 10.5px; font-family: 'Segoe UI', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: start" x="340.862" y="44.496" transform="rotate(-0 340.862 44.496)">surprising.txt</text>
