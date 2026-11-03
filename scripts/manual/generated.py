@@ -146,6 +146,10 @@ def _draw(kind, entry, variant, outputs_root, examples_dir, out_svg) -> None:
         F.phoneme_timeline(F.read_csv(p), out_svg, title)
     elif kind == "phoneme_surprisal":
         F.phoneme_timeline(F.read_csv(p), out_svg, title, ycol="phoneme_surprisal")
+    elif kind == "word_events":
+        F.event_stems(F.read_mat(p), "gpt2_Surprisal", "onset", "token", out_svg, title)
+    elif kind == "syllable_events":
+        F.event_stems(F.read_mat(p), "Pitch_Mean", "pcenter", "label", out_svg, title)
     elif kind == "timeseries":
         F.timeseries(F.read_mat(p), y, out_svg, title)
     elif kind == "image":
@@ -173,7 +177,7 @@ def _draw(kind, entry, variant, outputs_root, examples_dir, out_svg) -> None:
 VARIANT_LABEL = {"base": "Default settings", "env_hilbert": "env_method: hilbert",
                  "mel_music": "mel_preset: music", "pitch_hz": "pitch_units: hz"}
 SVG_KINDS = {"word_bars", "predict_compare", "norms", "word_timeline", "word_prosody", "syllable_timeline",
-             "syllable_prosody", "phoneme_timeline", "phoneme_surprisal", "timeseries", "image", "embedding",
+             "syllable_prosody", "phoneme_timeline", "phoneme_surprisal", "word_events", "syllable_events", "timeseries", "image", "embedding",
              "embedding_layers", "sentence_similarity", "categories", "doc_bars", "dependency",
              "structure", "lemmas", "morph", "sentence_timeline"}
 
@@ -412,6 +416,12 @@ def matlab(entry, outputs_root: Path | None = None) -> str:
                          "a = squeeze(S.embeddings(1, :, :)); b = squeeze(S.embeddings(2, :, :));\n"
                          "c = sum(a .* b, 2) ./ (vecnorm(a, 2, 2) .* vecnorm(b, 2, 2));\n"
                          "plot(1:12, c, 'o-'); xlabel('BERT layer'); ylabel('cosine(sentence 1, sentence 2)')\n")
+            elif kind in ("word_events", "syllable_events"):
+                x, yv, lab = (("onset", "gpt2_Surprisal", "token") if kind == "word_events"
+                              else ("pcenter", "Pitch_Mean", "label"))
+                code += (f"\nstem(S.{x}, S.{yv}); hold on\n"
+                         f"text(S.{x}, S.{yv}, S.{lab}, 'Rotation', 45)\n"
+                         f"xlabel('Time (s)'); ylabel('{yv}')\n")
             elif kind == "phoneme_surprisal":
                 code += ("\nstem(S.t, S.phoneme_surprisal, 'Marker', 'none')   % impulse at each phoneme onset\n"
                          "xlabel('Time (s)'); ylabel('phoneme surprisal (bits)')\n")

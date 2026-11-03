@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Syllable events .mat (MATLAB) · SENSI SpeechFeatures User Manual</title>
+<link rel="icon" href="../../assets/icon.svg">
+<link rel="stylesheet" href="../../assets/theme.css">
+<link rel="stylesheet" href="../../assets/layout.css">
+<link rel="stylesheet" href="../../assets/code.css">
+</head>
+<body data-root="../../">
+<button class="menu-btn" type="button" aria-label="Open the outline">☰ Contents</button>
+<div class="shell">
+  <nav class="left" aria-label="Manual outline">
+    <a class="brand" href="../../index.html"><img src="../../assets/icon.svg" alt="">SENSI SpeechFeatures <span>User Manual</span></a>
+    <div class="search">
+      <input type="search" placeholder="Search features, columns…  ( / )" aria-label="Search the manual">
+      <div class="search-results" role="listbox"></div>
+    </div>
+    <div class="outline"><ul><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../index.html"><span class="num">1</span>Introduction</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/requirements.html"><span class="num">2</span>Requirements</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/installation.html"><span class="num">3</span>Installation</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/usage.html"><span class="num">4</span>Using the app</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/sherlock.html"><span class="num">5</span>Running on Sherlock</a></div></li><li class="chapter open"><div class="row"><button class="toggle" type="button" aria-expanded="true" aria-label="Show or hide Features">▶</button><a href="../../features/index.html"><span class="num">6</span>Features</a></div><ul><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Word level">▶</button><a href="../../features/word/index.html"><span class="num">6.1</span>Word level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/structural_ids.html">Structural identifier columns</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/structural_offsets.html">Structural character offsets</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/feat_struct_sentence_text.html">Sentence text</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexling_tokens.html">Tokens and lemmas</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexling_pos.html">Part-of-speech tags</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexling_morph.html">Morphological features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexling_dep.html">Dependency parse</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/freq_subtlex.html">Word frequency (Zipf, wordfreq)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/edu_zipf.html">Educator&#x27;s Word Frequency Guide (EWFG) grade-band frequencies<span class="tag" title="Not computed in this manual">◇</span></a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/pred_surprisal.html">Surprisal</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/pred_cloze.html">Cloze probability</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/pred_topmatch.html">Top-1 prediction match</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/sem_indicators.html">Semantic-domain category indicators</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/master_word2vec.html">Word2Vec static word embeddings</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/master_bert_word.html">BERT contextual word embeddings</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/word_events_mat.html">Word events .mat (MATLAB)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/lexical_norms.html">Lexical norms (AoA, concreteness, imageability, familiarity, VAD)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/acoustic_boundaries.html">Acoustic word boundaries (MFA)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/acoustic_durations.html">Acoustic word duration and gap</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/prosody_pitch.html">Word-level pitch features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/word/prosody_volume.html">Word-level volume (intensity) features</a></div></li></ul></li><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Document level">▶</button><a href="../../features/document/index.html"><span class="num">6.2</span>Document level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_counts.html">Document-level count columns</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_aggregates.html">Word-level feature aggregates</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/output_doc_lex_diversity.html">Lexical diversity (TTR + MTLD)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/output_doc_readability.html">Readability (Flesch Reading Ease + Flesch–Kincaid Grade Level)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/output_doc_category_proportions.html">Document-level category proportions</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_psych_composite.html">Composite psychological scores (LIWC-style summary variables)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_prosody_pitch.html">Document-level pitch summaries</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_prosody_volume.html">Document-level volume (intensity) summaries</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/doc_prosody_pauses.html">Document-level pause statistics</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/feat_doc_prosody_articulation_rate.html">Articulation rate</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/document/feat_doc_prosody_hnr.html">Document-level Harmonics-to-Noise Ratio (HNR)</a></div></li></ul></li><li class="open"><div class="row"><button class="toggle" type="button" aria-expanded="true" aria-label="Show or hide Sub-word level">▶</button><a href="../../features/subword/index.html"><span class="num">6.3</span>Sub-word level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/syllable_timing.html">Syllable timing (Onset / End / Duration)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/syllable_events_mat.html" class="current">Syllable events .mat (MATLAB)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/syllable_labels.html">Syllable labels (orthographic + ARPABET + IPA)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/syllable_prosody.html">Syllable-level prosody (pitch + volume + deltas)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/feat_syllable_pcenter.html">Perceptual centre (P-center)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/phoneme.html">Phoneme-level columns</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/feat_phoneme_ipa.html">IPA phoneme symbol</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/g2p_oov.html">Out-of-dictionary words (MFA G2P)<span class="tag" title="Not computed in this manual">◇</span></a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/subword/phoneme_surprisal.html">Phoneme surprisal + cohort entropy</a></div></li></ul></li><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Sentence level">▶</button><a href="../../features/sentence/index.html"><span class="num">6.4</span>Sentence level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/sentence_timing.html">Sentence timing</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/sentence_prosody_pitch.html">Sentence-level pitch features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/sentence_prosody_volume.html">Sentence-level volume (intensity) features</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/feat_sentence_hnr.html">Sentence-level Harmonics-to-Noise Ratio (HNR)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/sentence/master_bert_sentence.html">BERT contextual sentence embeddings</a></div></li></ul></li><li class=""><div class="row"><button class="toggle" type="button" aria-expanded="false" aria-label="Show or hide Acoustic level">▶</button><a href="../../features/acoustic/index.html"><span class="num">6.5</span>Acoustic level</a></div><ul><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/acoustic/acoustic_envelope.html">Amplitude envelope (broadband)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/acoustic/acoustic_onset_envelope.html">Onset envelope (HWR derivative)</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/acoustic/acoustic_logmel.html">Log-mel spectrogram</a></div></li><li class=""><div class="row"><span class="toggle blank"></span><a href="../../features/acoustic/acoustic_mfcc.html">MFCC (Mel-frequency cepstral coefficients)</a></div></li></ul></li></ul></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../chapters/outputs.html"><span class="num">7</span>Outputs reference</a></div></li><li class="chapter"><div class="row"><span class="toggle blank"></span><a href="../../references.html"><span class="num">8</span>References</a></div></li></ul></div>
+  </nav>
+  <main>
+    <div class="content">
+      <div class="crumbs"><a href="../../features/index.html">Features</a> › <a href="../../features/subword/index.html">Sub-word level</a></div>
+      <details class="toc-inline"><summary>On this page</summary><ul><li><a href="#what">What it is</a></li><li><a href="#see">See it</a></li><li><a href="#output">In your output</a></li><li><a href="#matlab">MATLAB</a></li><li><a href="#x-what-s-in-the-file">What's in the file</a></li><li><a href="#x-matlab">MATLAB</a></li><li><a href="#x-configuration">Configuration</a></li><li><a href="#code">In the code</a></li><li><a href="#library">Library</a></li></ul></details>
+      <h1><span class="num">6.3.2</span>Syllable events .mat (MATLAB)</h1><p class="lede">One MATLAB file per stimulus, syllable/&lt;stim&gt;_syllable_events.mat, with one entry per syllable: start, end, label, parent word and every numeric syllable feature the run kept.</p><div class="facts"><span class="chip">App: <b>Sub-word features</b> → <b>Syllable timing</b></span><span class="chip">Output: <b>syllable/&lt;stim&gt;_syllable_events.mat</b></span><span class="chip">Libraries: <b>scipy</b></span></div><section id="what"><a id="meaning"></a><h2><span class="num">6.3.2.1</span>What it is</h2><p>One MATLAB file per stimulus, <code>syllable/&lt;stim&gt;_syllable_events.mat</code>, with <strong>one
+entry per syllable</strong>: start, end, label, parent word and every numeric
+syllable feature the run kept. When the P-center ran, the perceptual centre is
+included as <code>pcenter</code>, an alternative time anchor to <code>onset</code>
+(see <a href="../../features/subword/feat_syllable_pcenter.html">P-center</a>).</p>
+<p>Like the <a href="../../features/word/word_events_mat.html">word events file</a>, it stores <strong>events, not
+impulse trains</strong>: no fixed grid, no resampling. Every variable is an <code>n × 1</code>
+column vector and names match the syllable CSV's column names.</p>
+</section><section id="see"><h2><span class="num">6.3.2.2</span>See it</h2><div class="card"><div class="caption">Example <b>LJ002-0321</b> (LJ Speech, public domain): “Others who arrived just after the time of distribution were often 48 hours without food. The latter might also be six days without meat.”</div><audio controls preload="none" src="../../assets/audio/LJ002-0321.wav"></audio><div ><figure><img src="../../assets/figures/syllable_events_mat.svg" alt="Syllable events .mat (MATLAB) — Default settings"></figure><figcaption>Syllable events .mat (MATLAB) — Default settings</figcaption><div class="provenance">Read from <span class='file'>syllable/LJ002-0321_syllable_events.mat</span>, written by SENSI SpeechFeatures on the example shown here. Nothing on this figure is typed in.</div></div></div></section><section id="output"><h2><span class="num">6.3.2.3</span>In your output</h2><div class="card"><div class="card-title">File <span class="file">syllable/&lt;stim&gt;_syllable_events.mat</span></div><table class="excerpt vars"><thead><tr><th>variable</th><th>size</th><th>MATLAB class</th></tr></thead><tbody><tr><td><code>label</code></td><td>38 × 1</td><td>cell</td></tr><tr><td><code>onset</code></td><td>38 × 1</td><td>double</td></tr><tr><td><code>pcenter</code></td><td>38 × 1</td><td>double</td></tr><tr><td><code>Pitch_Mean</code></td><td>38 × 1</td><td>double</td></tr></tbody></table><div class="provenance">Excerpt of the real file for <b>LJ002-0321</b>.</div></div></section><section id="matlab"><h2><span class="num">6.3.2.4</span>MATLAB</h2><div class="card" data-tabs><div class="tabpanel on"><pre data-copy><code>S = load(&#x27;syllable/LJ002-0321_syllable_events.mat&#x27;);
+whos(&#x27;-file&#x27;, &#x27;syllable/LJ002-0321_syllable_events.mat&#x27;)                % variables, sizes, classes
+
+stem(S.pcenter, S.Pitch_Mean); hold on
+text(S.pcenter, S.Pitch_Mean, S.label, &#x27;Rotation&#x27;, 45)
+xlabel(&#x27;Time (s)&#x27;); ylabel(&#x27;Pitch_Mean&#x27;)
+</code></pre></div><div class="caption">Run from the output folder. Variable and column names were checked against the real files when this manual was built; the code itself was not run in MATLAB.</div></div></section><section id="x-what-s-in-the-file"><a id="whats-in-the-file"></a><h2><span class="num">6.3.2.5</span>What&#x27;s in the file</h2><p>Rows are the syllable CSV's rows that have an aligned <code>Onset</code> and <code>End</code>
+(punctuation has none). Row order is the CSV order. Text-only runs write no
+file.</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Contents</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>text</code></td>
+<td>the transcript text, whitespace-normalised</td>
+<td>char row</td>
+</tr>
+<tr>
+<td><code>label</code></td>
+<td>the syllable's orthographic <code>Label</code></td>
+<td>cellstr</td>
+</tr>
+<tr>
+<td><code>token</code></td>
+<td>the word the syllable belongs to</td>
+<td>cellstr</td>
+</tr>
+<tr>
+<td><code>onset</code>, <code>offset</code>, <code>duration</code></td>
+<td><code>Onset</code>, <code>End</code>, <code>Duration</code>: seconds from audio start, seconds</td>
+<td>double</td>
+</tr>
+<tr>
+<td><code>pcenter</code></td>
+<td><code>P_Center</code>, seconds from audio start; present only when P-center ran</td>
+<td>double</td>
+</tr>
+<tr>
+<td><code>sentence_id</code>, <code>syllable_id</code></td>
+<td>the same-named CSV columns</td>
+<td>double</td>
+</tr>
+<tr>
+<td>one variable per remaining numeric syllable column the run keeps</td>
+<td>e.g. <code>Pitch_Mean</code>, <code>Volume_Mean</code>, <code>Pitch_Delta</code>, <code>Volume_Delta</code>; <code>NaN</code> where the CSV cell is empty</td>
+<td>double</td>
+</tr>
+<tr>
+<td><code>columns</code></td>
+<td>the names of the feature variables above, in CSV order</td>
+<td>cellstr</td>
+</tr>
+<tr>
+<td><code>units</code></td>
+<td>the unit of each, aligned with <code>columns</code> (empty where none)</td>
+<td>cellstr</td>
+</tr>
+</tbody>
+</table>
+<p><code>ARPABET</code> and <code>IPA</code> (strings) are not in the file; the CSV has them. Syllables
+come from the aligned word, so unlike the word file there is no merging: the
+<code>.mat</code> and the CSV agree row for row (apart from the dropped rows above).</p>
+</section><section id="x-matlab"><a id="matlab"></a><h2><span class="num">6.3.2.6</span>MATLAB</h2><p>Use <code>S = load(...)</code>: a bare <code>load</code> would put a variable named <code>text</code> in the
+workspace and shadow MATLAB's <code>text()</code> function.</p>
+<pre><code class="language-matlab">S = load('syllable/&lt;stim&gt;_syllable_events.mat');
+
+% Stem a syllable feature at each syllable's perceptual centre, labelled
+stem(S.pcenter, S.Pitch_Mean); hold on
+text(S.pcenter, S.Pitch_Mean, S.label, 'Rotation', 45)
+xlabel('time (s)'); ylabel('Pitch\_Mean');
+
+% Put the events on your own sampling grid (fs Hz, N samples)
+fs = 128;
+N  = ceil(max(S.offset) * fs);
+x  = accumarray(round(S.pcenter*fs) + 1, S.Pitch_Mean, [N 1]);
+</code></pre>
+<p><code>accumarray</code> adds the values that land on the same sample; <code>x(idx) = v</code> would
+keep only the last of several events sharing a sample. Replace <code>S.pcenter</code>
+with <code>S.onset</code> for physical syllable onsets, or if P-center was off (the
+variable is then absent). <code>NaN</code> feature values propagate through
+<code>accumarray</code>; use <code>fillmissing</code> or drop them first if the feature has gaps.</p>
+</section><section id="x-configuration"><a id="configuration"></a><h2><span class="num">6.3.2.7</span>Configuration</h2><p>Sub-word features → <strong>Syllable timing</strong> card → <code>Events .mat (&lt;stim&gt;_syllable_events.mat)</code> toggle, off by default. The card's switch
+(<code>features.master_syllable_intervals</code>) greys it out; in <code>config/features.yaml</code>
+it is <code>features.feat_syllable_events_mat</code>. It is written only when the
+Sub-word level output is on, and a run with it on always aligns and
+syllabifies.</p>
+</section><section id="code"><a id="implementation-in-sensi-speechfeatures"></a><h2><span class="num">6.3.2.8</span>In the code</h2><div class="card"><div class="card-title">Open in GitHub</div><ul><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/utils/event_mat.py#L202"><code>sensi/utils/event_mat.py → syllable_event_vars()</code></a></li><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/pipeline.py#L851"><code>sensi/pipeline.py → run_word_level_batch()</code></a></li></ul></div><p>Source: <code>sensi/utils/event_mat.py:syllable_event_vars</code>; written by
+<code>sensi/pipeline.py:run_word_level_batch</code>.</p>
+<p><strong>What the code does:</strong></p>
+<ol>
+<li>Takes the syllable frame the run already built, after the per-column drop,
+so the same per-column toggles that decide the CSV columns decide the
+<code>.mat</code> variables.</li>
+<li>Keeps rows with non-<code>NaN</code> <code>Onset</code> and <code>End</code>; returns nothing (no file) if no
+row is left.</li>
+<li>Adds <code>label</code>, <code>token</code>, timing and, if <code>P_Center</code> is kept, <code>pcenter</code>;
+then every remaining numeric column, as <code>double</code>.</li>
+<li>Checks every variable name is a valid MATLAB identifier (raises rather than
+renaming) and writes with <code>scipy.io.savemat(..., oned_as=&quot;column&quot;)</code>.</li>
+</ol>
+<p>The file is written by the word pass only. ⚠️ <code>onset</code>/<code>offset</code>/<code>duration</code> are
+always present even if the syllable CSV drops those columns, because they are
+the reason the file exists.</p>
+</section><section id="library"><h2><span class="num">6.3.2.9</span>Library</h2><p><code>scipy.io.savemat</code> writes the file; the values come from the pandas frame the
+run already holds.</p>
+</section>
+      <nav class="pager">
+        <a class="prev" href="../../features/subword/syllable_timing.html"><small>Previous</small>Syllable timing (Onset / End / Duration)</a>
+        <a class="next" href="../../features/subword/syllable_labels.html"><small>Next</small>Syllable labels (orthographic + ARPABET + IPA)</a>
+      </nav>
+      <footer>SENSI SpeechFeatures User Manual · version 0.2.0 · built 2026-11-03 · source: <a href="https://github.com/edneuro/SENSI-Speech-Features">edneuro/SENSI-Speech-Features</a></footer>
+    </div>
+  </main>
+  <aside class="right" aria-label="On this page">
+    <div class="label">On this page</div>
+    <ul><li><a href="#what">What it is</a></li><li><a href="#see">See it</a></li><li><a href="#output">In your output</a></li><li><a href="#matlab">MATLAB</a></li><li><a href="#x-what-s-in-the-file">What's in the file</a></li><li><a href="#x-matlab">MATLAB</a></li><li><a href="#x-configuration">Configuration</a></li><li><a href="#code">In the code</a></li><li><a href="#library">Library</a></li></ul>
+    <div class="meta"><div><b>Key</b> <code>syllable_events_mat</code></div><div><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/docs/features/syllable_events_mat.md">This page’s source text</a> (also the app’s ⓘ pop-up)</div></div>
+  </aside>
+</div>
+<script src="../../assets/search-index.js"></script>
+<script src="../../assets/manual.js"></script>
+</body>
+</html>

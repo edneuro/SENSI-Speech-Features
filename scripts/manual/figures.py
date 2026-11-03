@@ -256,6 +256,25 @@ def phoneme_timeline(df, out, title, ycol=None):
     _save(fig, out)
 
 
+def event_stems(m, y, x, labels, out, title):
+    """An event .mat as a stem plot: one stem per event, at its time, with its label."""
+    t = m[x].ravel(); v = m[y].ravel()
+    names = [str(a.squeeze()) if hasattr(a, "squeeze") else str(a) for a in m[labels].ravel()]
+    ok = ~np.isnan(t) & ~np.isnan(v)
+    fig, ax = plt.subplots(figsize=(8.6, 3.0))
+    ml, sl, bl = ax.stem(t[ok], v[ok], basefmt=" ")
+    plt.setp(sl, color=ACCENT_DARK, lw=1.1); plt.setp(ml, color=ACCENT_DARK, markersize=4)
+    lo, hi = min(0.0, float(np.nanmin(v[ok]))), max(0.0, float(np.nanmax(v[ok])))
+    span = (hi - lo) or 1.0
+    for xi, vi, n in zip(t[ok], v[ok], np.array(names)[ok]):
+        up = vi >= 0
+        ax.text(xi, vi + (.02 if up else -.02) * span, n, rotation=45 if up else -45, ha="left",
+                va="bottom" if up else "top", fontsize=7, color=TEXT)
+    ax.set_ylim(lo - .3 * span if lo < 0 else 0, hi + .3 * span); ax.set_xlabel("Time (s)"); ax.set_ylabel(y)
+    ax.set_title(f"{title}  — {int(ok.sum())} events, stem at S.{x}", loc="left"); ax.grid(axis="x", visible=False)
+    _save(fig, out)
+
+
 def timeseries(m, y, out, title, t_max=None):
     t = m["t"].ravel(); v = m[y].ravel()
     if t_max:

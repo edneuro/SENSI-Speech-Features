@@ -28,7 +28,7 @@ chapter_docs:
 levels:
   - id: word
     title: Word level
-    blurb: One row per word (and punctuation token) in word/<stim>_features.csv, plus the word-embedding .mat files.
+    blurb: One row per word (and punctuation token) in word/<stim>_features.csv, plus the word-embedding and word-events .mat files.
     sections:
       - title: Structural
         features:
@@ -116,6 +116,12 @@ levels:
             output: "word/{stem}_bert_word.mat"
             show: [embeddings, tokens, word_id, sentence_id, is_valid]
             figure: embedding_layers
+      - title: MATLAB events file
+        features:
+          - key: word_events_mat
+            output: ["word/{stem}_word_events.mat"]
+            mat_show: [token, onset, offset, duration, gpt2_Surprisal, columns]
+            figure: word_events
       - title: Lexical norms
         features:
           - key: lexical_norms
@@ -216,7 +222,7 @@ levels:
 
   - id: subword
     title: Sub-word level
-    blurb: One row per syllable in syllable/<stim>_syllables.csv and per phoneme in phoneme/<stim>_phonemes.csv, plus phoneme/<stim>_phoneme_surprisal.mat.
+    blurb: One row per syllable in syllable/<stim>_syllables.csv and per phoneme in phoneme/<stim>_phonemes.csv, plus syllable/<stim>_syllable_events.mat and phoneme/<stim>_phoneme_surprisal.mat.
     sections:
       - title: Syllable timing
         features:
@@ -224,6 +230,10 @@ levels:
             output: "syllable/{stem}_syllables.csv"
             show: [token, syllable_id, Label, Onset, End, Duration]
             figure: syllable_timeline
+          - key: syllable_events_mat
+            output: ["syllable/{stem}_syllable_events.mat"]
+            mat_show: [label, onset, pcenter, Pitch_Mean]
+            figure: syllable_events
       - title: Syllable labels
         features:
           - key: syllable_labels

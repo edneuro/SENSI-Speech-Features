@@ -111,3 +111,10 @@ features,gpt2_Cloze,probability (0-1)
 documents_summary,mean_gpt2_cloze,probability (0-1)
 features,gpt2_TopMatch,boolean
 documents_summary,mean_gpt2_topmatch,proportion (0-1)
+word_events_mat,onset,seconds
+word_events_mat,offset,seconds
+word_events_mat,duration,seconds
+syllable_events_mat,onset,seconds
+syllable_events_mat,offset,seconds
+syllable_events_mat,duration,seconds
+syllable_events_mat,pcenter,seconds

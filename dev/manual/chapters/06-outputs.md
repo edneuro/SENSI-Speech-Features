@@ -12,7 +12,9 @@ keywords: outputs files folders csv mat logs manifest
 <output folder>/
 ├── word/        <stim>_features.csv            one row per word (and punctuation token)
 │                <stim>_word2vec.mat, <stim>_bert_word.mat
+│                <stim>_word_events.mat         one entry per spoken word, for stem plots
 ├── syllable/    <stim>_syllables.csv           one row per syllable
+│                <stim>_syllable_events.mat     one entry per syllable, for stem plots
 ├── phoneme/     <stim>_phonemes.csv            one row per phoneme
 │                <stim>_phoneme_surprisal.mat    time series on the analysis grid
 ├── sentence/    <stim>_sentences.csv           one row per sentence

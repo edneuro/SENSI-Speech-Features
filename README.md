@@ -240,8 +240,8 @@ A batch run writes, under your output folder:
 ```
 output/
 ├── word/       <stim>_features.csv          # one row per word
-│                <stim>_word2vec.mat, <stim>_bert_word.mat
-├── syllable/   <stim>_syllables.csv
+│                <stim>_word2vec.mat, <stim>_bert_word.mat, <stim>_word_events.mat
+├── syllable/   <stim>_syllables.csv, <stim>_syllable_events.mat
 ├── phoneme/    <stim>_phonemes.csv, <stim>_phoneme_surprisal.mat
 ├── sentence/   <stim>_sentences.csv, <stim>_bert_sentence.mat
 ├── document/   documents_summary_<timestamp>.csv   # one row per stimulus
