@@ -1,15 +1,17 @@
 """Load and save user preferences.
 
-Schema (v21 — active; DEFAULT_PREFS_V21 is the authoritative key set):
+Schema (v22 — active; DEFAULT_PREFS_V22 is the authoritative key set):
     {
-      "schema_version": 21,
+      "schema_version": 22,
       "shared":  {analyzer_name, last_*_folder, theme, hf_token_file},
       "features": {per-column toggles (feat_*, lexling_*, freq_*, sem_*),
                    master_* section switches (one per feature card, incl.
                    master_semantic_indicators / _similarity,
                    master_sentence_similarity), master_word2vec /
                    master_bert_word / master_bert_sentence (embedding ticks),
-                   feat_phoneme_surprisal_mat, vestigial master_acoustic_ts},
+                   feat_phoneme_surprisal_mat, v22 event .mat toggles
+                   (master_word_events, feat_word_events_mat,
+                   feat_syllable_events_mat), vestigial master_acoustic_ts},
       "predictability": {models, metrics, context},
       "semantic": {backend, categories_liwc, categories_empath},
       "output":   {level_word, level_document, level_subword, level_sentence,
@@ -1047,8 +1049,37 @@ def _migrate_outputs_to_levels(merged: dict, old_output: dict) -> None:
 # Active schema aliases
 # ---------------------------------------------------------------------------
 
-SCHEMA_VERSION = SCHEMA_VERSION_V21  # active version
-DEFAULT_PREFS: dict[str, Any] = DEFAULT_PREFS_V21  # active defaults
+# ---------------------------------------------------------------------------
+# v22 constants
+#
+# Additive: opt-in per-stimulus MATLAB event files (word/<stim>_word_events.mat,
+# syllable/<stim>_syllable_events.mat). The Word-page card needs a master_key
+# (ClusterCard), so it gets master_word_events (ON, the v15 masters-on policy)
+# with feat_word_events_mat as its child; the sub-word file is a per-file
+# toggle like feat_phoneme_surprisal_mat. Missing keys fill from defaults.
+# ---------------------------------------------------------------------------
+
+SCHEMA_VERSION_V22 = 22
+
+_FEATURES_DEFAULT_V22 = {
+    **DEFAULT_PREFS_V21["features"],
+    "master_word_events":        True,
+    "feat_word_events_mat":      False,
+    "feat_syllable_events_mat":  False,
+}
+
+DEFAULT_PREFS_V22: dict[str, Any] = {
+    **DEFAULT_PREFS_V21,
+    "schema_version": SCHEMA_VERSION_V22,
+    "features": dict(_FEATURES_DEFAULT_V22),
+}
+
+# ---------------------------------------------------------------------------
+# Active schema aliases
+# ---------------------------------------------------------------------------
+
+SCHEMA_VERSION = SCHEMA_VERSION_V22  # active version
+DEFAULT_PREFS: dict[str, Any] = DEFAULT_PREFS_V22  # active defaults
 
 
 # ---------------------------------------------------------------------------
@@ -1116,7 +1147,7 @@ def _merged_from_user(user: dict[str, Any]) -> tuple[dict[str, Any], bool]:
                    SCHEMA_VERSION_V12, SCHEMA_VERSION_V13, SCHEMA_VERSION_V14,
                    SCHEMA_VERSION_V15, SCHEMA_VERSION_V16, SCHEMA_VERSION_V17,
                    SCHEMA_VERSION_V18, SCHEMA_VERSION_V19, SCHEMA_VERSION_V20,
-                   SCHEMA_VERSION_V21):
+                   SCHEMA_VERSION_V21, SCHEMA_VERSION_V22):
         # v10–v15 are additive: missing keys are filled from the current
         # defaults (merged starts as DEFAULT_PREFS). v11's backend coercion and
         # the version stamp are applied in the finalize step below, which

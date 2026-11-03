@@ -11,7 +11,7 @@ from sensi.utils.config_yaml import (
     write_features_yaml,
 )
 from sensi.utils.preferences import (
-    DEFAULT_PREFS, DEFAULT_PREFS_V20, RETIRED_OUTPUT_KEYS_V21,
+    DEFAULT_PREFS, DEFAULT_PREFS_V20, RETIRED_OUTPUT_KEYS_V21, SCHEMA_VERSION,
     _merged_from_user, get_features_yaml_path, load_preferences,
 )
 
@@ -82,10 +82,10 @@ def test_v20_file_migrates_to_levels(case):
     features_data, _ = split_prefs(_v20_prefs(case))
     write_features_yaml(get_features_yaml_path(), features_data)
     prefs = load_preferences()
-    assert prefs["schema_version"] == 21
+    assert prefs["schema_version"] == SCHEMA_VERSION
     assert not set(RETIRED_OUTPUT_KEYS_V21) & set(prefs["output"])
     assert tuple(prefs["output"][lvl] for lvl in _LEVELS) ==         _EXPECTED_LEVELS[case["name"]]
-    # Persisted: the rewritten file is already v21 and has no retired key.
+    # Persisted: the rewritten file is already current and has no retired key.
     reread = load_preferences()
     assert reread == prefs
 

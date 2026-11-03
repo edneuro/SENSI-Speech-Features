@@ -9,7 +9,7 @@
 # Comments are regenerated on every save; hand-added comments do not survive.
 
 # Config schema version — managed by the app; do not edit.
-schema_version: 21
+schema_version: 22
 
 # Per-feature toggles (feat_* / master_* / freq_* / sem_* / lexling_*).
 features:
@@ -136,6 +136,9 @@ features:
   master_semantic_similarity: true
   master_sentence_similarity: true
   feat_phoneme_surprisal_mat: false
+  master_word_events: true
+  feat_word_events_mat: false
+  feat_syllable_events_mat: false
 
 # Predictability roster: models (slugs), metrics, per-model context caps.
 predictability:
