@@ -55,9 +55,10 @@ OUTPUT_KEYED_TOGGLES = frozenset({
 # each level writes. plan.output_csvs is a subset of the union of the levels
 # that are on (only artifacts with at least one active cluster are live).
 LEVEL_ARTIFACTS: dict[str, tuple[str, ...]] = {
-    "level_word":     ("features", "word2vec", "bert_word"),
+    "level_word":     ("features", "word2vec", "bert_word", "word_events_mat"),
     "level_document": ("documents_summary",),
-    "level_subword":  ("syllables", "phonemes", "phoneme_surprisal_mat"),
+    "level_subword":  ("syllables", "phonemes", "phoneme_surprisal_mat",
+                       "syllable_events_mat"),
     "level_sentence": ("sentences", "bert_sentence"),
     "level_acoustic": ("acoustic",),
 }

@@ -451,6 +451,26 @@ CLUSTERS: list[FeatureCluster] = [
         master_toggle="master_phoneme_surprisal",
     ),
 
+    # §2.6 Event .mat files (v22) — one entry per spoken word / syllable with
+    # onset/offset/duration/token + every kept numeric column (stem plots).
+    # The word file is a Word-level artifact; the syllable file is Sub-word.
+    FeatureCluster(
+        name="word events mat",
+        toggle_keys=("feat_word_events_mat",),
+        output_csv="word_events_mat",
+        requires_stages=("spacy_parse", "mfa_align"),
+        emits_columns=(),
+        master_toggle="master_word_events",
+    ),
+    FeatureCluster(
+        name="syllable events mat",
+        toggle_keys=("feat_syllable_events_mat",),
+        output_csv="syllable_events_mat",
+        requires_stages=("spacy_parse", "mfa_align", "syllabify_pairs"),
+        emits_columns=(),
+        master_toggle="master_syllable_intervals",
+    ),
+
     # --- Sentence level (§3) ---
 
     FeatureCluster(

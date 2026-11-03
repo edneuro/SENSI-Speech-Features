@@ -281,6 +281,13 @@ def estimate_disk(plan: Plan, prefs: dict, stats: InputStats) -> dict[str, int]:
         elif art == "acoustic":
             disk[art] = mat(all_secs * a_rate * _acoustic_channels(prefs) * _F64,
                             n_audio)
+        elif art == "word_events_mat":
+            # onset/offset/duration/token + one float64 vector per kept column
+            disk[art] = mat(rows["features"] * (cols["features"] + 4) * _F64,
+                            stats.n_with_audio)
+        elif art == "syllable_events_mat":
+            disk[art] = mat(rows["syllables"] * (cols["syllables"] + 4) * _F64,
+                            stats.n_with_audio)
         elif art == "phoneme_surprisal_mat":
             # impulse trains + the t vector, float64
             disk[art] = mat(stats.audio_seconds * ps_sr

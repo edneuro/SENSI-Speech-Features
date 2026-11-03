@@ -177,7 +177,7 @@ def test_main_still_exits_on_a_genuine_typo_not_a_retired_key(
 
 @pytest.mark.parametrize("name", [
     "sentence_timing_word_off", "phoneme_surprisal_mat_only",
-    "word2vec_only", "bert_sentence_only"])
+    "word2vec_only", "bert_sentence_only", "word_events_mat_only"])
 def test_dispatch_runs_word_batch_for_sidecar_only_levels(tmp_path, monkeypatch, name):
     """run.dispatch starts the word batch for every artifact it writes, not
     only the word / syllable / phoneme CSVs (scenarios shared with

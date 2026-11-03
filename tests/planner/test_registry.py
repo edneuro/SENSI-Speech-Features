@@ -72,7 +72,7 @@ def test_every_cluster_output_csv_is_valid():
     VALID = {
         "features", "syllables", "phonemes", "sentences", "documents_summary",
         "word2vec", "bert_word", "bert_sentence", "acoustic",
-        "phoneme_surprisal_mat",
+        "phoneme_surprisal_mat", "word_events_mat", "syllable_events_mat",
     }
     for c in CLUSTERS:
         assert c.output_csv in VALID, \

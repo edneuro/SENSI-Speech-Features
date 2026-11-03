@@ -62,6 +62,8 @@ _LEVEL_ROWS: list[tuple[str, str, str]] = [
 _ARTIFACT_PATHS: dict[str, str] = {
     "features":              "word/<stim>_features.csv",
     "word2vec":              "word/<stim>_word2vec.mat",
+    "word_events_mat":       "word/<stim>_word_events.mat",
+    "syllable_events_mat":   "syllable/<stim>_syllable_events.mat",
     "bert_word":             "word/<stim>_bert_word.mat",
     "documents_summary":     "document/documents_summary_<timestamp>.csv",
     "syllables":             "syllable/<stim>_syllables.csv",

@@ -644,6 +644,10 @@ SIDECAR_ONLY_SCENARIOS = {
         {"output": {"level_word": False, "level_subword": True},
          "features": {"feat_phoneme_surprisal_mat": True}},
         "phoneme_surprisal_mat", "no_phoneme_surprisal_mat"),
+    "word_events_mat_only": (
+        {"output": {"level_word": True},
+         "features": {"master_structural": False, "feat_word_events_mat": True}},
+        "word_events_mat", "no_word_events_mat"),
     "word2vec_only": (
         {"output": {"level_word": True},
          "features": {"master_structural": False, "master_word2vec": True}},

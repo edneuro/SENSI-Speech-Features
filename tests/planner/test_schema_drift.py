@@ -45,6 +45,8 @@ _INTENTIONALLY_UNROUTED_FEATURES: set[str] = {
     "master_acoustic_ts",
     # v16 phoneme surprisal — routes via FeatureCluster.master_toggle
     "master_phoneme_surprisal",
+    # v22 word events .mat — routes via master_toggle
+    "master_word_events",
 }
 
 # Output keys NOT routed via cluster toggle_keys (the v21 Run-tab level

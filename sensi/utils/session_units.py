@@ -207,4 +207,14 @@ def build_session_units(plan: Plan) -> list[dict]:
 
     rows.extend(_predictability_unit_rows(plan))
 
+    # Event .mat files: timing fields are lowercase struct fields in seconds.
+    for art in ("word_events_mat", "syllable_events_mat"):
+        if art not in plan.output_csvs:
+            continue
+        fields = ["onset", "offset", "duration"]
+        if art == "syllable_events_mat":
+            fields.append("pcenter")
+        for col in fields:
+            rows.append({"output_csv": art, "column": col, "unit": "seconds"})
+
     return rows

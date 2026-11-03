@@ -20,6 +20,7 @@ from sensi.extractors.acoustic_ts import MTRF_COMP
 WORD_BATCH_ARTIFACTS = frozenset({
     "features", "syllables", "phonemes", "sentences",
     "word2vec", "bert_word", "bert_sentence", "phoneme_surprisal_mat",
+    "word_events_mat", "syllable_events_mat",
 })
 _WORD_LEVEL_CSVS = WORD_BATCH_ARTIFACTS
 
@@ -143,6 +144,28 @@ def _categories_for_level(prefs: dict, level: str) -> str | None:
     return ",".join(cats) if cats else None
 
 
+def _event_units(plan: Plan) -> dict[str, dict[str, str]]:
+    """Column -> unit maps for the event .mat files (their `units` struct).
+
+    Derived from the features / syllables unit rows as if those artifacts were
+    live (the event file carries the same columns even when the CSV is off),
+    plus the event timing fields, which are always seconds.
+    """
+    import dataclasses
+    from sensi.utils.session_units import build_session_units
+
+    rows = build_session_units(dataclasses.replace(
+        plan, output_csvs=plan.output_csvs | {"features", "syllables"}))
+    timing = {c: "seconds" for c in ("onset", "offset", "duration", "pcenter")}
+    out: dict[str, dict[str, str]] = {}
+    for art, csv in (("word_events_mat", "features"),
+                     ("syllable_events_mat", "syllables")):
+        units = {r["column"]: r["unit"] for r in rows if r["output_csv"] == csv}
+        units.update(timing)
+        out[art] = units
+    return out
+
+
 def to_acoustic_namespace(prefs: dict) -> argparse.Namespace:
     """Namespace for sensi.pipeline.run_acoustic_level_batch. Audio-only; no transcript
     or word/doc stage flags."""
@@ -220,6 +243,10 @@ def to_namespace(plan: Plan, prefs: dict, level: str) -> argparse.Namespace:
     ns.no_word2vec      = "word2vec"     not in plan.output_csvs
     ns.no_bert_word     = "bert_word"    not in plan.output_csvs
     ns.no_bert_sentence = "bert_sentence" not in plan.output_csvs
+
+    ns.no_word_events_mat     = "word_events_mat"     not in plan.output_csvs
+    ns.no_syllable_events_mat = "syllable_events_mat" not in plan.output_csvs
+    ns.event_units = _event_units(plan) if level == "word" else {}
 
     ns.no_phoneme_surprisal     = "phoneme_surprisal" not in word_stages
     ns.no_phoneme_surprisal_mat = "phoneme_surprisal_mat" not in plan.output_csvs
