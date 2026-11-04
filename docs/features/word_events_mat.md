@@ -61,7 +61,7 @@ words. `token` is the original text span of the word (for example `Don't`); the 
 | `*_Cloze` | product of the parts |
 | `*_TopMatch` | 1 only if every part is 1 |
 | `Sem_*` 0/1 indicators | 1 if any part is 1 |
-| prosody and timing (`Pitch_*`, `Volume_*`, `Word_Gap`, …) | first part (the parts share one Onset–End window) |
+| prosody and timing (`Pitch_*`, `Volume_*`, `Word_Gap`, `Word_Gap_After`, …) | first part (the parts share one Onset–End window) |
 | frequency and lexical norms (`Zipf_Freq`, `AoA_*`, `Concreteness`, …) | looked up again for the joined form with the same lookup the CSV uses; `NaN` if the joined form is absent |
 | `token_id`, `sentence_id` | first part |
 

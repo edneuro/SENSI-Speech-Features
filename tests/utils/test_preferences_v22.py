@@ -12,15 +12,15 @@ _NEW = {
 }
 
 
-def test_active_version_is_22():
-    assert SCHEMA_VERSION == 22
-    assert DEFAULT_PREFS["schema_version"] == 22
+def test_active_version_is_at_least_22():
+    assert SCHEMA_VERSION >= 22
+    assert DEFAULT_PREFS["schema_version"] == SCHEMA_VERSION
 
 
 def test_v21_file_gets_new_keys_at_defaults():
     merged, changed = _merged_from_user(deepcopy(DEFAULT_PREFS_V21))
     assert changed is True
-    assert merged["schema_version"] == 22
+    assert merged["schema_version"] == SCHEMA_VERSION
     for k, v in _NEW.items():
         assert merged["features"][k] is v
 

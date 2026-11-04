@@ -68,10 +68,11 @@ class SentenceFeaturesSection(QWidget):
         prosody_card.settings_changed.connect(self.settings_changed)
         layout.addWidget(prosody_card)
 
-        # --- Semantic similarity (embeddings) ---
+        # --- Sentence embeddings (vectors for semantic similarity / encoding models) ---
         sim_card = ClusterCard(
-            "Semantic similarity",
-            "Pretrained sentence embeddings saved as .mat sidecars in sentence/.",
+            "Sentence embeddings",
+            "One BERT vector per sentence, saved as .mat files in sentence/, for "
+            "sentence-to-sentence similarity or encoding models (see ⓘ).",
             master_key="master_sentence_similarity",
         )
         sim_card.add_child(self._make_toggle(

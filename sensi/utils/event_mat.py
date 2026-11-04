@@ -55,7 +55,7 @@ def merge_rule(column: str) -> str | None:
     if column in _LOOKUP_COLS or column.startswith("Edu_Zipf_"):
         return "lookup"
     if (column in _ID_COLS or column in _STRING_COLS
-            or column in ("Onset", "End", "Word_Duration", "Word_Gap")
+            or column in ("Onset", "End", "Word_Duration", "Word_Gap", "Word_Gap_After")
             or column.startswith(("Pitch_", "Volume_"))):
         return "first"
     return None

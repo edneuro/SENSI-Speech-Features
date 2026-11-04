@@ -106,7 +106,7 @@ levels:
             output: "word/{stem}_features.csv"
             show: [token, Sem_Categories, Sem_Empath_family, Sem_Empath_communication]
             figure: categories
-      - title: Semantic similarity
+      - title: Word embeddings
         features:
           - key: master_word2vec
             output: "word/{stem}_word2vec.mat"
@@ -137,7 +137,7 @@ levels:
             figure: word_timeline
           - key: acoustic_durations
             output: "word/{stem}_features.csv"
-            show: [token, Onset, End, Word_Duration, Word_Gap]
+            show: [token, Onset, End, Word_Duration, Word_Gap, Word_Gap_After]
             figure: word_timeline
       - title: Prosody
         features:
@@ -301,7 +301,7 @@ levels:
             output: "sentence/{stem}_sentences.csv"
             show: [sentence_id, sentence, HNR]
             figure: table
-      - title: Semantic similarity
+      - title: Sentence embeddings
         features:
           - key: master_bert_sentence
             example: LJ003-0007

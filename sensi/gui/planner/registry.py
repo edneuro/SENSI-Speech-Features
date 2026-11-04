@@ -116,7 +116,8 @@ STAGES: list[Stage] = [
 
     Stage(name="word_timing",
           consumes=("word_df", "word_alignment"),
-          produces=("word_df.Word_Duration", "word_df.Word_Gap"),
+          produces=("word_df.Word_Duration", "word_df.Word_Gap",
+                    "word_df.Word_Gap_After"),
           run=add_timing_columns),
 
     Stage(name="word_prosody",
@@ -347,10 +348,11 @@ CLUSTERS: list[FeatureCluster] = [
     # §1.9 Derived timing
     FeatureCluster(
         name="word derived timing",
-        toggle_keys=("feat_acoustic_word_duration", "feat_acoustic_word_gap"),
+        toggle_keys=("feat_acoustic_word_duration", "feat_acoustic_word_gap",
+                     "feat_acoustic_word_gap_after"),
         output_csv="features",
         requires_stages=("mfa_align", "word_timing"),
-        emits_columns=("Word_Duration", "Word_Gap"),
+        emits_columns=("Word_Duration", "Word_Gap", "Word_Gap_After"),
         master_toggle="master_acoustic",
     ),
 

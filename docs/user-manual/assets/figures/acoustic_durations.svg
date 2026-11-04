@@ -12670,7 +12670,7 @@ L 337.607361 93.685432
 " style="fill: none; stroke: #c77a00; stroke-linecap: round"/>
    </g>
    <g id="text_32">
-    <text style="font-weight: 600; font-size: 10.5px; font-family: 'Segoe UI', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: start" x="9.895313" y="14.973281" transform="rotate(-0 9.895313 14.973281)">Acoustic word duration and gap</text>
+    <text style="font-weight: 600; font-size: 10.5px; font-family: 'Segoe UI', 'DejaVu Sans', 'Arial', sans-serif; text-anchor: start" x="9.895313" y="14.973281" transform="rotate(-0 9.895313 14.973281)">Acoustic word duration and gaps</text>
    </g>
   </g>
  </g>

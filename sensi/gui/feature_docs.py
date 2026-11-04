@@ -45,6 +45,7 @@ _SHARED_DOC_MAP: dict[str, str] = {
     # Word duration / gap — derived from boundaries, one shared explainer
     "feat_acoustic_word_duration": "acoustic_durations.md",
     "feat_acoustic_word_gap":      "acoustic_durations.md",
+    "feat_acoustic_word_gap_after": "acoustic_durations.md",
     # Word prosody — pitch family
     "feat_prosody_pitch_mean":   "prosody_pitch.md",
     "feat_prosody_pitch_min":    "prosody_pitch.md",

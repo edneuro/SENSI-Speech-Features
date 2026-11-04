@@ -1,8 +1,8 @@
 """Load and save user preferences.
 
-Schema (v22 — active; DEFAULT_PREFS_V22 is the authoritative key set):
+Schema (v23 — active; DEFAULT_PREFS_V23 is the authoritative key set):
     {
-      "schema_version": 22,
+      "schema_version": 23,
       "shared":  {analyzer_name, last_*_folder, theme, hf_token_file},
       "features": {per-column toggles (feat_*, lexling_*, freq_*, sem_*),
                    master_* section switches (one per feature card, incl.
@@ -1071,11 +1071,32 @@ DEFAULT_PREFS_V22: dict[str, Any] = {
 }
 
 # ---------------------------------------------------------------------------
+# v23 (2026-11-04)
+#
+# Additive: feat_acoustic_word_gap_after (Word_Gap_After, the silence after a
+# word). A pre-v23 file copies its feat_acoustic_word_gap value onto it, so
+# whoever was writing the gap before a word also gets the gap after it.
+# ---------------------------------------------------------------------------
+
+SCHEMA_VERSION_V23 = 23
+
+_FEATURES_DEFAULT_V23 = {
+    **_FEATURES_DEFAULT_V22,
+    "feat_acoustic_word_gap_after": False,
+}
+
+DEFAULT_PREFS_V23: dict[str, Any] = {
+    **DEFAULT_PREFS_V22,
+    "schema_version": SCHEMA_VERSION_V23,
+    "features": dict(_FEATURES_DEFAULT_V23),
+}
+
+# ---------------------------------------------------------------------------
 # Active schema aliases
 # ---------------------------------------------------------------------------
 
-SCHEMA_VERSION = SCHEMA_VERSION_V22  # active version
-DEFAULT_PREFS: dict[str, Any] = DEFAULT_PREFS_V22  # active defaults
+SCHEMA_VERSION = SCHEMA_VERSION_V23  # active version
+DEFAULT_PREFS: dict[str, Any] = DEFAULT_PREFS_V23  # active defaults
 
 
 # ---------------------------------------------------------------------------
@@ -1143,7 +1164,7 @@ def _merged_from_user(user: dict[str, Any]) -> tuple[dict[str, Any], bool]:
                    SCHEMA_VERSION_V12, SCHEMA_VERSION_V13, SCHEMA_VERSION_V14,
                    SCHEMA_VERSION_V15, SCHEMA_VERSION_V16, SCHEMA_VERSION_V17,
                    SCHEMA_VERSION_V18, SCHEMA_VERSION_V19, SCHEMA_VERSION_V20,
-                   SCHEMA_VERSION_V21, SCHEMA_VERSION_V22):
+                   SCHEMA_VERSION_V21, SCHEMA_VERSION_V22, SCHEMA_VERSION_V23):
         # v10–v15 are additive: missing keys are filled from the current
         # defaults (merged starts as DEFAULT_PREFS). v11's backend coercion and
         # the version stamp are applied in the finalize step below, which
@@ -1340,6 +1361,12 @@ def _merged_from_user(user: dict[str, Any]) -> tuple[dict[str, Any], bool]:
     # source never had takes its v20 default inside the helper).
     if isinstance(version, int) and version < SCHEMA_VERSION_V21:
         _migrate_outputs_to_levels(merged, dict(merged.get("output", {})))
+
+    # v23 finalize: the new gap-after toggle follows the user's gap-before.
+    if isinstance(version, int) and version < SCHEMA_VERSION_V23:
+        uf = user.get("features") if isinstance(user.get("features"), dict) else {}
+        if "feat_acoustic_word_gap_after" not in uf and "feat_acoustic_word_gap" in uf:
+            merged["features"]["feat_acoustic_word_gap_after"] = bool(uf["feat_acoustic_word_gap"])
 
     changed = merged.get("schema_version") != SCHEMA_VERSION
     merged["schema_version"] = SCHEMA_VERSION

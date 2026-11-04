@@ -75,3 +75,44 @@ def test_no_alignment_columns_emits_nan():
     assert 'Word_Gap' in out.columns
     assert math.isnan(out['Word_Duration'].iloc[0])
     assert math.isnan(out['Word_Gap'].iloc[0])
+
+
+def test_word_gap_after_is_silence_until_the_next_word():
+    df = pd.DataFrame({
+        'token': ['the', 'cat', ',', 'sat'],
+        'upos': ['DET', 'NOUN', 'PUNCT', 'VERB'],
+        'Onset': [0.0, 0.5, float('nan'), 1.2],
+        'End': [0.4, 1.0, float('nan'), 1.6],
+    })
+    out = add_timing_columns(df)
+    assert out['Word_Gap_After'].iloc[0] == pytest.approx(0.1)   # 0.5 - 0.4
+    assert out['Word_Gap_After'].iloc[1] == pytest.approx(0.2)   # across the comma
+    assert math.isnan(out['Word_Gap_After'].iloc[2])             # PUNCT has no interval
+    assert math.isnan(out['Word_Gap_After'].iloc[3])             # last aligned word
+    # the gap after a word is the gap before the next one
+    assert out['Word_Gap_After'].iloc[1] == pytest.approx(out['Word_Gap'].iloc[3])
+
+
+def test_contraction_parts_share_one_spoken_word():
+    """spaCy splits "He'd" into He + 'd; MFA times them as one word, so both
+    rows carry the same Onset/End. The first part holds the word's gaps; the
+    continuation row has none (it used to get a negative Word_Gap)."""
+    df = pd.DataFrame({
+        'token': ['said', '.', 'He', "'d", 'be'],
+        'upos': ['VERB', 'PUNCT', 'PRON', 'AUX', 'AUX'],
+        'Onset': [11.0, float('nan'), 12.56, 12.56, 12.75],
+        'End': [11.44, float('nan'), 12.75, 12.75, 12.86],
+    })
+    out = add_timing_columns(df)
+    assert out['Word_Gap'].iloc[2] == pytest.approx(1.12)
+    assert out['Word_Gap_After'].iloc[2] == pytest.approx(0.0)
+    assert math.isnan(out['Word_Gap'].iloc[3])
+    assert math.isnan(out['Word_Gap_After'].iloc[3])
+    assert out['Word_Gap'].iloc[4] == pytest.approx(0.0)
+    assert out['Word_Gap_After'].iloc[0] == pytest.approx(1.12)
+
+
+def test_word_gap_after_without_alignment_is_all_nan():
+    out = add_timing_columns(pd.DataFrame({'token': ['a'], 'upos': ['DET']}))
+    assert 'Word_Gap_After' in out.columns
+    assert math.isnan(out['Word_Gap_After'].iloc[0])

@@ -368,11 +368,12 @@ class WordFeaturesSection(QWidget):
         sem_card.add_child(liwc_note)
         layout.addWidget(sem_card)
 
-        # --- Semantic similarity (embeddings) ---
+        # --- Word embeddings (vectors for semantic similarity / encoding models) ---
         sim_card = ClusterCard(
-            "Semantic similarity",
-            "Pretrained word embeddings saved as .mat sidecars in word/. "
-            "Word2Vec requires a one-time manual download — see scripts/download_models.py.",
+            "Word embeddings",
+            "One vector per word, saved as .mat files in word/. Compute semantic "
+            "similarity to the context from them, or use them in encoding models "
+            "(see ⓘ). Word2Vec needs a one-time download — see scripts/download_models.py.",
             master_key="master_semantic_similarity",
         )
         sim_card.settings_changed.connect(self.settings_changed)
@@ -442,7 +443,8 @@ class WordFeaturesSection(QWidget):
             ("feat_acoustic_onset", "Onset"),
             ("feat_acoustic_end", "End"),
             ("feat_acoustic_word_duration", "Word_Duration"),
-            ("feat_acoustic_word_gap", "Word_Gap"),
+            ("feat_acoustic_word_gap", "Word_Gap (silence before)"),
+            ("feat_acoustic_word_gap_after", "Word_Gap_After (silence after)"),
         ]
         for i, (key, label) in enumerate(ac_keys):
             ac_grid.addWidget(

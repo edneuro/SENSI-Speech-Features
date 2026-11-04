@@ -1,6 +1,7 @@
 output_csv,column,unit
 features,Word_Duration,seconds
 features,Word_Gap,seconds
+features,Word_Gap_After,seconds
 features,Onset,seconds
 features,End,seconds
 features,Volume_Mean,dB

@@ -78,7 +78,7 @@ _COLUMN_ORDER = [
     # LLM_* columns used to occupy.
     '_PREDICTABILITY_',
     'Transcript', 'Onset', 'End',
-    'Word_Duration', 'Word_Gap',
+    'Word_Duration', 'Word_Gap', 'Word_Gap_After',
     # Prosody (Task 5)
     'Pitch_Mean', 'Pitch_Min', 'Pitch_Max', 'Pitch_Std',
     'Volume_Mean', 'Volume_Min', 'Volume_Max', 'Volume_Std',
@@ -477,6 +477,7 @@ _WORD_FEATURE_COLUMN_MAP = {
     "feat_acoustic_end": "End",
     "feat_acoustic_word_duration": "Word_Duration",
     "feat_acoustic_word_gap": "Word_Gap",
+    "feat_acoustic_word_gap_after": "Word_Gap_After",
     # Prosody
     "feat_prosody_pitch_mean":  "Pitch_Mean",
     "feat_prosody_pitch_min":   "Pitch_Min",

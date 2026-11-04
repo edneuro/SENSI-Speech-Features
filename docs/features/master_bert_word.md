@@ -15,6 +15,48 @@ transformer layers. Output shape: `(n_words, 12, 768)`. Each word's vector
 encodes its meaning *in context* — the same surface word ("bank") receives
 different vectors in "river bank" vs. "savings bank".
 
+## How these vectors are used
+The file holds the **vectors themselves, not a similarity score**: you
+compute the measure your analysis needs from them. Two common uses:
+
+1. **Semantic similarity to the preceding context.** Compare each word's
+   vector with a vector for what came before it, for example the mean of
+   the earlier words in the sentence, by cosine similarity (or
+   1 − similarity, a *dissimilarity*). A low value marks a word whose
+   meaning departs from its context. [Broderick 2018] regressed EEG on a
+   per-word semantic dissimilarity of this kind during continuous
+   narrative speech and found an N400-like response.
+2. **Encoding models.** Use the vector dimensions directly as regressors
+   that predict the neural response (often after reducing them, e.g.
+   with PCA) ([Goldstein 2022]).
+
+These vectors are **not** where surprisal comes from: surprisal and cloze
+are read from a language model's next-word probabilities (the
+[Predictability](pred_surprisal.md) card), not from embeddings.
+
+⚠️ A contextual vector is computed *from* the preceding sentences, so its similarity to that context is partly built in; for a similarity-to-context regressor the static [Word2Vec](master_word2vec.md) vectors are the more usual choice. Contextual vectors are most often used in encoding models, where carrying the context is the point. Pick one layer: `embeddings` is `n_words × 12 × 768`.
+
+Example (MATLAB): cosine similarity of each word to the mean of the
+earlier words in its sentence; the first word of a sentence, punctuation
+and words without a vector stay `NaN`.
+
+```matlab
+S   = load('<stim>_bert_word.mat');
+E   = double(S.embeddings);
+L   = 9;                                    % layer 1-12, your choice
+E   = squeeze(E(:, L, :));
+ok  = logical(S.is_valid(:));
+sid = double(S.sentence_id(:));
+sim = nan(size(E, 1), 1);
+for i = 1:size(E, 1)
+    prev = find(ok(1:i-1) & sid(1:i-1) == sid(i));   % earlier valid words, same sentence
+    if ok(i) && ~isempty(prev)
+        c = mean(E(prev, :), 1);
+        sim(i) = dot(E(i, :), c) / (norm(E(i, :)) * norm(c));   % cosine
+    end
+end
+```
+
 ## EEG rationale
 Contextual embeddings predict word-level neural responses to
 naturalistic language with high explained variance. Comparative
@@ -142,6 +184,8 @@ for w in range(len(words)):
 
 ## Papers
 
+- <a name="broderick-2018"></a>**[Broderick 2018]** Broderick, Anderson, Di Liberto, Crosse, Lalor. *Electrophysiological Correlates of Semantic Dissimilarity Reflect the Comprehension of Natural, Narrative Speech.* Current Biology 28(5), 803–809. [doi:10.1016/j.cub.2018.01.080](https://doi.org/10.1016/j.cub.2018.01.080) — regresses EEG against per-word semantic dissimilarity in continuous narrative speech.
+
 **Model:**
 - <a name="devlin-2019"></a>**[Devlin 2019]** Devlin, Chang, Lee, Toutanova. *BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding.* NAACL 2019. [arXiv:1810.04805](https://arxiv.org/abs/1810.04805)
 
@@ -160,6 +204,8 @@ for w in range(len(words)):
 [Toneva 2019]: #toneva-2019
 [Schrimpf 2021]: #schrimpf-2021
 [Goldstein 2022]: #goldstein-2022
+
+[Broderick 2018]: #broderick-2018
 
 ## Datasets
 <!-- auto-populated from docs/datasets/*.md once the dataset registry exists -->

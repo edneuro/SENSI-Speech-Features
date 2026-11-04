@@ -16,6 +16,46 @@ static embedding table (Google News 100B-word corpus). Output shape:
 regardless of context — this is the *static* (non-contextual)
 counterpart to [BERT](master_bert_word.md).
 
+## How these vectors are used
+The file holds the **vectors themselves, not a similarity score**: you
+compute the measure your analysis needs from them. Two common uses:
+
+1. **Semantic similarity to the preceding context.** Compare each word's
+   vector with a vector for what came before it, for example the mean of
+   the earlier words in the sentence, by cosine similarity (or
+   1 − similarity, a *dissimilarity*). A low value marks a word whose
+   meaning departs from its context. [Broderick 2018] regressed EEG on a
+   per-word semantic dissimilarity of this kind during continuous
+   narrative speech and found an N400-like response.
+2. **Encoding models.** Use the vector dimensions directly as regressors
+   that predict the neural response (often after reducing them, e.g.
+   with PCA) ([Goldstein 2022]).
+
+These vectors are **not** where surprisal comes from: surprisal and cloze
+are read from a language model's next-word probabilities (the
+[Predictability](pred_surprisal.md) card), not from embeddings.
+
+⚠️ For similarity to context, a **static** vector like this one is the usual choice: a word gets the same vector wherever it occurs, so the similarity reflects the word and its context, nothing more. A contextual vector ([BERT](master_bert_word.md)) is computed from that same context, so part of the similarity is built in.
+
+Example (MATLAB): cosine similarity of each word to the mean of the
+earlier words in its sentence; the first word of a sentence, punctuation
+and words without a vector stay `NaN`.
+
+```matlab
+S   = load('<stim>_word2vec.mat');
+E   = double(S.embeddings);
+ok  = logical(S.is_valid(:));
+sid = double(S.sentence_id(:));
+sim = nan(size(E, 1), 1);
+for i = 1:size(E, 1)
+    prev = find(ok(1:i-1) & sid(1:i-1) == sid(i));   % earlier valid words, same sentence
+    if ok(i) && ~isempty(prev)
+        c = mean(E(prev, :), 1);
+        sim(i) = dot(E(i, :), c) / (norm(E(i, :)) * norm(c));   % cosine
+    end
+end
+```
+
 ## EEG rationale
 Static distributional vectors capture corpus-level semantic similarity
 between words, and similarity in this space is the operational definition
@@ -137,6 +177,9 @@ for i, tok in enumerate(words):
 
 ## Papers
 
+- <a name="goldstein-2022"></a>**[Goldstein 2022]** Goldstein et al. *Shared computational principles for language processing in humans and deep language models.* Nature Neuroscience 25(3), 369–380. [doi:10.1038/s41593-022-01026-4](https://doi.org/10.1038/s41593-022-01026-4) — ECoG (9 participants, 30-min podcast) demonstrating that brain responses and autoregressive transformer models share next-word prediction, prediction-error encoding, and contextual-embedding-based representation of words.
+- <a name="broderick-2018"></a>**[Broderick 2018]** Broderick, Anderson, Di Liberto, Crosse, Lalor. *Electrophysiological Correlates of Semantic Dissimilarity Reflect the Comprehension of Natural, Narrative Speech.* Current Biology 28(5), 803–809. [doi:10.1016/j.cub.2018.01.080](https://doi.org/10.1016/j.cub.2018.01.080) — regresses EEG against per-word semantic dissimilarity in continuous narrative speech.
+
 **Model:**
 - <a name="mikolov-2013a"></a>**[Mikolov 2013a]** Mikolov, Sutskever, Chen, Corrado, Dean. *Distributed Representations of Words and Phrases and their Compositionality.* NeurIPS 2013. [arXiv:1310.4546](https://arxiv.org/abs/1310.4546) — skip-gram with negative sampling; the algorithm behind the Google News 300d vectors.
 - <a name="mikolov-2013b"></a>**[Mikolov 2013b]** Mikolov, Chen, Corrado, Dean. *Efficient Estimation of Word Representations in Vector Space.* ICLR Workshop 2013. [arXiv:1301.3781](https://arxiv.org/abs/1301.3781) — original Word2Vec paper.
@@ -151,6 +194,9 @@ for i, tok in enumerate(words):
 [Kutas 2011]: #kutas-2011
 [Toneva 2019]: #toneva-2019
 [Schrimpf 2021]: #schrimpf-2021
+
+[Broderick 2018]: #broderick-2018
+[Goldstein 2022]: #goldstein-2022
 
 ## Datasets
 <!-- auto-populated from docs/datasets/*.md once the dataset registry exists -->

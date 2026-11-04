@@ -153,13 +153,13 @@ def test_phoneme_surprisal_mat_tick(qtbot):
 
 @pytest.mark.parametrize("page_cls,title,key,section", [
     (WordFeaturesSection, "Semantic indicators", "master_semantic_indicators", "features"),
-    (WordFeaturesSection, "Semantic similarity", "master_semantic_similarity", "features"),
+    (WordFeaturesSection, "Word embeddings", "master_semantic_similarity", "features"),
     (DocFeaturesSection, "Aggregates", "master_doc_aggregates", "output"),
     (DocFeaturesSection, "Lexical diversity", "master_doc_lex_diversity", "output"),
     (DocFeaturesSection, "Readability", "master_doc_readability", "output"),
     (DocFeaturesSection, "Category proportions", "master_doc_category_proportions", "output"),
     (SubwordFeaturesSection, "P-center", "master_syllable_pcenter", "features"),
-    (SentenceFeaturesSection, "Semantic similarity", "master_sentence_similarity", "features"),
+    (SentenceFeaturesSection, "Sentence embeddings", "master_sentence_similarity", "features"),
 ])
 def test_new_section_switches_write_their_key(qtbot, page_cls, title, key, section):
     from sensi.utils.preferences import load_preferences

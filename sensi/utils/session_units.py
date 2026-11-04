@@ -18,6 +18,7 @@ _STATIC_UNITS: dict[tuple[str, str], str] = {
     # Word-level features CSV
     ("features", "Word_Duration"):    "seconds",
     ("features", "Word_Gap"):         "seconds",
+    ("features", "Word_Gap_After"):   "seconds",
     ("features", "Onset"):            "seconds",
     ("features", "End"):              "seconds",
     ("features", "Volume_Mean"):      "dB",
