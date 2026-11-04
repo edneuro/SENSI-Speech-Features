@@ -359,3 +359,30 @@ def test_save_hf_token_button_ignores_empty(qtbot, monkeypatch, tmp_path):
     w.hf_token_line.setText("   ")
     w.hf_token_save_btn.click()
     assert not (tmp_path / "hf_token.txt").exists()
+
+
+# --- Per-model precision combo -------------------------------------------------
+
+def test_precision_combos_one_per_model_gpt2_disabled(qtbot, prefs_tmp):
+    from sensi.gui.section_word_features import WordFeaturesSection
+    from sensi.extractors.predictability_models import all_specs
+    w = WordFeaturesSection(); qtbot.addWidget(w)
+    assert len(w.precision_combos) == len(all_specs()) == 7
+    for slug in ("gpt2", "gpt2_medium", "gpt2_large", "gpt2_xl"):
+        combo = w.precision_combos[slug]
+        assert combo.isEnabled() is False
+        assert combo.currentText() == "fp32"
+    llama = w.precision_combos["llama3_8b"]
+    assert llama.isEnabled() is True
+    assert [llama.itemText(i) for i in range(llama.count())] == ["fp16", "8-bit", "4-bit"]
+
+
+def test_precision_combo_persists_and_default_is_absence(qtbot, prefs_tmp):
+    from sensi.gui.section_word_features import WordFeaturesSection
+    from sensi.utils.preferences import load_preferences
+    w = WordFeaturesSection(); qtbot.addWidget(w)
+    combo = w.precision_combos["llama3_8b"]
+    combo.setCurrentIndex(combo.findText("4-bit"))
+    assert load_preferences()["predictability"]["precision"] == {"llama3_8b": "4bit"}
+    combo.setCurrentIndex(combo.findText("fp16"))
+    assert "llama3_8b" not in load_preferences()["predictability"]["precision"]

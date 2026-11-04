@@ -12,7 +12,10 @@ from sensi.gui.widgets import ClusterCard, ToggleRow
 from sensi.utils.preferences import load_preferences, save_preferences
 from sensi.extractors.predictability_models import (
     all_specs, is_gated, spec_for, FLOOR_CONTEXT,
+    default_precision, effective_precision,
 )
+
+_PRECISION_LABELS = {"fp32": "fp32", "fp16": "fp16", "8bit": "8-bit", "4bit": "4-bit"}
 # Imported as a module (not `from ... import has_hf_token`) so that tests can
 # monkeypatch `sensi.extractors.predictability.has_hf_token` and have it take
 # effect here — a direct-name import would bind a stale reference at
@@ -163,6 +166,8 @@ class WordFeaturesSection(QWidget):
         self.model_checkboxes: dict[str, QCheckBox] = {}
         self.model_labels: dict[str, QLabel] = {}
         self.context_spins: dict[str, QSpinBox] = {}
+        self.precision_combos: dict[str, QComboBox] = {}
+        saved_precision = pred_prefs.get("precision") or {}
         for spec in all_specs():
             row = QHBoxLayout(); row.setContentsMargins(0, 0, 0, 0)
             # Text lives on a wrapping label, not the checkbox (QCheckBox
@@ -203,6 +208,24 @@ class WordFeaturesSection(QWidget):
                 lambda v, s=spec.slug: self._on_context_changed(s, v))
             self.context_spins[spec.slug] = spin
             row.addWidget(spin)
+            # Per-model weight precision. Single-choice models (GPT-2
+            # family: fp32 only) show a disabled combo so the row layout
+            # stays aligned and the precision is visible.
+            combo = QComboBox()
+            for p in spec.precisions:
+                combo.addItem(_PRECISION_LABELS[p], p)
+            combo.setCurrentIndex(max(0, combo.findData(
+                effective_precision(spec.slug, saved_precision))))
+            combo.setEnabled(len(spec.precisions) > 1)
+            combo.setToolTip(
+                "Weight precision. fp16 is the most precise choice for "
+                "Llama; 8-bit and 4-bit use less GPU memory and shift the "
+                "values. Without a GPU the model runs fp32 on the CPU.")
+            combo.currentIndexChanged.connect(
+                lambda _i, s=spec.slug, c=combo:
+                    self._on_precision_changed(s, c.currentData()))
+            self.precision_combos[spec.slug] = combo
+            row.addWidget(combo)
             row_w = QWidget(); row_w.setLayout(row)
             models_box.addWidget(row_w)
         pred_card.add_group("Models", models_box)
@@ -599,6 +622,16 @@ class WordFeaturesSection(QWidget):
         else:
             context[slug] = int(value)
         save_preferences({"predictability": {"context": context}})
+        self.settings_changed.emit()
+
+    def _on_precision_changed(self, slug: str, value: str) -> None:
+        # The default precision is stored as the slug's ABSENCE (like context).
+        precision = dict(load_preferences()["predictability"].get("precision") or {})
+        if value == default_precision(slug):
+            precision.pop(slug, None)
+        else:
+            precision[slug] = value
+        save_preferences({"predictability": {"precision": precision}})
         self.settings_changed.emit()
 
     def _on_metric_toggled(self, _key: str, _checked: bool) -> None:
