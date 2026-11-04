@@ -293,11 +293,7 @@ def estimate_disk(plan: Plan, prefs: dict, stats: InputStats) -> dict[str, int]:
             disk[art] = mat(stats.audio_seconds * ps_sr
                             * (_PHONEME_SURPRISAL_TRAINS + 1) * _F64,
                             stats.n_with_audio)
-    disk.update(_model_download_bytes(plan, prefs))
     return disk
-
-
-MODEL_DOWNLOAD_KEY = "model_download"     # label: "first-use download"
 
 
 def _weights_cached(hf_id: str) -> bool:
@@ -308,21 +304,22 @@ def _weights_cached(hf_id: str) -> bool:
         return False
 
 
-def _model_download_bytes(plan: Plan, prefs: dict) -> dict[str, int]:
-    """Bytes the run will download on first use: every selected predictability
-    model whose weights are not in the local HF cache."""
+def model_downloads(plan: Plan, prefs: dict) -> list[tuple[str, int]]:
+    """(label, bytes) of every selected predictability model whose weights are
+    not in the local HF cache: what the run downloads on first use. Kept apart
+    from estimate_disk, whose total means "outputs written"."""
     if not (plan.predictability_word or plan.predictability_doc):
-        return {}
+        return []
     from sensi.extractors.predictability_models import spec_for
-    total = 0.0
+    out = []
     for slug in (prefs.get("predictability", {}) or {}).get("models") or []:
         try:
             spec = spec_for(slug)
         except KeyError:
             continue
         if not _weights_cached(spec.hf_id):
-            total += spec.download_gb * 1e9
-    return {MODEL_DOWNLOAD_KEY: round(total)} if total else {}
+            out.append((spec.label, round(spec.download_gb * 1e9)))
+    return out
 
 
 def level_bytes(disk: dict[str, int], level_key: str) -> int:

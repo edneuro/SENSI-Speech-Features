@@ -106,7 +106,7 @@ def test_gpt2_xl_cpu_only_counts_fp32_ram():
     assert abs(e.peak_gb - (B + 6.0 * 1.2 / 1.0737)) < 0.01
 
 
-def test_gpt2_on_gpu_counts_as_vram():
+def test_gpt2_xl_on_gpu_counts_as_vram():
     e = estimate_ram(_plan(pred=True), _prefs(["gpt2_xl"]), _sys(64, 24))
     assert abs(e.peak_gb - B) < 1e-9
 

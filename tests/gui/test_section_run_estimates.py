@@ -321,3 +321,31 @@ def test_refresh_mid_run_keeps_run_disabled(qtbot, tmp_path, monkeypatch):
     w._on_done_main("done")
     assert w.run_button.isEnabled()
     _settled(qtbot, w)
+
+
+_PRED = {"models": ["gpt2_large"],
+         "metrics": {"surprisal": True, "cloze": False, "topmatch": False}}
+
+
+def test_first_use_download_line(qtbot, tmp_path, monkeypatch):
+    _fake_system(monkeypatch, 64.0)
+    _inputs(tmp_path, pred=_PRED)
+    monkeypatch.setattr("huggingface_hub.try_to_load_from_cache",
+                        lambda repo, fn, **kw: None)
+    w = _section(qtbot)
+    w.show()
+    _settled(qtbot, w)
+    assert w.download_row.isVisible()
+    assert "GPT-2 large" in w.download_value.text()
+    assert "GB" in w.download_value.text()
+
+
+def test_no_download_line_when_cached(qtbot, tmp_path, monkeypatch):
+    _fake_system(monkeypatch, 64.0)
+    _inputs(tmp_path, pred=_PRED)
+    monkeypatch.setattr("huggingface_hub.try_to_load_from_cache",
+                        lambda repo, fn, **kw: "/x/config.json")
+    w = _section(qtbot)
+    w.show()
+    _settled(qtbot, w)
+    assert not w.download_row.isVisible()

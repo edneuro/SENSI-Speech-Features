@@ -26,7 +26,8 @@ _ESTIMATE_THREADS: set[threading.Thread] = set()
 _ESTIMATE_THREADS_LOCK = threading.Lock()
 
 _EMPTY_ESTIMATES = {"file_sizes": {}, "level_sizes": {}, "disk": "—",
-                    "ram": "—", "time": "—", "warning": None, "learned": True}
+                    "ram": "—", "time": "—", "warning": None, "learned": True,
+                    "download": ""}
 
 
 def wait_for_estimate_threads(timeout: float = 10.0) -> bool:
@@ -267,6 +268,20 @@ class RunSection(QWidget):
             row.addWidget(v)
             eb.addLayout(row)
             self.est_values[key] = v
+        # First-use model download (not an output): shown only when > 0.
+        self.download_row = QWidget()
+        dl = QHBoxLayout(self.download_row)
+        dl.setContentsMargins(0, 0, 0, 0)
+        dk = QLabel("First-use download")
+        dk.setObjectName("EstimateKey")
+        self.download_value = QLabel("")
+        self.download_value.setObjectName("EstimateValue")
+        self.download_value.setTextFormat(Qt.TextFormat.PlainText)
+        dl.addWidget(dk)
+        dl.addStretch(1)
+        dl.addWidget(self.download_value)
+        self.download_row.hide()
+        eb.addWidget(self.download_row)
         self.estimate_note = QLabel(
             "First estimate. It gets more precise as the app learns from "
             "runs on this computer.")
@@ -509,7 +524,11 @@ class RunSection(QWidget):
                 key: re_.format_bytes(re_.level_bytes(shown, key))
                 for key in level_keys
                 if has_text or key == "level_acoustic"}
+            dls = re_.model_downloads(plan, prefs)
+            download = (f"{re_.format_bytes(sum(b for _, b in dls))} "
+                        f"({', '.join(n for n, _ in dls)})" if dls else "")
             return {
+                "download": download,
                 "file_sizes": {a: re_.format_bytes(b) for a, b in shown.items()},
                 "level_sizes": level_sizes,
                 "disk": (re_.format_bytes(sum(shown.values()))
@@ -527,6 +546,8 @@ class RunSection(QWidget):
     def _show_estimates(self, est: dict) -> None:
         for k, v in self.est_values.items():
             v.setText(est[k])
+        self.download_value.setText(est.get("download", ""))
+        self.download_row.setVisible(bool(est.get("download")))
         self.estimate_note.setVisible(not est["learned"])
         self.estimate_warning.setText(est["warning"] or "")
         self.estimate_warning.setVisible(bool(est["warning"]))
