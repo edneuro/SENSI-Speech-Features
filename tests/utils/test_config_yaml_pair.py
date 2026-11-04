@@ -208,7 +208,7 @@ def test_non_boolean_settings_say_which_values_to_use(tmp_path):
     text = fp.read_text(encoding="utf-8")
     assert "  pitch_units: semitones  # semitones | hz\n" in text
     assert "  mel_preset: speech  # speech | music | general\n" in text
-    assert "gpt2, llama32_3b, llama3_8b, llama3_70b" in text
+    assert "gpt2, gpt2_medium, gpt2_large, gpt2_xl, llama32_3b, llama3_8b, llama3_70b" in text
     assert "  theme: system  # not used" in rp.read_text(encoding="utf-8")
     for section in ("prosody", "acoustic_ts", "semantic", "predictability",
                     "lexical_norms", "phoneme_surprisal"):

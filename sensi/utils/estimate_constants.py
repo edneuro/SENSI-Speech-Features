@@ -104,6 +104,8 @@ def _cuda_4bit_gib(spec: tuple[float, int, int, bool]) -> float:
     embed = vocab * hidden * (1 if tied else 2)
     return _gib(((params - embed) * 0.5 + embed * 2) * _OVERHEAD)
 
+_GPT2_SIZES = {"gpt2_medium": 355e6, "gpt2_large": 774e6, "gpt2_xl": 1.5e9}
+
 RAM_GB: dict[str, float] = {
     # 0.87 GiB on 1_FB_P vs 0.84 GiB on LJ002-0321: no input-length term at
     # these lengths (acoustic time series of a 32 s stimulus is small).
@@ -115,6 +117,10 @@ RAM_GB: dict[str, float] = {
     "gpt2": 0.70,
     # ...so its "@cuda" tier is the same CPU load, never VRAM.
     "gpt2@cuda": 0.70,
+    # Larger GPT-2 sizes: NOT measured; fp32 weights (4 B/param) + the 0.24 GiB
+    # non-weight overhead implied by the measured small model (0.70 - 124M x 4 B).
+    **{f"{_s}{_t}": round(_gib(_p * 4) + 0.24, 2)
+       for _s, _p in _GPT2_SIZES.items() for _t in ("", "@cuda")},
     # Llama entries are computed (gated models, not measured): see _cpu_gib /
     # _cuda_4bit_gib below for the rule and sources.
     "llama32_3b": _cpu_gib(_LLAMA["llama32_3b"]),
@@ -157,6 +163,9 @@ for _slug, _params in (("llama32_3b", 3.21e9), ("llama3_8b", 8e9),
     FIRST_ESTIMATE_RATES[f"predictability:{_slug}"] = round(
         FIRST_ESTIMATE_RATES["predictability"] * _params / _GPT2_PARAMS, 4)
 FIRST_ESTIMATE_RATES["predictability:gpt2"] = FIRST_ESTIMATE_RATES["predictability"]
+for _slug, _params in _GPT2_SIZES.items():
+    FIRST_ESTIMATE_RATES[f"predictability:{_slug}"] = round(
+        FIRST_ESTIMATE_RATES["predictability"] * _params / _GPT2_PARAMS, 4)
 
 # MFA wall time = fixed start-up per MFA invocation + slope x audio seconds
 # aligned (sensi.utils.timing_history.fit_overhead_slope learns both per machine).
@@ -203,6 +212,10 @@ for _slug, (_params, *_rest) in _LLAMA.items():
     FIRST_LOAD_SECONDS[f"predictability:{_slug}"] = round(
         FIRST_LOAD_SECONDS["predictability:gpt2"] * _params * 2
         / _GPT2_WEIGHT_BYTES, 1)
+
+for _slug, _params in _GPT2_SIZES.items():
+    FIRST_LOAD_SECONDS[f"predictability:{_slug}"] = round(
+        FIRST_LOAD_SECONDS["predictability:gpt2"] * _params / _GPT2_PARAMS, 1)
 
 # Range multipliers around the point estimate: wide before this machine has
 # history (built-in rates come from one other machine), narrow after.
