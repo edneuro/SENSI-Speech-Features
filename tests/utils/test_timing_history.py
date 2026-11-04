@@ -96,8 +96,9 @@ def test_stage_timer_records_sample_and_skips_on_error():
 
 
 def test_model_device_rule():
-    # GPT-2 is pinned to full-precision CPU by the extractor even with CUDA.
-    assert th.model_device("predictability", "gpt2", True) == "cpu"
+    # GPT-2 runs fp32 on the GPU when one is present (load_plan), like Llama.
+    assert th.model_device("predictability", "gpt2", True) == "cuda"
+    assert th.model_device("predictability", "gpt2", False) == "cpu"
     # Other roster models go to the GPU exactly when CUDA is available.
     from sensi.extractors.predictability_models import ALL_SPECS
     other = next(s.slug for s in ALL_SPECS if s.hf_id != "gpt2")

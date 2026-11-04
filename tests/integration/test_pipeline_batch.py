@@ -356,9 +356,9 @@ def test_batch_emits_namespaced_predictability_columns(tmp_path):
     assert 'gpt2_TopMatch' not in df.columns
     for retired in ('Surprisal', 'LLM_Surprisal', 'LLM_Cloze', 'LLM_TopMatch'):
         assert retired not in df.columns
-    # Document-first token has no context → NaN; a later content word is scored.
-    assert pd.isna(df['gpt2_Surprisal'].iloc[0])
-    assert df['gpt2_Surprisal'].notna().any()
+    # Every window starts with GPT-2's BOS, so the document-first word is scored.
+    assert pd.notna(df['gpt2_Surprisal'].iloc[0])
+    assert df['gpt2_Surprisal'].iloc[0] > 0
 
 
 # ---------------------------------------------------------------------------

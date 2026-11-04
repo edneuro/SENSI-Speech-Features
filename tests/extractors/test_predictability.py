@@ -13,7 +13,6 @@ from sensi.extractors.predictability import (
     _check_context_limit,
     _OPENAI_CONTEXT_LIMITS,
     _make_default_backend,
-    _load_tiers,
     is_gated_local_model,
     has_hf_token,
     select_model,
@@ -85,17 +84,18 @@ def test_unknown_slug_rejected():
 
 def test_gpt2_via_auto_matches_legacy_surprisal():
     # AutoModelForCausalLM("gpt2") is GPT2LMHeadModel — identical logits.
-    # Pin: the document-first token is NaN (no context); the first content
-    # word's surprisal is finite/positive. Guards against load-path drift.
+    # Pin: every window starts with GPT-2's <|endoftext|> BOS, so the
+    # document-first word gets a finite surprisal too. Guards against
+    # load-path drift.
     df = pd.DataFrame({"token": ["The", "cat", "sat"],
                        "upos": ["DET", "NOUN", "VERB"]})
     out = add_predictability(df, "The cat sat", models=["gpt2"],
                              metrics=["surprisal"])
-    assert math.isnan(out["gpt2_Surprisal"].iloc[0])
+    assert out["gpt2_Surprisal"].iloc[0] > 0
     assert out["gpt2_Surprisal"].iloc[1] > 0
 
 
-# ---- GPT-2 must stay fp32/CPU even when CUDA is available (legacy parity) ----
+# ---- fakes for the local HuggingFace backend --------------------------------
 
 
 class _DummyParam:
@@ -107,32 +107,63 @@ class _DummyModel:
     def __init__(self, device='cpu'):
         self.config = types.SimpleNamespace(max_position_embeddings=1024)
         self._device = device
+        self.moved_to = None
 
     def eval(self):
+        return self
+
+    def to(self, device):
+        self.moved_to = device
+        self._device = device
         return self
 
     def parameters(self):
         yield _DummyParam(self._device)
 
 
-def _patch_transformers(monkeypatch, fake_model):
+class _SpaceTokenizer:
+    """Splits on single spaces; GPT-2-style offsets (leading space included).
+    Subword ids are 1..n; `bos_token_id` is configurable."""
+    def __init__(self, bos_token_id=99):
+        self.bos_token_id = bos_token_id
+
+    def __call__(self, text, return_offsets_mapping=True, add_special_tokens=False):
+        assert add_special_tokens is False
+        ids, offsets, pos = [], [], 0
+        for k, word in enumerate(text.split(' ')):
+            start = pos if k == 0 else pos - 1      # include the leading space
+            pos += len(word)
+            offsets.append((start, pos))
+            ids.append(k + 1)
+            pos += 1
+        return {'input_ids': ids, 'offset_mapping': offsets}
+
+
+class _RecordingModel(_DummyModel):
+    """Uniform logits over a 128-word vocab; records every input row."""
+    def __init__(self, device='cpu'):
+        super().__init__(device)
+        self.rows = []
+
+    def __call__(self, ids_t):
+        import torch
+        row = ids_t[0].tolist()
+        self.rows.append(row)
+        return types.SimpleNamespace(logits=torch.zeros(1, len(row), 128))
+
+
+def _patch_transformers(monkeypatch, fake_model, tokenizer=None):
     monkeypatch.setattr('transformers.AutoTokenizer.from_pretrained',
-                        lambda *a, **k: object())
+                        lambda *a, **k: tokenizer if tokenizer is not None else object())
     monkeypatch.setattr('transformers.AutoModelForCausalLM.from_pretrained', fake_model)
-    monkeypatch.setattr('transformers.BitsAndBytesConfig', lambda **k: object())
+    monkeypatch.setattr('transformers.BitsAndBytesConfig',
+                        lambda **k: types.SimpleNamespace(**k))
 
 
-def test_gpt2_backend_stays_cpu_even_when_cuda_available(monkeypatch):
-    # Legacy sensi/extractors/surprisal.py hardcoded USE_GPU=False, always loading
-    # GPT-2 in full fp32 precision on CPU. The shared _HuggingFaceBackend
-    # must preserve that — quantized/fp16 GPT-2 would emit different
-    # surprisal values than previously-computed CSVs, even though the GPU
-    # tiers are correct for the Llama models.
-    from sensi.extractors.predictability import _HuggingFaceBackend
-    monkeypatch.setattr('torch.cuda.is_available', lambda: True)
-    _patch_transformers(monkeypatch, lambda model_id, **kw: _DummyModel('cuda:0'))
-    b = _HuggingFaceBackend('gpt2')
-    assert b._load_tier == 'CPU'
+def _fresh_caches():
+    import sensi.extractors.predictability as m
+    m._BACKEND_CACHE.clear()
+    m._SCORE_CACHE.clear()
 
 
 # ---------------------------------------------------------------------------
@@ -250,7 +281,8 @@ def test_add_predictability_caches_scores_across_passes(monkeypatch):
             return [{"p": 0.5, "surprisal": 1.0, "top_match": 1} for _ in tokens]
 
     monkeypatch.setattr(m, "_get_backend",
-                        lambda slug, max_context=None: _CountingBackend(slug))
+                        lambda slug, max_context=None, precision_map=None:
+                        _CountingBackend(slug))
     m._SCORE_CACHE.clear()
     df = pd.DataFrame({"token": ["a", "b"], "upos": ["DET", "NOUN"]})
     m.add_predictability(df, "a b", models=["gpt2"], metrics=["cloze"])          # word-level pass
@@ -321,7 +353,7 @@ def test_backend_raises_actionable_error_on_gated(monkeypatch):
 
     monkeypatch.setattr('transformers.AutoTokenizer.from_pretrained', raise_gated)
     with pytest.raises(RuntimeError) as ei:
-        _HuggingFaceBackend('meta-llama/Meta-Llama-3-8B')
+        _HuggingFaceBackend('meta-llama/Meta-Llama-3-8B', None, 'fp16', 'cuda')
     msg = str(ei.value)
     assert 'license' in msg and 'token' in msg
     assert 'meta-llama/Meta-Llama-3-8B' in msg
@@ -421,81 +453,180 @@ def test_chunk_slices_rejects_tiny_window():
         _chunk_slices(n=100, window=1)
 
 
-# ---- device-tier cascade for the local HuggingFace backend -----------------
-# (reuses _DummyParam / _DummyModel / _patch_transformers defined above)
+# ---- explicit precision per model + BOS-led windows ------------------------
+# (reuses the fakes defined above)
 
 
-def test_load_tiers_prefers_gpu_only_when_cuda():
-    assert _load_tiers(True) == ['4-bit GPU', 'fp16 GPU', 'CPU']
-    assert _load_tiers(False) == ['CPU']
-
-
-def test_backend_loads_4bit_on_gpu(monkeypatch):
+def test_first_word_scored_with_bos(monkeypatch):
     from sensi.extractors.predictability import _HuggingFaceBackend
-    monkeypatch.setattr('torch.cuda.is_available', lambda: True)
-    _patch_transformers(monkeypatch, lambda model_id, **kw: _DummyModel('cuda:0'))
-    b = _HuggingFaceBackend('meta-llama/Meta-Llama-3-8B')
-    assert b._load_tier == '4-bit GPU'
+    model = _RecordingModel()
+    _patch_transformers(monkeypatch, lambda model_id, **kw: model, _SpaceTokenizer(99))
+    b = _HuggingFaceBackend('gpt2', None, 'fp32', 'cpu')
+    out = add_predictability(_df(), "The cat .", models=["gpt2"],
+                             metrics=["surprisal"], backends={"gpt2": b})
+    assert np.isfinite(out["gpt2_Surprisal"].iloc[0])
+    assert model.rows[0][0] == 99
+    assert model.rows[0] == [99, 1, 2, 3]
 
 
-def test_backend_falls_back_to_fp16_gpu_on_bnb_error(monkeypatch):
-    """bitsandbytes broken (typical on Windows) but a GPU is present → fp16 GPU,
-    NOT a silent drop to CPU."""
+def test_every_chunk_window_starts_with_bos_and_fits_limit(monkeypatch):
     from sensi.extractors.predictability import _HuggingFaceBackend
-    monkeypatch.setattr('torch.cuda.is_available', lambda: True)
-    calls = []
+    model = _RecordingModel()
+    _patch_transformers(monkeypatch, lambda model_id, **kw: model, _SpaceTokenizer(99))
+    b = _HuggingFaceBackend('gpt2', 8, 'fp32', 'cpu')
+    words = [f"w{i}" for i in range(30)]
+    scores = b.score(" ".join(words), words)
+    assert len(model.rows) > 1
+    for row in model.rows:
+        assert row[0] == 99 and len(row) <= 8
+    # Windows are BOS + _chunk_slices(n, limit - 1); each subword kept once.
+    ids = list(range(1, 31))
+    assert model.rows == [[99] + ids[a:e] for a, e, _ in _chunk_slices(30, 7)]
+    assert sum(e - a - k for a, e, k in _chunk_slices(30, 7)) == 30
+    # Uniform logits over 128 -> every word is log2(128) = 7 bits.
+    assert all(sc['surprisal'] == pytest.approx(7.0) for sc in scores)
 
-    def fake_model(model_id, **kw):
-        calls.append(kw)
-        if 'quantization_config' in kw:
-            raise RuntimeError("bitsandbytes not available on this platform")
-        return _DummyModel('cuda:0')
 
-    _patch_transformers(monkeypatch, fake_model)
-    b = _HuggingFaceBackend('meta-llama/Meta-Llama-3-8B')
-    assert b._load_tier == 'fp16 GPU'
-    assert any('quantization_config' in c for c in calls)          # tried 4-bit
-    assert any(c.get('torch_dtype') is not None for c in calls)     # then fp16
-    assert b._context_limit == 1024
-
-
-def test_backend_falls_back_to_cpu_and_warns(monkeypatch, caplog):
-    """Both GPU loads fail while CUDA is present → CPU, with a loud warning so
-    the CPU landing is never silent."""
-    import logging
+def test_no_bos_token_keeps_first_word_nan(monkeypatch):
     from sensi.extractors.predictability import _HuggingFaceBackend
-    monkeypatch.setattr('torch.cuda.is_available', lambda: True)
-
-    def fake_model(model_id, **kw):
-        if kw.get('device_map') == 'auto':      # both GPU tiers use device_map
-            raise RuntimeError("gpu load failed")
-        return _DummyModel('cpu')
-
-    _patch_transformers(monkeypatch, fake_model)
-    with caplog.at_level(logging.WARNING):
-        b = _HuggingFaceBackend('meta-llama/Meta-Llama-3-8B')
-    assert b._load_tier == 'CPU'
-    assert 'CPU' in caplog.text and 'slower' in caplog.text
+    model = _RecordingModel()
+    _patch_transformers(monkeypatch, lambda model_id, **kw: model, _SpaceTokenizer(None))
+    b = _HuggingFaceBackend('gpt2', None, 'fp32', 'cpu')
+    out = add_predictability(_df(), "The cat .", models=["gpt2"],
+                             metrics=["surprisal", "topmatch"], backends={"gpt2": b})
+    assert math.isnan(out["gpt2_Surprisal"].iloc[0])
+    assert math.isnan(out["gpt2_TopMatch"].iloc[0])
+    assert np.isfinite(out["gpt2_Surprisal"].iloc[1])
+    assert model.rows == [[1, 2, 3]]
 
 
-def test_backend_cpu_only_when_no_cuda(monkeypatch, caplog):
-    """No GPU at all → only the CPU tier is attempted (no bnb/CUDA load), and
-    no false 'GPU idle' warning."""
-    import logging
-    from sensi.extractors.predictability import _HuggingFaceBackend
+def test_cpu_only_llama_loads_fp32_and_says_so(monkeypatch, capsys):
+    import torch
+    import sensi.extractors.predictability as m
+    _fresh_caches()
     monkeypatch.setattr('torch.cuda.is_available', lambda: False)
     calls = []
 
     def fake_model(model_id, **kw):
         calls.append(kw)
-        return _DummyModel('cpu')
+        return _RecordingModel()
 
-    _patch_transformers(monkeypatch, fake_model)
-    with caplog.at_level(logging.WARNING):
-        b = _HuggingFaceBackend('meta-llama/Llama-3.2-3B')
-    assert b._load_tier == 'CPU'
-    assert calls == [{}]                                    # no GPU load attempted
-    assert not any(r.levelno >= logging.WARNING for r in caplog.records)
+    _patch_transformers(monkeypatch, fake_model, _SpaceTokenizer(99))
+    df = pd.DataFrame({"token": ["a", "b"], "upos": ["DET", "NOUN"]})
+    m.add_predictability(df, "a b", models=["llama32_3b"], metrics=["surprisal"],
+                         precision={"llama32_3b": "4bit"})
+    assert calls == [{"dtype": torch.float32}]           # no quantization config
+    out = capsys.readouterr().out
+    assert "no GPU — running fp32 on CPU" in out
+    assert "[predict] llama32_3b: fp32 on CPU" in out
+    assert m.loaded_models()[-1] == {"slug": "llama32_3b",
+                                     "hf_id": "meta-llama/Llama-3.2-3B",
+                                     "precision": "fp32", "device": "cpu"}
+
+
+def test_4bit_failure_raises_without_fallback(monkeypatch):
+    import sensi.extractors.predictability as m
+    _fresh_caches()
+    monkeypatch.setattr('torch.cuda.is_available', lambda: True)
+    calls = []
+
+    def fake_model(model_id, **kw):
+        calls.append(kw)
+        raise RuntimeError("bitsandbytes not available on this platform")
+
+    _patch_transformers(monkeypatch, fake_model, _SpaceTokenizer(99))
+    with pytest.raises(RuntimeError) as ei:
+        m._get_backend("llama3_8b", None, {"llama3_8b": "4bit"})
+    msg = str(ei.value)
+    assert "fp16" in msg and "4bit" in msg and "bitsandbytes" in msg
+    assert len(calls) == 1                               # no other precision tried
+    assert calls[0]["quantization_config"].load_in_4bit is True
+    assert calls[0]["device_map"] == "auto"
+
+
+def test_llama_fp16_and_8bit_kwargs_on_gpu(monkeypatch):
+    import torch
+    import sensi.extractors.predictability as m
+    _fresh_caches()
+    monkeypatch.setattr('torch.cuda.is_available', lambda: True)
+    calls = []
+
+    def fake_model(model_id, **kw):
+        calls.append(kw)
+        return _DummyModel('cuda:0')
+
+    _patch_transformers(monkeypatch, fake_model, _SpaceTokenizer(99))
+    m._get_backend("llama3_8b", None, {"llama3_8b": "fp16"})
+    m._get_backend("llama3_8b", None, {"llama3_8b": "8bit"})
+    assert calls[0] == {"dtype": torch.float16, "device_map": "auto"}
+    assert calls[1]["quantization_config"].load_in_8bit is True
+    assert calls[1]["device_map"] == "auto"
+
+
+def test_gpt2_large_fp32_on_gpu_when_present(monkeypatch, capsys):
+    import torch
+    import sensi.extractors.predictability as m
+    _fresh_caches()
+    monkeypatch.setattr('torch.cuda.is_available', lambda: True)
+    calls, models = [], []
+
+    def fake_model(model_id, **kw):
+        calls.append((model_id, kw))
+        models.append(_DummyModel('cpu'))
+        return models[-1]
+
+    _patch_transformers(monkeypatch, fake_model, _SpaceTokenizer(99))
+    b = m._get_backend("gpt2_large", None, None)
+    assert calls == [("openai-community/gpt2-large", {"dtype": torch.float32})]
+    assert models[0].moved_to == "cuda"
+    assert (b.precision_run, b.device) == ("fp32", "cuda")
+    assert "[predict] gpt2_large: fp32 on GPU" in capsys.readouterr().out
+
+
+def test_precision_change_rescores(monkeypatch):
+    import sensi.extractors.predictability as m
+    _fresh_caches()
+    monkeypatch.setattr('torch.cuda.is_available', lambda: True)
+    builds, scores = [], []
+
+    class _B:
+        def __init__(self, model_id, max_context, precision_run, device, **kw):
+            builds.append((model_id, precision_run, device))
+
+        def score(self, text, tokens):
+            scores.append(text)
+            return [{"p": 0.5, "surprisal": 1.0, "top_match": 1} for _ in tokens]
+
+    monkeypatch.setattr(m, "_make_default_backend", _B)
+    df = pd.DataFrame({"token": ["a", "b"], "upos": ["DET", "NOUN"]})
+    for prec in ("fp16", "4bit"):
+        m.add_predictability(df, "a b", models=["llama32_3b"], metrics=["surprisal"],
+                             precision={"llama32_3b": prec})
+    assert [p for _, p, _ in builds] == ["fp16", "4bit"]
+    assert len(scores) == 2
+
+
+def test_first_use_download_notice(monkeypatch, capsys):
+    import sensi.extractors.predictability as m
+    _fresh_caches()
+    monkeypatch.setattr('torch.cuda.is_available', lambda: False)
+    monkeypatch.setattr('huggingface_hub.try_to_load_from_cache', lambda *a, **k: None)
+    _patch_transformers(monkeypatch, lambda model_id, **kw: _DummyModel('cpu'),
+                        _SpaceTokenizer(99))
+    m._get_backend("gpt2_large", None, None)
+    assert "downloading 3.25 GB on first use" in capsys.readouterr().out
+
+
+def test_no_download_notice_when_cached(monkeypatch, capsys):
+    import sensi.extractors.predictability as m
+    _fresh_caches()
+    monkeypatch.setattr('torch.cuda.is_available', lambda: False)
+    monkeypatch.setattr('huggingface_hub.try_to_load_from_cache',
+                        lambda *a, **k: "/cache/config.json")
+    _patch_transformers(monkeypatch, lambda model_id, **kw: _DummyModel('cpu'),
+                        _SpaceTokenizer(99))
+    m._get_backend("gpt2_large", None, None)
+    assert "downloading" not in capsys.readouterr().out
 
 
 # --- Project B: per-model context cap threading ------------------------------
@@ -505,7 +636,7 @@ def test_backend_caps_context_limit(monkeypatch):
     monkeypatch.setattr('torch.cuda.is_available', lambda: False)
     _patch_transformers(monkeypatch, lambda model_id, **kw: _DummyModel('cpu'))
     # _DummyModel.config.max_position_embeddings == 1024; a lower cap wins.
-    b = m._HuggingFaceBackend('gpt2', max_context=256)
+    b = m._HuggingFaceBackend('gpt2', 256, 'fp32', 'cpu')
     assert b._context_limit == 256
 
 
@@ -513,7 +644,7 @@ def test_backend_context_none_uses_native(monkeypatch):
     import sensi.extractors.predictability as m
     monkeypatch.setattr('torch.cuda.is_available', lambda: False)
     _patch_transformers(monkeypatch, lambda model_id, **kw: _DummyModel('cpu'))
-    b = m._HuggingFaceBackend('gpt2')
+    b = m._HuggingFaceBackend('gpt2', None, 'fp32', 'cpu')
     assert b._context_limit == 1024
 
 
@@ -521,7 +652,7 @@ def test_backend_cap_above_native_clamps(monkeypatch):
     import sensi.extractors.predictability as m
     monkeypatch.setattr('torch.cuda.is_available', lambda: False)
     _patch_transformers(monkeypatch, lambda model_id, **kw: _DummyModel('cpu'))
-    b = m._HuggingFaceBackend('gpt2', max_context=5000)
+    b = m._HuggingFaceBackend('gpt2', 5000, 'fp32', 'cpu')
     assert b._context_limit == 1024   # min(native 1024, 5000)
 
 
@@ -538,7 +669,7 @@ def test_get_backend_reuses_same_cap_but_evicts_other_caps(monkeypatch):
     b2 = m._get_backend('gpt2', max_context=512)            # re-cap → new
     assert b2 is not b1
     # Only the newest cap for gpt2 is retained; the 256 entry is gone.
-    assert list(m._BACKEND_CACHE.keys()) == [('gpt2', 512)]
+    assert list(m._BACKEND_CACHE.keys()) == [('gpt2', 512, 'fp32', 'cpu')]
 
 
 def test_get_backend_keeps_distinct_models(monkeypatch):
@@ -561,8 +692,8 @@ def test_add_predictability_threads_effective_context(monkeypatch):
         def score(self, text, tokens):
             return [{"p": 0.5, "surprisal": 1.0, "top_match": 1} for _ in tokens]
 
-    def fake_get_backend(slug, max_context=None):
-        calls.append((slug, max_context))
+    def fake_get_backend(slug, max_context=None, precision_map=None):
+        calls.append((slug, max_context, precision_map))
         return _FakeB()
 
     monkeypatch.setattr(m, "_get_backend", fake_get_backend)
@@ -570,8 +701,9 @@ def test_add_predictability_threads_effective_context(monkeypatch):
     df = pd.DataFrame({"token": ["a", "b"], "upos": ["NOUN", "NOUN"]})
     # llama3_8b native is 8192; cap 2048 is honored (above floor).
     m.add_predictability(df, "a b", models=["llama3_8b"], metrics=["surprisal"],
-                         context={"llama3_8b": 2048})
-    assert calls == [("llama3_8b", 2048)]
+                         context={"llama3_8b": 2048},
+                         precision={"llama3_8b": "8bit"})
+    assert calls == [("llama3_8b", 2048, {"llama3_8b": "8bit"})]
 
 
 def test_line_breaks_reach_the_model_as_single_spaces():

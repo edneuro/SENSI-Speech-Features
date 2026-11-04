@@ -86,21 +86,18 @@ def load_key(step: str, model: str | None = None) -> str:
 def model_device(step: str, model: str | None, cuda_available: bool) -> str:
     """"cuda" or "cpu": where the extractor itself puts this step's model.
 
-    Predictability follows sensi/extractors/predictability.py's _HuggingFaceBackend:
-    GPU tiers are tried only when CUDA is available and the model is not one
-    pinned to full-precision CPU (_is_full_precision_cpu, i.e. GPT-2).
+    Predictability follows sensi/extractors/predictability_models.load_plan:
+    every roster model runs on the GPU when CUDA is available, else on CPU.
     BERT (sensi/extractors/bert_embed.py) never moves its model off the CPU, and
     every other step is CPU-only.
     """
     if step != "predictability" or not cuda_available or not model:
         return "cpu"
-    from sensi.extractors.predictability import _is_full_precision_cpu
-    from sensi.extractors.predictability_models import spec_for
+    from sensi.extractors.predictability_models import load_plan
     try:
-        hf_id = spec_for(model).hf_id
+        return load_plan(model, None, cuda_available)[1]
     except KeyError:
         return "cpu"
-    return "cpu" if _is_full_precision_cpu(hf_id) else "cuda"
 
 
 def _default_path() -> Path:

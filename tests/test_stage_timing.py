@@ -58,7 +58,7 @@ def test_timed_predictability_matches_single_call_and_times_load(monkeypatch):
     from sensi.extractors.predictability_models import ALL_SPECS
 
     class _Fake:
-        def __init__(self, model_id, max_context=None):
+        def __init__(self, model_id, *args, **kwargs):
             self.k = len(model_id)
 
         def score(self, text, tokens):

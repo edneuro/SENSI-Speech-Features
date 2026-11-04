@@ -161,7 +161,8 @@ def _timed_predictability(args, df, text, models, metrics, context):
     """
     from sensi.extractors import predictability as _pred
     from sensi.extractors.predictability import add_predictability
-    from sensi.extractors.predictability_models import effective_context, spec_for
+    from sensi.extractors.predictability_models import (
+        effective_context, load_plan, spec_for)
     from sensi.utils.timing_history import load_key, model_device
     if not [m for m in metrics if m in _pred._METRIC_COLS]:
         return add_predictability(df, text, models=models, metrics=metrics,
@@ -174,13 +175,14 @@ def _timed_predictability(args, df, text, models, metrics, context):
     for slug in models:
         hf_id = spec_for(slug).hf_id
         eff = effective_context(slug, context or {})
-        if (hf_id, eff, digest) in _pred._SCORE_CACHE:
+        prec, dev = load_plan(slug, None, _cuda_available())
+        if (hf_id, eff, prec, digest) in _pred._SCORE_CACHE:
             df = add_predictability(df, text, models=[slug], metrics=metrics,
                                     context=context)
             continue
         _preload_timed(args, load_key('predictability', slug),
-                       _pred._BACKEND_CACHE, (hf_id, eff),
-                       lambda: _pred._get_backend(slug, eff))
+                       _pred._BACKEND_CACHE, (hf_id, eff, prec, dev),
+                       lambda: _pred._get_backend(slug, eff, None))
         device = model_device('predictability', slug, _cuda_available())
         with timer.stage('predictability', count_words(text), model=slug,
                          device=device):

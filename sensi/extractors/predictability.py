@@ -21,7 +21,9 @@ from typing import Protocol
 import numpy as np
 import pandas as pd
 
-from sensi.extractors.predictability_models import spec_for, effective_context
+from sensi.extractors.predictability_models import (
+    spec_for, effective_context, effective_precision, load_plan, weights_gb,
+    slug_for_hf_id)
 from sensi.utils.transcript_prep import normalize_whitespace
 
 logger = logging.getLogger(__name__)
@@ -33,7 +35,8 @@ _METRIC_COLS = {"surprisal": "Surprisal", "cloze": "Cloze", "topmatch": "TopMatc
 # add_predictability: roster-driven, namespaced columns
 # ---------------------------------------------------------------------------
 
-def add_predictability(df, text, *, models, metrics, context=None, backends=None):
+def add_predictability(df, text, *, models, metrics, context=None, precision=None,
+                       backends=None):
     metrics = [m for m in metrics if m in _METRIC_COLS]
     if not models or not metrics:
         return df.copy()
@@ -52,23 +55,26 @@ def add_predictability(df, text, *, models, metrics, context=None, backends=None
             scores = backend.score(text, tokens)
         else:
             eff = effective_context(slug, ctx_map)   # per-model cap (Project B)
-            scores = _scored_by_slug(slug, text, tokens, eff)
+            scores = _scored_by_slug(slug, text, tokens, eff, precision)
         _write_metric_columns(out, slug, metrics, upos, scores)
     return out
 
 
 def _scored_by_slug(slug: str, text: str, tokens: list[str],
-                    max_context: int | None = None) -> list[dict]:
+                    max_context: int | None = None,
+                    precision_map: dict | None = None) -> list[dict]:
     """Score via the cached backend, memoized per (hf_id, max_context,
-    text/tokens digest) so the word-level and document-level passes over the
-    same stimulus never re-run inference. The cache key includes max_context
-    so re-capping a model re-scores rather than returning the old window's
-    values (see _SCORE_CACHE below)."""
+    precision run, text/tokens digest) so the word-level and document-level
+    passes over the same stimulus never re-run inference. The key includes
+    max_context and the precision actually run, so re-capping a model or
+    changing its precision re-scores rather than returning stale values
+    (see _SCORE_CACHE below)."""
     hf_id = spec_for(slug).hf_id
-    key = (hf_id, max_context, _text_tokens_digest(text, tokens))
+    precision_run, _device = load_plan(slug, precision_map, _cuda_available())
+    key = (hf_id, max_context, precision_run, _text_tokens_digest(text, tokens))
     scores = _SCORE_CACHE.get(key)
     if scores is None:
-        scores = _get_backend(slug, max_context).score(text, tokens)
+        scores = _get_backend(slug, max_context, precision_map).score(text, tokens)
         _SCORE_CACHE[key] = scores
         while len(_SCORE_CACHE) > SCORE_CACHE_MAX:
             _SCORE_CACHE.popitem(last=False)
@@ -97,8 +103,27 @@ def _write_metric_columns(out, slug, metrics, upos, scores):
         out[f"{slug}_{_METRIC_COLS[m]}"] = cols[m]
 
 
-def _get_backend(slug: str, max_context: int | None = None) -> "_Backend":
-    return _cached_backend(spec_for(slug).hf_id, max_context)
+def _cuda_available() -> bool:
+    try:
+        import torch
+        return bool(torch.cuda.is_available())
+    except Exception:   # noqa: BLE001
+        return False
+
+
+def _get_backend(slug: str, max_context: int | None = None,
+                 precision_map: dict | None = None) -> "_Backend":
+    """The cached backend for `slug` at the precision/device load_plan picks.
+    No GPU -> fp32 on CPU for every model, said once when that overrides the
+    user's choice."""
+    hf_id = spec_for(slug).hf_id
+    precision_run, device = load_plan(slug, precision_map, _cuda_available())
+    if ((hf_id, max_context, precision_run, device) not in _BACKEND_CACHE
+            and device == "cpu"
+            and effective_precision(slug, precision_map) != "fp32"):
+        print(f"[predict] {slug}: no GPU — running fp32 on CPU "
+              f"(~{weights_gb(slug, precision_run):.1f} GB RAM)", flush=True)
+    return _cached_backend(hf_id, max_context, precision_run, device, slug=slug)
 
 
 # ---------------------------------------------------------------------------
@@ -206,9 +231,9 @@ def _scores_from_subwords(
 # only — OpenAI can't score an existing string for per-token log-probabilities
 # (the legacy /v1/completions echo+logprobs primitive is retired).
 LLM_OPTIONS = [
-    ('meta-llama/Meta-Llama-3-70B', 'Llama-3-70B   (free, r≈0.84, needs ≥48GB VRAM)'),
-    ('meta-llama/Meta-Llama-3-8B',  'Llama-3-8B    (free, r≈0.79, needs ≥12GB VRAM)'),
-    ('meta-llama/Llama-3.2-3B',     'Llama-3.2-3B  (free, r≈0.76, needs ≥8GB VRAM, CPU-capable)'),
+    ('meta-llama/Meta-Llama-3-70B', 'Llama-3-70B   (free, gated)'),
+    ('meta-llama/Meta-Llama-3-8B',  'Llama-3-8B    (free, gated)'),
+    ('meta-llama/Llama-3.2-3B',     'Llama-3.2-3B  (free, gated)'),
 ]
 
 # Retained so a future OpenAI scoring backend (and the generic
@@ -320,31 +345,6 @@ def _available_vram_gb() -> float:
     return 0.0
 
 
-def _load_tiers(cuda: bool) -> list[str]:
-    """Ordered model-load strategies, most-VRAM-efficient first.
-
-    The GPU tiers ('4-bit GPU', 'fp16 GPU') are only attempted when CUDA is
-    actually present; on a CPU-only machine we go straight to 'CPU' rather
-    than fail a bitsandbytes/CUDA load first. The 4-bit tier depends on a
-    working bitsandbytes build (frequently broken on Windows), so 'fp16 GPU'
-    exists specifically so a GPU still gets used when quantization is
-    unavailable — otherwise we'd silently drop to CPU with the GPU idle.
-    """
-    return ['4-bit GPU', 'fp16 GPU', 'CPU'] if cuda else ['CPU']
-
-
-# HF ids that must always load full-precision on CPU, never quantized/fp16
-# on GPU — this preserves the legacy sensi/extractors/surprisal.py behavior
-# (hardcoded USE_GPU=False), so previously-computed GPT-2 surprisal values
-# never drift due to a precision change. Only GPT-2 has this constraint;
-# the Llama models keep the normal GPU-tier cascade.
-_FULL_PRECISION_CPU_HF_IDS = {"gpt2"}
-
-
-def _is_full_precision_cpu(hf_id: str) -> bool:
-    return hf_id in _FULL_PRECISION_CPU_HF_IDS
-
-
 def _model_load_hint(model_id: str, exc: Exception) -> str:
     return (
         f"Could not load local LLM {model_id!r}: {type(exc).__name__}: {exc}\n"
@@ -355,54 +355,85 @@ def _model_load_hint(model_id: str, exc: Exception) -> str:
     )
 
 
+def _quantized_load_hint(name: str, precision_run: str, exc: Exception) -> str:
+    return (
+        f"Could not load {name} at {precision_run}: {type(exc).__name__}: {exc}\n"
+        f"8-bit / 4-bit loading needs a working bitsandbytes build on a CUDA GPU. "
+        f"To fix: choose fp16 for this model on the Predictability card."
+    )
+
+
+def _is_cached_locally(model_id: str) -> bool:
+    """True when the model's config.json is already in the local HF cache
+    (no network: a local lookup only)."""
+    try:
+        from huggingface_hub import try_to_load_from_cache
+        return isinstance(try_to_load_from_cache(model_id, "config.json"), str)
+    except Exception:   # noqa: BLE001 — treat a failed lookup as "not cached"
+        return False
+
+
 class _HuggingFaceBackend:
-    """Local Hugging Face causal-LM backend with 4-bit quantization when possible.
+    """Local Hugging Face causal-LM backend at one explicit precision.
 
     Loads via AutoModelForCausalLM/AutoTokenizer for every model — including
     GPT-2, where AutoModelForCausalLM("gpt2") resolves to the same
     GPT2LMHeadModel class (identical weights/logits) that the legacy
-    sensi/extractors/surprisal.py loaded directly.
+    sensi/extractors/surprisal.py loaded directly. `precision_run` / `device`
+    come from predictability_models.load_plan; a failed load raises, it never
+    falls back to another precision (that would change the values silently).
     """
 
-    def __init__(self, model_id: str, max_context: int | None = None):
+    def __init__(self, model_id: str, max_context: int | None = None,
+                 precision_run: str = "fp32", device: str = "cpu",
+                 slug: str | None = None):
         import torch
         from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
 
         self._torch = torch
         self._model_id = model_id
         self._max_context = max_context
-        cuda = bool(torch.cuda.is_available()) and not _is_full_precision_cpu(model_id)
+        self.precision_run = precision_run
+        self.device = device
+        slug = slug or slug_for_hf_id(model_id)
+        name = slug or model_id
 
-        def _load(tier: str):
-            if tier == '4-bit GPU':
-                quant = BitsAndBytesConfig(
-                    load_in_4bit=True, bnb_4bit_compute_dtype=torch.float16)
-                return AutoModelForCausalLM.from_pretrained(
-                    model_id, quantization_config=quant, device_map='auto')
-            if tier == 'fp16 GPU':
-                return AutoModelForCausalLM.from_pretrained(
-                    model_id, torch_dtype=torch.float16, device_map='auto')
-            return AutoModelForCausalLM.from_pretrained(model_id)  # CPU, default dtype
+        if slug is not None and not _is_cached_locally(model_id):
+            print(f"[predict] {slug}: downloading "
+                  f"{spec_for(slug).download_gb:.2f} GB on first use…", flush=True)
 
         try:
             # A gated / missing / offline repo fails on the tokenizer first, so
-            # the actionable hint below fires before we try any device tier.
+            # the actionable hint below fires before any weights load.
             self._tokenizer = AutoTokenizer.from_pretrained(model_id)
-            last_exc: Exception | None = None
-            self._load_tier = None
-            for tier in _load_tiers(cuda):
-                try:
-                    self._model = _load(tier)
-                    self._load_tier = tier
-                    break
-                except Exception as exc:   # noqa: BLE001 — many unrelated load failures
-                    last_exc = exc
-                    logger.info(
-                        "Local LLM load tier %r failed for %s: %s", tier, model_id, exc)
-            if self._load_tier is None:
-                raise last_exc if last_exc is not None else RuntimeError("no load tier")
         except Exception as exc:
             raise RuntimeError(_model_load_hint(model_id, exc)) from exc
+        try:
+            if precision_run == "fp32":
+                model = AutoModelForCausalLM.from_pretrained(
+                    model_id, dtype=torch.float32)
+                if device == "cuda":
+                    model = model.to("cuda")
+            elif precision_run == "fp16":
+                model = AutoModelForCausalLM.from_pretrained(
+                    model_id, dtype=torch.float16, device_map="auto")
+            elif precision_run == "8bit":
+                model = AutoModelForCausalLM.from_pretrained(
+                    model_id, quantization_config=BitsAndBytesConfig(load_in_8bit=True),
+                    device_map="auto")
+            elif precision_run == "4bit":
+                model = AutoModelForCausalLM.from_pretrained(
+                    model_id, quantization_config=BitsAndBytesConfig(
+                        load_in_4bit=True, bnb_4bit_compute_dtype=torch.float16),
+                    device_map="auto")
+            else:
+                raise ValueError(f"unknown precision {precision_run!r}")
+        except Exception as exc:
+            if precision_run in ("8bit", "4bit"):
+                raise RuntimeError(
+                    _quantized_load_hint(name, precision_run, exc)) from exc
+            raise RuntimeError(_model_load_hint(model_id, exc)) from exc
+        self._model = model
 
         self._model.eval()
         # Native context window, optionally capped by the user's per-model
@@ -415,58 +446,56 @@ class _HuggingFaceBackend:
             self._context_limit = max_context
         else:
             self._context_limit = min(native, max_context)
-        try:
-            device = next(self._model.parameters()).device
-        except Exception:
-            device = 'unknown'
-        logger.info(
-            "Loaded local LLM %s via %s (device=%s)", model_id, self._load_tier, device)
-        if cuda and self._load_tier == 'CPU':
-            logger.warning(
-                "GPU detected but %s loaded on CPU — the 4-bit and fp16 GPU loads "
-                "both failed (check bitsandbytes / accelerate). Inference will be "
-                "much slower; fix the GPU deps or pick a smaller model.", model_id)
+        print(f"[predict] {name}: {precision_run} on "
+              f"{'GPU' if device == 'cuda' else 'CPU'}", flush=True)
 
     def score(self, text: str, tokens: list[str]) -> list[dict]:
         torch = self._torch
         enc = self._tokenizer(text, return_offsets_mapping=True, add_special_tokens=False)
         ids = enc['input_ids']
         offsets = enc['offset_mapping']
+        n = len(ids)
+        sub_log_p: list = [None] * n
+        sub_top1: list = [None] * n
+        if n == 0:
+            return _scores_from_subwords(text, tokens, offsets, sub_log_p, sub_top1, ids)
         device = next(self._model.parameters()).device
 
+        # Every forward pass is [BOS] + ids[a:b]: BOS is never scored and maps
+        # to no word, and gives ids[0] a context, so the first word is scored
+        # too. Without a BOS token (lead == 0) ids[0] stays unscored (None).
+        bos = getattr(self._tokenizer, 'bos_token_id', None)
+        lead = [] if bos is None else [bos]
         limit = self._context_limit
-        if limit is None or len(ids) <= limit:
-            ids_t = torch.tensor([ids], device=device)
-            with torch.no_grad():
-                logits = self._model(ids_t).logits[0]
+        if limit is None or n + len(lead) <= limit:
+            segments = [(0, n, 0)]
         else:
             # Stimulus exceeds the model's context window — slide a chunked
             # window through it. Stride = window // 2 so each post-window
             # position sees at least window // 2 preceding subwords inside
-            # its forward pass.
-            chunks = []
-            for seg_start, seg_end, keep_off in _chunk_slices(len(ids), limit):
-                seg_ids = ids[seg_start:seg_end]
-                ids_t = torch.tensor([seg_ids], device=device)
-                with torch.no_grad():
-                    seg_logits = self._model(ids_t).logits[0]
-                chunks.append(seg_logits[keep_off:])
-            logits = torch.cat(chunks, dim=0)
+            # its forward pass; BOS takes one slot of every window.
+            segments = _chunk_slices(n, limit - len(lead))
 
-        log_probs = torch.log_softmax(logits, dim=-1)
-        # Per-subword log-prob and top-1 prediction. Position 0 has no
-        # preceding context — None marks it unscoreable (not "0 bits").
-        sub_log_p: list = [None]
-        sub_top1: list = [None]
-        for i in range(1, len(ids)):
-            sub_log_p.append(log_probs[i - 1, ids[i]].item())
-            sub_top1.append(int(log_probs[i - 1].argmax().item()))
+        for a, b, keep in segments:
+            ids_t = torch.tensor([lead + ids[a:b]], device=device)
+            with torch.no_grad():
+                log_probs = torch.log_softmax(self._model(ids_t).logits[0], dim=-1)
+            # Logits at window position j predict ids[a + j + 1 - len(lead)];
+            # keep positions j >= keep, so each subword is scored exactly once.
+            for j in range(keep, b - a):
+                t = a + j + 1 - len(lead)
+                if t >= n:
+                    continue
+                sub_log_p[t] = log_probs[j, ids[t]].item()
+                sub_top1[t] = int(log_probs[j].argmax().item())
 
         return _scores_from_subwords(text, tokens, offsets,
                                      sub_log_p, sub_top1, ids)
 
 
-def _make_default_backend(model_id: str, max_context: int | None = None) -> _Backend:
+def _make_default_backend(model_id: str, max_context: int | None = None,
+                          precision_run: str = "fp32", device: str = "cpu",
+                          slug: str | None = None) -> _Backend:
     if model_id.startswith('gpt-'):
         raise RuntimeError(
             f"OpenAI model {model_id!r} is not supported for cloze scoring. "
@@ -477,7 +506,7 @@ def _make_default_backend(model_id: str, max_context: int | None = None) -> _Bac
             "(e.g. --llm-model meta-llama/Llama-3.2-3B, which runs on CPU), "
             "or omit --llm-model to auto-select one by GPU VRAM."
         )
-    return _HuggingFaceBackend(model_id, max_context)
+    return _HuggingFaceBackend(model_id, max_context, precision_run, device, slug=slug)
 
 
 # Process-wide backend cache, keyed by literal HuggingFace repo id (the same
@@ -486,25 +515,38 @@ def _make_default_backend(model_id: str, max_context: int | None = None) -> _Bac
 # same model from different call sites share one instance. Loading a local 8B
 # model costs minutes; we load once per id and reuse it across every document
 # (and the word/doc passes) in a run — the same "load once" intent that
-# _align_cache gives MFA. Keyed by (model_id, max_context) so two different
-# per-model context caps for the same model don't share one instance. Callers
-# that pass an explicit `backend=` bypass this entirely.
+# _align_cache gives MFA. Keyed by (model_id, max_context, precision_run,
+# device) so two context caps or precisions of the same model don't share one
+# instance. Callers that pass an explicit `backend=` bypass this entirely.
 _BACKEND_CACHE: dict[tuple, _Backend] = {}
 
+# One {"slug", "hf_id", "precision", "device"} per backend built in this
+# process, in load order (read through loaded_models()).
+_LOADED: list[dict] = []
 
-def _cached_backend(model_id: str, max_context: int | None = None) -> _Backend:
-    key = (model_id, max_context)
+
+def loaded_models() -> list[dict]:
+    return [dict(r) for r in _LOADED]
+
+
+def _cached_backend(model_id: str, max_context: int | None = None,
+                    precision_run: str = "fp32", device: str = "cpu",
+                    slug: str | None = None) -> _Backend:
+    key = (model_id, max_context, precision_run, device)
     backend = _BACKEND_CACHE.get(key)
     if backend is None:
         # Keep at most one loaded instance per model_id: a run uses a single
-        # context cap per model, so an other-cap instance of the same model is
-        # dead weight (each holds GBs of weights). Evict them before loading —
-        # this keeps the cache bounded to the roster size even when the user
-        # tries several caps for the same model across successive runs.
+        # context cap and precision per model, so another instance of the same
+        # model is dead weight (each holds GBs of weights). Evict them before
+        # loading — this keeps the cache bounded to the roster size even when
+        # the user tries several caps/precisions across successive runs.
         for stale in [k for k in _BACKEND_CACHE if k[0] == model_id]:
             del _BACKEND_CACHE[stale]
-        backend = _make_default_backend(model_id, max_context)
+        backend = _make_default_backend(model_id, max_context, precision_run,
+                                        device, slug=slug)
         _BACKEND_CACHE[key] = backend
+        _LOADED.append({"slug": slug or slug_for_hf_id(model_id), "hf_id": model_id,
+                        "precision": precision_run, "device": device})
     return backend
 
 
@@ -512,8 +554,9 @@ def _cached_backend(model_id: str, max_context: int | None = None) -> _Backend:
 # score cache: (model, text/tokens digest) → scores, reused across passes
 # ---------------------------------------------------------------------------
 
-# (hf_id/model_id, text/tokens digest) → scores. Sized to hold one GUI
-# dispatch (word pass + doc pass over the same stimuli); FIFO-evicted.
+# (hf_id/model_id, max_context, precision run, text/tokens digest) → scores.
+# Sized to hold one GUI dispatch (word pass + doc pass over the same stimuli);
+# FIFO-evicted.
 _SCORE_CACHE: OrderedDict = OrderedDict()
 SCORE_CACHE_MAX = 256
 
