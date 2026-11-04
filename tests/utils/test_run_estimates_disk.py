@@ -161,3 +161,22 @@ def test_scan_words_match_recorded_units(tmp_path):
     (tdir / "s.txt").write_text(text, encoding="utf-8")
     st = scan_inputs(str(tdir), "")
     assert st.words == count_words(text) == 6
+
+
+def test_uncached_models_add_first_use_download(monkeypatch):
+    prefs = _all_on()
+    prefs["predictability"]["models"] = ["gpt2", "gpt2_xl"]
+    plan = plan_from_prefs(prefs)
+    cached = {"gpt2": "/some/config.json"}
+    monkeypatch.setattr("huggingface_hub.try_to_load_from_cache",
+                        lambda repo, fn, **kw: cached.get(repo))
+    disk = estimate_disk(plan, prefs, _stats())
+    assert disk[RE.MODEL_DOWNLOAD_KEY] == round(6.43e9)
+
+
+def test_cached_models_add_no_download(monkeypatch):
+    prefs = _all_on()
+    plan = plan_from_prefs(prefs)
+    monkeypatch.setattr("huggingface_hub.try_to_load_from_cache",
+                        lambda repo, fn, **kw: "/some/config.json")
+    assert RE.MODEL_DOWNLOAD_KEY not in estimate_disk(plan, prefs, _stats())

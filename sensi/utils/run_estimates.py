@@ -293,7 +293,36 @@ def estimate_disk(plan: Plan, prefs: dict, stats: InputStats) -> dict[str, int]:
             disk[art] = mat(stats.audio_seconds * ps_sr
                             * (_PHONEME_SURPRISAL_TRAINS + 1) * _F64,
                             stats.n_with_audio)
+    disk.update(_model_download_bytes(plan, prefs))
     return disk
+
+
+MODEL_DOWNLOAD_KEY = "model_download"     # label: "first-use download"
+
+
+def _weights_cached(hf_id: str) -> bool:
+    from huggingface_hub import try_to_load_from_cache
+    try:
+        return isinstance(try_to_load_from_cache(hf_id, "config.json"), str)
+    except Exception:
+        return False
+
+
+def _model_download_bytes(plan: Plan, prefs: dict) -> dict[str, int]:
+    """Bytes the run will download on first use: every selected predictability
+    model whose weights are not in the local HF cache."""
+    if not (plan.predictability_word or plan.predictability_doc):
+        return {}
+    from sensi.extractors.predictability_models import spec_for
+    total = 0.0
+    for slug in (prefs.get("predictability", {}) or {}).get("models") or []:
+        try:
+            spec = spec_for(slug)
+        except KeyError:
+            continue
+        if not _weights_cached(spec.hf_id):
+            total += spec.download_gb * 1e9
+    return {MODEL_DOWNLOAD_KEY: round(total)} if total else {}
 
 
 def level_bytes(disk: dict[str, int], level_key: str) -> int:
@@ -340,10 +369,10 @@ def has_cuda(system: dict) -> bool:
 
 def estimate_ram(plan: Plan, prefs: dict, system: dict) -> RamEstimate:
     """Baseline + the SUM of the heavy items that will run (they stay cached
-    for the whole process). A model the extractor would put on the GPU counts
-    its "<slug>@cuda" value against VRAM instead of RAM."""
-    from sensi.extractors.predictability_models import spec_for
-    from sensi.utils.timing_history import model_device
+    for the whole process). Each predictability model counts the memory of the
+    precision it actually runs at (load_plan: the chosen precision on a GPU,
+    fp32 on the CPU otherwise), against VRAM when it runs on the GPU."""
+    from sensi.extractors.predictability_models import load_plan, spec_for
 
     gpu = system.get("gpu") or {}
     machine = float(system.get("system_ram_gb") or 0.0)
@@ -357,16 +386,15 @@ def estimate_ram(plan: Plan, prefs: dict, system: dict) -> RamEstimate:
     if {"bert_word", "bert_sentence"} & set(plan.output_csvs):
         items.append(("BERT", K.RAM_GB["bert"], False))
     if plan.predictability_word or plan.predictability_doc:
-        for slug in (prefs.get("predictability", {}) or {}).get("models") or []:
-            on_gpu = model_device("predictability", slug, cuda,
-                                  precision_map=(prefs.get("predictability", {}) or {}).get("precision")) == "cuda"
+        pred = prefs.get("predictability", {}) or {}
+        for slug in pred.get("models") or []:
             try:
                 name = spec_for(slug).label
+                precision, device = load_plan(slug, pred.get("precision"), cuda)
             except KeyError:
-                name = slug
-            gb = K.RAM_GB.get(f"{slug}@cuda" if on_gpu else slug)
-            if gb is not None:
-                items.append((name, gb, on_gpu))
+                continue
+            items.append((name, K.predictability_ram_gib(slug, precision),
+                          device == "cuda"))
 
     ram_items = [i for i in items if not i[2]]
     gpu_items = [i for i in items if i[2]]

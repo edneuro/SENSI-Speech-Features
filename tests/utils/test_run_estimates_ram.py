@@ -30,7 +30,7 @@ def test_baseline_only_without_heavy_items():
 def test_heavy_items_add_up():
     e = estimate_ram(_plan(["word2vec", "bert_word"], pred=True),
                      _prefs(["gpt2"]), _sys())
-    want = B + K.RAM_GB["word2vec"] + K.RAM_GB["bert"] + K.RAM_GB["gpt2"]
+    want = B + K.RAM_GB["word2vec"] + K.RAM_GB["bert"] + K.predictability_ram_gib("gpt2", "fp32")
     assert abs(e.peak_gb - want) < 1e-9
     assert e.driver == "Word2Vec"
 
@@ -77,7 +77,7 @@ def test_predictability_off_ignores_selected_models():
 
 def test_doc_means_alone_count_models():
     e = estimate_ram(_plan(pred_doc=True), _prefs(["gpt2"]), _sys())
-    assert abs(e.peak_gb - (B + K.RAM_GB["gpt2"])) < 1e-9
+    assert abs(e.peak_gb - (B + K.predictability_ram_gib("gpt2", "fp32"))) < 1e-9
 
 
 def test_stacked_items_warn_as_this_run():
@@ -99,3 +99,34 @@ def test_unknown_machine_memory_does_not_warn():
     e = estimate_ram(_plan(["word2vec"], pred=True), _prefs(["llama3_70b"]),
                      {"system_ram_gb": 0, "gpu": {"name": None, "vram_gb": 0}})
     assert e.fits and e.warning is None
+
+
+def test_gpt2_xl_cpu_only_counts_fp32_ram():
+    e = estimate_ram(_plan(pred=True), _prefs(["gpt2_xl"]), _sys(64, 0))
+    assert abs(e.peak_gb - (B + 6.0 * 1.2 / 1.0737)) < 0.01
+
+
+def test_gpt2_on_gpu_counts_as_vram():
+    e = estimate_ram(_plan(pred=True), _prefs(["gpt2_xl"]), _sys(64, 24))
+    assert abs(e.peak_gb - B) < 1e-9
+
+
+def test_llama8b_fp16_with_gpu_is_vram():
+    e = estimate_ram(_plan(pred=True), _prefs(["llama3_8b"]), _sys(16, 12))
+    assert e.warning and "GPU memory" in e.warning
+    assert abs(e.peak_gb - B) < 1e-9
+    assert "≈ 17.9" in e.warning
+
+
+def test_llama8b_4bit_choice_fits_small_gpu():
+    prefs = _prefs(["llama3_8b"])
+    prefs["predictability"]["precision"] = {"llama3_8b": "4bit"}
+    e = estimate_ram(_plan(pred=True), prefs, _sys(16, 12))
+    assert e.fits and e.warning is None
+
+
+def test_llama8b_cpu_only_ignores_4bit_choice():
+    prefs = _prefs(["llama3_8b"])
+    prefs["predictability"]["precision"] = {"llama3_8b": "4bit"}
+    e = estimate_ram(_plan(pred=True), prefs, _sys(64, 0))
+    assert abs(e.peak_gb - (B + 32 * 1.2 / 1.0737)) < 0.01

@@ -16,6 +16,8 @@ the unit of sensi.utils.system_info's system_ram_gb / vram_gb.
 """
 from __future__ import annotations
 
+from sensi.extractors.predictability_models import all_specs, spec_for, weights_gb
+
 # --- Rows per transcript word (validation corpus, 2026-10-26, jose) ---------
 ROWS_PER_WORD: dict[str, float] = {
     "features": 1.1296,    # 340 word-CSV rows / 301 words (spaCy splits punctuation/clitics)
@@ -56,55 +58,63 @@ def _gib(n_bytes: float) -> float:
 
 _OVERHEAD = 1.2   # +20 % over the raw weights for activations, buffers, CUDA context
 
-# Llama (params, vocab_size, hidden_size, tie_word_embeddings).
-# Params from the model cards:
+# Parameter counts and download sizes come from the roster
+# (sensi.extractors.predictability_models, no torch import). Llama counts from
+# the model cards:
 #   llama32_3b  3.21B ("Params: 3B (3.21B)"), https://huggingface.co/meta-llama/Llama-3.2-3B
 #   llama3_8b   8B (card and safetensors widget both say "8B"),
 #               https://huggingface.co/meta-llama/Meta-Llama-3-8B
 #   llama3_70b  71B (safetensors "Model size: 71B params"; the card table says
 #               "70B" - the larger figure is used),
 #               https://huggingface.co/meta-llama/Meta-Llama-3-70B
-# vocab/hidden/tie: the official meta-llama config.json files are gated (HTTP
-# 401 without a token), so they are read from public ungated mirrors of the
-# same checkpoints:
+# Only the 4-bit rule needs more than the parameter count: (vocab_size,
+# hidden_size, tie_word_embeddings). The official meta-llama config.json files
+# are gated (HTTP 401 without a token), so they are read from public ungated
+# mirrors of the same checkpoints:
 #   https://huggingface.co/unsloth/Llama-3.2-3B/raw/main/config.json
 #       (vocab 128256, hidden 3072, tie_word_embeddings true, bfloat16)
 #   https://huggingface.co/unsloth/llama-3-8b/raw/main/config.json
 #       (vocab 128256, hidden 4096, tie_word_embeddings false, bfloat16)
 #   https://huggingface.co/NousResearch/Meta-Llama-3-70B/raw/main/config.json
 #       (vocab 128256, hidden 8192, tie_word_embeddings false, bfloat16)
-_LLAMA: dict[str, tuple[float, int, int, bool]] = {
-    "llama32_3b": (3.21e9, 128256, 3072, True),
-    "llama3_8b": (8e9, 128256, 4096, False),
-    "llama3_70b": (71e9, 128256, 8192, False),
+_LLAMA_EMBED: dict[str, tuple[int, int, bool]] = {
+    "llama32_3b": (128256, 3072, True),
+    "llama3_8b": (128256, 4096, False),
+    "llama3_70b": (128256, 8192, False),
 }
 
-
-def _cpu_gib(spec: tuple[float, int, int, bool]) -> float:
-    """CPU tier: from_pretrained(model_id) with no dtype. In transformers 5.13.0
-    (the version pinned in conda-lock.yml) `dtype` "defaults to "auto"", which
-    uses the config.json dtype (bfloat16 for all three) = 2 B/param:
-    https://huggingface.co/docs/transformers/v5.13.0/en/main_classes/model#transformers.PreTrainedModel.from_pretrained
-    """
-    params = spec[0]
-    return _gib(params * 2 * _OVERHEAD)
+_GPT2_MEASURED_GIB = 0.70   # gpt2 (124M) fp32 on CPU: 1.57 - 0.87 GiB baseline
 
 
-def _cuda_4bit_gib(spec: tuple[float, int, int, bool]) -> float:
-    """@cuda tier: the extractor's first GPU tier, 4-bit bitsandbytes. Only
-    nn.Linear layers become 4-bit (~0.5 B/param); "all other modules ... are
-    converted to torch.float16", and transformers leaves lm_head unquantized,
-    so embed_tokens + lm_head stay fp16 (2 B/param), counted once when
+def _4bit_gib(slug: str) -> float:
+    """Llama on a GPU at 4-bit (bitsandbytes). Only nn.Linear layers become
+    4-bit (~0.5 B/param); "all other modules ... are converted to
+    torch.float16", and transformers leaves lm_head unquantized, so
+    embed_tokens + lm_head stay fp16 (2 B/param), counted once when
     tie_word_embeddings is true:
     https://huggingface.co/docs/transformers/v5.13.0/en/quantization/bitsandbytes
-    If the 4-bit load fails the extractor falls back to fp16 on the GPU, which
-    needs about the CPU figure instead.
     """
-    params, vocab, hidden, tied = spec
+    params = spec_for(slug).params
+    vocab, hidden, tied = _LLAMA_EMBED[slug]
     embed = vocab * hidden * (1 if tied else 2)
     return _gib(((params - embed) * 0.5 + embed * 2) * _OVERHEAD)
 
-_GPT2_SIZES = {"gpt2_medium": 355e6, "gpt2_large": 774e6, "gpt2_xl": 1.5e9}
+
+def predictability_ram_gib(slug: str, precision_run: str) -> float:
+    """Peak memory (GiB) of one predictability model loaded at `precision_run`
+    (the precision it actually runs at, from load_plan). RAM when it runs on
+    the CPU, VRAM when on a GPU - the caller decides which pool.
+
+    gpt2 fp32 is the measured figure; every other model/precision is its weight
+    bytes x _OVERHEAD (not measured: no GPU / gated / larger models on the
+    calibration machine).
+    """
+    if slug == "gpt2" and precision_run == "fp32":
+        return _GPT2_MEASURED_GIB
+    if precision_run == "4bit" and slug in _LLAMA_EMBED:
+        return _4bit_gib(slug)
+    return _gib(weights_gb(slug, precision_run) * 1e9 * _OVERHEAD)
+
 
 RAM_GB: dict[str, float] = {
     # 0.87 GiB on 1_FB_P vs 0.84 GiB on LJ002-0321: no input-length term at
@@ -112,23 +122,7 @@ RAM_GB: dict[str, float] = {
     "baseline": 0.87,
     "word2vec": 3.85,   # GoogleNews 300-d KeyedVectors (4.72 - 0.87 GiB)
     "bert": 0.48,       # bert-base-uncased, fp32 (1.35 - 0.87 GiB)
-    # GPT-2 always loads full-precision on the CPU
-    # (sensi/extractors/predictability._is_full_precision_cpu): fp32, 1.57 - 0.87 GiB.
-    "gpt2": 0.70,
-    # ...so its "@cuda" tier is the same CPU load, never VRAM.
-    "gpt2@cuda": 0.70,
-    # Larger GPT-2 sizes: NOT measured; fp32 weights (4 B/param) + the 0.24 GiB
-    # non-weight overhead implied by the measured small model (0.70 - 124M x 4 B).
-    **{f"{_s}{_t}": round(_gib(_p * 4) + 0.24, 2)
-       for _s, _p in _GPT2_SIZES.items() for _t in ("", "@cuda")},
-    # Llama entries are computed (gated models, not measured): see _cpu_gib /
-    # _cuda_4bit_gib below for the rule and sources.
-    "llama32_3b": _cpu_gib(_LLAMA["llama32_3b"]),
-    "llama32_3b@cuda": _cuda_4bit_gib(_LLAMA["llama32_3b"]),
-    "llama3_8b": _cpu_gib(_LLAMA["llama3_8b"]),
-    "llama3_8b@cuda": _cuda_4bit_gib(_LLAMA["llama3_8b"]),
-    "llama3_70b": _cpu_gib(_LLAMA["llama3_70b"]),
-    "llama3_70b@cuda": _cuda_4bit_gib(_LLAMA["llama3_70b"]),
+    # Predictability models: see predictability_ram_gib (depends on precision).
 }
 
 
@@ -153,19 +147,15 @@ FIRST_ESTIMATE_RATES: dict[str, float] = {
     "doc_summary": 0.000836,
 }
 
-# Llama predictability on CPU, keyed like timing_history.load_key: NOT measured
-# (gated models). Scaled from the measured GPT-2 rate by parameter count
-# (forward-pass cost ~ params): GPT-2 124M params ("124M parameters",
-# https://huggingface.co/openai-community/gpt2); Llama counts as in RAM_GB.
-_GPT2_PARAMS = 124e6
-for _slug, _params in (("llama32_3b", 3.21e9), ("llama3_8b", 8e9),
-                       ("llama3_70b", 71e9)):
-    FIRST_ESTIMATE_RATES[f"predictability:{_slug}"] = round(
-        FIRST_ESTIMATE_RATES["predictability"] * _params / _GPT2_PARAMS, 4)
-FIRST_ESTIMATE_RATES["predictability:gpt2"] = FIRST_ESTIMATE_RATES["predictability"]
-for _slug, _params in _GPT2_SIZES.items():
-    FIRST_ESTIMATE_RATES[f"predictability:{_slug}"] = round(
-        FIRST_ESTIMATE_RATES["predictability"] * _params / _GPT2_PARAMS, 4)
+# Predictability rates of every other roster model: NOT measured (gated or
+# larger). Scaled from the measured GPT-2 rate by parameter count (forward-pass
+# cost ~ params): GPT-2 124M params ("124M parameters",
+# https://huggingface.co/openai-community/gpt2); counts from the roster.
+_GPT2_PARAMS = spec_for("gpt2").params
+for _spec in all_specs():
+    FIRST_ESTIMATE_RATES[f"predictability:{_spec.slug}"] = (
+        FIRST_ESTIMATE_RATES["predictability"] if _spec.slug == "gpt2" else
+        round(FIRST_ESTIMATE_RATES["predictability"] * _spec.params / _GPT2_PARAMS, 4))
 
 # MFA wall time = fixed start-up per MFA invocation + slope x audio seconds
 # aligned (sensi.utils.timing_history.fit_overhead_slope learns both per machine).
@@ -199,23 +189,20 @@ FIRST_LOAD_SECONDS: dict[str, float] = {
     "phoneme_surprisal": 5.9,
 }
 
-# Llama loads: NOT measured (gated models). Scaled from the measured GPT-2 load
-# by weight bytes read: seconds per byte = 7.8 s / (124M params x 4 B, fp32 —
-# GPT-2 loads full precision, see RAM_GB), times the Llama weight size =
-# params (as in _LLAMA / RAM_GB) x 2 B (bfloat16, the config.json dtype cited
-# above). Every device tier reads the same bf16 weights from disk; the figure
-# excludes 4-bit quantization time on the CUDA tier. Like the
-# GPT-2 figure this is a warm-disk-cache load; a cold first download/read is
-# slower.
+# Other roster models' loads: NOT measured. Scaled from the measured GPT-2
+# load by weight bytes read: seconds per byte = 7.8 s / (124M params x 4 B, fp32),
+# times the model's on-disk weight size = params x 4 B for the GPT-2 family
+# (fp32 checkpoints) or params x 2 B for Llama (bfloat16, the config.json dtype
+# cited above). Every device tier reads the same weights from disk; the figure
+# excludes 4-bit quantization time. Like the GPT-2 figure this is a
+# warm-disk-cache load; a cold first download/read is slower.
 _GPT2_WEIGHT_BYTES = _GPT2_PARAMS * 4
-for _slug, (_params, *_rest) in _LLAMA.items():
-    FIRST_LOAD_SECONDS[f"predictability:{_slug}"] = round(
-        FIRST_LOAD_SECONDS["predictability:gpt2"] * _params * 2
-        / _GPT2_WEIGHT_BYTES, 1)
-
-for _slug, _params in _GPT2_SIZES.items():
-    FIRST_LOAD_SECONDS[f"predictability:{_slug}"] = round(
-        FIRST_LOAD_SECONDS["predictability:gpt2"] * _params / _GPT2_PARAMS, 1)
+for _spec in all_specs():
+    if _spec.slug != "gpt2":
+        _bytes = _spec.params * (4 if _spec.slug.startswith("gpt2") else 2)
+        FIRST_LOAD_SECONDS[f"predictability:{_spec.slug}"] = round(
+            FIRST_LOAD_SECONDS["predictability:gpt2"] * _bytes
+            / _GPT2_WEIGHT_BYTES, 1)
 
 # Range multipliers around the point estimate: wide before this machine has
 # history (built-in rates come from one other machine), narrow after.
