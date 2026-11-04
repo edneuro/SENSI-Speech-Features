@@ -23,7 +23,7 @@
   <main>
     <div class="content">
       <div class="crumbs"><a href="../../features/index.html">Features</a> › <a href="../../features/sentence/index.html">Sentence level</a></div>
-      <details class="toc-inline"><summary>On this page</summary><ul><li><a href="#what">What it is</a></li><li><a href="#see">See it</a></li><li><a href="#output">In your output</a></li><li><a href="#matlab">MATLAB</a></li><li><a href="#code">In the code</a></li><li><a href="#library">Library</a></li><li><a href="#eeg">EEG rationale</a></li><li><a href="#papers">Papers</a></li></ul></details>
+      <details class="toc-inline"><summary>On this page</summary><ul><li><a href="#what">What it is</a></li><li><a href="#see">See it</a></li><li><a href="#output">In your output</a></li><li><a href="#matlab">MATLAB</a></li><li><a href="#x-how-these-vectors-are-used">How these vectors are used</a></li><li><a href="#code">In the code</a></li><li><a href="#library">Library</a></li><li><a href="#eeg">EEG rationale</a></li><li><a href="#papers">Papers</a></li></ul></details>
       <h1><span class="num">6.4.5</span>BERT contextual sentence embeddings</h1><p class="lede">A 768-dimensional vector per sentence at each of BERT&#x27;s 12 transformer layers — the sentence-level analogue of the word-level BERT embedding.</p><div class="facts"><span class="chip">App: <b>Sentence features</b> → <b>Sentence embeddings</b></span><span class="chip">Output: <b>sentence/&lt;stim&gt;_bert_sentence.mat</b></span><span class="chip">Libraries: <b>transformers, torch</b></span></div><section id="what"><a id="meaning"></a><h2><span class="num">6.4.5.1</span>What it is</h2><p>A 768-dimensional vector per sentence at each of BERT's 12 transformer
 layers — the sentence-level analogue of the
 <a href="../../features/word/master_bert_word.html">word-level BERT embedding</a>. Output shape:
@@ -37,7 +37,42 @@ size(S.embeddings)                         % 2 x 12 x 768 (single) = sentences x
 a = squeeze(S.embeddings(1, :, :)); b = squeeze(S.embeddings(2, :, :));
 c = sum(a .* b, 2) ./ (vecnorm(a, 2, 2) .* vecnorm(b, 2, 2));
 plot(1:12, c, &#x27;o-&#x27;); xlabel(&#x27;BERT layer&#x27;); ylabel(&#x27;cosine(sentence 1, sentence 2)&#x27;)
-</code></pre></div><div class="caption">Run from the output folder. Variable and column names were checked against the real files when this manual was built; the code itself was not run in MATLAB.</div></div></section><section id="code"><a id="implementation-in-sensi-speechfeatures"></a><h2><span class="num">6.4.5.5</span>In the code</h2><div class="card"><div class="card-title">Open in GitHub</div><ul><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/extractors/bert_embed.py#L66"><code>sensi/extractors/bert_embed.py → embed_bert_words_and_sentences()</code></a></li></ul></div><p>Source: <code>sensi/extractors/bert_embed.py:embed_bert_words_and_sentences</code></p>
+</code></pre></div><div class="caption">Run from the output folder. Variable and column names were checked against the real files when this manual was built; the code itself was not run in MATLAB.</div></div></section><section id="x-how-these-vectors-are-used"><a id="how-these-vectors-are-used"></a><h2><span class="num">6.4.5.5</span>How these vectors are used</h2><p>The file holds the <strong>vectors themselves, not a similarity score</strong>: you
+compute the measure your analysis needs from them. Two common uses:</p>
+<ol>
+<li><strong>Sentence-to-sentence similarity.</strong> Compare each sentence's vector with
+the previous sentence's by cosine similarity (or 1 − similarity, a
+<em>dissimilarity</em>). A low value marks a sentence whose content departs from
+the one before it, a rough index of topic continuity or a discourse shift.</li>
+<li><strong>Encoding models.</strong> Use the vector dimensions of one layer directly as
+regressors that predict the neural response to each sentence (often after
+reducing them, e.g. with PCA) (<a href="#toneva-2019-sent">Toneva 2019</a>, <a href="#caucheteux-2022">Caucheteux 2022</a>,
+<a href="../../features/word/master_bert_word.html#goldstein-2022">Goldstein 2022</a>).</li>
+</ol>
+<p>These vectors are <strong>not</strong> where surprisal comes from: surprisal and cloze
+are read from a language model's next-word probabilities (the
+<a href="../../features/word/pred_surprisal.html">Predictability</a> card), not from embeddings.</p>
+<p>⚠️ Pick the layer before you look at the neural data and report it: the
+twelve layers carry different information and the best one depends on the
+task and region (<a href="#toneva-2019-sent">Toneva 2019</a>). ⚠️ These vectors are contextual (computed
+with the preceding text as left context), so part of the similarity between
+neighbouring sentences is built in by the model itself; it is not a purely
+&quot;semantic&quot; distance.</p>
+<p>Example (MATLAB): cosine similarity between each sentence and the one
+before it at one layer; the first sentence and any sentence with
+<code>is_valid == false</code> stay <code>NaN</code>.</p>
+<pre><code class="language-matlab">S  = load('&lt;stim&gt;_bert_sentence.mat');
+L  = 9;                                   % layer 1..12 (pre-register this)
+E  = double(squeeze(S.embeddings(:, L, :)));   % n_sentences x 768
+ok = logical(S.is_valid(:));
+sim = nan(size(E, 1), 1);
+for i = 2:size(E, 1)
+    if ok(i) &amp;&amp; ok(i-1)
+        sim(i) = dot(E(i, :), E(i-1, :)) / (norm(E(i, :)) * norm(E(i-1, :)));   % cosine
+    end
+end
+</code></pre>
+</section><section id="code"><a id="implementation-in-sensi-speechfeatures"></a><h2><span class="num">6.4.5.6</span>In the code</h2><div class="card"><div class="card-title">Open in GitHub</div><ul><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/extractors/bert_embed.py#L66"><code>sensi/extractors/bert_embed.py → embed_bert_words_and_sentences()</code></a></li></ul></div><p>Source: <code>sensi/extractors/bert_embed.py:embed_bert_words_and_sentences</code></p>
 <p><strong>What the code does</strong> (verified against the source):</p>
 <p>The sentence embeddings are produced <strong>in the same forward pass</strong> as
 the <a href="../../features/word/master_bert_word.html">word-level embeddings</a> — see that doc's
@@ -121,9 +156,9 @@ the sentence's final word from the
 <a href="../../features/word/master_bert_word.html">word-level embeddings</a>, which are computed with
 left context.</li>
 </ul>
-</section><section id="library"><h2><span class="num">6.4.5.6</span>Library</h2><p>Same setup as the word-level extractor — see
+</section><section id="library"><h2><span class="num">6.4.5.7</span>Library</h2><p>Same setup as the word-level extractor — see
 <a href="../../features/word/master_bert_word.html#library"><code>master_bert_word</code></a>.</p>
-</section><section id="eeg"><a id="eeg-rationale"></a><h2><span class="num">6.4.5.7</span>EEG rationale</h2><p>Sentence-level embeddings are the right granularity for:</p>
+</section><section id="eeg"><a id="eeg-rationale"></a><h2><span class="num">6.4.5.8</span>EEG rationale</h2><p>Sentence-level embeddings are the right granularity for:</p>
 <ul>
 <li><strong>Sentence-locked ERP analyses</strong> of meaning integration / discourse
 effects, where the regressor is &quot;how similar is this sentence's
@@ -140,7 +175,7 @@ surprisal&quot; measure, complementary to word-level
 <a href="../../features/word/master_bert_word.html">word-level column</a>: optimal-layer choice for
 sentence-level EEG / fMRI prediction is task- and ROI-dependent
 (<a href="#toneva-2019-sent">Toneva 2019</a>).</p>
-</section><section id="papers"><h2><span class="num">6.4.5.8</span>Papers</h2><p>See <a href="../../features/word/master_bert_word.html"><code>master_bert_word</code></a> for the full reference
+</section><section id="papers"><h2><span class="num">6.4.5.9</span>Papers</h2><p>See <a href="../../features/word/master_bert_word.html"><code>master_bert_word</code></a> for the full reference
 list; the sentence-level embedding inherits the same foundational
 papers (Devlin 2019, Tenney 2019, Rogers 2020, Toneva 2019,
 Schrimpf 2021, Goldstein 2022) plus the sentence-level-specific:</p>
@@ -168,7 +203,7 @@ Schrimpf 2021, Goldstein 2022) plus the sentence-level-specific:</p>
   </main>
   <aside class="right" aria-label="On this page">
     <div class="label">On this page</div>
-    <ul><li><a href="#what">What it is</a></li><li><a href="#see">See it</a></li><li><a href="#output">In your output</a></li><li><a href="#matlab">MATLAB</a></li><li><a href="#code">In the code</a></li><li><a href="#library">Library</a></li><li><a href="#eeg">EEG rationale</a></li><li><a href="#papers">Papers</a></li></ul>
+    <ul><li><a href="#what">What it is</a></li><li><a href="#see">See it</a></li><li><a href="#output">In your output</a></li><li><a href="#matlab">MATLAB</a></li><li><a href="#x-how-these-vectors-are-used">How these vectors are used</a></li><li><a href="#code">In the code</a></li><li><a href="#library">Library</a></li><li><a href="#eeg">EEG rationale</a></li><li><a href="#papers">Papers</a></li></ul>
     <div class="meta"><div><b>Key</b> <code>master_bert_sentence</code></div><div><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/docs/features/master_bert_sentence.md">This page’s source text</a> (also the app’s ⓘ pop-up)</div></div>
   </aside>
 </div>

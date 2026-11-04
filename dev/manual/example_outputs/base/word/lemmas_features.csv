@@ -1,23 +1,23 @@
 doc_id,paragraph_id,sentence_id,sentence,start,end,token_id,token_in_sentence_id,token,lemma,upos,xpos,feats,dep_rel,head_token_id,Zipf_Freq,Sem_Empath_anticipation,Sem_Empath_body,Sem_Empath_communication,Sem_Empath_family,Sem_Empath_friends,Sem_Empath_hearing,Sem_Empath_money,Sem_Empath_movement,Sem_Empath_negative_emotion,Sem_Empath_philosophy,Sem_Empath_positive_emotion,Sem_Empath_science,Sem_Empath_work,Sem_Categories,gpt2_Cloze,gpt2_Surprisal,gpt2_TopMatch,Word_Duration,Word_Gap,Word_Gap_After,AoA_Mean,AoA_SD,Concreteness,Imageability,Familiarity,Valence,Arousal,Dominance
 8,1,1,"The children were running while the mice ate their cheese.
-",1,3,1,1,The,the,DET,DT,Definite=Def|PronType=Art,det,2,7.73,,,,,,,,,,,,,,,,,,,,,,,1.43,209.0,625.0,,,
+",1,3,1,1,The,the,DET,DT,Definite=Def|PronType=Art,det,2,7.73,,,,,,,,,,,,,,,0.0376997,4.7293,0.0,,,,,,1.43,209.0,625.0,,,
 8,1,1,"The children were running while the mice ate their cheese.
-",5,12,2,2,children,child,NOUN,NNS,Number=Plur,nsubj,4,5.3,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,family,0.000411837,11.2456,0.0,,,,,,4.78,619.0,585.0,7.2,5.33,5.2
+",5,12,2,2,children,child,NOUN,NNS,Number=Plur,nsubj,4,5.3,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,family,0.000217121,12.1692,0.0,,,,,,4.78,619.0,585.0,7.2,5.33,5.2
 8,1,1,"The children were running while the mice ate their cheese.
-",14,17,3,3,were,be,AUX,VBD,Mood=Ind|Tense=Past|VerbForm=Fin,aux,4,6.79,,,,,,,,,,,,,,,0.136979,2.868,1.0,,,,5.11,3.23,1.85,274.0,613.0,6.18,3.43,5.5
+",14,17,3,3,were,be,AUX,VBD,Mood=Ind|Tense=Past|VerbForm=Fin,aux,4,6.79,,,,,,,,,,,,,,,0.0750251,3.7365,0.0,,,,5.11,3.23,1.85,274.0,613.0,6.18,3.43,5.5
 8,1,1,"The children were running while the mice ate their cheese.
-",19,25,4,4,running,run,VERB,VBG,Aspect=Prog|Tense=Pres|VerbForm=Part,ROOT,4,5.49,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,0.0,movement,0.00066403,10.5565,0.0,,,,4.47,1.9,4.31,490.0,571.0,6.41,5.24,5.44
+",19,25,4,4,running,run,VERB,VBG,Aspect=Prog|Tense=Pres|VerbForm=Part,ROOT,4,5.49,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0,0.0,movement,0.000700118,10.4801,0.0,,,,4.47,1.9,4.31,490.0,571.0,6.41,5.24,5.44
 8,1,1,"The children were running while the mice ate their cheese.
-",27,31,5,5,while,while,SCONJ,IN,,mark,8,5.86,,,,,,,,,,,,,,,0.0015534,9.3304,0.0,,,,,,1.55,302.0,543.0,,,
+",27,31,5,5,while,while,SCONJ,IN,,mark,8,5.86,,,,,,,,,,,,,,,0.00168644,9.2118,0.0,,,,,,1.55,302.0,543.0,,,
 8,1,1,"The children were running while the mice ate their cheese.
-",33,35,6,6,the,the,DET,DT,Definite=Def|PronType=Art,det,7,7.73,,,,,,,,,,,,,,,0.159287,2.6503,1.0,,,,,,1.43,209.0,625.0,,,
+",33,35,6,6,the,the,DET,DT,Definite=Def|PronType=Art,det,7,7.73,,,,,,,,,,,,,,,0.157741,2.6644,1.0,,,,,,1.43,209.0,625.0,,,
 8,1,1,"The children were running while the mice ate their cheese.
-",37,40,7,7,mice,mouse,NOUN,NNS,Number=Plur,nsubj,8,4.31,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,,8.93465e-05,13.4502,0.0,,,,4.94,1.76,4.83,615.0,520.0,4.8,3.38,4.29
+",37,40,7,7,mice,mouse,NOUN,NNS,Number=Plur,nsubj,8,4.31,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,,0.000149118,12.7113,0.0,,,,4.94,1.76,4.83,615.0,520.0,4.8,3.38,4.29
 8,1,1,"The children were running while the mice ate their cheese.
-",42,44,8,8,ate,eat,VERB,VBD,Tense=Past|VerbForm=Fin,advcl,4,5.13,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,,0.0208914,5.5809,0.0,,,,2.78,1.48,4.44,563.0,529.0,7.1,4.38,7.26
+",42,44,8,8,ate,eat,VERB,VBD,Tense=Past|VerbForm=Fin,advcl,4,5.13,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,,0.0177417,5.8167,0.0,,,,2.78,1.48,4.44,563.0,529.0,7.1,4.38,7.26
 8,1,1,"The children were running while the mice ate their cheese.
-",46,50,9,9,their,their,PRON,PRP$,Number=Plur|Person=3|Poss=Yes|PronType=Prs,poss,10,6.33,,,,,,,,,,,,,,,0.0692536,3.852,0.0,,,,,,3.34,255.0,607.0,,,
+",46,50,9,9,their,their,PRON,PRP$,Number=Plur|Person=3|Poss=Yes|PronType=Prs,poss,10,6.33,,,,,,,,,,,,,,,0.0796737,3.6498,0.0,,,,,,3.34,255.0,607.0,,,
 8,1,1,"The children were running while the mice ate their cheese.
-",52,57,10,10,cheese,cheese,NOUN,NN,Number=Sing,dobj,8,4.57,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,,0.00211088,8.8879,0.0,,,,4.33,1.75,4.7,592.0,588.0,6.81,3.8,7.11
+",52,57,10,10,cheese,cheese,NOUN,NN,Number=Sing,dobj,8,4.57,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,,0.00181678,9.1044,0.0,,,,4.33,1.75,4.7,592.0,588.0,6.81,3.8,7.11
 8,1,1,"The children were running while the mice ate their cheese.
 ",58,58,11,11,.,.,PUNCT,.,PunctType=Peri,punct,4,,,,,,,,,,,,,,,,,,,,,,,,,,,,,

@@ -29,15 +29,16 @@ model assigns to a word given everything that came before it in the
 document, in <strong>bits</strong>:</p>
 <pre><code>&lt;slug&gt;_Surprisal(wᵢ) = -log₂ P_model(wᵢ | w₁ … wᵢ₋₁)        [Hale 2001], [Levy 2008]
 </code></pre>
-<p><code>&lt;slug&gt;</code> stands for the model's short name — <code>gpt2</code>, <code>llama32_3b</code>,
-<code>llama3_8b</code> or <code>llama3_70b</code> — and is the prefix of the column name, so
+<p><code>&lt;slug&gt;</code> stands for the model's short name — <code>gpt2</code>, <code>gpt2_medium</code>,
+<code>gpt2_large</code>, <code>gpt2_xl</code>, <code>llama32_3b</code>, <code>llama3_8b</code> or <code>llama3_70b</code> — and is the prefix of the column name, so
 <code>gpt2_Surprisal</code> is surprisal from GPT-2. Each model you tick writes its own
 column, and the name always says which model produced it.</p>
 <p>Low surprisal means the model expected the word; high surprisal means it
 did not (see <em>Reading the numbers</em> below for the scale). PUNCT rows are
-<code>NaN</code>, and so is the document's first word (no left context to condition
-on).</p>
-</section><section id="see"><h2><span class="num">6.1.10.2</span>See it</h2><div class="card"><div class="caption">Example text (invented, run without audio): <b>predictable.txt</b>: “She spread butter on her toast.”; <b>surprising.txt</b>: “She spread butter on her violin.”</div><div ><figure><img src="../../assets/figures/pred_surprisal.svg" alt="Surprisal — Default settings"></figure><figcaption>Surprisal — Default settings</figcaption><div class="provenance">Read from <span class='file'>word/predictable_features.csv</span> and <span class='file'>word/surprising_features.csv</span>, written by SENSI SpeechFeatures on the example shown here. Nothing on this figure is typed in.</div></div></div></section><section id="output"><h2><span class="num">6.1.10.3</span>In your output</h2><div class="card"><div class="card-title">File <span class="file">word/&lt;stim&gt;_features.csv</span></div><table class="excerpt"><thead><tr><th class="">token</th><th class="hl">gpt2_Surprisal<br><small>bits</small></th></tr></thead><tbody><tr><td class="">She</td><td class="hl"></td></tr><tr><td class="">spread</td><td class="hl">13.94</td></tr><tr><td class="">butter</td><td class="hl">11.24</td></tr><tr><td class="">on</td><td class="hl">2.868</td></tr><tr><td class="">her</td><td class="hl">3.09</td></tr><tr><td class="">violin</td><td class="hl">16.95</td></tr><tr><td class="">.</td><td class="hl"></td></tr></tbody></table><div class="caption">7 rows shown; showing the feature's columns, with the unit the run's units table gives for each. An empty cell means no value (e.g. punctuation, or a word the measure doesn’t cover).</div><div class="provenance">Excerpt of the real file for <b>surprising</b>.</div></div></section><section id="matlab"><h2><span class="num">6.1.10.4</span>MATLAB</h2><div class="card" data-tabs><div class="tabpanel on"><pre data-copy><code>% Load the word-level table (one row per word)
+<code>NaN</code>. The document's first word is scored too: every pass starts with the
+model's beginning-of-text token, so it has a left context to condition on
+(see <em>What each word's surprisal is conditioned on</em>).</p>
+</section><section id="see"><h2><span class="num">6.1.10.2</span>See it</h2><div class="card"><div class="caption">Example text (invented, run without audio): <b>predictable.txt</b>: “She spread butter on her toast.”; <b>surprising.txt</b>: “She spread butter on her violin.”</div><div ><figure><img src="../../assets/figures/pred_surprisal.svg" alt="Surprisal — Default settings"></figure><figcaption>Surprisal — Default settings</figcaption><div class="provenance">Read from <span class='file'>word/predictable_features.csv</span> and <span class='file'>word/surprising_features.csv</span>, written by SENSI SpeechFeatures on the example shown here. Nothing on this figure is typed in.</div></div></div></section><section id="output"><h2><span class="num">6.1.10.3</span>In your output</h2><div class="card"><div class="card-title">File <span class="file">word/&lt;stim&gt;_features.csv</span></div><table class="excerpt"><thead><tr><th class="">token</th><th class="hl">gpt2_Surprisal<br><small>bits</small></th></tr></thead><tbody><tr><td class="">She</td><td class="hl">9.588</td></tr><tr><td class="">spread</td><td class="hl">14.31</td></tr><tr><td class="">butter</td><td class="hl">9.901</td></tr><tr><td class="">on</td><td class="hl">2.618</td></tr><tr><td class="">her</td><td class="hl">2.723</td></tr><tr><td class="">violin</td><td class="hl">16.07</td></tr><tr><td class="">.</td><td class="hl"></td></tr></tbody></table><div class="caption">7 rows shown; showing the feature's columns, with the unit the run's units table gives for each. An empty cell means no value (e.g. punctuation, or a word the measure doesn’t cover).</div><div class="provenance">Excerpt of the real file for <b>surprising</b>.</div></div></section><section id="matlab"><h2><span class="num">6.1.10.4</span>MATLAB</h2><div class="card" data-tabs><div class="tabpanel on"><pre data-copy><code>% Load the word-level table (one row per word)
 T = readtable(&#x27;word/surprising_features.csv&#x27;, &#x27;TextType&#x27;, &#x27;string&#x27;);
 T.Properties.VariableNames             % every column in the file
 head(T(:, {&#x27;token&#x27;, &#x27;gpt2_Surprisal&#x27;}), 10)                % this feature&#x27;s columns (first rows)
@@ -113,20 +114,26 @@ value converts exactly to a probability: <code>P = 2^(−surprisal)</code>.</p>
 <p>Each extra bit halves the probability, so 2 bits vs 4 bits is the same
 step as 12 vs 14. Real values from the manual's example run (GPT-2):</p>
 <ul>
-<li><em>She spread butter on her</em> <strong>toast</strong> → 7.1 bits; <strong>violin</strong> in the same
-frame → 17.0 bits.</li>
+<li><em>She spread butter on her</em> <strong>toast</strong> → 5.9 bits; <strong>violin</strong> in the same
+frame → 16.1 bits.</li>
 <li>function words in an expected slot sit low: <strong>on</strong> after <em>spread butter</em>
-→ 2.9 bits; <strong>hours</strong> after <em>48</em> → 0.89 bits.</li>
+→ 2.6 bits; <strong>hours</strong> after <em>48</em> → 0.79 bits.</li>
 <li>a content word after a short, open context sits high: <strong>spread</strong> after
-<em>She</em> → 13.9 bits, since almost any verb could follow.</li>
+<em>She</em> → 14.3 bits, since almost any verb could follow.</li>
+<li>the document's first word is scored from the beginning-of-text token alone,
+so it is a &quot;how likely is this word to open a text&quot; value: <strong>She</strong> → 9.6
+bits, <strong>Others</strong> → 13.7 bits.</li>
 <li>a word the model did not see coming sits high even when it is ordinary
 English. In <em>Others who arrived just after the time of</em> <strong>distribution</strong>
-(LJ002-0321), GPT-2 gave <em>the</em> 56 % and <strong>distribution</strong> 14.7 bits;
-after <em>were often</em>, <strong>48</strong> gets 18.7 bits (GPT-2's top guess, <em>the</em>, had
-only 3 %), and <strong>six</strong> after <em>might also be</em> gets 12.7 bits. Writing
-the number out does not lower it: <em>forty-eight</em> in the same place is
-even less expected.</li>
+(LJ002-0321), GPT-2 gave <em>the</em> 50 % and <strong>distribution</strong> 13.7 bits;
+after <em>were often</em>, <strong>48</strong> gets 18.8 bits (GPT-2's top guess, <em>greeted</em>,
+had only 2 %), and <strong>six</strong> after <em>might also be</em> gets 12.1 bits. Writing
+the number out does not lower it: <em>forty-eight</em> in the same place costs
+22.5 bits, even less expected.</li>
 </ul>
+<p>(The 50 %, the 2 % and the <em>forty-eight</em> figure are GPT-2 small probabilities
+measured for this page with the beginning-of-text token, on the same
+sentence; the bit values are from the manual's example run.)</p>
 <p>Model surprisal on naturalistic reading corpora spans roughly 0–20 bits
 (<a href="#wilcox-2020">Wilcox 2020</a>, Fig. 1), with most words well below the top of that
 range. What counts as &quot;high&quot; depends on the model, the text and its
@@ -142,19 +149,125 @@ writes one namespaced column per model (e.g. <code>gpt2_Surprisal</code> and
 compare estimator quality on the same stimulus rather than committing
 to one model.</p>
 </section><section id="x-models"><a id="models"></a><h2><span class="num">6.1.10.7</span>Models</h2><p>Surprisal is available for every model in the roster
-(<code>sensi/extractors/predictability_models.py</code>): <strong>GPT-2</strong> (<code>gpt2</code>, free, no
-token, CPU-capable baseline) and three gated <strong>Llama-3</strong> variants
-(<code>llama32_3b</code>, <code>llama3_8b</code>, <code>llama3_70b</code>) that need a HuggingFace token</p>
+(<code>sensi/extractors/predictability_models.py</code>): the <strong>GPT-2 family</strong>
+(<code>gpt2</code>, <code>gpt2_medium</code>, <code>gpt2_large</code>, <code>gpt2_xl</code>; free, no token) and three
+gated <strong>Llama-3</strong> variants (<code>llama32_3b</code>, <code>llama3_8b</code>, <code>llama3_70b</code>) that
+need a HuggingFace token + accepted license — see
+<strong><a href="../../chapters/usage.html#huggingface-token">LLM access &amp; credentials</a></strong>. Nothing is downloaded at
+setup: a model's weights are fetched the first time a run uses it (the
+console and the Run page say how much).</p>
+<table>
+<thead>
+<tr>
+<th>Slug</th>
+<th>Parameters</th>
+<th>First-use download</th>
+<th>Precision (default; choices)</th>
+<th>Runs on</th>
+<th>Weights in memory</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>gpt2</code></td>
+<td>124 M</td>
+<td>0.55 GB</td>
+<td>fp32 only</td>
+<td>CPU or GPU</td>
+<td>0.5 GB</td>
+</tr>
+<tr>
+<td><code>gpt2_medium</code></td>
+<td>355 M</td>
+<td>1.52 GB</td>
+<td>fp32 only</td>
+<td>CPU or GPU</td>
+<td>1.4 GB</td>
+</tr>
+<tr>
+<td><code>gpt2_large</code></td>
+<td>774 M</td>
+<td>3.25 GB</td>
+<td>fp32 only</td>
+<td>CPU or GPU</td>
+<td>3.1 GB</td>
+</tr>
+<tr>
+<td><code>gpt2_xl</code></td>
+<td>1.5 B</td>
+<td>6.43 GB</td>
+<td>fp32 only</td>
+<td>CPU or GPU</td>
+<td>6.0 GB</td>
+</tr>
+<tr>
+<td><code>llama32_3b</code></td>
+<td>3.21 B</td>
+<td>6.42 GB</td>
+<td>fp16 (default), 8bit, 4bit</td>
+<td>GPU (CPU: fp32)</td>
+<td>6.4 GB fp16 · 3.2 GB 8bit · 1.6 GB 4bit · 12.8 GB fp32 on CPU</td>
+</tr>
+<tr>
+<td><code>llama3_8b</code></td>
+<td>8 B</td>
+<td>16.0 GB</td>
+<td>fp16 (default), 8bit, 4bit</td>
+<td>GPU (CPU: fp32)</td>
+<td>16 GB fp16 · 8 GB 8bit · 4 GB 4bit · 32 GB fp32 on CPU</td>
+</tr>
+<tr>
+<td><code>llama3_70b</code></td>
+<td>71 B</td>
+<td>142 GB</td>
+<td>fp16 (default), 8bit, 4bit</td>
+<td>GPU (CPU: fp32)</td>
+<td>142 GB fp16 · 71 GB 8bit · 35.5 GB 4bit · 284 GB fp32 on CPU</td>
+</tr>
+</tbody>
+</table>
+<p>&quot;Weights in memory&quot; is parameters × bytes per parameter (fp32 4, fp16 2,
+8bit 1, 4bit 0.5; <code>predictability_models.weights_gb</code>). It is the weights
+alone: activations and the key-value cache come on top, so allow headroom.</p>
+<p>Pick one or several from the GUI's Predictability card's model multi-select;
+each selected model is scored once per stimulus and contributes its own
+<code>&lt;slug&gt;_Surprisal</code> column when the Surprisal metric checkbox is on. Whether a
+larger model's surprisal fits human data better depends on the measure and on
+how large the models are — see <em>EEG rationale</em> below; the GPT-2 family is the
+free, always-available option, and ticking several sizes writes one column
+each so you can compare them on your own data.</p>
+<h3 id="precision">Precision</h3>
+<p>Each Llama row has a precision dropdown (fp16, 8bit, 4bit); the GPT-2 rows
+are fixed at fp32. Stored per model in <code>prefs[&quot;predictability&quot;][&quot;precision&quot;]</code>
+(a slug absent from the map = the model's default).</p>
 <ul>
-<li>accepted license — see <strong><a href="../../chapters/usage.html#huggingface-token">LLM access &amp; credentials</a></strong>.
-Pick one or several from the GUI's Predictability card's model
-multi-select; each selected model is scored once per stimulus and
-contributes its own <code>&lt;slug&gt;_Surprisal</code> column when the Surprisal metric
-checkbox is on. Whether a larger model's surprisal fits human data
-better depends on the measure and on how large the models are — see
-<em>EEG rationale</em> below; GPT-2 is the free, always-available baseline.</li>
+<li><strong>GPT-2 stays fp32.</strong> Measured on GPT-2 small in this project
+(2026-11-04): running it in fp16 moves surprisal by 0.0213 bits on average
+(largest change 0.1187), and on a CPU one 1024-subword window takes 82.31 s
+in fp16 against 0.55 s in fp32; bf16 moves surprisal by 0.2193 bits on
+average (largest 1.1432). So lower precision buys nothing for models this
+small, and fp32 is the value to cite.</li>
+<li><strong>Llama defaults to fp16</strong>.
+The previous behaviour (silently loading 4-bit where it could) is gone:
+the precision that ran is always the one you chose and is recorded.</li>
+<li><strong>8-bit and 4-bit</strong> shrink the memory a Llama needs (table above) at the
+cost of values that differ from fp16. The size of that shift was <strong>not
+measured</strong> in this project, so state the precision with any result that
+uses them. If an 8-/4-bit load fails (for example no working
+<em>bitsandbytes</em>), the run stops with a message that suggests fp16; it never
+falls back to another precision, because that would change the values
+without telling you.</li>
+<li><strong>No GPU → fp32 on the CPU for every model</strong>, whatever precision is
+selected, because half precision is very slow on a CPU (the GPT-2 timing
+above). Llama-3-8B in fp32 needs about 32 GB of RAM, which is why the
+console warns first.</li>
 </ul>
-</section><section id="code"><a id="implementation-in-sensi-speechfeatures"></a><h2><span class="num">6.1.10.8</span>In the code</h2><div class="card"><div class="card-title">Open in GitHub</div><ul><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/extractors/predictability.py#L36"><code>sensi/extractors/predictability.py → add_predictability()</code></a></li><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/extractors/predictability_models.py"><code>sensi/extractors/predictability_models.py</code></a></li></ul></div><p>Source: <code>sensi/extractors/predictability.py:add_predictability</code> (the unified,
+<p>What is recorded: the console prints one line per model as it loads, e.g.
+<code>[predict] gpt2: fp32 on CPU</code>, or <code>[predict] llama3_8b: no GPU — running fp32 on CPU (~32.0 GB RAM)</code> when your choice was overridden, and
+<code>[predict] &lt;slug&gt;: downloading X GB on first use…</code> before a first download.
+The run manifest (<code>logs/*_manifest.json</code>) has a <code>predictability_models</code> list,
+one <code>{slug, hf_id, precision, device}</code> entry per model the run used.</p>
+</section><section id="code"><a id="implementation-in-sensi-speechfeatures"></a><h2><span class="num">6.1.10.8</span>In the code</h2><div class="card"><div class="card-title">Open in GitHub</div><ul><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/extractors/predictability.py#L38"><code>sensi/extractors/predictability.py → add_predictability()</code></a></li><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/extractors/predictability_models.py"><code>sensi/extractors/predictability_models.py</code></a></li></ul></div><p>Source: <code>sensi/extractors/predictability.py:add_predictability</code> (the unified,
 roster-driven extractor); long-text handling is in
 <code>_chunk_slices</code> / <code>_HuggingFaceBackend.score</code>.</p>
 <p><strong>This also produces</strong> <a href="../../features/word/pred_cloze.html"><code>Cloze</code></a> and
@@ -175,68 +288,74 @@ equivalent to running it <code>N</code> times with prefixes of growing length �
 just faster. The per-position distributions are independent: nothing
 is pooled across positions.</p>
 <p>For the <strong>very first</strong> word of the document there is no preceding
-text to condition on; the extractor stores <code>NaN</code> (not a meaningful
-surprisal — those rows are dropped or skipped in regressions).</p>
+text, so every forward pass starts with the model's <strong>beginning-of-text
+token</strong> (<code>&lt;|endoftext|&gt;</code> for GPT-2, <code>&lt;|begin_of_text|&gt;</code> for Llama 3). The
+token is never scored and belongs to no word; it only gives the first
+subword a left context, so the first word gets a Surprisal, Cloze and
+TopMatch like any other. ⚠️ That value is &quot;how likely is this word to open
+a text&quot;, not a continuation of anything, so you may still want to drop the
+first word from a regression.</p>
 <h3 id="short-transcripts-fit-the-models-context-window-exact">Short transcripts (fit the model's context window): exact</h3>
 <p>Every model has a hard architectural context limit
 (<code>model.config.max_position_embeddings</code>) — GPT-2's is 1024 subwords;
 the Llama-3.2-3B/8B/70B variants are 131072/8192/8192 (see
 <code>sensi/extractors/predictability_models.py</code>'s <code>native_ctx</code>). When the
 transcript tokenises to at or under that limit for the model in use,
-the whole document fits in one forward pass and every word's surprisal
-is conditioned on its complete natural preceding text. <strong>No
-approximation.</strong></p>
+the whole document (plus the one beginning-of-text token) fits in one
+forward pass and every word's surprisal is conditioned on its complete
+natural preceding text. <strong>No approximation.</strong></p>
 <h3 id="long-transcripts-exceed-the-context-window-chunked-bounded-preceding-context">Long transcripts (exceed the context window): chunked, bounded preceding context</h3>
 <p>Podcast episodes and audiobook chapters routinely exceed a model's
 context window (most visibly GPT-2's 1024-subword limit, or the two
 8K-context Llama-3 models) and cannot fit in a single forward pass.
 <code>_HuggingFaceBackend.score</code> then walks the input via <code>_chunk_slices</code>
-with a stride of <code>window // 2</code>, where <code>window</code> is that model's context
-limit. Each forward pass takes one <code>window // 2</code>-subword chunk plus the
-immediately preceding <code>window // 2</code> subwords as left context — exactly
-<code>window</code> subwords, the most the model can hold. Only the logits for the
-chunk itself are kept; the prefix logits are discarded and re-computed
-(with a longer prefix) on the previous pass.</p>
-<p>For a transcript twice GPT-2's window (2000 subwords, <code>window = 1024</code>,
-<code>chunk = 512</code>):</p>
+with a stride of <code>(limit − 1) // 2</code>, where <code>limit</code> is that model's context
+limit and the one slot the beginning-of-text token takes is already taken
+off. Each forward pass is the beginning-of-text token, one chunk and the
+immediately preceding chunk as left context — at most <code>limit</code> subwords, the
+most the model can hold. Only the logits for the chunk itself are kept; the
+prefix logits are discarded and re-computed (with a longer prefix) on the
+previous pass.</p>
+<p>For a transcript about twice GPT-2's window (2000 subwords, <code>limit = 1024</code>,
+so windows of BOS + up to 1023 subwords and <code>chunk = 511</code>):</p>
 <table>
 <thead>
 <tr>
 <th>Chunk being scored</th>
-<th>Forward-pass input</th>
+<th>Forward-pass input (after the BOS token)</th>
 <th>Preceding context the chunk's first subword sees</th>
 <th>Vs. ideal full-context</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>subwords 0 – 511</td>
-<td><code>input[0:512]</code></td>
+<td>subwords 0 – 510</td>
+<td><code>input[0:511]</code></td>
 <td>none (grows naturally within chunk)</td>
 <td>identical</td>
 </tr>
 <tr>
-<td>subwords 512 – 1023</td>
-<td><code>input[0:1024]</code></td>
-<td>512 subwords (positions 0 – 511)</td>
+<td>subwords 511 – 1021</td>
+<td><code>input[0:1022]</code></td>
+<td>511 subwords (positions 0 – 510)</td>
 <td>identical</td>
 </tr>
 <tr>
-<td>subwords 1024 – 1535</td>
-<td><code>input[512:1536]</code></td>
-<td>512 subwords (positions 512 – 1023)</td>
-<td>positions 0 – 511 lost</td>
+<td>subwords 1022 – 1532</td>
+<td><code>input[511:1533]</code></td>
+<td>511 subwords (positions 511 – 1021)</td>
+<td>positions 0 – 510 lost</td>
 </tr>
 <tr>
-<td>subwords 1536 – 1999</td>
-<td><code>input[1024:2000]</code></td>
-<td>512 subwords (positions 1024 – 1535)</td>
-<td>positions 0 – 1023 lost</td>
+<td>subwords 1533 – 1999</td>
+<td><code>input[1022:2000]</code></td>
+<td>511 subwords (positions 1022 – 1532)</td>
+<td>positions 0 – 1021 lost</td>
 </tr>
 </tbody>
 </table>
 <p>So every position past the first window is scored with <strong>between
-<code>window // 2</code> and <code>window - 1</code> preceding subwords</strong> of context,
+<code>(limit − 1) // 2</code> and <code>limit − 2</code> preceding subwords</strong> of context,
 depending on where it sits inside its chunk. The earliest subwords
 drop out of view at every chunk boundary. This is the unavoidable cost
 of a fixed context window on long texts — <em>which</em> subwords to drop is
@@ -251,7 +370,8 @@ model's full native window (<code>native_ctx</code>). Lowering it makes the
 chunking above kick in sooner — each word conditions on less preceding
 text, which is <strong>faster and uses less memory on long stimuli</strong>, and
 lets you fix a common context length across models for comparability.
-The cap is clamped to <code>[128, native_ctx]</code> (helper
+The cap counts the beginning-of-text token, so a window holds the token plus
+up to <code>cap − 1</code> subwords. The cap is clamped to <code>[128, native_ctx]</code> (helper
 <code>predictability_models.effective_context</code>); the effective window is
 <code>min(cap, model's real max)</code>, so it never exceeds what the model can
 hold. Stored per model in <code>prefs[&quot;predictability&quot;][&quot;context&quot;]</code> (a slug
@@ -264,6 +384,8 @@ default to reproduce the full-context values.</p>
 </blockquote>
 <h3 id="why-a-window--2-stride">Why a <code>window // 2</code> stride</h3>
 <p>The stride trades preceding-context budget against forward-pass count:</p>
+<p>Here <code>window</code> is the number of subwords a pass holds after the beginning-of-text
+token (<code>limit − 1</code>).</p>
 <table>
 <thead>
 <tr>
@@ -294,20 +416,24 @@ default to reproduce the full-context values.</p>
 flattens well before its full context window is consumed, so the
 marginal accuracy gain from a smaller stride is small. The <code>window // 2</code> stride trades up to <code>window // 2 - 1</code> subwords of additional
 context for a <code>window // 2</code>× compute reduction. For GPT-2 this is a
-512-subword stride against its 1024-subword window; the same rule
-applies to every roster model via its own <code>window</code>.</p>
+511-subword stride against its 1023-subword window (1024 minus the
+beginning-of-text token); the same rule applies to every roster model via its
+own <code>window</code>.</p>
 <h3 id="step-by-step">Step by step</h3>
 <ol>
 <li><code>_get_backend</code> / <code>_cached_backend</code> lazily load an
 <code>AutoModelForCausalLM</code> + <code>AutoTokenizer</code> for the model's HuggingFace
-repo id (<code>gpt2</code> for the GPT-2 slug, <code>meta-llama/...</code> for the Llama
-slugs), cached process-wide per <code>hf_id</code> — a load costs minutes for
-the larger Llamas, so it happens once per run, shared across the
-word-level and document-level passes.</li>
+repo id (<code>gpt2</code>, <code>openai-community/gpt2-medium</code> … for the GPT-2
+slugs, <code>meta-llama/...</code> for the Llama slugs) at the precision and on
+the device <code>load_plan</code> picks (see <em>Precision</em>), cached process-wide —
+a load costs minutes for the larger Llamas, so it happens once per run,
+shared across the word-level and document-level passes. A model that is
+not yet in <code>data/hf_cache/</code> is downloaded now, with a console line.</li>
 <li><code>_HuggingFaceBackend.score</code> tokenises the <strong>whole transcript</strong> with
 character offsets, so every subword carries a <code>(char_start, char_end)</code> span, and runs one forward pass (or the chunked sliding
 window above) to get per-subword log-probabilities and top-1
-predictions.</li>
+predictions. Each pass is fed <code>[BOS] + subwords</code>; the logits at the BOS
+position score the first subword.</li>
 <li><code>map_tokens_to_subwords</code> walks the spaCy tokens in document order
 and assigns each subword to exactly ONE token — the first token
 whose character span it overlaps (a subword straddling a token
@@ -324,18 +450,23 @@ word-level and document-level batches process the same stimulus in
 one run, each model runs its forward pass once and the second pass
 is a cache hit.</li>
 </ol>
-<p><strong>GPT-2 is pinned full-precision on CPU</strong> (<code>_FULL_PRECISION_CPU_HF_IDS</code>)
-— unlike the Llama models, it never loads 4-bit/fp16 on a GPU, so
-<code>gpt2_Surprisal</code> values match the historical GPT-2-only extractor
-bit-for-bit regardless of the machine's GPU availability.</p>
+<p><strong>GPT-2 models always run fp32</strong>: their only offered precision is fp32, so
+with a GPU they run fp32 on it and without one fp32 on the CPU. The
+precision a Llama runs at is the one chosen (fp16 by default) on a GPU, and
+fp32 on the CPU otherwise (see <em>Precision</em>).</p>
 <h3 id="why-design-notes">Why (design notes)</h3>
 <ul>
-<li><em><code>NaN</code> for the first word</em>: its first subword has no left context,
-so the model cannot assign it a probability. Emitting <code>0</code> bits there
-(the pre-2026-07 behavior) faked a &quot;perfectly predictable&quot; first
-word; <code>NaN</code> follows the pipeline-wide no-value convention. Any word
-whose subwords include position 0 is affected (i.e. exactly the
-document-initial word).</li>
+<li><em>The first word is scored, from a beginning-of-text token</em>: without any
+left context the model cannot assign its first subword a probability (an
+earlier version stored <code>0</code> bits, faking a &quot;perfectly predictable&quot; word,
+and then <code>NaN</code>). Starting every window with the model's own
+beginning-of-text token is how these models were trained to see the
+start of a text, so the first word gets an honest &quot;probability of opening
+a text with this word&quot;. Windows after the first one start with the token
+too, so the context a word sees is the same no matter which chunk it
+falls in. ⚠️ Values for all words differ from runs from
+before 2026-11-04, because every position now has the token in its
+context.</li>
 <li><em>PUNCT → <code>NaN</code></em>: language models do assign probabilities to
 punctuation, but ERP work on predictability is &quot;usually investigated
 on content words only&quot;, and in <a href="#frank-2015">Frank 2015</a> the surprisal effect on the

@@ -101,11 +101,15 @@ approved your request to use Llama; you get it once and the app remembers it.</p
 <a href="../features/word/pred_surprisal.html"><code>Surprisal</code></a>, and
 <a href="../features/word/pred_topmatch.html"><code>TopMatch</code></a> — come from a single forward pass of
 each <strong>local</strong> model you select in the GUI's Predictability card
-(roster: GPT-2 + three Llama-3 variants; see
-<a href="../features/word/pred_surprisal.html#models">Models</a>). Weights are not bundled; set
-access up once per gated model before running. <strong>GPT-2 needs no
-credentials at all</strong> — it's free, ungated, and downloads automatically
-on first use. Everything below applies only to the three gated
+(roster: four GPT-2 sizes + three Llama-3 variants; see
+<a href="../features/word/pred_surprisal.html#models">Models</a>). Weights are not bundled and <strong>nothing
+is downloaded at setup</strong>: each model's weights download into
+<code>data/hf_cache/</code> the first time a run uses it (GPT-2 0.55 GB, GPT-2 medium
+1.52 GB, GPT-2 large 3.25 GB, GPT-2 XL 6.43 GB, Llama-3.2-3B 6.42 GB,
+Llama-3-8B 16.0 GB, Llama-3-70B 142 GB), with a console line and a
+&quot;First-use download&quot; line on the Run page. Set access up once per gated
+model before running. <strong>The GPT-2 models need no credentials at all</strong> —
+they are free and ungated. Everything below applies only to the three gated
 Llama-3 models.</p>
 <blockquote>
 <p><strong>Why local-only (no OpenAI).</strong> Scoring an <em>existing</em> string for per-token
@@ -147,14 +151,15 @@ detected&quot;, <strong>or</strong></li>
 </ul>
 </li>
 </ol>
-<p><strong>Device placement is automatic</strong>, in this order: 4-bit on the GPU (needs a
-working <em>bitsandbytes</em> build — an 8B model fits in ~6 GB VRAM this way) →
-fp16 on the GPU if bitsandbytes is unavailable (≈16 GB VRAM for 8B; this is the
-common path on Windows, where bitsandbytes is often broken) → CPU if there's no
-CUDA GPU. If a GPU <em>is</em> present but both GPU loads fail, the run logs a loud
-warning and falls back to CPU rather than using the GPU silently — watch the
-log for <code>loaded on CPU</code> if inference is unexpectedly slow. Running on
-Sherlock/HPC is documented separately.</p>
+<p><strong>Precision and device placement.</strong> With a GPU, a Llama runs at the
+precision chosen on its row of the Predictability card — fp16 by default,
+or 8bit / 4bit (these need a working <em>bitsandbytes</em>; if the load fails the
+run stops and suggests fp16, it never switches precision silently) — and
+the GPT-2 models run fp32. With no CUDA GPU every model runs fp32 on the
+CPU, and the console prints the RAM that needs (for example about 32 GB for
+Llama-3-8B). See <a href="../features/word/pred_surprisal.html#precision">Precision</a> for the measurements
+behind this and for what the console line and the run manifest record.
+Running on Sherlock/HPC is documented separately.</p>
 <h2 id="inputs"><span class="num">4.4</span>Inputs</h2>
 <figure class="card"><img class="shot" src="../assets/screens/01-inputs.png" alt="The Inputs page with the manual&#x27;s example files"><figcaption>The Inputs page with the manual&#x27;s example files (screenshot of the real app)</figcaption></figure>
 <ul>
@@ -278,7 +283,7 @@ lists the keys it uses). Settings that aren't switches have their own blocks, fo
 </code></pre>
 <p>Predictability is chosen by model and metric:</p>
 <pre><code class="language-yaml"><span class="nt">predictability</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">models</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">gpt2</span><span class="p p-Indicator">]</span><span class="w">           </span><span class="c1"># gpt2, or the gated Llama models (llama32_3b, llama3_8b, … — need a token)</span>
+<span class="w">  </span><span class="nt">models</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">gpt2</span><span class="p p-Indicator">]</span><span class="w">           </span><span class="c1"># gpt2 (also gpt2_medium, gpt2_large, gpt2_xl), or the gated Llama models (llama32_3b, llama3_8b, … — need a token)</span>
 <span class="w">  </span><span class="nt">metrics</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">surprisal</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
 <span class="w">    </span><span class="nt">cloze</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>

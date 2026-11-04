@@ -1,47 +1,47 @@
 doc_id,paragraph_id,sentence_id,sentence,start,end,token_id,token_in_sentence_id,token,lemma,upos,xpos,feats,dep_rel,head_token_id,Zipf_Freq,Sem_Empath_anticipation,Sem_Empath_body,Sem_Empath_communication,Sem_Empath_family,Sem_Empath_friends,Sem_Empath_hearing,Sem_Empath_money,Sem_Empath_movement,Sem_Empath_negative_emotion,Sem_Empath_philosophy,Sem_Empath_positive_emotion,Sem_Empath_science,Sem_Empath_work,Sem_Categories,gpt2_Cloze,gpt2_Surprisal,gpt2_TopMatch,Word_Duration,Word_Gap,Word_Gap_After,AoA_Mean,AoA_SD,Concreteness,Imageability,Familiarity,Valence,Arousal,Dominance
-9,1,1,You must finish the report by Friday.,1,3,1,1,You,you,PRON,PRP,Case=Nom|Person=2|PronType=Prs,nsubj,3,6.98,,,,,,,,,,,,,,,,,,,,,,,4.11,,,,,
-9,1,1,You must finish the report by Friday.,5,8,2,2,must,must,AUX,MD,VerbForm=Fin,aux,3,5.68,,,,,,,,,,,,,,,0.00168289,9.2148,0.0,,,,4.58,2.36,2.13,247.0,589.0,5.45,4.1,5.06
-9,1,1,You must finish the report by Friday.,10,15,3,3,finish,finish,VERB,VB,VerbForm=Inf,ROOT,3,4.91,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,,0.00078363,10.3175,0.0,,,,6.32,2.45,2.89,437.0,617.0,6.41,3.81,6.44
-9,1,1,You must finish the report by Friday.,17,19,4,4,the,the,DET,DT,Definite=Def|PronType=Art,det,5,7.73,,,,,,,,,,,,,,,0.280934,1.8317,1.0,,,,,,1.43,209.0,625.0,,,
-9,1,1,You must finish the report by Friday.,21,26,5,5,report,report,NOUN,NN,Number=Sing,dobj,3,5.32,0.0,0.0,1.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,"communication,work",0.000588283,10.7312,0.0,,,,6.6,1.82,3.92,411.0,590.0,4.77,3.52,4.94
-9,1,1,You must finish the report by Friday.,28,29,6,6,by,by,ADP,IN,,prep,3,6.66,,,,,,,,,,,,,,,0.0999784,3.3222,0.0,,,,,,1.55,229.0,598.0,,,
-9,1,1,You must finish the report by Friday.,31,36,7,7,Friday,Friday,PROPN,NNP,Number=Sing,pobj,6,4.96,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,,0.0188521,5.7291,0.0,,,,,,3.28,,,,,
+9,1,1,You must finish the report by Friday.,1,3,1,1,You,you,PRON,PRP,Case=Nom|Person=2|PronType=Prs,nsubj,3,6.98,,,,,,,,,,,,,,,0.00486886,7.6822,0.0,,,,,,4.11,,,,,
+9,1,1,You must finish the report by Friday.,5,8,2,2,must,must,AUX,MD,VerbForm=Fin,aux,3,5.68,,,,,,,,,,,,,,,0.0449213,4.4765,0.0,,,,4.58,2.36,2.13,247.0,589.0,5.45,4.1,5.06
+9,1,1,You must finish the report by Friday.,10,15,3,3,finish,finish,VERB,VB,VerbForm=Inf,ROOT,3,4.91,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,,4.43427e-05,14.4609,0.0,,,,6.32,2.45,2.89,437.0,617.0,6.41,3.81,6.44
+9,1,1,You must finish the report by Friday.,17,19,4,4,the,the,DET,DT,Definite=Def|PronType=Art,det,5,7.73,,,,,,,,,,,,,,,0.351947,1.5066,1.0,,,,,,1.43,209.0,625.0,,,
+9,1,1,You must finish the report by Friday.,21,26,5,5,report,report,NOUN,NN,Number=Sing,dobj,3,5.32,0.0,0.0,1.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,1.0,"communication,work",0.000372663,11.3898,0.0,,,,6.6,1.82,3.92,411.0,590.0,4.77,3.52,4.94
+9,1,1,You must finish the report by Friday.,28,29,6,6,by,by,ADP,IN,,prep,3,6.66,,,,,,,,,,,,,,,0.111442,3.1656,0.0,,,,,,1.55,229.0,598.0,,,
+9,1,1,You must finish the report by Friday.,31,36,7,7,Friday,Friday,PROPN,NNP,Number=Sing,pobj,6,4.96,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,,0.0286194,5.1269,0.0,,,,,,3.28,,,,,
 9,1,1,You must finish the report by Friday.,37,37,8,8,.,.,PUNCT,.,PunctType=Peri,punct,3,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
-9,1,2,We expect your team to deliver it on time.,1,2,9,1,We,we,PRON,PRP,Case=Nom|Number=Plur|Person=1|PronType=Prs,nsubj,10,6.54,,,,,,,,,,,,,,,0.0237055,5.3986,0.0,,,,,,3.08,389.0,614.0,,,
-9,1,2,We expect your team to deliver it on time.,4,9,10,2,expect,expect,VERB,VBP,Tense=Pres|VerbForm=Fin,ROOT,10,5.01,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,,0.00624605,7.3228,0.0,,,,8.7,2.81,1.89,,,5.95,4.86,4.89
-9,1,2,We expect your team to deliver it on time.,11,14,11,3,your,your,PRON,PRP$,Person=2|Poss=Yes|PronType=Prs,poss,12,6.53,,,,,,,,,,,,,,,0.0311502,5.0046,0.0,,,,,,2.37,,,,,
-9,1,2,We expect your team to deliver it on time.,16,19,12,4,team,team,NOUN,NN,Number=Sing,nsubj,14,5.67,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,,0.0040554,7.9459,0.0,,,,6.0,1.81,3.79,565.0,538.0,5.91,3.38,6.53
-9,1,2,We expect your team to deliver it on time.,21,22,13,5,to,to,PART,TO,,aux,14,7.43,,,,,,,,,,,,,,,0.712551,0.4889,1.0,,,,,,1.55,220.0,613.0,,,
-9,1,2,We expect your team to deliver it on time.,24,30,14,6,deliver,deliver,VERB,VB,VerbForm=Inf,ccomp,10,4.55,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,,0.00451795,7.7901,0.0,,,,6.63,2.54,3.12,388.0,529.0,6.0,4.75,6.74
-9,1,2,We expect your team to deliver it on time.,32,33,15,7,it,it,PRON,PRP,Case=Acc|Gender=Neut|Number=Sing|Person=3|PronType=Prs,dobj,14,6.95,,,,,,,,,,,,,,,0.0290559,5.105,0.0,,,,,,2.81,265.0,625.0,,,
-9,1,2,We expect your team to deliver it on time.,35,36,16,8,on,on,ADP,IN,,prep,14,6.91,,,,,,,,,,,,,,,0.095879,3.3826,0.0,,,,,,3.25,268.0,614.0,,,
-9,1,2,We expect your team to deliver it on time.,38,41,17,9,time,time,NOUN,NN,Number=Sing,pobj,16,6.29,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,,0.583972,0.776,1.0,,,,5.16,1.86,3.07,413.0,604.0,5.6,3.41,4.36
+9,1,2,We expect your team to deliver it on time.,1,2,9,1,We,we,PRON,PRP,Case=Nom|Number=Plur|Person=1|PronType=Prs,nsubj,10,6.54,,,,,,,,,,,,,,,0.0130013,6.2652,0.0,,,,,,3.08,389.0,614.0,,,
+9,1,2,We expect your team to deliver it on time.,4,9,10,2,expect,expect,VERB,VBP,Tense=Pres|VerbForm=Fin,ROOT,10,5.01,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,,0.00500536,7.6423,0.0,,,,8.7,2.81,1.89,,,5.95,4.86,4.89
+9,1,2,We expect your team to deliver it on time.,11,14,11,3,your,your,PRON,PRP$,Person=2|Poss=Yes|PronType=Prs,poss,12,6.53,,,,,,,,,,,,,,,0.0550842,4.1822,0.0,,,,,,2.37,,,,,
+9,1,2,We expect your team to deliver it on time.,16,19,12,4,team,team,NOUN,NN,Number=Sing,nsubj,14,5.67,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,,0.00170068,9.1997,0.0,,,,6.0,1.81,3.79,565.0,538.0,5.91,3.38,6.53
+9,1,2,We expect your team to deliver it on time.,21,22,13,5,to,to,PART,TO,,aux,14,7.43,,,,,,,,,,,,,,,0.737528,0.4392,1.0,,,,,,1.55,220.0,613.0,,,
+9,1,2,We expect your team to deliver it on time.,24,30,14,6,deliver,deliver,VERB,VB,VerbForm=Inf,ccomp,10,4.55,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,,0.00509349,7.6171,0.0,,,,6.63,2.54,3.12,388.0,529.0,6.0,4.75,6.74
+9,1,2,We expect your team to deliver it on time.,32,33,15,7,it,it,PRON,PRP,Case=Acc|Gender=Neut|Number=Sing|Person=3|PronType=Prs,dobj,14,6.95,,,,,,,,,,,,,,,0.0259917,5.2658,0.0,,,,,,2.81,265.0,625.0,,,
+9,1,2,We expect your team to deliver it on time.,35,36,16,8,on,on,ADP,IN,,prep,14,6.91,,,,,,,,,,,,,,,0.0863761,3.5332,0.0,,,,,,3.25,268.0,614.0,,,
+9,1,2,We expect your team to deliver it on time.,38,41,17,9,time,time,NOUN,NN,Number=Sing,pobj,16,6.29,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,,0.67815,0.5603,1.0,,,,5.16,1.86,3.07,413.0,604.0,5.6,3.41,4.36
 9,1,2,We expect your team to deliver it on time.,42,42,18,10,.,.,PUNCT,.,PunctType=Peri,punct,10,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
 9,1,3,"They missed the last deadline, and we cannot accept another delay.
-",1,4,19,1,They,they,PRON,PRP,Case=Nom|Number=Plur|Person=3|PronType=Prs,nsubj,20,6.5,,,,,,,,,,,,,,,0.00141326,9.4668,0.0,,,,,,2.93,312.0,607.0,,,
+",1,4,19,1,They,they,PRON,PRP,Case=Nom|Number=Plur|Person=3|PronType=Prs,nsubj,20,6.5,,,,,,,,,,,,,,,0.000490103,10.9946,0.0,,,,,,2.93,312.0,607.0,,,
 9,1,3,"They missed the last deadline, and we cannot accept another delay.
-",6,11,20,2,missed,miss,VERB,VBD,Tense=Past|VerbForm=Fin,ROOT,20,5.22,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,,0.000535352,10.8672,0.0,,,,6.33,3.41,2.54,447.0,586.0,4.1,3.9,5.12
+",6,11,20,2,missed,miss,VERB,VBD,Tense=Past|VerbForm=Fin,ROOT,20,5.22,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,,0.000593913,10.7175,0.0,,,,6.33,3.41,2.54,447.0,586.0,4.1,3.9,5.12
 9,1,3,"They missed the last deadline, and we cannot accept another delay.
-",13,15,21,3,the,the,DET,DT,Definite=Def|PronType=Art,det,23,7.73,,,,,,,,,,,,,,,0.242668,2.0429,1.0,,,,,,1.43,209.0,625.0,,,
+",13,15,21,3,the,the,DET,DT,Definite=Def|PronType=Art,det,23,7.73,,,,,,,,,,,,,,,0.224266,2.1567,1.0,,,,,,1.43,209.0,625.0,,,
 9,1,3,"They missed the last deadline, and we cannot accept another delay.
-",17,20,22,4,last,last,ADJ,JJ,Degree=Pos,amod,23,5.86,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,,0.0186721,5.743,0.0,,,,,,3.04,367.0,587.0,,,
+",17,20,22,4,last,last,ADJ,JJ,Degree=Pos,amod,23,5.86,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,,0.0164959,5.9218,0.0,,,,,,3.04,367.0,587.0,,,
 9,1,3,"They missed the last deadline, and we cannot accept another delay.
-",22,29,23,5,deadline,deadline,NOUN,NN,Number=Sing,dobj,20,4.12,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,,0.0542554,4.2041,0.0,,,,9.56,2.55,2.66,,,3.19,5.74,4.53
+",22,29,23,5,deadline,deadline,NOUN,NN,Number=Sing,dobj,20,4.12,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,,0.0975821,3.3572,0.0,,,,9.56,2.55,2.66,,,3.19,5.74,4.53
 9,1,3,"They missed the last deadline, and we cannot accept another delay.
 ",30,30,24,6,",",",",PUNCT,",",PunctType=Comm,punct,20,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
 9,1,3,"They missed the last deadline, and we cannot accept another delay.
-",32,34,25,7,and,and,CCONJ,CC,ConjType=Cmp,cc,20,7.41,,,,,,,,,,,,,,,0.204058,2.2929,0.0,,,,,,1.52,226.0,620.0,,,
+",32,34,25,7,and,and,CCONJ,CC,ConjType=Cmp,cc,20,7.41,,,,,,,,,,,,,,,0.177346,2.4954,0.0,,,,,,1.52,226.0,620.0,,,
 9,1,3,"They missed the last deadline, and we cannot accept another delay.
-",36,37,26,8,we,we,PRON,PRP,Case=Nom|Number=Plur|Person=1|PronType=Prs,nsubj,29,6.54,,,,,,,,,,,,,,,0.160901,2.6358,1.0,,,,,,3.08,389.0,614.0,,,
+",36,37,26,8,we,we,PRON,PRP,Case=Nom|Number=Plur|Person=1|PronType=Prs,nsubj,29,6.54,,,,,,,,,,,,,,,0.135021,2.8887,1.0,,,,,,3.08,389.0,614.0,,,
 9,1,3,"They missed the last deadline, and we cannot accept another delay.
-",39,41,27,9,can,can,AUX,MD,VerbForm=Fin,aux,29,6.46,,,,,,,,,,,,,,,0.00537229,7.5402,0.0,,,,4.32,2.26,4.55,369.0,620.0,6.41,3.14,6.44
+",39,41,27,9,can,can,AUX,MD,VerbForm=Fin,aux,29,6.46,,,,,,,,,,,,,,,0.00500536,7.6423,0.0,,,,4.32,2.26,4.55,369.0,620.0,6.41,3.14,6.44
 9,1,3,"They missed the last deadline, and we cannot accept another delay.
 ",42,44,28,10,not,not,PART,RB,Polarity=Neg,neg,29,6.69,,,,,,,,,,,,,,,,,,,,,,,2.08,253.0,565.0,,,
 9,1,3,"They missed the last deadline, and we cannot accept another delay.
-",46,51,29,11,accept,accept,VERB,VB,VerbForm=Inf,conj,20,4.85,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,,0.0132286,6.2402,0.0,,,,6.74,2.08,3.03,,,6.39,2.8,5.94
+",46,51,29,11,accept,accept,VERB,VB,VerbForm=Inf,conj,20,4.85,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,,0.00848523,6.8808,0.0,,,,6.74,2.08,3.03,,,6.39,2.8,5.94
 9,1,3,"They missed the last deadline, and we cannot accept another delay.
-",53,59,30,12,another,another,DET,DT,,det,31,5.74,,,,,,,,,,,,,,,0.0102024,6.6149,0.0,,,,,,2.69,,,,,
+",53,59,30,12,another,another,DET,DT,,det,31,5.74,,,,,,,,,,,,,,,0.00705704,7.1467,0.0,,,,,,2.69,,,,,
 9,1,3,"They missed the last deadline, and we cannot accept another delay.
-",61,65,31,13,delay,delay,NOUN,NN,Number=Sing,dobj,29,4.4,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,,0.0104543,6.5798,0.0,,,,8.78,2.05,2.79,,,3.45,3.0,3.68
+",61,65,31,13,delay,delay,NOUN,NN,Number=Sing,dobj,29,4.4,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,,0.0140397,6.1543,0.0,,,,8.78,2.05,2.79,,,3.45,3.0,3.68
 9,1,3,"They missed the last deadline, and we cannot accept another delay.
 ",66,66,32,14,.,.,PUNCT,.,PunctType=Peri,punct,29,,,,,,,,,,,,,,,,,,,,,,,,,,,,,

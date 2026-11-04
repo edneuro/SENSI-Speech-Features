@@ -60,18 +60,20 @@ given the preceding context, i.e. the raw P, not its negative log:</p>
 (which is defined as <code>-log₂ P</code> <a href="#hale-2001">Hale 2001</a>), so</p>
 <pre><code>&lt;slug&gt;_Cloze = 2^(-&lt;slug&gt;_Surprisal)
 </code></pre>
-<p><code>&lt;slug&gt;</code> stands for the model's short name — <code>gpt2</code>, <code>llama32_3b</code>,
-<code>llama3_8b</code> or <code>llama3_70b</code> — and is the prefix of the column name, so
+<p><code>&lt;slug&gt;</code> stands for the model's short name — <code>gpt2</code>, <code>gpt2_medium</code>,
+<code>gpt2_large</code>, <code>gpt2_xl</code>, <code>llama32_3b</code>, <code>llama3_8b</code> or <code>llama3_70b</code> — and is the prefix of the column name, so
 <code>gpt2_Cloze</code> is the probability from GPT-2. Each model you tick writes its own
 column, and the name always says which model produced it.</p>
-<p>PUNCT rows are <code>NaN</code>, and so is the document's first word (no
-preceding context to condition on). <code>&lt;slug&gt;_Cloze</code>, <code>&lt;slug&gt;_Surprisal</code>
+<p>PUNCT rows are <code>NaN</code>. The document's first word is scored: every forward
+pass starts with the model's beginning-of-text token (see
+<a href="../../features/word/pred_surprisal.html#what-each-words-surprisal-is-conditioned-on">Surprisal</a>),
+so it has a left context. <code>&lt;slug&gt;_Cloze</code>, <code>&lt;slug&gt;_Surprisal</code>
 and <code>&lt;slug&gt;_TopMatch</code> all come from the same forward pass for a given
 model — enabling any one of the three metrics for a model triggers
 that model's scoring pass. Enabling Cloze for several roster models at
 once (see <a href="../../features/word/pred_surprisal.html#models">Models</a>) writes one column per
 model, e.g. <code>gpt2_Cloze</code> and <code>llama3_8b_Cloze</code> side by side.</p>
-</section><section id="see"><h2><span class="num">6.1.11.2</span>See it</h2><div class="card"><div class="caption">Example text (invented, run without audio): <b>predictable.txt</b>: “She spread butter on her toast.”; <b>surprising.txt</b>: “She spread butter on her violin.”</div><div ><figure><img src="../../assets/figures/pred_cloze.svg" alt="Cloze probability (model estimate) — Default settings"></figure><figcaption>Cloze probability (model estimate) — Default settings</figcaption><div class="provenance">Read from <span class='file'>word/predictable_features.csv</span> and <span class='file'>word/surprising_features.csv</span>, written by SENSI SpeechFeatures on the example shown here. Nothing on this figure is typed in.</div></div></div></section><section id="output"><h2><span class="num">6.1.11.3</span>In your output</h2><div class="card"><div class="card-title">File <span class="file">word/&lt;stim&gt;_features.csv</span></div><table class="excerpt"><thead><tr><th class="">token</th><th class="hl">gpt2_Cloze<br><small>probability (0-1)</small></th></tr></thead><tbody><tr><td class="">She</td><td class="hl"></td></tr><tr><td class="">spread</td><td class="hl">6.347e-05</td></tr><tr><td class="">butter</td><td class="hl">0.0004147</td></tr><tr><td class="">on</td><td class="hl">0.137</td></tr><tr><td class="">her</td><td class="hl">0.1174</td></tr><tr><td class="">violin</td><td class="hl">7.877e-06</td></tr><tr><td class="">.</td><td class="hl"></td></tr></tbody></table><div class="caption">7 rows shown; showing the feature's columns, with the unit the run's units table gives for each. An empty cell means no value (e.g. punctuation, or a word the measure doesn’t cover).</div><div class="provenance">Excerpt of the real file for <b>surprising</b>.</div></div></section><section id="matlab"><h2><span class="num">6.1.11.4</span>MATLAB</h2><div class="card" data-tabs><div class="tabpanel on"><pre data-copy><code>% Load the word-level table (one row per word)
+</section><section id="see"><h2><span class="num">6.1.11.2</span>See it</h2><div class="card"><div class="caption">Example text (invented, run without audio): <b>predictable.txt</b>: “She spread butter on her toast.”; <b>surprising.txt</b>: “She spread butter on her violin.”</div><div ><figure><img src="../../assets/figures/pred_cloze.svg" alt="Cloze probability (model estimate) — Default settings"></figure><figcaption>Cloze probability (model estimate) — Default settings</figcaption><div class="provenance">Read from <span class='file'>word/predictable_features.csv</span> and <span class='file'>word/surprising_features.csv</span>, written by SENSI SpeechFeatures on the example shown here. Nothing on this figure is typed in.</div></div></div></section><section id="output"><h2><span class="num">6.1.11.3</span>In your output</h2><div class="card"><div class="card-title">File <span class="file">word/&lt;stim&gt;_features.csv</span></div><table class="excerpt"><thead><tr><th class="">token</th><th class="hl">gpt2_Cloze<br><small>probability (0-1)</small></th></tr></thead><tbody><tr><td class="">She</td><td class="hl">0.001299</td></tr><tr><td class="">spread</td><td class="hl">4.936e-05</td></tr><tr><td class="">butter</td><td class="hl">0.001046</td></tr><tr><td class="">on</td><td class="hl">0.1629</td></tr><tr><td class="">her</td><td class="hl">0.1515</td></tr><tr><td class="">violin</td><td class="hl">1.457e-05</td></tr><tr><td class="">.</td><td class="hl"></td></tr></tbody></table><div class="caption">7 rows shown; showing the feature's columns, with the unit the run's units table gives for each. An empty cell means no value (e.g. punctuation, or a word the measure doesn’t cover).</div><div class="provenance">Excerpt of the real file for <b>surprising</b>.</div></div></section><section id="matlab"><h2><span class="num">6.1.11.4</span>MATLAB</h2><div class="card" data-tabs><div class="tabpanel on"><pre data-copy><code>% Load the word-level table (one row per word)
 T = readtable(&#x27;word/surprising_features.csv&#x27;, &#x27;TextType&#x27;, &#x27;string&#x27;);
 T.Properties.VariableNames             % every column in the file
 head(T(:, {&#x27;token&#x27;, &#x27;gpt2_Cloze&#x27;}), 10)                % this feature&#x27;s columns (first rows)
@@ -79,11 +81,11 @@ head(T(:, {&#x27;token&#x27;, &#x27;gpt2_Cloze&#x27;}), 10)                % thi
 % Plot
 w = T.upos ~= &quot;PUNCT&quot;;            % words only
 bar(T.gpt2_Cloze(w)); xticks(1:nnz(w)); xticklabels(T.token(w)); ylabel(&#x27;gpt2_Cloze&#x27;)
-</code></pre></div><div class="caption">Run from the output folder. Variable and column names were checked against the real files when this manual was built; the code itself was not run in MATLAB.</div></div></section><section id="x-getting-access-credentials"><a id="getting-access--credentials"></a><h2><span class="num">6.1.11.5</span>Getting access &amp; credentials</h2><p>GPT-2 needs no credentials — it's free and ungated. The gated Llama-3
+</code></pre></div><div class="caption">Run from the output folder. Variable and column names were checked against the real files when this manual was built; the code itself was not run in MATLAB.</div></div></section><section id="x-getting-access-credentials"><a id="getting-access--credentials"></a><h2><span class="num">6.1.11.5</span>Getting access &amp; credentials</h2><p>The GPT-2 models need no credentials — they are free and ungated. The gated Llama-3
 models need a HuggingFace token + license approval before they run.
 This is shared with <code>&lt;slug&gt;_Surprisal</code> and <code>&lt;slug&gt;_TopMatch</code> — see
 <strong><a href="../../chapters/usage.html#huggingface-token">LLM access &amp; credentials</a></strong> for the full step-by-step.</p>
-</section><section id="code"><a id="implementation-in-sensi-speechfeatures"></a><h2><span class="num">6.1.11.6</span>In the code</h2><div class="card"><div class="card-title">Open in GitHub</div><ul><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/extractors/predictability.py#L36"><code>sensi/extractors/predictability.py → add_predictability()</code></a></li></ul></div><p>Source: <code>sensi/extractors/predictability.py:add_predictability</code> (the
+</section><section id="code"><a id="implementation-in-sensi-speechfeatures"></a><h2><span class="num">6.1.11.6</span>In the code</h2><div class="card"><div class="card-title">Open in GitHub</div><ul><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/extractors/predictability.py#L38"><code>sensi/extractors/predictability.py → add_predictability()</code></a></li></ul></div><p>Source: <code>sensi/extractors/predictability.py:add_predictability</code> (the
 unified, roster-driven extractor). Backend:
 <code>_HuggingFaceBackend</code>, built on <code>AutoModelForCausalLM</code> for every
 roster model (GPT-2 included) — local Hugging Face weights only, no
@@ -96,7 +98,8 @@ selected model. Per spaCy token:</p>
 surprisal = -sum(subword_log_probs) / math.log(2)
 top_match = (argmax_subword == actual_subword)  # at the first subword
 </code></pre>
-<p>PUNCT rows are masked to <code>NaN</code>. The probability is stored to 6
+<p>PUNCT rows are masked to <code>NaN</code>; the first word is scored (beginning-of-text
+token). The probability is stored to 6
 <strong>significant digits</strong> (e.g. <code>0.0123457</code>, or <code>2.07e-12</code> for a very
 unlikely word), so it is never rounded down to exactly 0 and
 <code>Cloze = 2^(−Surprisal)</code> holds for every word (rounding to 6 decimal places

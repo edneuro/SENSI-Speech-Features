@@ -1,23 +1,23 @@
 doc_id,paragraph_id,sentence_id,sentence,start,end,token_id,token_in_sentence_id,token,lemma,upos,xpos,feats,dep_rel,head_token_id,Zipf_Freq,Sem_Empath_anticipation,Sem_Empath_body,Sem_Empath_communication,Sem_Empath_family,Sem_Empath_friends,Sem_Empath_hearing,Sem_Empath_money,Sem_Empath_movement,Sem_Empath_negative_emotion,Sem_Empath_philosophy,Sem_Empath_positive_emotion,Sem_Empath_science,Sem_Empath_work,Sem_Categories,gpt2_Cloze,gpt2_Surprisal,gpt2_TopMatch,Word_Duration,Word_Gap,Word_Gap_After,AoA_Mean,AoA_SD,Concreteness,Imageability,Familiarity,Valence,Arousal,Dominance
-12,1,1,The dog barked.,1,3,1,1,The,the,DET,DT,Definite=Def|PronType=Art,det,2,7.73,,,,,,,,,,,,,,,,,,,,,,,1.43,209.0,625.0,,,
-12,1,1,The dog barked.,5,7,2,2,dog,dog,NOUN,NN,Number=Sing,nsubj,3,5.1,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,,0.000127033,12.9425,0.0,,,,2.8,1.2,4.85,636.0,598.0,7.0,5.43,5.73
-12,1,1,The dog barked.,9,14,3,3,barked,bark,VERB,VBD,Tense=Past|VerbForm=Fin,ROOT,3,3.85,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,,0.00197155,8.9865,0.0,,,,5.17,1.76,4.52,539.0,518.0,4.86,3.4,4.82
+12,1,1,The dog barked.,1,3,1,1,The,the,DET,DT,Definite=Def|PronType=Art,det,2,7.73,,,,,,,,,,,,,,,0.0376997,4.7293,0.0,,,,,,1.43,209.0,625.0,,,
+12,1,1,The dog barked.,5,7,2,2,dog,dog,NOUN,NN,Number=Sing,nsubj,3,5.1,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,,0.000190994,12.3542,0.0,,,,2.8,1.2,4.85,636.0,598.0,7.0,5.43,5.73
+12,1,1,The dog barked.,9,14,3,3,barked,bark,VERB,VBD,Tense=Past|VerbForm=Fin,ROOT,3,3.85,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,,0.000254758,11.9386,0.0,,,,5.17,1.76,4.52,539.0,518.0,4.86,3.4,4.82
 12,1,1,The dog barked.,15,15,4,4,.,.,PUNCT,.,PunctType=Peri,punct,3,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
 12,1,2,"Then it slept.
 
-",1,4,5,1,Then,then,ADV,RB,PronType=Dem,advmod,7,6.07,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,,0.0160145,5.9645,0.0,,,,,,1.44,204.0,610.0,,,
+",1,4,5,1,Then,then,ADV,RB,PronType=Dem,advmod,7,6.07,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,,0.0133901,6.2227,0.0,,,,,,1.44,204.0,610.0,,,
 12,1,2,"Then it slept.
 
-",6,7,6,2,it,it,PRON,PRP,Case=Nom|Gender=Neut|Number=Sing|Person=3|PronType=Prs,nsubj,7,6.95,,,,,,,,,,,,,,,0.0540003,4.2109,0.0,,,,,,2.81,265.0,625.0,,,
+",6,7,6,2,it,it,PRON,PRP,Case=Nom|Gender=Neut|Number=Sing|Person=3|PronType=Prs,nsubj,7,6.95,,,,,,,,,,,,,,,0.0831362,3.5884,0.0,,,,,,2.81,265.0,625.0,,,
 12,1,2,"Then it slept.
 
-",9,13,7,3,slept,sleep,VERB,VBD,Tense=Past|VerbForm=Fin,ROOT,7,5.05,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,,9.0152e-05,13.4373,0.0,,,,2.79,1.03,4.44,530.0,610.0,7.22,3.6,5.3
+",9,13,7,3,slept,sleep,VERB,VBD,Tense=Past|VerbForm=Fin,ROOT,7,5.05,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,,0.000121604,13.0055,0.0,,,,2.79,1.03,4.44,530.0,610.0,7.22,3.6,5.3
 12,1,2,"Then it slept.
 
 ",14,14,8,4,.,.,PUNCT,.,PunctType=Peri,punct,7,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
 12,2,3,"Morning came.
-",1,7,9,1,Morning,Morning,PROPN,NNP,Number=Sing,nsubj,10,5.33,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,,7.88303e-05,13.6309,0.0,,,,4.0,1.45,3.44,579.0,605.0,6.41,3.95,6.35
+",1,7,9,1,Morning,Morning,PROPN,NNP,Number=Sing,nsubj,10,5.33,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,,6.18257e-05,13.9814,0.0,,,,4.0,1.45,3.44,579.0,605.0,6.41,3.95,6.35
 12,2,3,"Morning came.
-",9,12,10,2,came,come,VERB,VBD,Tense=Past|VerbForm=Fin,ROOT,10,5.78,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,,0.181228,2.4641,1.0,,,,3.32,1.42,2.72,322.0,608.0,5.64,3.57,5.94
+",9,12,10,2,came,come,VERB,VBD,Tense=Past|VerbForm=Fin,ROOT,10,5.78,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,,0.186759,2.4207,1.0,,,,3.32,1.42,2.72,322.0,608.0,5.64,3.57,5.94
 12,2,3,"Morning came.
 ",13,13,11,3,.,.,PUNCT,.,PunctType=Peri,punct,10,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
