@@ -13,11 +13,15 @@ The predictability metrics — [`Cloze`](pred_cloze.md),
 [`Surprisal`](pred_surprisal.md), and
 [`TopMatch`](pred_topmatch.md) — come from a single forward pass of
 each **local** model you select in the GUI's Predictability card
-(roster: GPT-2 + three Llama-3 variants; see
-[Models](pred_surprisal.md#models)). Weights are not bundled; set
-access up once per gated model before running. **GPT-2 needs no
-credentials at all** — it's free, ungated, and downloads automatically
-on first use. Everything below applies only to the three gated
+(roster: four GPT-2 sizes + three Llama-3 variants; see
+[Models](pred_surprisal.md#models)). Weights are not bundled and **nothing
+is downloaded at setup**: each model's weights download into
+`data/hf_cache/` the first time a run uses it (GPT-2 0.55 GB, GPT-2 medium
+1.52 GB, GPT-2 large 3.25 GB, GPT-2 XL 6.43 GB, Llama-3.2-3B 6.42 GB,
+Llama-3-8B 16.0 GB, Llama-3-70B 142 GB), with a console line and a
+"First-use download" line on the Run page. Set access up once per gated
+model before running. **The GPT-2 models need no credentials at all** —
+they are free and ungated. Everything below applies only to the three gated
 Llama-3 models.
 
 > **Why local-only (no OpenAI).** Scoring an *existing* string for per-token
@@ -58,11 +62,12 @@ after you accept Meta's license *and* Meta approves your request.
    - Run `hf auth login` once in the environment (stored under `~/.cache`), **or**
    - Set the `HF_TOKEN` (or `HUGGING_FACE_HUB_TOKEN`) environment variable.
 
-**Device placement is automatic**, in this order: 4-bit on the GPU (needs a
-working *bitsandbytes* build — an 8B model fits in ~6 GB VRAM this way) →
-fp16 on the GPU if bitsandbytes is unavailable (≈16 GB VRAM for 8B; this is the
-common path on Windows, where bitsandbytes is often broken) → CPU if there's no
-CUDA GPU. If a GPU *is* present but both GPU loads fail, the run logs a loud
-warning and falls back to CPU rather than using the GPU silently — watch the
-log for `loaded on CPU` if inference is unexpectedly slow. Running on
-Sherlock/HPC is documented separately.
+**Precision and device placement.** With a GPU, a Llama runs at the
+precision chosen on its row of the Predictability card — fp16 by default,
+or 8bit / 4bit (these need a working *bitsandbytes*; if the load fails the
+run stops and suggests fp16, it never switches precision silently) — and
+the GPT-2 models run fp32. With no CUDA GPU every model runs fp32 on the
+CPU, and the console prints the RAM that needs (for example about 32 GB for
+Llama-3-8B). See [Precision](pred_surprisal.md#precision) for the measurements
+behind this and for what the console line and the run manifest record.
+Running on Sherlock/HPC is documented separately.

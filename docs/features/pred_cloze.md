@@ -50,13 +50,15 @@ Mathematical exponential inverse of [`<slug>_Surprisal`](pred_surprisal.md)
 
     <slug>_Cloze = 2^(-<slug>_Surprisal)
 
-`<slug>` stands for the model's short name — `gpt2`, `llama32_3b`,
-`llama3_8b` or `llama3_70b` — and is the prefix of the column name, so
+`<slug>` stands for the model's short name — `gpt2`, `gpt2_medium`,
+`gpt2_large`, `gpt2_xl`, `llama32_3b`, `llama3_8b` or `llama3_70b` — and is the prefix of the column name, so
 `gpt2_Cloze` is the probability from GPT-2. Each model you tick writes its own
 column, and the name always says which model produced it.
 
-PUNCT rows are `NaN`, and so is the document's first word (no
-preceding context to condition on). `<slug>_Cloze`, `<slug>_Surprisal`
+PUNCT rows are `NaN`. The document's first word is scored: every forward
+pass starts with the model's beginning-of-text token (see
+[Surprisal](pred_surprisal.md#what-each-words-surprisal-is-conditioned-on)),
+so it has a left context. `<slug>_Cloze`, `<slug>_Surprisal`
 and `<slug>_TopMatch` all come from the same forward pass for a given
 model — enabling any one of the three metrics for a model triggers
 that model's scoring pass. Enabling Cloze for several roster models at
@@ -108,7 +110,8 @@ surprisal = -sum(subword_log_probs) / math.log(2)
 top_match = (argmax_subword == actual_subword)  # at the first subword
 ```
 
-PUNCT rows are masked to `NaN`. The probability is stored to 6
+PUNCT rows are masked to `NaN`; the first word is scored (beginning-of-text
+token). The probability is stored to 6
 **significant digits** (e.g. `0.0123457`, or `2.07e-12` for a very
 unlikely word), so it is never rounded down to exactly 0 and
 `Cloze = 2^(−Surprisal)` holds for every word (rounding to 6 decimal places
@@ -141,7 +144,7 @@ would turn any word above about 20 bits of surprisal into `0.0`).
 
 ## Getting access & credentials
 
-GPT-2 needs no credentials — it's free and ungated. The gated Llama-3
+The GPT-2 models need no credentials — they are free and ungated. The gated Llama-3
 models need a HuggingFace token + license approval before they run.
 This is shared with `<slug>_Surprisal` and `<slug>_TopMatch` — see
 **[LLM access & credentials](llm_credentials.md)** for the full step-by-step.

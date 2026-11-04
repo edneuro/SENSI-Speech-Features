@@ -4,7 +4,7 @@
 Same methodology already proven for GPT-2 on a local machine: run the app's
 real `extractors.predictability.add_predictability` on a transcript, then
 INDEPENDENTLY re-tokenize/forward-pass/aggregate the exact same already-
-loaded model+tokenizer by hand (reusing only the pure-math helpers
+loaded model+tokenizer by hand, with the same BOS-led windows the app uses (reusing only the pure-math helpers
 `_scores_from_subwords` and `_chunk_slices`, never calling the app's own
 `.score()` again), and diff every content word's Surprisal / Cloze /
 TopMatch. A match proves the app's windowing, subword-mapping, and
@@ -110,29 +110,35 @@ def _run_pass(*, label, df, text, tokens, upos, model_slug, metrics, context_map
     ids = enc["input_ids"]
     offsets = enc["offset_mapping"]
 
-    if eff_context is None or len(ids) <= eff_context:
-        print(f"Text is {len(ids)} subwords <= effective context {eff_context} "
+    # Same windows as _HuggingFaceBackend.score: every forward pass is
+    # [BOS] + subwords, BOS is never scored, so window = BOS + <= (limit - 1)
+    # subwords and the first word is scored too.
+    bos = getattr(tokenizer, "bos_token_id", None)
+    lead = [] if bos is None else [bos]
+    n = len(ids)
+    if eff_context is None or n + len(lead) <= eff_context:
+        print(f"Text is {n} subwords (+BOS) <= effective context {eff_context} "
               f"-- single forward pass (native code path).")
-        with torch.no_grad():
-            logits = model(torch.tensor([ids], device=device)).logits[0]
+        segments = [(0, n, 0)]
     else:
-        n_chunks = len(_chunk_slices(len(ids), eff_context))
-        print(f"Text is {len(ids)} subwords > effective context {eff_context} "
-              f"-- {n_chunks} chunk(s), sliding window (chunked code path).")
-        chunk_logits = []
-        for seg_start, seg_end, keep_off in _chunk_slices(len(ids), eff_context):
-            seg_ids = ids[seg_start:seg_end]
-            with torch.no_grad():
-                seg_logits = model(torch.tensor([seg_ids], device=device)).logits[0]
-            chunk_logits.append(seg_logits[keep_off:])
-        logits = torch.cat(chunk_logits, dim=0)
-    log_probs = torch.log_softmax(logits, dim=-1)
+        segments = _chunk_slices(n, eff_context - len(lead))
+        print(f"Text is {n} subwords > effective context {eff_context} "
+              f"-- {len(segments)} chunk(s), sliding window (chunked code path), "
+              f"each led by BOS.")
 
-    sub_log_p: list = [None]
-    sub_top1: list = [None]
-    for i in range(1, len(ids)):
-        sub_log_p.append(log_probs[i - 1, ids[i]].item())
-        sub_top1.append(int(log_probs[i - 1].argmax().item()))
+    sub_log_p: list = [None] * n
+    sub_top1: list = [None] * n
+    for a, b, keep in segments:
+        with torch.no_grad():
+            seg_logits = model(torch.tensor([lead + ids[a:b]], device=device)).logits[0]
+        seg_lp = torch.log_softmax(seg_logits, dim=-1)
+        # window position j predicts ids[a + j + 1 - len(lead)]
+        for j in range(keep, b - a):
+            t = a + j + 1 - len(lead)
+            if t >= n:
+                continue
+            sub_log_p[t] = seg_lp[j, ids[t]].item()
+            sub_top1[t] = int(seg_lp[j].argmax().item())
 
     indep_scores = _scores_from_subwords(text, tokens, offsets, sub_log_p, sub_top1, ids)
 
@@ -204,6 +210,7 @@ def main() -> int:
     metrics = [m.strip() for m in args.metrics.split(",") if m.strip()]
 
     from sensi.extractors.text_parser import parse
+    from sensi.utils.transcript_prep import normalize_whitespace
     from sensi.extractors.predictability import (
         add_predictability, _get_backend, _scores_from_subwords, _chunk_slices,
     )
@@ -223,6 +230,8 @@ def main() -> int:
     text = Path(args.text_file).read_text(encoding="utf-8") if args.text_file else _DEFAULT_TEXT
     print(f"Text ({len(text)} chars): {text[:200]!r}{'...' if len(text) > 200 else ''}")
 
+    # add_predictability scores the whitespace-normalised transcript; mirror it.
+    text = normalize_whitespace(text)
     df = parse(text)
     tokens = [str(t) for t in df["token"].tolist()]
     upos = df["upos"].tolist()

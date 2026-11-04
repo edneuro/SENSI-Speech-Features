@@ -173,7 +173,7 @@ Predictability is chosen by model and metric:
 
 ```yaml
 predictability:
-  models: [gpt2]           # gpt2, or the gated Llama models (llama32_3b, llama3_8b, … — need a token)
+  models: [gpt2]           # gpt2 (also gpt2_medium, gpt2_large, gpt2_xl), or the gated Llama models (llama32_3b, llama3_8b, … — need a token)
   metrics:
     surprisal: true
     cloze: true

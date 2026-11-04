@@ -17,6 +17,47 @@ layers — the sentence-level analogue of the
 contextual embeddings of its non-PUNCT content words** at the same
 layer.
 
+## How these vectors are used
+The file holds the **vectors themselves, not a similarity score**: you
+compute the measure your analysis needs from them. Two common uses:
+
+1. **Sentence-to-sentence similarity.** Compare each sentence's vector with
+   the previous sentence's by cosine similarity (or 1 − similarity, a
+   *dissimilarity*). A low value marks a sentence whose content departs from
+   the one before it, a rough index of topic continuity or a discourse shift.
+2. **Encoding models.** Use the vector dimensions of one layer directly as
+   regressors that predict the neural response to each sentence (often after
+   reducing them, e.g. with PCA) ([Toneva 2019], [Caucheteux 2022],
+   [Goldstein 2022]).
+
+These vectors are **not** where surprisal comes from: surprisal and cloze
+are read from a language model's next-word probabilities (the
+[Predictability](pred_surprisal.md) card), not from embeddings.
+
+⚠️ Pick the layer before you look at the neural data and report it: the
+twelve layers carry different information and the best one depends on the
+task and region ([Toneva 2019]). ⚠️ These vectors are contextual (computed
+with the preceding text as left context), so part of the similarity between
+neighbouring sentences is built in by the model itself; it is not a purely
+"semantic" distance.
+
+Example (MATLAB): cosine similarity between each sentence and the one
+before it at one layer; the first sentence and any sentence with
+`is_valid == false` stay `NaN`.
+
+```matlab
+S  = load('<stim>_bert_sentence.mat');
+L  = 9;                                   % layer 1..12 (pre-register this)
+E  = double(squeeze(S.embeddings(:, L, :)));   % n_sentences x 768
+ok = logical(S.is_valid(:));
+sim = nan(size(E, 1), 1);
+for i = 2:size(E, 1)
+    if ok(i) && ok(i-1)
+        sim(i) = dot(E(i, :), E(i-1, :)) / (norm(E(i, :)) * norm(E(i-1, :)));   % cosine
+    end
+end
+```
+
 ## EEG rationale
 Sentence-level embeddings are the right granularity for:
 

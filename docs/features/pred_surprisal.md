@@ -16,15 +16,16 @@ document, in **bits**:
 
     <slug>_Surprisal(wᵢ) = -log₂ P_model(wᵢ | w₁ … wᵢ₋₁)        [Hale 2001], [Levy 2008]
 
-`<slug>` stands for the model's short name — `gpt2`, `llama32_3b`,
-`llama3_8b` or `llama3_70b` — and is the prefix of the column name, so
+`<slug>` stands for the model's short name — `gpt2`, `gpt2_medium`,
+`gpt2_large`, `gpt2_xl`, `llama32_3b`, `llama3_8b` or `llama3_70b` — and is the prefix of the column name, so
 `gpt2_Surprisal` is surprisal from GPT-2. Each model you tick writes its own
 column, and the name always says which model produced it.
 
 Low surprisal means the model expected the word; high surprisal means it
 did not (see *Reading the numbers* below for the scale). PUNCT rows are
-`NaN`, and so is the document's first word (no left context to condition
-on).
+`NaN`. The document's first word is scored too: every pass starts with the
+model's beginning-of-text token, so it has a left context to condition on
+(see *What each word's surprisal is conditioned on*).
 
 ## Reading the numbers
 Surprisal has no upper limit and no fixed "surprising" cut-off, but every
@@ -43,19 +44,26 @@ value converts exactly to a probability: `P = 2^(−surprisal)`.
 Each extra bit halves the probability, so 2 bits vs 4 bits is the same
 step as 12 vs 14. Real values from the manual's example run (GPT-2):
 
-- *She spread butter on her* **toast** → 7.1 bits; **violin** in the same
-  frame → 17.0 bits.
+- *She spread butter on her* **toast** → 5.9 bits; **violin** in the same
+  frame → 16.1 bits.
 - function words in an expected slot sit low: **on** after *spread butter*
-  → 2.9 bits; **hours** after *48* → 0.89 bits.
+  → 2.6 bits; **hours** after *48* → 0.79 bits.
 - a content word after a short, open context sits high: **spread** after
-  *She* → 13.9 bits, since almost any verb could follow.
+  *She* → 14.3 bits, since almost any verb could follow.
+- the document's first word is scored from the beginning-of-text token alone,
+  so it is a "how likely is this word to open a text" value: **She** → 9.6
+  bits, **Others** → 13.7 bits.
 - a word the model did not see coming sits high even when it is ordinary
   English. In *Others who arrived just after the time of* **distribution**
-  (LJ002-0321), GPT-2 gave *the* 56 % and **distribution** 14.7 bits;
-  after *were often*, **48** gets 18.7 bits (GPT-2's top guess, *the*, had
-  only 3 %), and **six** after *might also be* gets 12.7 bits. Writing
-  the number out does not lower it: *forty-eight* in the same place is
-  even less expected.
+  (LJ002-0321), GPT-2 gave *the* 50 % and **distribution** 13.7 bits;
+  after *were often*, **48** gets 18.8 bits (GPT-2's top guess, *greeted*,
+  had only 2 %), and **six** after *might also be* gets 12.1 bits. Writing
+  the number out does not lower it: *forty-eight* in the same place costs
+  22.5 bits, even less expected.
+
+(The 50 %, the 2 % and the *forty-eight* figure are GPT-2 small probabilities
+measured for this page with the beginning-of-text token, on the same
+sentence; the bit values are from the manual's example run.)
 
 Model surprisal on naturalistic reading corpora spans roughly 0–20 bits
 ([Wilcox 2020], Fig. 1), with most words well below the top of that
@@ -75,16 +83,68 @@ to one model.
 
 ## Models
 Surprisal is available for every model in the roster
-(`sensi/extractors/predictability_models.py`): **GPT-2** (`gpt2`, free, no
-token, CPU-capable baseline) and three gated **Llama-3** variants
-(`llama32_3b`, `llama3_8b`, `llama3_70b`) that need a HuggingFace token
-+ accepted license — see **[LLM access & credentials](llm_credentials.md)**.
-Pick one or several from the GUI's Predictability card's model
-multi-select; each selected model is scored once per stimulus and
-contributes its own `<slug>_Surprisal` column when the Surprisal metric
-checkbox is on. Whether a larger model's surprisal fits human data
-better depends on the measure and on how large the models are — see
-*EEG rationale* below; GPT-2 is the free, always-available baseline.
+(`sensi/extractors/predictability_models.py`): the **GPT-2 family**
+(`gpt2`, `gpt2_medium`, `gpt2_large`, `gpt2_xl`; free, no token) and three
+gated **Llama-3** variants (`llama32_3b`, `llama3_8b`, `llama3_70b`) that
+need a HuggingFace token + accepted license — see
+**[LLM access & credentials](llm_credentials.md)**. Nothing is downloaded at
+setup: a model's weights are fetched the first time a run uses it (the
+console and the Run page say how much).
+
+| Slug | Parameters | First-use download | Precision (default; choices) | Runs on | Weights in memory |
+|---|---|---|---|---|---|
+| `gpt2` | 124 M | 0.55 GB | fp32 only | CPU or GPU | 0.5 GB |
+| `gpt2_medium` | 355 M | 1.52 GB | fp32 only | CPU or GPU | 1.4 GB |
+| `gpt2_large` | 774 M | 3.25 GB | fp32 only | CPU or GPU | 3.1 GB |
+| `gpt2_xl` | 1.5 B | 6.43 GB | fp32 only | CPU or GPU | 6.0 GB |
+| `llama32_3b` | 3.21 B | 6.42 GB | fp16 (default), 8bit, 4bit | GPU (CPU: fp32) | 6.4 GB fp16 · 3.2 GB 8bit · 1.6 GB 4bit · 12.8 GB fp32 on CPU |
+| `llama3_8b` | 8 B | 16.0 GB | fp16 (default), 8bit, 4bit | GPU (CPU: fp32) | 16 GB fp16 · 8 GB 8bit · 4 GB 4bit · 32 GB fp32 on CPU |
+| `llama3_70b` | 71 B | 142 GB | fp16 (default), 8bit, 4bit | GPU (CPU: fp32) | 142 GB fp16 · 71 GB 8bit · 35.5 GB 4bit · 284 GB fp32 on CPU |
+
+"Weights in memory" is parameters × bytes per parameter (fp32 4, fp16 2,
+8bit 1, 4bit 0.5; `predictability_models.weights_gb`). It is the weights
+alone: activations and the key-value cache come on top, so allow headroom.
+
+Pick one or several from the GUI's Predictability card's model multi-select;
+each selected model is scored once per stimulus and contributes its own
+`<slug>_Surprisal` column when the Surprisal metric checkbox is on. Whether a
+larger model's surprisal fits human data better depends on the measure and on
+how large the models are — see *EEG rationale* below; the GPT-2 family is the
+free, always-available option, and ticking several sizes writes one column
+each so you can compare them on your own data.
+
+### Precision
+Each Llama row has a precision dropdown (fp16, 8bit, 4bit); the GPT-2 rows
+are fixed at fp32. Stored per model in `prefs["predictability"]["precision"]`
+(a slug absent from the map = the model's default).
+
+- **GPT-2 stays fp32.** Measured on GPT-2 small in this project
+  (2026-11-04): running it in fp16 moves surprisal by 0.0213 bits on average
+  (largest change 0.1187), and on a CPU one 1024-subword window takes 82.31 s
+  in fp16 against 0.55 s in fp32; bf16 moves surprisal by 0.2193 bits on
+  average (largest 1.1432). So lower precision buys nothing for models this
+  small, and fp32 is the value to cite.
+- **Llama defaults to fp16**.
+  The previous behaviour (silently loading 4-bit where it could) is gone:
+  the precision that ran is always the one you chose and is recorded.
+- **8-bit and 4-bit** shrink the memory a Llama needs (table above) at the
+  cost of values that differ from fp16. The size of that shift was **not
+  measured** in this project, so state the precision with any result that
+  uses them. If an 8-/4-bit load fails (for example no working
+  *bitsandbytes*), the run stops with a message that suggests fp16; it never
+  falls back to another precision, because that would change the values
+  without telling you.
+- **No GPU → fp32 on the CPU for every model**, whatever precision is
+  selected, because half precision is very slow on a CPU (the GPT-2 timing
+  above). Llama-3-8B in fp32 needs about 32 GB of RAM, which is why the
+  console warns first.
+
+What is recorded: the console prints one line per model as it loads, e.g.
+`[predict] gpt2: fp32 on CPU`, or `[predict] llama3_8b: no GPU — running fp32
+on CPU (~32.0 GB RAM)` when your choice was overridden, and
+`[predict] <slug>: downloading X GB on first use…` before a first download.
+The run manifest (`logs/*_manifest.json`) has a `predictability_models` list,
+one `{slug, hf_id, precision, device}` entry per model the run used.
 
 ## EEG rationale
 Surprisal is a well-replicated word-level predictor of **N400
@@ -184,8 +244,13 @@ just faster. The per-position distributions are independent: nothing
 is pooled across positions.
 
 For the **very first** word of the document there is no preceding
-text to condition on; the extractor stores `NaN` (not a meaningful
-surprisal — those rows are dropped or skipped in regressions).
+text, so every forward pass starts with the model's **beginning-of-text
+token** (`<|endoftext|>` for GPT-2, `<|begin_of_text|>` for Llama 3). The
+token is never scored and belongs to no word; it only gives the first
+subword a left context, so the first word gets a Surprisal, Cloze and
+TopMatch like any other. ⚠️ That value is "how likely is this word to open
+a text", not a continuation of anything, so you may still want to drop the
+first word from a regression.
 
 ### Short transcripts (fit the model's context window): exact
 Every model has a hard architectural context limit
@@ -193,34 +258,35 @@ Every model has a hard architectural context limit
 the Llama-3.2-3B/8B/70B variants are 131072/8192/8192 (see
 `sensi/extractors/predictability_models.py`'s `native_ctx`). When the
 transcript tokenises to at or under that limit for the model in use,
-the whole document fits in one forward pass and every word's surprisal
-is conditioned on its complete natural preceding text. **No
-approximation.**
+the whole document (plus the one beginning-of-text token) fits in one
+forward pass and every word's surprisal is conditioned on its complete
+natural preceding text. **No approximation.**
 
 ### Long transcripts (exceed the context window): chunked, bounded preceding context
 Podcast episodes and audiobook chapters routinely exceed a model's
 context window (most visibly GPT-2's 1024-subword limit, or the two
 8K-context Llama-3 models) and cannot fit in a single forward pass.
 `_HuggingFaceBackend.score` then walks the input via `_chunk_slices`
-with a stride of `window // 2`, where `window` is that model's context
-limit. Each forward pass takes one `window // 2`-subword chunk plus the
-immediately preceding `window // 2` subwords as left context — exactly
-`window` subwords, the most the model can hold. Only the logits for the
-chunk itself are kept; the prefix logits are discarded and re-computed
-(with a longer prefix) on the previous pass.
+with a stride of `(limit − 1) // 2`, where `limit` is that model's context
+limit and the one slot the beginning-of-text token takes is already taken
+off. Each forward pass is the beginning-of-text token, one chunk and the
+immediately preceding chunk as left context — at most `limit` subwords, the
+most the model can hold. Only the logits for the chunk itself are kept; the
+prefix logits are discarded and re-computed (with a longer prefix) on the
+previous pass.
 
-For a transcript twice GPT-2's window (2000 subwords, `window = 1024`,
-`chunk = 512`):
+For a transcript about twice GPT-2's window (2000 subwords, `limit = 1024`,
+so windows of BOS + up to 1023 subwords and `chunk = 511`):
 
-| Chunk being scored | Forward-pass input | Preceding context the chunk's first subword sees | Vs. ideal full-context |
+| Chunk being scored | Forward-pass input (after the BOS token) | Preceding context the chunk's first subword sees | Vs. ideal full-context |
 |---|---|---|---|
-| subwords 0 – 511     | `input[0:512]`     | none (grows naturally within chunk)     | identical |
-| subwords 512 – 1023  | `input[0:1024]`    | 512 subwords (positions 0 – 511)        | identical |
-| subwords 1024 – 1535 | `input[512:1536]`  | 512 subwords (positions 512 – 1023)     | positions 0 – 511 lost  |
-| subwords 1536 – 1999 | `input[1024:2000]` | 512 subwords (positions 1024 – 1535)    | positions 0 – 1023 lost |
+| subwords 0 – 510     | `input[0:511]`     | none (grows naturally within chunk)     | identical |
+| subwords 511 – 1021  | `input[0:1022]`    | 511 subwords (positions 0 – 510)        | identical |
+| subwords 1022 – 1532 | `input[511:1533]`  | 511 subwords (positions 511 – 1021)     | positions 0 – 510 lost  |
+| subwords 1533 – 1999 | `input[1022:2000]` | 511 subwords (positions 1022 – 1532)    | positions 0 – 1021 lost |
 
 So every position past the first window is scored with **between
-`window // 2` and `window - 1` preceding subwords** of context,
+`(limit − 1) // 2` and `limit − 2` preceding subwords** of context,
 depending on where it sits inside its chunk. The earliest subwords
 drop out of view at every chunk boundary. This is the unavoidable cost
 of a fixed context window on long texts — *which* subwords to drop is
@@ -237,7 +303,8 @@ model's full native window (`native_ctx`). Lowering it makes the
 chunking above kick in sooner — each word conditions on less preceding
 text, which is **faster and uses less memory on long stimuli**, and
 lets you fix a common context length across models for comparability.
-The cap is clamped to `[128, native_ctx]` (helper
+The cap counts the beginning-of-text token, so a window holds the token plus
+up to `cap − 1` subwords. The cap is clamped to `[128, native_ctx]` (helper
 `predictability_models.effective_context`); the effective window is
 `min(cap, model's real max)`, so it never exceeds what the model can
 hold. Stored per model in `prefs["predictability"]["context"]` (a slug
@@ -251,6 +318,9 @@ absent from the map = uncapped = the default).
 ### Why a `window // 2` stride
 The stride trades preceding-context budget against forward-pass count:
 
+Here `window` is the number of subwords a pass holds after the beginning-of-text
+token (`limit − 1`).
+
 | Stride | Forward passes for N subwords | Minimum preceding context past the first window |
 |---|---|---|
 | `window` (no overlap) | ≈ N / window | 0 subwords at every chunk boundary — first position of each chunk has no context, yielding spurious surprisal |
@@ -263,21 +333,25 @@ flattens well before its full context window is consumed, so the
 marginal accuracy gain from a smaller stride is small. The `window //
 2` stride trades up to `window // 2 - 1` subwords of additional
 context for a `window // 2`× compute reduction. For GPT-2 this is a
-512-subword stride against its 1024-subword window; the same rule
-applies to every roster model via its own `window`.
+511-subword stride against its 1023-subword window (1024 minus the
+beginning-of-text token); the same rule applies to every roster model via its
+own `window`.
 
 ### Step by step
 1. `_get_backend` / `_cached_backend` lazily load an
    `AutoModelForCausalLM` + `AutoTokenizer` for the model's HuggingFace
-   repo id (`gpt2` for the GPT-2 slug, `meta-llama/...` for the Llama
-   slugs), cached process-wide per `hf_id` — a load costs minutes for
-   the larger Llamas, so it happens once per run, shared across the
-   word-level and document-level passes.
+   repo id (`gpt2`, `openai-community/gpt2-medium` … for the GPT-2
+   slugs, `meta-llama/...` for the Llama slugs) at the precision and on
+   the device `load_plan` picks (see *Precision*), cached process-wide —
+   a load costs minutes for the larger Llamas, so it happens once per run,
+   shared across the word-level and document-level passes. A model that is
+   not yet in `data/hf_cache/` is downloaded now, with a console line.
 2. `_HuggingFaceBackend.score` tokenises the **whole transcript** with
    character offsets, so every subword carries a `(char_start,
    char_end)` span, and runs one forward pass (or the chunked sliding
    window above) to get per-subword log-probabilities and top-1
-   predictions.
+   predictions. Each pass is fed `[BOS] + subwords`; the logits at the BOS
+   position score the first subword.
 3. `map_tokens_to_subwords` walks the spaCy tokens in document order
    and assigns each subword to exactly ONE token — the first token
    whose character span it overlaps (a subword straddling a token
@@ -294,18 +368,23 @@ applies to every roster model via its own `window`.
    one run, each model runs its forward pass once and the second pass
    is a cache hit.
 
-**GPT-2 is pinned full-precision on CPU** (`_FULL_PRECISION_CPU_HF_IDS`)
-— unlike the Llama models, it never loads 4-bit/fp16 on a GPU, so
-`gpt2_Surprisal` values match the historical GPT-2-only extractor
-bit-for-bit regardless of the machine's GPU availability.
+**GPT-2 models always run fp32**: their only offered precision is fp32, so
+with a GPU they run fp32 on it and without one fp32 on the CPU. The
+precision a Llama runs at is the one chosen (fp16 by default) on a GPU, and
+fp32 on the CPU otherwise (see *Precision*).
 
 ### Why (design notes)
-- *`NaN` for the first word*: its first subword has no left context,
-  so the model cannot assign it a probability. Emitting `0` bits there
-  (the pre-2026-07 behavior) faked a "perfectly predictable" first
-  word; `NaN` follows the pipeline-wide no-value convention. Any word
-  whose subwords include position 0 is affected (i.e. exactly the
-  document-initial word).
+- *The first word is scored, from a beginning-of-text token*: without any
+  left context the model cannot assign its first subword a probability (an
+  earlier version stored `0` bits, faking a "perfectly predictable" word,
+  and then `NaN`). Starting every window with the model's own
+  beginning-of-text token is how these models were trained to see the
+  start of a text, so the first word gets an honest "probability of opening
+  a text with this word". Windows after the first one start with the token
+  too, so the context a word sees is the same no matter which chunk it
+  falls in. ⚠️ Values for all words differ from runs from
+  before 2026-11-04, because every position now has the token in its
+  context.
 - *PUNCT → `NaN`*: language models do assign probabilities to
   punctuation, but ERP work on predictability is "usually investigated
   on content words only", and in [Frank 2015] the surprisal effect on the

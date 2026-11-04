@@ -23,8 +23,9 @@ transcript:
 
 Comparison is made at the **first subword** of the spaCy token (model
 subwords don't always align 1:1 with spaCy tokens). PUNCT rows are
-`NaN`, and so is the document's first word — it has no preceding
-context, so the model makes no prediction for it. Enabling Top-match
+`NaN`. The document's first word is scored: every forward pass starts with
+the model's beginning-of-text token, so the model does make a prediction
+for it (see [Surprisal](pred_surprisal.md#what-each-words-surprisal-is-conditioned-on)). Enabling Top-match
 for several roster models writes one column per model, e.g.
 `gpt2_TopMatch` and `llama3_8b_TopMatch` side by side.
 
@@ -68,10 +69,10 @@ The comparison is done at the token's first subword, in vocabulary-id
 space (`argmax` id vs. the actual next-token id) from the local model's
 logits.
 
-`upos == "PUNCT"` → `NaN`, and the document's first word is `NaN` too
-(no preceding context, so no prediction to match). The output is stored
-as `int` for `0` / `1` and remains `NaN` (a `Nullable Int64` view in
-pandas) for those rows.
+`upos == "PUNCT"` → `NaN`; the document's first word is matched like any
+other (its prediction comes from the beginning-of-text token). The output is
+stored as `int` for `0` / `1` and remains `NaN` (a `Nullable Int64` view in
+pandas) for the PUNCT rows.
 
 ## Library
 See `sensi/extractors/predictability.py:_HuggingFaceBackend.score`. Every
