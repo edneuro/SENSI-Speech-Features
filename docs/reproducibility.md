@@ -41,10 +41,19 @@ hand-edited** — treat it like a build artifact, not source.
 4. Commit `conda-lock.yml` alongside the source-file change in the same
    commit. A lock that doesn't match its sources is worse than no lock.
 
-CI (`.github/workflows/env-verify.yml` — the install+import merge gate across
-all three OSes; see "Verification status" below for what it does and doesn't
-prove) will catch a lock that fails to install, but it won't catch a lock that
-installs but is stale relative to the source files — that's on the author.
+**CI is turned off** (since 2026-11-04, to stop GitHub Actions charges). The
+workflow `.github/workflows/env-verify.yml` — an install + import check on all
+three OSes — is still in the repository but disabled on GitHub, so nothing
+runs on push or pull request. Until it is re-enabled, a lock that fails to
+install on another platform is caught only when someone installs it there, so
+after a dependency change: rebuild `./env` from the new lock and run the full
+test suite locally (step 3), and if you can, install on a second OS (WSL is
+enough for linux-64). A lock that installs but is stale relative to the source
+files was never caught by CI — that's on the author.
+
+To run the check again, re-enable it (repository admin):
+`gh workflow enable env-verify -R edneuro/SENSI-Speech-Features`. Each run uses
+three GitHub-hosted runners, one of them macOS.
 
 ## Supported platforms
 
@@ -138,11 +147,11 @@ Be precise about this — it's the difference between "should work" and
   MFA 3.4.0) confirms that one failure is platform-independent and lock-neutral,
   not a regression.
 - **osx-arm64 (Apple Silicon)**: verified only at the **install + import**
-  level, and only by CI (`.github/workflows/env-verify.yml`) — a green
-  `macos-latest` run across all three OSes is the merge gate, so this holds
-  the moment the branch merges; until that run is green, treat macOS as
-  *expected to work* (the lock installs an identical package set) rather than
-  proven. No one on this project has run the full pipeline — MFA forced alignment, GPT-2 surprisal, the
+  level, and only by CI (`.github/workflows/env-verify.yml`), whose last green
+  `macos-latest` runs predate 2026-11-04, when CI was turned off. A lock
+  regenerated after that date has not been installed on macOS by anyone: treat
+  macOS as *expected to work* (the lock installs an identical package set)
+  rather than proven until someone installs it on a Mac or CI is re-enabled. No one on this project has run the full pipeline — MFA forced alignment, GPT-2 surprisal, the
   acoustic/prosody extractors — on real macOS hardware, because CI runners
   don't carry the vendored `data/mfa_data/`/`data/hf_cache/` models and no Mac was
   available. **"MFA produces byte-identical alignment output on macOS" is

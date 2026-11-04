@@ -75,7 +75,7 @@ by up to ~0.05–0.08 s for files previously aligned in a mixed batch).
   is never exercised; no stimulus is long enough to exercise predictability chunking
   end-to-end.
 - **Release blockers:** no `LICENSE`; the ⚠️ markers in `docs/features/*.md` (owner's domain
-  review, §4); CI runs install + import smoke only (the test suite never runs in CI); no
+  review, §4); CI is turned off since 2026-11-04 (GitHub billing; when on it ran install + import smoke only, never the test suite); no
   version/tag or `CITATION.cff`.
 
 **Two surfaces came back clean in the audit — do not re-audit:** the `.mat` sidecars
