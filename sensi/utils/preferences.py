@@ -1,8 +1,8 @@
 """Load and save user preferences.
 
-Schema (v23 — active; DEFAULT_PREFS_V23 is the authoritative key set):
+Schema (v24 — active; DEFAULT_PREFS_V24 is the authoritative key set):
     {
-      "schema_version": 23,
+      "schema_version": 24,
       "shared":  {analyzer_name, last_*_folder, theme, hf_token_file},
       "features": {per-column toggles (feat_*, lexling_*, freq_*, sem_*),
                    master_* section switches (one per feature card, incl.
@@ -12,7 +12,7 @@ Schema (v23 — active; DEFAULT_PREFS_V23 is the authoritative key set):
                    feat_phoneme_surprisal_mat, v22 event .mat toggles
                    (master_word_events, feat_word_events_mat,
                    feat_syllable_events_mat), vestigial master_acoustic_ts},
-      "predictability": {models, metrics, context},
+      "predictability": {models, metrics, context, precision},
       "semantic": {backend, categories_liwc, categories_empath},
       "output":   {level_word, level_document, level_subword, level_sentence,
                    level_acoustic (Run-tab level switches), out_count_*,
@@ -1092,11 +1092,32 @@ DEFAULT_PREFS_V23: dict[str, Any] = {
 }
 
 # ---------------------------------------------------------------------------
+# v24 (2026-11-04)
+#
+# Additive: predictability.precision, an optional per-model weight precision
+# (fp16 | 8bit | 4bit for llama* models; GPT-2 models are always fp32).
+# Mirrors predictability.context; empty = every model's default.
+# ---------------------------------------------------------------------------
+
+SCHEMA_VERSION_V24 = 24
+
+_PREDICTABILITY_DEFAULT_V24 = {
+    **DEFAULT_PREFS_V23["predictability"],
+    "precision": {},
+}
+
+DEFAULT_PREFS_V24: dict[str, Any] = {
+    **DEFAULT_PREFS_V23,
+    "schema_version": SCHEMA_VERSION_V24,
+    "predictability": dict(_PREDICTABILITY_DEFAULT_V24),
+}
+
+# ---------------------------------------------------------------------------
 # Active schema aliases
 # ---------------------------------------------------------------------------
 
-SCHEMA_VERSION = SCHEMA_VERSION_V23  # active version
-DEFAULT_PREFS: dict[str, Any] = DEFAULT_PREFS_V23  # active defaults
+SCHEMA_VERSION = SCHEMA_VERSION_V24  # active version
+DEFAULT_PREFS: dict[str, Any] = DEFAULT_PREFS_V24  # active defaults
 
 
 # ---------------------------------------------------------------------------
@@ -1164,7 +1185,8 @@ def _merged_from_user(user: dict[str, Any]) -> tuple[dict[str, Any], bool]:
                    SCHEMA_VERSION_V12, SCHEMA_VERSION_V13, SCHEMA_VERSION_V14,
                    SCHEMA_VERSION_V15, SCHEMA_VERSION_V16, SCHEMA_VERSION_V17,
                    SCHEMA_VERSION_V18, SCHEMA_VERSION_V19, SCHEMA_VERSION_V20,
-                   SCHEMA_VERSION_V21, SCHEMA_VERSION_V22, SCHEMA_VERSION_V23):
+                   SCHEMA_VERSION_V21, SCHEMA_VERSION_V22, SCHEMA_VERSION_V23,
+                   SCHEMA_VERSION_V24):
         # v10–v15 are additive: missing keys are filled from the current
         # defaults (merged starts as DEFAULT_PREFS). v11's backend coercion and
         # the version stamp are applied in the finalize step below, which

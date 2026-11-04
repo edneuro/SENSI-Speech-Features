@@ -25,6 +25,8 @@ def test_defaults_are_valid():
     ({"predictability": {"models": ["gpt3"]}}, "unknown predictability model"),
     ({"predictability": {"metrics": {"Surprisal": True}}}, "unknown predictability metric"),
     ({"predictability": {"context": {"gpt2": "lots"}}}, "predictability.context.gpt2"),
+    ({"predictability": {"precision": {"gpt2": "fp16"}}}, "predictability.precision.gpt2"),
+    ({"predictability": {"precision": {"llama3_8b": "bf16"}}}, "predictability.precision.llama3_8b"),
     ({"semantic": {"backend": "empth"}}, "semantic.backend"),
     ({"semantic": {"categories_empath": ["not_a_category_xyz"]}}, "unknown Empath"),
 ])
@@ -42,3 +44,12 @@ def test_validate_features_yaml_includes_value_errors():
 def test_non_mapping_for_a_mapping_setting_is_a_type_error():
     errors = validate_features_yaml({"predictability": {"context": "oops"}})
     assert any("predictability.context" in e for e in errors)
+
+
+def test_valid_precision_is_accepted():
+    assert value_errors({"predictability": {"precision": {"llama3_8b": "8bit"}}}) == []
+
+
+def test_each_bad_precision_gives_one_error():
+    assert len(value_errors({"predictability": {"precision": {"gpt2": "fp16"}}})) == 1
+    assert len(value_errors({"predictability": {"precision": {"llama3_8b": "bf16"}}})) == 1

@@ -9,7 +9,7 @@
 # Comments are regenerated on every save; hand-added comments do not survive.
 
 # Config schema version — managed by the app; do not edit.
-schema_version: 23
+schema_version: 24
 
 # Per-feature toggles (feat_* / master_* / freq_* / sem_* / lexling_*).
 features:
@@ -141,14 +141,15 @@ features:
   feat_syllable_events_mat: false
   feat_acoustic_word_gap_after: false
 
-# Predictability roster: models (slugs), metrics, per-model context caps.
+# Predictability roster: models (slugs), metrics, per-model context caps and precision.
 predictability:
-  models: []  # list of model names: any of gpt2, llama32_3b, llama3_8b, llama3_70b, e.g. [gpt2]; the llama* models need a HuggingFace token
+  models: []  # list of model names: any of gpt2, gpt2_medium, gpt2_large, gpt2_xl, llama32_3b, llama3_8b, llama3_70b, e.g. [gpt2]; the llama* models need a HuggingFace token
   metrics:  # surprisal / cloze / topmatch: true or false each
     surprisal: false
     cloze: false
     topmatch: false
-  context: {}  # optional per-model limit on preceding context, in tokens, e.g. {gpt2: 512}; 128 up to the model's window (gpt2 1024, llama32_3b 131072, llama3_8b 8192, llama3_70b 8192); {} = full window
+  context: {}  # optional per-model limit on preceding context, in tokens, e.g. {gpt2: 512}; 128 up to the model's window (gpt2 1024, gpt2_medium 1024, gpt2_large 1024, gpt2_xl 1024, llama32_3b 131072, llama3_8b 8192, llama3_70b 8192); {} = full window
+  precision: {}  # optional per-model weight precision for llama* models: fp16 (default) | 8bit | 4bit, e.g. {llama3_8b: 8bit}; GPT-2 models always run fp32; without a GPU every model runs fp32
 
 # Semantic-indicator backend + category multi-selects.
 semantic:

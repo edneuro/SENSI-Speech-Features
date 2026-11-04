@@ -6,9 +6,9 @@ from sensi.utils.preferences import (
 )
 
 
-def test_active_version_is_23():
-    assert SCHEMA_VERSION == 23
-    assert DEFAULT_PREFS["schema_version"] == 23
+def test_active_version_is_at_least_23():
+    assert SCHEMA_VERSION >= 23
+    assert DEFAULT_PREFS["schema_version"] >= 23
     assert DEFAULT_PREFS["features"]["feat_acoustic_word_gap_after"] is False
 
 
@@ -16,7 +16,7 @@ def test_v22_file_with_gap_on_gets_gap_after_on():
     old = deepcopy(DEFAULT_PREFS_V22)
     old["features"]["feat_acoustic_word_gap"] = True
     merged, changed = _merged_from_user(old)
-    assert changed is True and merged["schema_version"] == 23
+    assert changed is True and merged["schema_version"] >= 23
     assert merged["features"]["feat_acoustic_word_gap_after"] is True
 
 

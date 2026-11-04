@@ -132,6 +132,18 @@ def value_errors(data: dict) -> list[str]:
             elif not (_num(n) and n == int(n) and n > 0):
                 errors.append(f"predictability.context.{m} must be a positive whole "
                               f"number of tokens, got {n!r}")
+    precision = pred.get("precision")
+    if isinstance(precision, dict):
+        by_slug = {s.slug: s.precisions for s in all_specs()}
+        for m, p in precision.items():
+            if m not in slugs:
+                errors.append(f"predictability.precision has unknown model {m!r}")
+            elif len(by_slug[m]) < 2:
+                errors.append(f"predictability.precision.{m}: this model always runs "
+                              f"{by_slug[m][0]}; remove it")
+            elif p not in by_slug[m]:
+                errors.append(f"predictability.precision.{m} must be one of "
+                              f"{', '.join(by_slug[m])}, got {p!r}")
 
     # --- semantic -------------------------------------------------------
     one_of("semantic", "backend", _SEM_BACKENDS)

@@ -49,7 +49,7 @@ _SECTION_COMMENTS = {
     "schema_version": "Config schema version — managed by the app; do not edit.",
     "features": "Per-feature toggles (feat_* / master_* / freq_* / sem_* / lexling_*).",
     "output": "Output artifacts: per-level CSV/.mat toggles + doc-level column groups.",
-    "predictability": "Predictability roster: models (slugs), metrics, per-model context caps.",
+    "predictability": "Predictability roster: models (slugs), metrics, per-model context caps and precision.",
     "semantic": "Semantic-indicator backend + category multi-selects.",
     "prosody": "Praat pitch/pause parameters + p-center k.",
     "acoustic_ts": "Acoustic time-series (TRF) parameters.",
@@ -130,6 +130,9 @@ def _key_comments() -> dict[tuple[str, str], str]:
             "e.g. [gpt2]; the llama* models need a HuggingFace token",
         ("predictability", "metrics"):
             f"{' / '.join(_METRICS)}: true or false each",
+        ("predictability", "precision"):
+            "optional per-model weight precision for llama* models: fp16 (default) | 8bit | 4bit, "
+            "e.g. {llama3_8b: 8bit}; GPT-2 models always run fp32; without a GPU every model runs fp32",
         ("predictability", "context"):
             "optional per-model limit on preceding context, in tokens, e.g. {gpt2: 512}; "
             f"128 up to the model's window ({windows}); {{}} = full window",
