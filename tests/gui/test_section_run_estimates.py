@@ -349,3 +349,14 @@ def test_no_download_line_when_cached(qtbot, tmp_path, monkeypatch):
     w.show()
     _settled(qtbot, w)
     assert not w.download_row.isVisible()
+
+
+def test_ram_line_says_fp32_on_cpu_without_gpu(qtbot, tmp_path, monkeypatch):
+    _fake_system(monkeypatch, 512.0)
+    _inputs(tmp_path, pred={"models": ["llama32_3b"],
+                            "metrics": {"surprisal": True, "cloze": False,
+                                        "topmatch": False}})
+    w = _section(qtbot)
+    w.show()
+    _settled(qtbot, w)
+    assert "Llama-3.2-3B (fp32 on CPU: no GPU)" in w.est_values["ram"].text()

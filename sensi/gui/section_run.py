@@ -535,7 +535,9 @@ class RunSection(QWidget):
                          if shown else "—"),
                 "ram": (f"≈ {_gb(ram.peak_gb)} GB&nbsp;&nbsp;<span style="
                         f"'font-weight:400;color:{TEXT_MUTED}'>this computer: "
-                        f"{ram.machine_gb:.0f} GB</span>"),
+                        f"{ram.machine_gb:.0f} GB"
+                        + "".join(f" · {n}" for n in ram.cpu_fp32)
+                        + "</span>"),
                 "time": re_.format_duration(tm.low_s, tm.high_s),
                 "warning": ram.warning, "learned": tm.learned,
             }

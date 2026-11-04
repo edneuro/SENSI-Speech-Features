@@ -9,9 +9,10 @@
 #SBATCH --job-name=sensi-extract
 #SBATCH --partition=gpu          # or an owners partition you belong to (see `sh_part`)
 #SBATCH --gpus=1                 # one GPU
-##SBATCH -C GPU_MEM:16GB         # VRAM: Llama-3-8B in 4-bit needs ~6-8 GB; 16 GB is
-                                 # comfortable. Uncomment to pin (use 24GB for the
-                                 # fp16 fallback / headroom). Remove the extra '#' to enable.
+##SBATCH -C GPU_MEM:24GB         # VRAM (estimates): Llama-3-8B fp16 ~19 GB, 8bit ~10 GB,
+                                 # 4bit ~5 GB; Llama-3-70B 8bit ~85 GB, 4bit ~43 GB.
+                                 # Precision: predictability.precision in features.yaml.
+                                 # Remove the extra '#' to enable (RUNBOOK step 7).
 #SBATCH --cpus-per-task=8        # MFA/spaCy are CPU-bound — give them cores
 #SBATCH --mem=32G
 #SBATCH --time=04:00:00

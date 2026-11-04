@@ -130,3 +130,19 @@ def test_llama8b_cpu_only_ignores_4bit_choice():
     prefs["predictability"]["precision"] = {"llama3_8b": "4bit"}
     e = estimate_ram(_plan(pred=True), prefs, _sys(64, 0))
     assert abs(e.peak_gb - (B + 32 * 1.2 / 1.0737)) < 0.01
+
+
+def test_cpu_only_llama_is_labelled_fp32_on_cpu():
+    prefs = {"predictability": {"models": ["gpt2", "llama32_3b"],
+                                "precision": {"llama32_3b": "4bit"}}}
+    e = estimate_ram(_plan(pred=True), prefs, _sys(64, 0))
+    assert e.cpu_fp32 == ("Llama-3.2-3B (fp32 on CPU: no GPU)",)   # not GPT-2
+    assert e.driver == "Llama-3.2-3B (fp32 on CPU: no GPU)"
+    assert abs(e.peak_gb - (B + K.predictability_ram_gib("gpt2", "fp32")
+                            + K.predictability_ram_gib("llama32_3b", "fp32"))) < 1e-9
+
+
+def test_gpu_llama_has_no_fp32_label():
+    prefs = {"predictability": {"models": ["llama32_3b"]}}
+    e = estimate_ram(_plan(pred=True), prefs, _sys(64, 24))
+    assert e.cpu_fp32 == ()

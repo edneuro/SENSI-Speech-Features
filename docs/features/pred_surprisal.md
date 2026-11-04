@@ -140,8 +140,9 @@ are fixed at fp32. Stored per model in `prefs["predictability"]["precision"]`
   console warns first.
 
 What is recorded: the console prints one line per model as it loads, e.g.
-`[predict] gpt2: fp32 on CPU`, or `[predict] llama3_8b: no GPU — running fp32
-on CPU (~32.0 GB RAM)` when your choice was overridden, and
+`[predict] gpt2: fp32 on CPU`; when your choice was overridden it first adds
+`[predict] llama3_8b: no GPU — running fp32 on CPU (~32.0 GB RAM)` (followed
+by the usual `[predict] llama3_8b: fp32 on CPU` load line), and
 `[predict] <slug>: downloading X GB on first use…` before a first download.
 The run manifest (`logs/*_manifest.json`) has a `predictability_models` list,
 one `{slug, hf_id, precision, device}` entry per model the run used.
@@ -266,17 +267,18 @@ natural preceding text. **No approximation.**
 Podcast episodes and audiobook chapters routinely exceed a model's
 context window (most visibly GPT-2's 1024-subword limit, or the two
 8K-context Llama-3 models) and cannot fit in a single forward pass.
-`_HuggingFaceBackend.score` then walks the input via `_chunk_slices`
-with a stride of `(limit − 1) // 2`, where `limit` is that model's context
-limit and the one slot the beginning-of-text token takes is already taken
-off. Each forward pass is the beginning-of-text token, one chunk and the
-immediately preceding chunk as left context — at most `limit` subwords, the
-most the model can hold. Only the logits for the chunk itself are kept; the
+`_HuggingFaceBackend.score` then walks the input via `_chunk_slices`.
+Throughout this section, `limit` is the model's context limit (its native
+window, or your cap below) and **`window = limit − 1`** is the number of
+subwords a forward pass holds after the beginning-of-text token. The stride
+(chunk size) is `window // 2`. Each forward pass is the beginning-of-text
+token, one chunk and the immediately preceding chunk as left context — at
+most `window` subwords plus the token, the most the model can hold. Only the logits for the chunk itself are kept; the
 prefix logits are discarded and re-computed (with a longer prefix) on the
 previous pass.
 
 For a transcript about twice GPT-2's window (2000 subwords, `limit = 1024`,
-so windows of BOS + up to 1023 subwords and `chunk = 511`):
+so `window = 1023` and a stride of 511):
 
 | Chunk being scored | Forward-pass input (after the BOS token) | Preceding context the chunk's first subword sees | Vs. ideal full-context |
 |---|---|---|---|
@@ -286,7 +288,8 @@ so windows of BOS + up to 1023 subwords and `chunk = 511`):
 | subwords 1533 – 1999 | `input[1022:2000]` | 511 subwords (positions 1022 – 1532)    | positions 0 – 1021 lost |
 
 So every position past the first window is scored with **between
-`(limit − 1) // 2` and `limit − 2` preceding subwords** of context,
+`window // 2` and `2 · (window // 2) − 1` preceding subwords** of context
+(511 to 1021 for GPT-2),
 depending on where it sits inside its chunk. The earliest subwords
 drop out of view at every chunk boundary. This is the unavoidable cost
 of a fixed context window on long texts — *which* subwords to drop is
@@ -316,10 +319,8 @@ absent from the map = uncapped = the default).
 > default to reproduce the full-context values.
 
 ### Why a `window // 2` stride
-The stride trades preceding-context budget against forward-pass count:
-
-Here `window` is the number of subwords a pass holds after the beginning-of-text
-token (`limit − 1`).
+The stride trades preceding-context budget against forward-pass count
+(`window = limit − 1`, as defined above):
 
 | Stride | Forward passes for N subwords | Minimum preceding context past the first window |
 |---|---|---|

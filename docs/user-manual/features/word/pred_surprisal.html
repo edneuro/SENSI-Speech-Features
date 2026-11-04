@@ -263,11 +263,13 @@ above). Llama-3-8B in fp32 needs about 32 GB of RAM, which is why the
 console warns first.</li>
 </ul>
 <p>What is recorded: the console prints one line per model as it loads, e.g.
-<code>[predict] gpt2: fp32 on CPU</code>, or <code>[predict] llama3_8b: no GPU — running fp32 on CPU (~32.0 GB RAM)</code> when your choice was overridden, and
+<code>[predict] gpt2: fp32 on CPU</code>; when your choice was overridden it first adds
+<code>[predict] llama3_8b: no GPU — running fp32 on CPU (~32.0 GB RAM)</code> (followed
+by the usual <code>[predict] llama3_8b: fp32 on CPU</code> load line), and
 <code>[predict] &lt;slug&gt;: downloading X GB on first use…</code> before a first download.
 The run manifest (<code>logs/*_manifest.json</code>) has a <code>predictability_models</code> list,
 one <code>{slug, hf_id, precision, device}</code> entry per model the run used.</p>
-</section><section id="code"><a id="implementation-in-sensi-speechfeatures"></a><h2><span class="num">6.1.10.8</span>In the code</h2><div class="card"><div class="card-title">Open in GitHub</div><ul><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/extractors/predictability.py#L38"><code>sensi/extractors/predictability.py → add_predictability()</code></a></li><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/extractors/predictability_models.py"><code>sensi/extractors/predictability_models.py</code></a></li></ul></div><p>Source: <code>sensi/extractors/predictability.py:add_predictability</code> (the unified,
+</section><section id="code"><a id="implementation-in-sensi-speechfeatures"></a><h2><span class="num">6.1.10.8</span>In the code</h2><div class="card"><div class="card-title">Open in GitHub</div><ul><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/extractors/predictability.py#L39"><code>sensi/extractors/predictability.py → add_predictability()</code></a></li><li><a href="https://github.com/edneuro/SENSI-Speech-Features/blob/main/sensi/extractors/predictability_models.py"><code>sensi/extractors/predictability_models.py</code></a></li></ul></div><p>Source: <code>sensi/extractors/predictability.py:add_predictability</code> (the unified,
 roster-driven extractor); long-text handling is in
 <code>_chunk_slices</code> / <code>_HuggingFaceBackend.score</code>.</p>
 <p><strong>This also produces</strong> <a href="../../features/word/pred_cloze.html"><code>Cloze</code></a> and
@@ -308,16 +310,17 @@ natural preceding text. <strong>No approximation.</strong></p>
 <p>Podcast episodes and audiobook chapters routinely exceed a model's
 context window (most visibly GPT-2's 1024-subword limit, or the two
 8K-context Llama-3 models) and cannot fit in a single forward pass.
-<code>_HuggingFaceBackend.score</code> then walks the input via <code>_chunk_slices</code>
-with a stride of <code>(limit − 1) // 2</code>, where <code>limit</code> is that model's context
-limit and the one slot the beginning-of-text token takes is already taken
-off. Each forward pass is the beginning-of-text token, one chunk and the
-immediately preceding chunk as left context — at most <code>limit</code> subwords, the
-most the model can hold. Only the logits for the chunk itself are kept; the
+<code>_HuggingFaceBackend.score</code> then walks the input via <code>_chunk_slices</code>.
+Throughout this section, <code>limit</code> is the model's context limit (its native
+window, or your cap below) and <strong><code>window = limit − 1</code></strong> is the number of
+subwords a forward pass holds after the beginning-of-text token. The stride
+(chunk size) is <code>window // 2</code>. Each forward pass is the beginning-of-text
+token, one chunk and the immediately preceding chunk as left context — at
+most <code>window</code> subwords plus the token, the most the model can hold. Only the logits for the chunk itself are kept; the
 prefix logits are discarded and re-computed (with a longer prefix) on the
 previous pass.</p>
 <p>For a transcript about twice GPT-2's window (2000 subwords, <code>limit = 1024</code>,
-so windows of BOS + up to 1023 subwords and <code>chunk = 511</code>):</p>
+so <code>window = 1023</code> and a stride of 511):</p>
 <table>
 <thead>
 <tr>
@@ -355,7 +358,8 @@ so windows of BOS + up to 1023 subwords and <code>chunk = 511</code>):</p>
 </tbody>
 </table>
 <p>So every position past the first window is scored with <strong>between
-<code>(limit − 1) // 2</code> and <code>limit − 2</code> preceding subwords</strong> of context,
+<code>window // 2</code> and <code>2 · (window // 2) − 1</code> preceding subwords</strong> of context
+(511 to 1021 for GPT-2),
 depending on where it sits inside its chunk. The earliest subwords
 drop out of view at every chunk boundary. This is the unavoidable cost
 of a fixed context window on long texts — <em>which</em> subwords to drop is
@@ -383,9 +387,8 @@ history) — by design, and only when you opt in. Leave it at the
 default to reproduce the full-context values.</p>
 </blockquote>
 <h3 id="why-a-window--2-stride">Why a <code>window // 2</code> stride</h3>
-<p>The stride trades preceding-context budget against forward-pass count:</p>
-<p>Here <code>window</code> is the number of subwords a pass holds after the beginning-of-text
-token (<code>limit − 1</code>).</p>
+<p>The stride trades preceding-context budget against forward-pass count
+(<code>window = limit − 1</code>, as defined above):</p>
 <table>
 <thead>
 <tr>

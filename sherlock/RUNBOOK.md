@@ -222,10 +222,22 @@ sinfo -o "%P %f" | grep -o "GPU_MEM:[0-9]*GB" | sort -u
 
 **b. Submit — pass the partition and VRAM as flags** (no file editing; these `sbatch`
 flags override the script's defaults). Pick a partition from `sh_part` and a VRAM
-size from the `sinfo` list that fits your model:
-- **Llama-3-8B** (default, 4-bit) → `16GB` is plenty (needs ~6–8 GB).
-- **Llama-3-70B** (4-bit) → `48GB` or `80GB` (also set `settings.llm_model` + download
-  those weights in step 5).
+size from the `sinfo` list that fits your model at its precision. Approximate GPU
+memory per model (weights × 1.2 for activations and the CUDA context; estimates, not
+measurements):
+
+| Model | fp16 (default) | 8bit | 4bit |
+|---|---|---|---|
+| Llama-3.2-3B | ≈ 7.7 GB | ≈ 3.9 GB | ≈ 1.9 GB |
+| Llama-3-8B | ≈ 19 GB | ≈ 9.6 GB | ≈ 4.8 GB |
+| Llama-3-70B | ≈ 170 GB (several GPUs) | ≈ 85 GB | ≈ 43 GB |
+
+- Choose the precision per model in `config/features.yaml` under `predictability:`,
+  e.g. `precision: {llama3_8b: 8bit}` (no entry = fp16). The models themselves are
+  `predictability.models`; download their weights in step 5.
+- If the model does not fit, the run stops with "Not enough GPU memory" instead of
+  silently running layers on the CPU: request a larger `GPU_MEM` or pick 8bit/4bit.
+- e.g. Llama-3-8B fp16 → `24GB`; 8bit → `16GB`; 4bit → `16GB` (or smaller).
 - Bigger VRAM = **longer queue**, so don't over-request.
 ```bash
 sbatch --partition=gpu -C GPU_MEM:16GB \

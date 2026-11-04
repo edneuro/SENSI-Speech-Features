@@ -355,6 +355,9 @@ class RamEstimate:
     gpu_vram_gb: float
     fits: bool
     warning: str | None
+    # Models whose chosen precision is overridden to fp32 because there is no
+    # GPU, e.g. "Llama-3.2-3B (fp32 on CPU: no GPU)" — shown on the Run page.
+    cpu_fp32: tuple[str, ...] = ()
 
 
 def has_cuda(system: dict) -> bool:
@@ -369,7 +372,8 @@ def estimate_ram(plan: Plan, prefs: dict, system: dict) -> RamEstimate:
     for the whole process). Each predictability model counts the memory of the
     precision it actually runs at (load_plan: the chosen precision on a GPU,
     fp32 on the CPU otherwise), against VRAM when it runs on the GPU."""
-    from sensi.extractors.predictability_models import load_plan, spec_for
+    from sensi.extractors.predictability_models import (
+        effective_precision, load_plan, spec_for)
 
     gpu = system.get("gpu") or {}
     machine = float(system.get("system_ram_gb") or 0.0)
@@ -378,6 +382,7 @@ def estimate_ram(plan: Plan, prefs: dict, system: dict) -> RamEstimate:
 
     # (display name, GiB, on_gpu)
     items: list[tuple[str, float, bool]] = []
+    cpu_fp32: list[str] = []
     if "word2vec" in plan.output_csvs:
         items.append(("Word2Vec", K.RAM_GB["word2vec"], False))
     if {"bert_word", "bert_sentence"} & set(plan.output_csvs):
@@ -388,8 +393,12 @@ def estimate_ram(plan: Plan, prefs: dict, system: dict) -> RamEstimate:
             try:
                 name = spec_for(slug).label
                 precision, device = load_plan(slug, pred.get("precision"), cuda)
+                chosen = effective_precision(slug, pred.get("precision"))
             except KeyError:
                 continue
+            if device == "cpu" and chosen != "fp32":
+                name = f"{name} (fp32 on CPU: no GPU)"
+                cpu_fp32.append(name)
             items.append((name, K.predictability_ram_gib(slug, precision),
                           device == "cuda"))
 
@@ -404,7 +413,8 @@ def estimate_ram(plan: Plan, prefs: dict, system: dict) -> RamEstimate:
         warning = _ram_warning(_pool_item(ram_items), peak, machine)
     elif vram > 0 and gpu_total > vram:
         warning = _ram_warning(_pool_item(gpu_items), gpu_total, vram, gpu=True)
-    return RamEstimate(peak, driver, machine, vram, warning is None, warning)
+    return RamEstimate(peak, driver, machine, vram, warning is None, warning,
+                       tuple(cpu_fp32))
 
 
 def _pool_item(items: list[tuple[str, float, bool]]) -> str:

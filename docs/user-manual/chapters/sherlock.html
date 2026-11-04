@@ -248,11 +248,46 @@ sizes actually exist on the cluster:</p>
 </code></pre>
 <p><strong>b. Submit — pass the partition and VRAM as flags</strong> (no file editing; these <code>sbatch</code>
 flags override the script's defaults). Pick a partition from <code>sh_part</code> and a VRAM
-size from the <code>sinfo</code> list that fits your model:</p>
+size from the <code>sinfo</code> list that fits your model at its precision. Approximate GPU
+memory per model (weights × 1.2 for activations and the CUDA context; estimates, not
+measurements):</p>
+<table>
+<thead>
+<tr>
+<th>Model</th>
+<th>fp16 (default)</th>
+<th>8bit</th>
+<th>4bit</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Llama-3.2-3B</td>
+<td>≈ 7.7 GB</td>
+<td>≈ 3.9 GB</td>
+<td>≈ 1.9 GB</td>
+</tr>
+<tr>
+<td>Llama-3-8B</td>
+<td>≈ 19 GB</td>
+<td>≈ 9.6 GB</td>
+<td>≈ 4.8 GB</td>
+</tr>
+<tr>
+<td>Llama-3-70B</td>
+<td>≈ 170 GB (several GPUs)</td>
+<td>≈ 85 GB</td>
+<td>≈ 43 GB</td>
+</tr>
+</tbody>
+</table>
 <ul>
-<li><strong>Llama-3-8B</strong> (default, 4-bit) → <code>16GB</code> is plenty (needs ~6–8 GB).</li>
-<li><strong>Llama-3-70B</strong> (4-bit) → <code>48GB</code> or <code>80GB</code> (also set <code>settings.llm_model</code> + download
-those weights in step 5).</li>
+<li>Choose the precision per model in <code>config/features.yaml</code> under <code>predictability:</code>,
+e.g. <code>precision: {llama3_8b: 8bit}</code> (no entry = fp16). The models themselves are
+<code>predictability.models</code>; download their weights in step 5.</li>
+<li>If the model does not fit, the run stops with &quot;Not enough GPU memory&quot; instead of
+silently running layers on the CPU: request a larger <code>GPU_MEM</code> or pick 8bit/4bit.</li>
+<li>e.g. Llama-3-8B fp16 → <code>24GB</code>; 8bit → <code>16GB</code>; 4bit → <code>16GB</code> (or smaller).</li>
 <li>Bigger VRAM = <strong>longer queue</strong>, so don't over-request.</li>
 </ul>
 <pre><code class="language-bash">sbatch<span class="w"> </span>--partition<span class="o">=</span>gpu<span class="w"> </span>-C<span class="w"> </span>GPU_MEM:16GB<span class="w"> </span><span class="se">\</span>
