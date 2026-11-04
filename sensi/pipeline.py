@@ -150,7 +150,7 @@ def _cuda_available() -> bool:
         return False
 
 
-def _timed_predictability(args, df, text, models, metrics, context):
+def _timed_predictability(args, df, text, models, metrics, context, precision=None):
     """add_predictability one model at a time, each timed as its own sample.
 
     Same columns, values and order as the single multi-model call (the
@@ -166,7 +166,7 @@ def _timed_predictability(args, df, text, models, metrics, context):
     from sensi.utils.timing_history import load_key, model_device
     if not [m for m in metrics if m in _pred._METRIC_COLS]:
         return add_predictability(df, text, models=models, metrics=metrics,
-                                  context=context)
+                                  context=context, precision=precision)
     for slug in models:
         spec_for(slug)   # validate the whole roster first, like the extractor
     timer = args._stage_timer
@@ -175,19 +175,20 @@ def _timed_predictability(args, df, text, models, metrics, context):
     for slug in models:
         hf_id = spec_for(slug).hf_id
         eff = effective_context(slug, context or {})
-        prec, dev = load_plan(slug, None, _cuda_available())
+        prec, dev = load_plan(slug, precision, _cuda_available())
         if (hf_id, eff, prec, digest) in _pred._SCORE_CACHE:
             df = add_predictability(df, text, models=[slug], metrics=metrics,
-                                    context=context)
+                                    context=context, precision=precision)
             continue
         _preload_timed(args, load_key('predictability', slug),
                        _pred._BACKEND_CACHE, (hf_id, eff, prec, dev),
-                       lambda: _pred._get_backend(slug, eff, None))
-        device = model_device('predictability', slug, _cuda_available())
+                       lambda: _pred._get_backend(slug, eff, precision))
+        device = model_device('predictability', slug, _cuda_available(),
+                              precision_map=precision)
         with timer.stage('predictability', count_words(text), model=slug,
                          device=device):
             df = add_predictability(df, text, models=[slug], metrics=metrics,
-                                    context=context)
+                                    context=context, precision=precision)
     return df
 
 
@@ -307,10 +308,11 @@ def run(args) -> pd.DataFrame:
         print(f'[predict] {len(pred_models)} model(s) x {len(pred_metrics)} metric(s)…')
         if getattr(args, '_stage_timer', None) is None:
             df = add_predictability(df, text, models=pred_models, metrics=pred_metrics,
-                                    context=pconf.get('context'))
+                                    context=pconf.get('context'),
+                                    precision=pconf.get('precision'))
         else:
             df = _timed_predictability(args, df, text, pred_models, pred_metrics,
-                                       pconf.get('context'))
+                                       pconf.get('context'), pconf.get('precision'))
 
     args._phones_df = None  # reset each run; populated below when alignment runs
     if not args.no_align and args.audio:

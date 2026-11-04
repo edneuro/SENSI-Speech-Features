@@ -64,6 +64,19 @@ class _StdoutTee:
         return getattr(self._orig, name)
 
 
+def _predictability_models() -> list:
+    """Models this run scored with (slug, hf_id, precision, device). Never
+    imports the predictability module (torch) for a run that did not use it."""
+    mod = sys.modules.get('sensi.extractors.predictability')
+    return mod.used_models() if mod is not None else []
+
+
+def _reset_predictability_models() -> None:
+    mod = sys.modules.get('sensi.extractors.predictability')
+    if mod is not None:
+        mod.reset_used_models()
+
+
 class RunLogger:
     def __init__(
         self,
@@ -86,6 +99,7 @@ class RunLogger:
         self._logs_dir.mkdir(parents=True, exist_ok=True)
 
         self._start = _dt.datetime.now()
+        _reset_predictability_models()   # the manifest lists this run's models only
         # run_ts is shared between the word + doc batches that get dispatched
         # together (see sensi/gui/run_dispatch.py), so their log files group cleanly
         # by timestamp in the Logs tab.
@@ -231,6 +245,7 @@ class RunLogger:
             'pairs': self._pairs,
             'warnings': self._warnings,
             'errors': self._errors,
+            'predictability_models': _predictability_models(),
         }
 
         with self._manifest_path.open('w', encoding='utf-8') as f:

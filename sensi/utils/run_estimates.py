@@ -358,7 +358,8 @@ def estimate_ram(plan: Plan, prefs: dict, system: dict) -> RamEstimate:
         items.append(("BERT", K.RAM_GB["bert"], False))
     if plan.predictability_word or plan.predictability_doc:
         for slug in (prefs.get("predictability", {}) or {}).get("models") or []:
-            on_gpu = model_device("predictability", slug, cuda) == "cuda"
+            on_gpu = model_device("predictability", slug, cuda,
+                                  precision_map=(prefs.get("predictability", {}) or {}).get("precision")) == "cuda"
             try:
                 name = spec_for(slug).label
             except KeyError:
@@ -512,7 +513,9 @@ def estimate_time(plan: Plan, prefs: dict, stats: InputStats, history: dict,
                        K.FIRST_ESTIMATE_RATES["mfa_align"])
             total += fit[0] + fit[1] * units
             continue
-        device = model_device(step, model, cuda_available)
+        device = model_device(
+            step, model, cuda_available,
+            precision_map=(prefs.get("predictability", {}) or {}).get("precision"))
         r = rate(history, step, model, device)
         if r is None:
             learned = False

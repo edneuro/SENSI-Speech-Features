@@ -179,3 +179,56 @@ def test_shared_run_ts_yields_grouped_filenames(tmp_path):
     logs = out / 'logs'
     assert (logs / f'word_run_{ts}.log').exists()
     assert (logs / f'doc_run_{ts}.log').exists()
+
+
+def _logger(tmp_path, name):
+    out = tmp_path / name
+    out.mkdir()
+    return RunLogger(output_folder=out, analyzer='A', config={},
+                     input_transcripts_folder=tmp_path, input_audio_folder=tmp_path,
+                     text_extensions=['txt'], audio_extensions=['wav']), out
+
+
+def _manifest(out):
+    return json.loads(next((out / 'logs').glob('run_*_manifest.json'))
+                      .read_text(encoding='utf-8'))
+
+
+def test_manifest_lists_models_each_run_used(tmp_path, monkeypatch):
+    """Two runs in one process: the second reuses the cached backend (and the
+    score cache) but its manifest still names the model."""
+    import pandas as pd
+    from sensi.extractors import predictability as P
+
+    class _Fake:
+        def __init__(self, *a, **k):
+            pass
+
+        def score(self, text, tokens):
+            return [{"surprisal": 1.0, "p": 0.5, "top_match": 1} for _ in tokens]
+
+    monkeypatch.setattr(P, "_make_default_backend", _Fake)
+    monkeypatch.setattr(P, "_BACKEND_CACHE", {})
+    monkeypatch.setattr(P, "_SCORE_CACHE", type(P._SCORE_CACHE)())
+    monkeypatch.setattr(P, "_USED", [])
+    monkeypatch.setattr(P, "_cuda_available", lambda: False)
+    df = pd.DataFrame({"token": ["a", "b"], "upos": ["DET", "NOUN"]})
+    for name in ("one", "two"):
+        logger, out = _logger(tmp_path, name)
+        P.add_predictability(df, "a b", models=["gpt2"], metrics=["surprisal"])
+        logger.finalize()
+        assert _manifest(out)["predictability_models"] == [
+            {"slug": "gpt2", "hf_id": "gpt2", "precision": "fp32", "device": "cpu"}]
+    # a run that scores nothing lists nothing
+    logger, out = _logger(tmp_path, "three")
+    logger.finalize()
+    assert _manifest(out)["predictability_models"] == []
+
+
+def test_manifest_empty_when_predictability_never_imported(tmp_path, monkeypatch):
+    import sys
+    monkeypatch.delitem(sys.modules, 'sensi.extractors.predictability', raising=False)
+    logger, out = _logger(tmp_path, "x")
+    logger.finalize()
+    assert _manifest(out)["predictability_models"] == []
+    assert 'sensi.extractors.predictability' not in sys.modules

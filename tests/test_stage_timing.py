@@ -110,3 +110,34 @@ def test_mfa_sample_counts_only_aligned_audio(tmp_path):
     pipeline._record_mfa_timing(args, items, {"aligned": [], "cached": ["a", "b"]}, 1.0)
     pipeline._record_mfa_timing(types.SimpleNamespace(), items, {"aligned": ["a"]}, 1.0)
     assert len(th.load_history()["samples"]) == 1
+
+
+def test_timed_predictability_threads_precision(monkeypatch):
+    """The precision map reaches the backend build and keys the caches."""
+    import types
+    import pandas as pd
+    from sensi.extractors import predictability as P
+
+    built = []
+
+    class _Fake:
+        def __init__(self, model_id, max_context, precision_run, device, **kw):
+            built.append((precision_run, device))
+
+        def score(self, text, tokens):
+            return [{"surprisal": 1.0, "p": 0.5, "top_match": 1} for _ in tokens]
+
+    monkeypatch.setattr(P, "_make_default_backend", _Fake)
+    monkeypatch.setattr(P, "_BACKEND_CACHE", {})
+    monkeypatch.setattr(P, "_SCORE_CACHE", type(P._SCORE_CACHE)())
+    monkeypatch.setattr(P, "_cuda_available", lambda: True)
+    monkeypatch.setattr(pipeline, "_cuda_available", lambda: True)
+    df = pd.DataFrame({"token": ["a", "b"], "upos": ["DET", "NOUN"]})
+    args = types.SimpleNamespace(_stage_timer=th.StageTimer())
+    slug = "llama32_3b"
+    from sensi.extractors.predictability_models import ALL_SPECS
+    slug = next(s.slug for s in ALL_SPECS if s.slug.startswith("llama"))
+    pipeline._timed_predictability(args, df, "a b", [slug], ["surprisal"], None,
+                                   {slug: "4bit"})
+    assert built == [("4bit", "cuda")]
+    assert args._stage_timer.samples[0].device == "cuda"

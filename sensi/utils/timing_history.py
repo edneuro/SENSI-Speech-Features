@@ -83,7 +83,8 @@ def load_key(step: str, model: str | None = None) -> str:
     return f"{step}:{model}" if model else step
 
 
-def model_device(step: str, model: str | None, cuda_available: bool) -> str:
+def model_device(step: str, model: str | None, cuda_available: bool,
+                 precision_map: dict | None = None) -> str:
     """"cuda" or "cpu": where the extractor itself puts this step's model.
 
     Predictability follows sensi/extractors/predictability_models.load_plan:
@@ -95,7 +96,7 @@ def model_device(step: str, model: str | None, cuda_available: bool) -> str:
         return "cpu"
     from sensi.extractors.predictability_models import load_plan
     try:
-        return load_plan(model, None, cuda_available)[1]
+        return load_plan(model, precision_map, cuda_available)[1]
     except KeyError:
         return "cpu"
 

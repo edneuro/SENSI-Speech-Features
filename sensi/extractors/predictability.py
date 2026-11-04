@@ -53,6 +53,7 @@ def add_predictability(df, text, *, models, metrics, context=None, precision=Non
         backend = (backends or {}).get(slug)
         if backend is not None:
             scores = backend.score(text, tokens)
+            _record_used(slug, precision)
         else:
             eff = effective_context(slug, ctx_map)   # per-model cap (Project B)
             scores = _scored_by_slug(slug, text, tokens, eff, precision)
@@ -71,6 +72,7 @@ def _scored_by_slug(slug: str, text: str, tokens: list[str],
     (see _SCORE_CACHE below)."""
     hf_id = spec_for(slug).hf_id
     precision_run, _device = load_plan(slug, precision_map, _cuda_available())
+    _record_used(slug, precision_map)
     key = (hf_id, max_context, precision_run, _text_tokens_digest(text, tokens))
     scores = _SCORE_CACHE.get(key)
     if scores is None:
@@ -527,6 +529,27 @@ _LOADED: list[dict] = []
 
 def loaded_models() -> list[dict]:
     return [dict(r) for r in _LOADED]
+
+
+# Models a RUN scored with (cache hits included), in first-use order; unlike
+# _LOADED this is per run: reset_used_models() is called when a run starts.
+_USED: list[dict] = []
+
+
+def reset_used_models() -> None:
+    _USED.clear()
+
+
+def used_models() -> list[dict]:
+    return [dict(r) for r in _USED]
+
+
+def _record_used(slug: str, precision_map: dict | None) -> None:
+    precision_run, device = load_plan(slug, precision_map, _cuda_available())
+    rec = {"slug": slug, "hf_id": spec_for(slug).hf_id,
+           "precision": precision_run, "device": device}
+    if rec not in _USED:
+        _USED.append(rec)
 
 
 def _cached_backend(model_id: str, max_context: int | None = None,
