@@ -723,3 +723,140 @@ def test_line_breaks_reach_the_model_as_single_spaces():
                        models=["gpt2"], metrics=["surprisal"],
                        backends={"gpt2": _Recording()})
     assert seen == ["Others arrived were late ."]
+
+
+# ---- final-review fixes: no silent CPU offload, dtype check, used-model record
+
+
+class _MappedModel(_DummyModel):
+    """A device_map="auto" load: hf_device_map says where each module landed."""
+    def __init__(self, device_map, dtype=None):
+        super().__init__('cuda:0')
+        self.hf_device_map = device_map
+        if dtype is not None:
+            self.dtype = dtype
+
+
+@pytest.mark.parametrize("where", ["cpu", "disk"])
+def test_offload_to_cpu_or_disk_raises_memory_error(monkeypatch, where):
+    import sensi.extractors.predictability as m
+    _fresh_caches()
+    monkeypatch.setattr('torch.cuda.is_available', lambda: True)
+    _patch_transformers(
+        monkeypatch,
+        lambda model_id, **kw: _MappedModel({"model.embed_tokens": 0,
+                                             "lm_head": where}),
+        _SpaceTokenizer(99))
+    with pytest.raises(RuntimeError) as ei:
+        m._get_backend("llama3_8b", None, {"llama3_8b": "fp16"})
+    msg = str(ei.value)
+    assert "llama3_8b" in msg and "fp16" in msg
+    assert "GPU memory" in msg
+    assert "16.0 GB" in msg                       # weights_gb(llama3_8b, fp16)
+    assert "8bit" in msg and "4bit" in msg        # suggests a smaller precision
+    assert m._BACKEND_CACHE == {}
+
+
+def test_all_gpu_device_map_loads(monkeypatch):
+    import sensi.extractors.predictability as m
+    _fresh_caches()
+    monkeypatch.setattr('torch.cuda.is_available', lambda: True)
+    _patch_transformers(
+        monkeypatch,
+        lambda model_id, **kw: _MappedModel({"model.layers.0": 0,
+                                             "model.layers.1": 1,
+                                             "lm_head": "cuda:1"}),
+        _SpaceTokenizer(99))
+    b = m._get_backend("llama3_8b", None, {"llama3_8b": "8bit"})
+    assert (b.precision_run, b.device) == ("8bit", "cuda")
+
+
+def test_quantized_hint_mentions_gpu_memory(monkeypatch):
+    import sensi.extractors.predictability as m
+    _fresh_caches()
+    monkeypatch.setattr('torch.cuda.is_available', lambda: True)
+
+    def fake_model(model_id, **kw):
+        raise ValueError("Some modules are dispatched on the CPU or the disk")
+
+    _patch_transformers(monkeypatch, fake_model, _SpaceTokenizer(99))
+    with pytest.raises(RuntimeError) as ei:
+        m._get_backend("llama3_8b", None, {"llama3_8b": "8bit"})
+    msg = str(ei.value)
+    assert "bitsandbytes" in msg and "GPU memory" in msg and "fp16" in msg
+
+
+@pytest.mark.parametrize("requested,loaded", [("fp32", "float16"),
+                                              ("fp16", "float32")])
+def test_loaded_dtype_must_match_precision(monkeypatch, requested, loaded):
+    import torch
+    import sensi.extractors.predictability as m
+    _fresh_caches()
+    monkeypatch.setattr('torch.cuda.is_available', lambda: True)
+    _patch_transformers(
+        monkeypatch,
+        lambda model_id, **kw: _MappedModel({"": 0}, getattr(torch, loaded)),
+        _SpaceTokenizer(99))
+    with pytest.raises(RuntimeError) as ei:
+        m._HuggingFaceBackend("meta-llama/Llama-3.2-3B", None, requested, "cuda")
+    msg = str(ei.value)
+    assert requested in msg and loaded in msg
+
+
+def test_matching_dtype_loads(monkeypatch):
+    import torch
+    import sensi.extractors.predictability as m
+    monkeypatch.setattr('torch.cuda.is_available', lambda: True)
+    _patch_transformers(
+        monkeypatch,
+        lambda model_id, **kw: _MappedModel({"": 0}, torch.float16),
+        _SpaceTokenizer(99))
+    b = m._HuggingFaceBackend("meta-llama/Llama-3.2-3B", None, "fp16", "cuda")
+    assert b.precision_run == "fp16"
+
+
+def test_failed_load_is_not_recorded_as_used(monkeypatch):
+    import sensi.extractors.predictability as m
+    _fresh_caches()
+    m.reset_used_models()
+    monkeypatch.setattr('torch.cuda.is_available', lambda: False)
+
+    def fake_model(model_id, **kw):
+        raise OSError("no weights")
+
+    _patch_transformers(monkeypatch, fake_model, _SpaceTokenizer(99))
+    df = pd.DataFrame({"token": ["a", "b"], "upos": ["DET", "NOUN"]})
+    with pytest.raises(RuntimeError):
+        m.add_predictability(df, "a b", models=["gpt2_large"], metrics=["surprisal"])
+    assert m.used_models() == []
+
+
+def test_used_models_recorded_after_scoring_and_on_cache_hit(monkeypatch):
+    import sensi.extractors.predictability as m
+    _fresh_caches()
+    monkeypatch.setattr('torch.cuda.is_available', lambda: False)
+    _patch_transformers(monkeypatch, lambda model_id, **kw: _RecordingModel(),
+                        _SpaceTokenizer(99))
+    df = pd.DataFrame({"token": ["a", "b"], "upos": ["DET", "NOUN"]})
+    m.reset_used_models()
+    m.add_predictability(df, "a b", models=["gpt2"], metrics=["surprisal"])
+    m.reset_used_models()                              # a new run, scores cached
+    m.add_predictability(df, "a b", models=["gpt2"], metrics=["surprisal"])
+    assert m.used_models() == [{"slug": "gpt2", "hf_id": "gpt2",
+                                "precision": "fp32", "device": "cpu"}]
+
+
+def test_evicting_a_stale_backend_frees_gpu_memory(monkeypatch):
+    import sensi.extractors.predictability as m
+    _fresh_caches()
+    monkeypatch.setattr('torch.cuda.is_available', lambda: True)
+    freed = []
+    monkeypatch.setattr('torch.cuda.empty_cache', lambda: freed.append(1))
+    _patch_transformers(monkeypatch,
+                        lambda model_id, **kw: _MappedModel({"": 0}),
+                        _SpaceTokenizer(99))
+    m._get_backend("llama3_8b", None, {"llama3_8b": "fp16"})
+    assert freed == []
+    m._get_backend("llama3_8b", None, {"llama3_8b": "4bit"})
+    assert freed == [1]
+    assert [k[2] for k in m._BACKEND_CACHE] == ["4bit"]

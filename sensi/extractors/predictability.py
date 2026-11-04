@@ -12,6 +12,7 @@ add_predictability.
 """
 from __future__ import annotations
 
+import gc
 import hashlib
 import logging
 import math
@@ -23,7 +24,7 @@ import pandas as pd
 
 from sensi.extractors.predictability_models import (
     spec_for, effective_context, effective_precision, load_plan, weights_gb,
-    slug_for_hf_id)
+    slug_for_hf_id, BYTES_PER_PARAM)
 from sensi.utils.transcript_prep import normalize_whitespace
 
 logger = logging.getLogger(__name__)
@@ -72,7 +73,6 @@ def _scored_by_slug(slug: str, text: str, tokens: list[str],
     (see _SCORE_CACHE below)."""
     hf_id = spec_for(slug).hf_id
     precision_run, _device = load_plan(slug, precision_map, _cuda_available())
-    _record_used(slug, precision_map)
     key = (hf_id, max_context, precision_run, _text_tokens_digest(text, tokens))
     scores = _SCORE_CACHE.get(key)
     if scores is None:
@@ -80,6 +80,9 @@ def _scored_by_slug(slug: str, text: str, tokens: list[str],
         _SCORE_CACHE[key] = scores
         while len(_SCORE_CACHE) > SCORE_CACHE_MAX:
             _SCORE_CACHE.popitem(last=False)
+    # Recorded only once scores exist (a cache hit counts): a failed load must
+    # not put the model in the run's manifest.
+    _record_used(slug, precision_map)
     return scores
 
 
@@ -360,9 +363,46 @@ def _model_load_hint(model_id: str, exc: Exception) -> str:
 def _quantized_load_hint(name: str, precision_run: str, exc: Exception) -> str:
     return (
         f"Could not load {name} at {precision_run}: {type(exc).__name__}: {exc}\n"
-        f"8-bit / 4-bit loading needs a working bitsandbytes build on a CUDA GPU. "
-        f"To fix: choose fp16 for this model on the Predictability card."
+        f"8-bit / 4-bit loading needs a working bitsandbytes build on a CUDA GPU "
+        f"and enough free GPU memory for the quantized weights. "
+        f"To fix: choose fp16 for this model on the Predictability card, or use "
+        f"a GPU with more memory."
     )
+
+
+def _offloaded_modules(model) -> list[str]:
+    """Modules device_map="auto" placed on the CPU or disk (it does that
+    silently when the weights do not fit in GPU memory). Several GPUs are
+    fine: only "cpu"/"disk" placements count."""
+    dmap = getattr(model, "hf_device_map", None) or {}
+    return [k for k, v in dmap.items() if str(v) in ("cpu", "disk")]
+
+
+def _offload_error(name: str, slug: str | None, precision_run: str,
+                   offloaded: list[str]) -> str:
+    need = (f" (~{weights_gb(slug, precision_run):.1f} GB of weights)"
+            if slug is not None else "")
+    smaller = [p for p in ("8bit", "4bit")
+               if BYTES_PER_PARAM[p] < BYTES_PER_PARAM[precision_run]]
+    advice = (f"choose {' or '.join(smaller)} for this model on the "
+              f"Predictability card, or use a GPU with more memory"
+              if smaller else "use a GPU with more memory")
+    return (f"Not enough GPU memory for {name} at {precision_run}{need}: "
+            f"{len(offloaded)} module(s) would run on the CPU/disk "
+            f"(e.g. {offloaded[0]}), which is very slow. To fix: {advice}.")
+
+
+_EXPECTED_DTYPE = {"fp32": "float32", "fp16": "float16"}
+
+
+def _loaded_dtype(model):
+    dtype = getattr(model, "dtype", None)
+    if dtype is None:
+        try:
+            dtype = getattr(next(iter(model.parameters())), "dtype", None)
+        except Exception:   # noqa: BLE001
+            dtype = None
+    return dtype
 
 
 def _is_cached_locally(model_id: str) -> bool:
@@ -435,6 +475,19 @@ class _HuggingFaceBackend:
                 raise RuntimeError(
                     _quantized_load_hint(name, precision_run, exc)) from exc
             raise RuntimeError(_model_load_hint(model_id, exc)) from exc
+        offloaded = _offloaded_modules(model)
+        if offloaded:
+            del model
+            _free_memory()
+            raise RuntimeError(_offload_error(name, slug, precision_run, offloaded))
+        # An older transformers ignores `dtype=` and would load the wrong
+        # precision silently; the values would then not be what was asked for.
+        want = _EXPECTED_DTYPE.get(precision_run)
+        got = _loaded_dtype(model)
+        if want is not None and got is not None and str(got).split(".")[-1] != want:
+            raise RuntimeError(
+                f"{name} loaded as {got}, not {precision_run} ({want}) as "
+                f"requested. Update transformers (pip install -r requirements.txt).")
         self._model = model
 
         self._model.eval()
@@ -552,6 +605,17 @@ def _record_used(slug: str, precision_map: dict | None) -> None:
         _USED.append(rec)
 
 
+def _free_memory() -> None:
+    """Release dropped weights now, so the next load has the memory."""
+    gc.collect()
+    if _cuda_available():
+        try:
+            import torch
+            torch.cuda.empty_cache()
+        except Exception:   # noqa: BLE001
+            pass
+
+
 def _cached_backend(model_id: str, max_context: int | None = None,
                     precision_run: str = "fp32", device: str = "cpu",
                     slug: str | None = None) -> _Backend:
@@ -563,8 +627,11 @@ def _cached_backend(model_id: str, max_context: int | None = None,
         # model is dead weight (each holds GBs of weights). Evict them before
         # loading — this keeps the cache bounded to the roster size even when
         # the user tries several caps/precisions across successive runs.
-        for stale in [k for k in _BACKEND_CACHE if k[0] == model_id]:
-            del _BACKEND_CACHE[stale]
+        stale = [k for k in _BACKEND_CACHE if k[0] == model_id]
+        for k in stale:
+            del _BACKEND_CACHE[k]
+        if stale:
+            _free_memory()
         backend = _make_default_backend(model_id, max_context, precision_run,
                                         device, slug=slug)
         _BACKEND_CACHE[key] = backend

@@ -227,7 +227,7 @@ def main() -> int:
               "mode) or a token is exported. See RUNBOOK.md step 5.",
               file=sys.stderr)
 
-    text = Path(args.text_file).read_text(encoding="utf-8") if args.text_file else _DEFAULT_TEXT
+    text = Path(args.text_file).read_text(encoding="utf-8-sig") if args.text_file else _DEFAULT_TEXT
     print(f"Text ({len(text)} chars): {text[:200]!r}{'...' if len(text) > 200 else ''}")
 
     # add_predictability scores the whitespace-normalised transcript; mirror it.
